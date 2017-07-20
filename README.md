@@ -164,7 +164,7 @@ var app = new App({
             },
             myFooter: {
                 markupTemplate: function(locals){
-                    '<footer>' + locals.footerText + '</footer>'
+                    return '<footer>' + locals.footerText + '</footer>'
                 },
                 state: {
                     footerText: 'Copyright 2016, David Attenborough'
@@ -202,7 +202,7 @@ var app = new App({
             },
             myFooter: {
                 markupTemplate: function(locals){
-                    '<footer>' + locals.footerText + '</footer>'
+                    return '<footer>' + locals.footerText + '</footer>'
                 },
                 state: {
                     footerText: 'Copyright 2016, David Attenborough'
@@ -218,6 +218,53 @@ var app = new App({
 });
 ```
 There is something new here: we are assigning an `onInit` callback to the myFooter component to change the footerText 3 seconds after the component inits. Weddell is reactive, so every time you alter app state, the DOM will update itself.
+
+If you're targeting ES6 browsers, this becomes a bit more concise:
+
+```javascript
+var app = new App({
+    el: '#app',
+    component: {
+        markupTemplate: locals =>
+        `
+            <div>${locals.myAppTitle}</div>
+        `,
+        state: {
+            myAppTitle: 'A compendium of frog species'
+        },
+        components: {
+            myHeader: {
+                markupTemplate: locals =>
+                `
+                    <header>${locals.headerText}</header>
+                `,
+                state: {
+                    headerText: 'Who doesn\'t love frogs?'
+                }
+            },
+            myBody: {
+                state: {
+
+                }
+            },
+            myFooter: {
+                markupTemplate: locals =>
+                `
+                    <footer>${locals.footerText}</footer>
+                `,
+                state: {
+                    footerText: 'Copyright 2016, David Attenborough'
+                },
+                onInit: () => {
+                    setTimeout(() => {
+                        this.state.footerText = 'Just kidding, copyright 2017, some other guy';
+                    }, 3000);
+                }
+            }
+        }
+    }
+});
+```
 
 To be continued...
 
