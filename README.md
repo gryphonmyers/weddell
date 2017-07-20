@@ -12,8 +12,9 @@ This framework was written with the core assumptions in mind:
 * A framework should be extensible. The easier it is to make the framework do what you need it to, the better. Everyone hates black boxes.
 * A framework should make no assumptions about the environment it is developed in. Sure, Typescript has some nice features, but nobody should be forced to use it.
 
-#Usage
-##Installation
+# Usage
+
+## Installation
 
 ```
 npm install weddell
@@ -21,7 +22,7 @@ npm install weddell
 
 Weddell uses CommonJS and is compatible with NodeJS and bundlers like Browserify. Standalone builds are also available in the `dist` folder, revealing `Weddell` to the global namespace.
 
-##Gearing up
+## Gearing up
 Weddell is customizable, with a plugin system and _many_ preset configurations of those plugins available. You can either choose a preset and run with it, or roll your own implementation, including whatever plugins you want (or writing your own!)
 
 Presets follow a two-character naming convention to indicate included plugins and other features:
@@ -34,7 +35,7 @@ Presets follow a two-character naming convention to indicate included plugins an
 * hv - Transforms HTML to VDOM, necessary if you want to use HTML syntax (or systems that output it) in combination with the VDOM module.
 * e5 - Compiles to ES5 syntax and includes necessary polyfills. Note: if you are using a JS bundler and not a standalone build, ES5 transpiling is up to you. Polyfills will be included though.
 
-##Getting started
+## Getting started
 A very basic CommonJS implementation would look like:
 
 `bundle.js`
@@ -62,7 +63,7 @@ app.init();
 
 Replace the `require('weddell')` with `Weddell` if you're using a standalone build.
 
-##Component interface
+## Component interface
 
 Weddell uses a component-based, declarative plain object API that is similar in some ways to Vue.js. App objects have a single root component, while all other components can have any number of components held inside an object, with the key being the components identifier within the app:
 
@@ -136,6 +137,7 @@ var app = new App({
     }
 });
 ```
+
 This will in fact render some static HTML to the page. Not super impressive. We can instead use the `markupTemplate` option and pass in a function that returns some html.
 
 ```javascript
