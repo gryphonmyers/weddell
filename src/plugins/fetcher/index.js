@@ -2,8 +2,8 @@ var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var defaultOpts = {};
 
-module.exports = function(Weddell, opts){
-    return Weddell.plugin({
+module.exports = function(_Weddell, opts){
+    return _Weddell.plugin({
         id: 'fetcher',
         classes:  {
             Component: Mixin(function(Component){

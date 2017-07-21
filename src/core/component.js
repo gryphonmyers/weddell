@@ -23,7 +23,8 @@ var defaultOpts = {
 
 var defaultInitOpts = {
 };
-class Component extends mix(Component).with(EventEmitterMixin) {
+
+var Component = class extends mix(Component).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
@@ -213,37 +214,6 @@ class Component extends mix(Component).with(EventEmitterMixin) {
         var pipelines = pipelineName ? [this._pipelines[pipelineName]] : Object.values(this._pipelines);
         pipelines.forEach((pipeline) => pipeline.render(changedKey));
     }
-
-
-    // renderCSS() {
-    //     if (this._CSSisDirty && this.CSSTemplate) {
-    //         var accessedProperties = this.getAccessedProperties(function(){
-    //             this._css = this.CSSTemplate(this._locals);
-    //         }.bind(this));
-    //
-    //         if (this.components) {
-    //             if (this._css && typeof this._css == 'object' && this._css.then) {
-    //                 this._css = Promise.all([this._css].concat(
-    //                         Object.values(this.components).map(function(componentObj) {
-    //                             return this.components[componentObj.name].renderCSS();
-    //                         }.bind(this)))
-    //                     )
-    //                     .then(arr => arr.join(''));
-    //             } else {
-    //                 this._css += Object.values(this.components).reduce(function(finalVal, componentObj) {
-    //                     return finalVal + this.components[componentObj.name].renderCSS();
-    //                 }.bind(this), '');
-    //             }
-    //         }
-    //
-    //         this._CSSTemplateProperties = accessedProperties;
-    //         this._CSSisDirty = false;
-    //         this.trigger('rendercss', this._css);
-    //     }
-    //
-    //     return this._css;
-    // }
-
 }
 
 module.exports = Component;

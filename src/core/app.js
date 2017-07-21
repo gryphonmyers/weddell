@@ -3,6 +3,7 @@ var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
 var debounce = require('debounce');
 var Sig = require('./sig');
+var EventEmitterMixin = require('./event-emitter-mixin');
 
 Sig.addTypeAlias('HTMLString', 'String');
 Sig.addTypeAlias('CSSString', 'String');
@@ -15,9 +16,10 @@ var defaultOpts = {
     stylesTransforms: []
 };
 
-class App {
+var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
+        super(opts);
         this.el = opts.el;
         this.styleEl = opts.styleEl;
         this.component = opts.component;
@@ -65,7 +67,6 @@ class App {
                 Object.defineProperty(window, consts.VAR_NAME, {
                     value: {app: this}
                 });
-
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
                 }
@@ -88,6 +89,9 @@ class App {
                 });
                 var Component = this.constructor.Weddell.classes.Component;
                 this.component = new Component(component);
+                this.trigger('createcomponent', {component: this.component});
+                this.component.on('createcomponent', evt =>
+                    this.trigger('createcomponent', evt));
 
                 return this.component.init(componentOpts)
                     .then(() => {

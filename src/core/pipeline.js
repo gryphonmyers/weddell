@@ -1,7 +1,7 @@
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
-class Pipeline extends mix(Pipeline).with(EventEmitterMixin) {
+var Renderer = class extends mix(Renderer).with(EventEmitterMixin) {
     constructor(opts) {
         super(opts);
         var Sig = this.constructor.Weddell.classes.Sig;
@@ -64,10 +64,15 @@ class Pipeline extends mix(Pipeline).with(EventEmitterMixin) {
                 .reduce((finalVal, transform) => {
                     return finalVal || Transform.getTransformPath(this.transforms, returnType, this.targetRenderFormat);
                 }, null);
-            if (!transforms) {
-                throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + this.targetRenderFormat.validated;
+                
+            if (!this.targetRenderFormat.checkIfMatch(returnType)) {
+                if (!transforms) {
+                    throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + this.targetRenderFormat.validated;
+                }
+                this.template = Transform.compose(input, transforms);
+            } else {
+                this.template = input;
             }
-            this.template = Transform.compose(input, transforms);
         } else {
             transforms = Transform.getTransformPath(this.transforms, this.inputFormat, this.targetRenderFormat);
 
@@ -121,4 +126,4 @@ class Pipeline extends mix(Pipeline).with(EventEmitterMixin) {
     }
 }
 
-module.exports = Pipeline;
+module.exports = Renderer;

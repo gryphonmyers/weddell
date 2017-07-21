@@ -11,7 +11,7 @@ var defaultOpts = {
     shouldEvalFunctions: true
 };
 
-class Store extends mix(Store).with(EventEmitterMixin) {
+var Store = class extends mix(Store).with(EventEmitterMixin) {
     constructor(data, opts) {
         opts = defaults(opts, defaultOpts);
         super();

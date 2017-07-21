@@ -30,10 +30,7 @@ gulp.task('compile-discs', function() {
 });
 
 gulp.task('compile-dev', function() {
-    return makeBundle('implementation/index.js', 'bundle.js', './implementation/js/', {dev: true});
-});
-gulp.task('compile-dev-dot', function() {
-    return makeBundle('implementation/imp-dot.js', 'bundle.js', './implementation/js/', {dev: true});
+    return makeBundles('./src/presets', './docs/js', [{es6: true, dev:true}]);
 });
 
 function makeBundles(entryDir, outputDir, optsArr) {
@@ -80,14 +77,9 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
     if (opts.disc) {
         parsed.ext = '.html';
         parsed.name += '-disc';
-    } else {
-        // if (opts.es6) {
-        //     parsed.name += '-es6';
-        // }
+    } else if (! opts.dev) {
         parsed.name += '-' + config.version;
-        if (!opts.dev) {
-            parsed.ext = '.min' + parsed.ext;
-        }
+        parsed.ext = '.min' + parsed.ext;
     }
     parsed.base = parsed.name + parsed.ext;
     fileName = path.format(parsed);
@@ -134,9 +126,8 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
     var bundleOpts = {};
     if (opts.dev) {
         _.assign(bundleOpts, {cache: {}, packageCache: {}});
-    } else {
-        bundleOpts.standalone = 'Weddell';
     }
+    bundleOpts.standalone = 'Weddell';
     if (opts.disc) {
         bundleOpts.fullPaths = true;
     }

@@ -1,7 +1,7 @@
 var Parser = require('prescribe');
 module.exports = {
     parse: function(html, h) {
-        var parser = new Parser(html);
+        var parser = new Parser(html.trim());
         var nodes = [];
         var current;
 

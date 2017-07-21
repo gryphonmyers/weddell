@@ -4,12 +4,12 @@ var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
 
-module.exports = function(Weddell){
-    return Weddell.plugin({
+module.exports = function(_Weddell){
+    return _Weddell.plugin({
         id: 'router',
         classes:  {
-            App: Mixin(function(Weddell){
-                return class extends Weddell {
+            App: Mixin(function(App){
+                return class extends App {
                     constructor(opts) {
                         super(opts);
                         this.router = new Router({

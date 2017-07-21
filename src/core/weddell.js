@@ -7,14 +7,14 @@ var Transform = require('./transform');
 var Sig = require('./sig');
 var includes = require('../utils/includes');
 
-class Weddell {
+class _Weddell {
     static plugin(pluginObj) {
-        Weddell = class extends Weddell {};
+        class NewWeddell extends _Weddell {};
         if (!pluginObj.id) {
             throw 'Got a plugin with no ID assigned. Aborting';
         }
-        if (!includes(Weddell.loadedPlugins, pluginObj.id)) {
-            if (pluginObj.requires && !includes(Weddell.loadedPlugins, pluginObj.requires)) {
+        if (!includes(NewWeddell.loadedPlugins, pluginObj.id)) {
+            if (pluginObj.requires && !includes(NewWeddell.loadedPlugins, pluginObj.requires)) {
                 [].concat(pluginObj.requires).forEach((plugReq) => {
                     throw 'Plugin ' + pluginObj.id + ' requires the plugin ' + plugReq + ', which is not loaded. Load ' + plugReq + ' first.';
                 });
@@ -23,42 +23,42 @@ class Weddell {
                 Object.entries(pluginObj.classes).forEach((entry) => {
                     var className = entry[0];
                     var classOrMixin = entry[1];
-                    if (className in Weddell.classes) {
+                    if (className in NewWeddell.classes) {
                         // Core class, we assume a mixin was passed and we should mix it
-                        Weddell.classes[className] = mix(Weddell.classes[className]).with(classOrMixin);
+                        NewWeddell.classes[className] = mix(NewWeddell.classes[className]).with(classOrMixin);
                     } else {
                         // Helper class
-                        Weddell.classes[className] = classOrMixin;
+                        NewWeddell.classes[className] = classOrMixin;
                     }
                 });
-                Object.values(Weddell.classes).forEach(function(commonClass){
-                    commonClass.Weddell = Weddell;
+                Object.values(NewWeddell.classes).forEach(function(commonClass){
+                    commonClass.NewWeddell = NewWeddell;
                 });
             }
 
             if (pluginObj.deps) {
                 Object.entries(pluginObj.deps).forEach((entry) => {
-                    if (entry[0] in Weddell.deps) {
+                    if (entry[0] in NewWeddell.deps) {
                         throw 'Dependency conflict while loading plugin: ' + entry[0] + ' is taken.';
                     }
-                    Weddell.deps[entry[0]] = entry[1];
+                    NewWeddell.deps[entry[0]] = entry[1];
                 });
             }
 
-            Weddell.loadedPlugins.push(pluginObj.id);
+            NewWeddell.loadedPlugins.push(pluginObj.id);
         } else {
             console.warn('Plugin ' + pluginObj.id + ' already loaded. Ignoring.');
         }
-        return Weddell;
+        return NewWeddell;
     }
 }
-Weddell.loadedPlugins = [];
-Weddell.consts = {
+_Weddell.loadedPlugins = [];
+_Weddell.consts = {
     VAR_NAME: '_wdl'
 };
-Weddell.deps = {};
-Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
-Object.values(Weddell.classes).forEach(function(commonClass){
-    commonClass.Weddell = Weddell;
+_Weddell.deps = {};
+_Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
+Object.values(_Weddell.classes).forEach(function(commonClass){
+    commonClass.Weddell = _Weddell;
 });
-module.exports = Weddell;
+module.exports = _Weddell;

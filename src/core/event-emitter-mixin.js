@@ -8,8 +8,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
         constructor(opts) {
             super(opts);
             Object.defineProperties(this, {
-                _callbacks: {value: {}},
-                _proxies: {value: {}}
+                _callbacks: {value: {}}
             });
         }
 
@@ -22,7 +21,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
                 }
                 this._callbacks[eventName] = this._callbacks[eventName].concat(callback);
             }
-            return () => {this.off(eventName, callback)};
+            return () => this.off(eventName, callback);
         }
 
         once(eventName, callback) {
@@ -55,32 +54,10 @@ var EventEmitterMixin = Mixin(function(superClass) {
             if (Array.isArray(eventName)) {
                 return eventName.map(evtName => this.trigger(evtName, eventObj, thisArg));
             } else {
-                if (eventName in this._proxies) {
-                    this._proxies[eventName].forEach(proxy => proxy.trigger(eventName, eventObj));
-                }
                 if (eventName in this._callbacks) {
                     return this._callbacks[eventName].map(cb => cb.call(thisArg || this, eventObj));
                 }
             }
-        }
-
-        proxyEvent(eventName, eventEmitter) {
-            if (hasMixin(eventEmitter, EventEmitterMixin)) {
-                if (Array.isArray(eventName)) {
-                    eventName.forEach(evtName => this.proxyEvent(evtName, eventEmitter));
-                } else {
-                    if (!(eventName in this._proxies)) {
-                        this._proxies[eventName] = [];
-                    }
-                    if (!includes(this._proxies[eventName], eventEmitter)) {
-                        this._proxies[eventName].push(eventEmitter);
-                        return true;
-                    }
-                }
-            } else {
-                console.warn('Failed to proxy events to object because it is not an event emitter');
-            }
-            return false;
         }
     }
 });
