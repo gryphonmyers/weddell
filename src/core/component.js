@@ -131,8 +131,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             component = component[0];
                         }
                         component = defaults(component, {
-                            targetMarkupRenderFormat: this._pipelines.markup.targetRenderFormat,
-                            targetStylesRenderFormat: this._pipelines.styles.targetRenderFormat,
+                            targetMarkupRenderFormat: this._pipelines.markup.inputFormat.parsed.returns,
+                            targetStylesRenderFormat: this._pipelines.styles.inputFormat.parsed.returns,
                             markupTransforms: this._pipelines.markup.transforms,
                             stylesTransforms: this._pipelines.styles.transforms
                         });

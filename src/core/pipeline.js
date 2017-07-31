@@ -64,10 +64,10 @@ var Renderer = class extends mix(Renderer).with(EventEmitterMixin) {
                 .reduce((finalVal, transform) => {
                     return finalVal || Transform.getTransformPath(this.transforms, returnType, this.targetRenderFormat);
                 }, null);
-                
+
             if (!this.targetRenderFormat.checkIfMatch(returnType)) {
                 if (!transforms) {
-                    throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + this.targetRenderFormat.validated;
+                    throw "Could not find a tranform path from " + returnType.validated + ' to ' + this.targetRenderFormat.validated;
                 }
                 this.template = Transform.compose(input, transforms);
             } else {
