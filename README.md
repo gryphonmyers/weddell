@@ -34,6 +34,7 @@ Presets follow a two-character naming convention to indicate included plugins an
 * cv - Transforms CSS assets at runtime to allow for state vars to be used in stylesheets using CSS4 var syntax.
 * hv - Transforms HTML to VDOM, necessary if you want to use HTML syntax (or systems that output it) in combination with the VDOM module.
 * e5 - Compiles to ES5 syntax and includes necessary polyfills. Note: if you are using a JS bundler and not a standalone build, ES5 transpiling is up to you. Polyfills will be included though.
+* ad - Exposes an action dispatcher to components, allowing for Flux-like architecture.
 
 ## Getting started
 A very basic CommonJS implementation would look like:
