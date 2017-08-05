@@ -6,6 +6,7 @@ var Renderer = class extends mix(Renderer).with(EventEmitterMixin) {
         super(opts);
         var Sig = this.constructor.Weddell.classes.Sig;
         Object.defineProperties(this, {
+            isDirty: {value: false, writable: true},
             name: {value: opts.name},
             template: {value: null, writable: true},
             input: {value: opts.input, writable: true},
@@ -84,41 +85,39 @@ var Renderer = class extends mix(Renderer).with(EventEmitterMixin) {
         }
     }
 
+    markDirty(changedKey) {
+        if (!this.isDirty && (!changedKey || changedKey in this._watchedProperties)) {
+            this.isDirty = true;
+            this.trigger('markeddirty', {changedKey});
+            return true;
+        }
+        return false;
+    }
+
     callTemplate(locals) {
         return this.template.call(this, locals);
     }
 
-    render(changedKey) {
-        if ((!changedKey || (changedKey in this._watchedProperties))) {
-            var promise = new Promise((resolve) => {
-                if (this._requestHandle) {
-                    cancelAnimationFrame(this._requestHandle);
-                    this._currentResolve(promise);
-                }
-                this._currentResolve = resolve;
-                this._requestHandle = requestAnimationFrame(() => {
-                    this._requestHandle = null;
-                    var accessed = {};
-                    var off = this._store.on('get', function(evt){
-                        accessed[evt.key] = 1;
-                    });
-                    var output = this.template ? this.callTemplate(this._store) : this.static;
-                    //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
-                    off();
-                    this._watchedProperties = accessed;
-                    resolve(
-                        output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
-                            .then(() => {
-                                this._cache = output
-                                this.trigger('render', {output});
-                                return output;
-                            }) : null
-                    );
-                });
+    render() {
+        if (this.isDirty || !this._cache) {
+            var accessed = {};
+            var off = this._store.on('get', function(evt){
+                accessed[evt.key] = 1;
             });
-            this._promise = promise;
+            var output = this.template ? this.callTemplate(this._store) : this.static;
+            //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
+            off();
+            this._watchedProperties = accessed;
+
+            return Promise.resolve(output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
+                    .then(() => {
+                        this.isDirty = false;
+                        this._cache = output
+                        this.trigger('render', {output});
+                        return output;
+                    }) : null);
         }
-        return this._promise;
+        return Promise.resolve(this._cache);
     }
 
     import() {

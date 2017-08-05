@@ -61,6 +61,7 @@ module.exports = function(_Weddell){
 
                         this.on('createcomponent', (evt) => {
                             this.addState(evt.componentName, evt.component);
+                            evt.component.on(['exit', 'enter'], this.markDirty.bind(this));
                         });
                     }
 

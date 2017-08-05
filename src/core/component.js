@@ -6,6 +6,7 @@ var DeDupe = require('mixwith-es5').DeDupe;
 var uniq = require('array-uniq');
 var compact = require('array-compact');
 var Sig = require('./sig');
+var includes = require('../utils/includes');
 
 Sig.addTypeAlias('HTMLString', 'String');
 Sig.addTypeAlias('CSSString', 'String');
@@ -16,6 +17,7 @@ var defaultOpts = {
     state: {},
     inputs: [],
     outputs: [],
+    isRoot: false,
     passthrough: [],
     markupFormat: 'HTMLString',
     stylesFormat: 'CSSString'
@@ -41,6 +43,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this.defaultInitOpts = defaults(opts.defaultInitOpts, defaultInitOpts);
 
         Object.defineProperties(this, {
+            isRoot: {value: opts.isRoot},
             _transformers: {value: []},
             _inputs : {value: opts.inputs},
             _outputs : {value: opts.outputs},
@@ -109,12 +112,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
         Object.entries(this._pipelines).forEach((entry) => {
-            entry[1].on('render', (rendered) => {
-                var output = this.getOutput(entry[0]);
-                this.trigger('render' + entry[0], output);
-                this.trigger('render', Object.assign({pipelineName: entry[0]}, output));
-            });
             entry[1].init();
+            entry[1].on('markeddirty', evt => {
+                this.trigger('markeddirty', {pipelineName: entry[0], pipeline: entry[1], changedKey: evt.changedKey});
+            });
             //TODO bugfix: pipelines are initting twice
         });
 
@@ -140,11 +141,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         component = new this.constructor(component);
                         this.trigger('createcomponent', {component, componentName});
 
-                        component.on(['exit', 'enter'], this.render.bind(this));
                         this.components[componentName] = component;
 
-                        component.on('render', (evt) => {
-                            this.render(evt.pipelineName);
+                        component.on('markeddirty', evt => {
+                            this.markDirty();
                         });
 
                         return component.init.call(component, componentOpts)
@@ -183,7 +183,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 );
             }.bind(this))
             .then(function(){
-                this.render();
                 this._isInit = true;
             }.bind(this));
 
@@ -203,16 +202,54 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             console.warn("No component with name", componentName);
             return;
         }
-        return this.components[componentName]._pipelines[pipelineName].import();
+        var component = this.components[componentName];
+        this.trigger('import', {component});
+        return component._pipelines[pipelineName].import();
+    }
+
+    markDirty(changedKey) {
+        return Object.values(this._pipelines).forEach(pipeline => pipeline.markDirty(changedKey));
     }
 
     react(evt) {
-        this.render(null, evt.changedKey);
+        this.markDirty(evt.changedKey);
     }
 
-    render(pipelineName, changedKey) {
-        var pipelines = pipelineName ? [this._pipelines[pipelineName]] : Object.values(this._pipelines);
-        pipelines.forEach((pipeline) => pipeline.render(changedKey));
+    render(pipelineName) {
+        var importedComponents = {};
+        if (!pipelineName) {
+            return Object.keys(this._pipelines).map(pipelineKey => this.render(pipelineKey));
+        }
+        return Promise.all(
+                Object.values(this.components).map(component => component.render(pipelineName))
+            )
+            .then(componentsOutput => {
+                var pipeline = this._pipelines[pipelineName];
+                var off = this.on('import', evt => {
+                    if (includes(Object.values(this.components), evt.component)) {
+                        importedComponents[evt.component._id] = evt.component;
+                    }
+                });
+                return pipeline.render()
+                    .then(output => {
+                        off();
+                        var evObj = {
+                            output,
+                            component: this,
+                            id: this._id,
+                            components: componentsOutput.map(compOutput => {
+                                return Object.assign({
+                                    wasImported: compOutput.id in importedComponents
+                                }, compOutput)
+                            })
+                        };
+
+                        this.trigger('render', Object.assign({}, evObj));
+                        this.trigger('render' + pipelineName, Object.assign({}, evObj));
+
+                        return evObj;
+                    });
+            });
     }
 }
 

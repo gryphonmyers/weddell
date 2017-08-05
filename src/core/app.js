@@ -47,7 +47,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
     renderStyles(evt) {
         var flattenStyles = function(obj){
-            return obj.output + obj.components.map(flattenStyles).join('');
+            return obj.component.isRoot || obj.wasImported ? obj.output + obj.components.map(flattenStyles).join('') : '';
         };
         this.renderCSS(flattenStyles(evt));
     }
@@ -82,6 +82,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 var componentOpts = Array.isArray(this.component) ? this.component[1] : {};
                 var component = Array.isArray(this.component) ? this.component[0] : this.component;
                 component = defaults(component, {
+                    isRoot: true,
                     targetStylesRenderFormat: this.stylesRenderFormat,
                     targetMarkupRenderFormat: this.markupRenderFormat,
                     markupTransforms: this.markupTransforms,
@@ -90,13 +91,18 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 var Component = this.constructor.Weddell.classes.Component;
                 this.component = new Component(component);
                 this.trigger('createcomponent', {component: this.component});
-                this.component.on('createcomponent', evt =>
-                    this.trigger('createcomponent', evt));
+                this.component.on('createcomponent', evt => this.trigger('createcomponent', evt));
+                this.component.on('markeddirty', evt => {
+                    requestAnimationFrame(() => {
+                        this.component.render(evt.pipelineName);
+                    });
+                });
 
                 return this.component.init(componentOpts)
                     .then(() => {
                         this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
                         this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
+                        this.component.render();
                     })
             })
     }
