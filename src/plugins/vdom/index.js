@@ -4,6 +4,7 @@ var VDOMDiff = require('virtual-dom/diff');
 var VNode = require('virtual-dom/vnode/vnode');
 var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
+var flatMap = require('../../utils/flatmap');
 
 var defaultComponentOpts = {
     markupFormat: '(locals:Object,h:Function)=>VNode'
@@ -38,12 +39,11 @@ module.exports = function(Weddell, pluginOpts) {
                                 return new Function('locals', 'h', input);
                             }
                         }));
+
+                        this.renderers.VNode = this.renderVNode.bind(this);
                     }
 
-                    renderHTML(newTree) {
-                        /*
-                        * This plugin expects all templates to return VNodes instead of HTML.
-                        */
+                    renderVNode(newTree) {
                         if (Array.isArray(newTree)) {
                             console.warn('Your markup must have one root node. Only using the first one for now.');
                             newTree = newTree[0];
@@ -57,8 +57,8 @@ module.exports = function(Weddell, pluginOpts) {
             }),
             Pipeline: Mixin(function(Pipeline){
                 return class extends Pipeline {
-                    callTemplate(locals) {
-                        return this.template.call(this, locals, h);
+                    callTemplate(locals, template) {
+                        return template.call(this, locals, h);
                     }
                 };
             }),
@@ -67,6 +67,61 @@ module.exports = function(Weddell, pluginOpts) {
                     constructor(opts) {
                         opts = defaults(opts, defaultComponentOpts);
                         super(opts);
+
+                        this.renderers.VNode = this.replaceVNodeComponents.bind(this);
+                    }
+
+                    replaceVNodeComponents(node, content, renderedComponents) {
+                        if (Array.isArray(node)) {
+                            return Promise.all(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents)));
+                        }
+
+                        var Sig = this.constructor.Weddell.classes.Sig;
+
+                        if (!renderedComponents) {
+                            renderedComponents = {};
+                        }
+
+                        if (node.tagName) {
+                            if (node.tagName === 'CONTENT') {
+                                return content;
+                            } else {
+                                var componentEntry = Object.entries(this.components)
+                                    .find(entry => {
+                                        return entry[0].toLowerCase() == node.tagName.toLowerCase()
+                                    });
+                                if (componentEntry) {
+                                    if (!(componentEntry[0] in renderedComponents)) {
+                                        renderedComponents[componentEntry[0]] = [];
+                                    }
+                                    var index = node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME] || renderedComponents[componentEntry[0]].length;
+                                    renderedComponents[componentEntry[0]].push(null);
+
+                                    return this.replaceVNodeComponents(node.children, content, renderedComponents)
+                                        .then(componentContent => {
+                                            return this.getComponentInstance(componentEntry[0], index)
+                                                .then(componentInstance => {
+                                                    renderedComponents[index] = componentInstance;
+                                                    return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'));
+                                                });
+                                        })
+                                        .then(componentOutput => {
+                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes});
+                                            return componentOutput.output[0]
+                                        });
+                                }
+                            }
+                        }
+
+                        if (node.children) {
+                            return this.replaceVNodeComponents(node.children, content, renderedComponents)
+                                .then(children => {
+                                    node.children = children;
+                                    return node;
+                                });
+                        }
+
+                        return Promise.resolve(node);
                     }
                 }
                 return Component;

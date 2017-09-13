@@ -57,7 +57,6 @@ module.exports = function(_Weddell){
                             $router: this.importRouterView.bind(this)
                         };
                         this.store.assign(routerLocals);
-                        this._locals.assign(routerLocals);
 
                         this.on('createcomponent', (evt) => {
                             this.addState(evt.componentName, evt.component);

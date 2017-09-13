@@ -5,12 +5,11 @@ var debounce = require('debounce');
 var Sig = require('./sig');
 var EventEmitterMixin = require('./event-emitter-mixin');
 
-Sig.addTypeAlias('HTMLString', 'String');
 Sig.addTypeAlias('CSSString', 'String');
 
 var defaultOpts = {
     renderInterval: 41.6667,
-    markupRenderFormat: 'HTMLString',
+    markupRenderFormat: null,
     stylesRenderFormat: 'CSSString',
     markupTransforms: [],
     stylesTransforms: []
@@ -22,12 +21,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         super(opts);
         this.el = opts.el;
         this.styleEl = opts.styleEl;
-        this.component = opts.component;
+        this.Component = opts.Component;
+        this.component = null;
         this.renderInterval = opts.renderInterval;
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
         this.stylesTransforms = opts.stylesTransforms;
+        this.renderers = {};
         var Sig = this.constructor.Weddell.classes.Sig;
     }
 
@@ -35,20 +36,20 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.styleEl.textContent = CSSString;
     }
 
-    renderHTML(html) {
-        if (this.el) {
-            this.el.innerHTML = html;
-        }
-    }
+
 
     renderMarkup(evt) {
-        this.renderHTML(evt.output);
+        // debugger;
+        if (!(evt.renderFormat in this.renderers)) {
+            throw "No appropriate markup renderer found for format: " + evt.renderFormat;
+        }
+        this.renderers[evt.renderFormat].call(this, evt.output);
     }
 
     renderStyles(evt) {
-        var flattenStyles = function(obj){
-            return obj.component.isRoot || obj.wasImported ? obj.output + obj.components.map(flattenStyles).join('') : '';
-        };
+        var flattenStyles = function(obj) {
+            return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
+        }
         this.renderCSS(flattenStyles(evt));
     }
 
@@ -58,15 +59,17 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             .then(() => {
                 var consts = this.constructor.Weddell.consts;
 
-                if (!this.component) {
+                if (!this.Component) {
                     throw "There is no base component set for this app. Can't mount.";
                 }
                 if (consts.VAR_NAME in window) {
                     throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
                 }
+
                 Object.defineProperty(window, consts.VAR_NAME, {
-                    value: {app: this}
+                    value: {app: this, components: {} }
                 });
+
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
                 }
@@ -79,19 +82,23 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     document.head.appendChild(this.styleEl);
                 }
 
-                var componentOpts = Array.isArray(this.component) ? this.component[1] : {};
-                var component = Array.isArray(this.component) ? this.component[0] : this.component;
-                component = defaults(component, {
-                    isRoot: true,
-                    targetStylesRenderFormat: this.stylesRenderFormat,
-                    targetMarkupRenderFormat: this.markupRenderFormat,
-                    markupTransforms: this.markupTransforms,
-                    stylesTransforms: this.stylesTransforms
-                });
+                var componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
+                this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
+
                 var Component = this.constructor.Weddell.classes.Component;
-                this.component = new Component(component);
+
+                var app = this;
+
+                this.component = new this.Component({
+                    isRoot: true,
+                    targetStylesRenderFormat: app.stylesRenderFormat,
+                    targetMarkupRenderFormat: app.markupRenderFormat,
+                    markupTransforms: app.markupTransforms,
+                    stylesTransforms: app.stylesTransforms
+                });
+
                 this.trigger('createcomponent', {component: this.component});
-                this.component.on('createcomponent', evt => this.trigger('createcomponent', evt));
+                this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
                 this.component.on('markeddirty', evt => {
                     requestAnimationFrame(() => {
                         this.component.render(evt.pipelineName);

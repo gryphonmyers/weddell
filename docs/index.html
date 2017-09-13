@@ -3,65 +3,248 @@
     <head><title>My App</title></head>
     <body>
         <div id='app'></div>
-        <script src='js/weddell-e5+ro+vd+hv+cv+ad.js'></script>
+        <script src='js/weddell-e5+ro+vd.js'></script>
         <script>
             var App = Weddell.classes.App;
+            var Component = Weddell.classes.Component;
 
             var app = new App({
                 el: '#app',
-                component: {
-                    markupFormat: '(locals:Object,h:Function)=>HTMLString',
-                    markupTemplate: locals =>
-                    `
-                        <div>
-                            ${locals.$component('myHeader')}
-
-                            <h1>${locals.myAppTitle}</h1>
-
-                            ${locals.$component('myFooter')}
-                        </div>
-                    `,
-                    state: {
-                        myAppTitle: 'A compendium of frog species'
-                    },
-                    components: {
-                        myHeader: {
+                // markupRenderFormat: 'HTMLString',
+                Component: class AppComponent extends Component {
+                    constructor(opts) {
+                        super(Object.assign({
                             markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                            styles: `
+                                .moo {
+                                    background-color: red;
+                                }
+                            `,
                             markupTemplate: locals =>
                             `
-                                <header onclick="${locals.$bind("this.$act('disablethings', {mything:'moo'})")}">${locals.headerText}</header>
-                            `,
-                            state: {
-                                headerText: 'Who doesn\'t love frogs?'
-                            }
-                        },
-                        myBody: {
-                            state: {
+                                <div>
+                                    <MyHeader bobby="foot">
+                                        <MyFooter></MyFooter>
+                                    </MyHeader>
 
-                            }
-                        },
-                        myFooter: {
-                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
-                            markupTemplate: locals =>
-                            `
-                                ${!locals.disabled ? locals.coolContent : ''}
-                                <footer>${locals.footerText}</footer>
+                                    <h1>${locals.myAppTitle}</h1>
+
+                                    <MyFooter></MyFooter>
+
+                                    <Accordion type="radio">
+                                        <AccordionRow accordionLabel="Bringo">
+                                            <h1>Moooo</h1>
+                                        </AccordionRow>
+
+                                        <AccordionRow accordionLabel="Boppa">
+                                            <span>Hi omnes lingua, institutis, legibus inter se differunt. Ut enim ad minim veniam, quis nostrud exercitation. Quam diu etiam furor iste tuus nos eludet?</span>
+                                        </AccordionRow>
+
+                                        <AccordionRow accordionLabel="Basdij">
+                                            <span>Idque Caesaris facere voluntate liceret: sese habere. Vivamus sagittis lacus vel augue laoreet rutrum faucibus. Contra legem facit qui id facit quod lex prohibet.</span>
+                                        </AccordionRow>
+
+                                        <AccordionRow accordionLabel="asdnASKJ">
+                                            <span>Gallia est omnis divisa in partes tres, quarum. Donec sed odio operae, eu vulputate felis rhoncus. Salutantibus vitae elit libero, a pharetra augue.</span>
+                                        </AccordionRow>
+                                    </Accordion>
+                                </div>
                             `,
                             state: {
-                                disabled: false,
-                                coolContent: 'This is cool',
-                                footerText: 'Copyright 2016, David Attenborough'
+                                myAppTitle: 'A compendium of frog species'
                             },
-                            onInit: function() {
-                                this.state.on('disablethings', function(evt){
-                                    console.log('Disabling, sorry', evt.mything);
-                                    this.disabled = true;
-                                });
-                                setTimeout(() => {
-                                    this.state.footerText = 'Just kidding, copyright 2017, some other guy';
-                                }, 3000);
+                            components: {
+                                Accordion: class Accordion extends Component {
+                                    constructor(opts) {
+                                        super(Object.assign({
+                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                            stylesFormat: 'CSSString',
+                                            state: {
+                                                boogie: 'moo',
+                                                accordionID: null,
+                                                type: 'checkbox'
+                                            },
+                                            inputs: ['type'],
+                                            markupTemplate: locals =>
+                                            `
+                                                <div class="accordion-wrapper" data-moo="${locals.type}">
+                                                    <content></content>
+                                                </div>
+                                            `,
+                                            styles: `
+                                                .accordion-label {
+                                                    display: block;
+                                                    padding: 10px 40px 10px 15px;
+                                                    position: relative;
+                                                    margin-bottom: 5px;
+                                                    transition: border-bottom 0s 0.5s, margin-bottom 0s 0.5s, background-color 0.5s;
+                                                    border: 1px solid #dedede;
+                                                }
+
+                                                .accordion-label::after {
+                                                    transform: translate(-50%, -50%);
+                                                }
+                                                .accordion-label::before, .accordion-label::after {
+                                                    content: '';
+                                                    position: absolute;
+                                                    display: block;
+                                                    right: 0;
+                                                    top: 50%;
+                                                    width: 20px;
+                                                    height: 2px;
+                                                    background-color: $color_4;
+                                                    opacity: 1;
+                                                    transition: opacity 0.5s;
+                                                }
+
+                                                .accordion-label::before {
+                                                    transform: translate(-50%, -50%) rotate(90deg);
+                                                }
+
+                                                .accordion[type=checkbox]:checked + .accordion-label::before {
+                                                    opacity: 0;
+                                                }
+
+                                                .accordion[type=radio]:checked + .accordion-label::before,
+                                                .accordion[type=radio]:checked + .accordion-label::after {
+                                                    opacity: 0;
+                                                }
+
+                                                .accordion[type=radio]:not(:checked) + .accordion-label,
+                                                .accordion[type=checkbox] + .accordion-label {
+                                                    cursor: pointer;
+                                                }
+
+                                                .accordion:not(:checked) + .accordion-content,
+                                                .accordion:not(:checked) + .accordion-label + .accordion-content {
+                                                    max-height: 0;
+                                                    border: 0px solid transparent;
+                                                    margin-bottom: 0;
+                                                }
+
+                                                .accordion:checked + .accordion-content,
+                                                .accordion:checked + .accordion-label + .accordion-content{
+                                                    max-height: 1500px;
+                                                    padding-top: 10px;
+                                                    padding-bottom: 10px;
+                                                    padding-left: 15px;
+                                                    padding-right: 15px;
+                                                    transition: max-height 0.5s 0s, padding-left 0s, padding-right 0s, padding-top 0.5s, padding-bottom 0.5s, background-color 0.5s;
+                                                }
+
+                                                .accordion:checked + .accordion-label {
+                                                    transition: background-color 0.5s;
+                                                }
+
+                                                .accordion + .accordion-content,
+                                                .accordion + .accordion-label + .accordion-content{
+                                                    overflow: hidden;
+                                                    background-color: $color_5;
+                                                    transition: max-height 0.5s 0s, padding-left 0s 0.5s,  padding-right 0s 0.5s, padding-top 0.5s, padding-bottom 0.5s, border 0s 0.5s, margin-bottom 0s 0.5s, background-color 0.5s;
+                                                }
+
+                                                .accordion {
+                                                    display: none;
+                                                }
+
+                                                .accordion:checked + .accordion-label + .accordion-content {
+                                                    border: 1px solid #dedede;
+                                                    border-top: none;
+                                                    margin-bottom: 5px;
+                                                }
+
+                                                .accordion:checked + .accordion-label {
+                                                    border-bottom: none;
+                                                    margin-bottom: 0;
+                                                }
+
+                                                .accordion-content .accordion:checked + .accordion-label,
+                                                .accordion-content .accordion:checked + .accordion-label + .accordion-content {
+                                                    background-color: #EBEBEB;
+                                                }
+                                            `,
+                                            components: {
+                                                AccordionRow: [class AccordionRow extends Component {
+                                                    constructor(opts) {
+                                                        super(Object.assign({
+                                                            inputs: ['type', 'accordionLabel'],
+                                                            state: {
+                                                                accordionLabel: 'Mew',
+                                                                type: 'checkbox'
+                                                            },
+                                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                                            markupTemplate: locals =>
+                                                            `
+                                                                <div class="accordion-row">
+                                                                    <input id="accordion-${locals.$componentID + locals.$id}-checkbox" name="sections-accordion" type="${locals.type}" class="accordion" />
+
+                                                                    <label class="accordion-label" for="accordion-${locals.$componentID + locals.$id}-checkbox">
+                                                                        <h3><a href="#">${locals.accordionLabel}</a></h3>
+                                                                    </label>
+
+                                                                    <div class="accordion-content">
+                                                                        <content></content>
+                                                                    </div>
+                                                                </div>
+                                                            `
+                                                        }, opts))
+                                                    }
+                                                }, {
+                                                    type: 'type'
+                                                }]
+                                            }
+                                        }, opts));
+                                    }
+                                },
+                                MyHeader: class Header extends Component {
+                                    constructor(opts) {
+                                        super(Object.assign({
+                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                            markupTemplate: locals =>
+                                            `
+                                                <header data-bobby="${locals.bobby}" onclick="${locals.$bind("this.$act('disablethings', {mything:'moo'})")}">${locals.headerText}</header>
+                                            `,
+                                            inputs: ['bobby'],
+                                            state: {
+                                                headerText: 'Who doesn\'t love frogs?'
+                                            }
+                                        }, opts))
+                                    }
+                                },
+                                MyBody: class Body extends Component {
+                                },
+                                MyFooter: class Footer extends Component {
+                                    constructor(opts) {
+                                        super(Object.assign({
+                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                            markupTemplate: locals =>
+                                            `
+                                                <footer>
+                                                    ${!locals.disabled ? locals.coolContent : ''}
+                                                    <div>${locals.footerText}</div>
+                                                </footer>
+                                            `,
+                                            state: {
+                                                disabled: false,
+                                                coolContent: 'This is cool',
+                                                footerText: 'Copyright 2016, David Attenborough'
+                                            }
+                                        }, opts))
+                                    }
+
+                                    onInit() {
+                                        this.state.on('disablethings', function(evt){
+                                            console.log('Disabling, sorry', evt.mything);
+                                            this.disabled = true;
+                                        });
+                                        setTimeout(() => {
+                                            // debugger;
+                                            this.state.footerText = 'Just kidding, copyright 2017, some other guy';
+                                        }, 3000);
+                                    }
+                                }
                             }
-                        }
+                        }, opts))
                     }
                 }
             });

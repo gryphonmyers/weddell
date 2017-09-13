@@ -8,13 +8,15 @@ var mix = require('mixwith-es5').mix;
 
 var defaultOpts = {
     shouldMonitorChanges: true,
-    shouldEvalFunctions: true
+    shouldEvalFunctions: true,
+    inputMappings: {}
 };
 
 var Store = class extends mix(Store).with(EventEmitterMixin) {
     constructor(data, opts) {
         opts = defaults(opts, defaultOpts);
         super();
+
         Object.defineProperties(this, {
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
@@ -22,47 +24,133 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _dependencyKeys: {configurable: false,value: {}},
             _dependentKeys: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
-            _proxyProps: {configurable: false,value: {}}
+            _proxyProps: {configurable: false,value: {}},
+            proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
+            extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
+            inputMappings: { value: opts.inputMappings }
         });
+
+        difference(Object.values(this.inputMappings), Object.keys(data)).forEach(key => {
+            this.set(key, null);
+        });
+
         if (data) {
             this.assign(data);
         }
+
+        this.extends.forEach(obj => {
+            obj.on('change', function(evt){
+                if (evt.changedKey in this.inputMappings) {
+                    evt = Object.assign({}, evt);
+                    evt.changedKey = this.inputMappings[evt.changedKey];
+                    this.trigger('change', evt);
+                }
+            }.bind(this));
+
+            obj.on('get', function(evt){
+                if (evt.key in this.inputMappings) {
+                    evt = Object.assign({}, evt);
+                    evt.key = this.inputMappings[evt.key];
+                    this.trigger('change', evt);
+                }
+            }.bind(this));
+        });
+
+        Object.keys(this.inputMappings).forEach(key => {
+            this.set(key, null, true);
+        });
+
+        this.proxies.forEach(proxy => {
+            Object.keys(proxy).forEach(key => {
+                this.set(key, null, true);
+            });
+
+            proxy.on('change', evt => {
+                if (!(evt.changedKey in this._data) && !(evt.changedKey in this.inputMappings)) {
+                    this.trigger('change', Object.assign({}, evt));
+                }
+            });
+            proxy.on('get', evt => {
+                if (!(evt.key in this._data) && !(evt.key in this.inputMappings)) {
+                    this.trigger('get', Object.assign({}, evt));
+                }
+            });
+        });
     }
 
-    assign(data) {
-        Object.entries(data).map(function(entry){
-            Object.defineProperty(this, entry[0], {
-                configurable: false,
-                enumerable: true,
-                get: function(){
-                    this.trigger('get', {key: entry[0], value: this._data[entry[0]]});
-                    if (this.shouldEvalFunctions && typeof this._data[entry[0]] === 'function') {
-                        return this.evaluateFunctionProperty(entry[0]);
-                    }
-                    return this._data[entry[0]];
-                }.bind(this),
-                set: function(newValue) {
+    set(key, val, isReadOnly) {
+        if (!(key in this)) {
+            if (!isReadOnly) {
+                var setter = function(newValue) {
                     if (this.shouldMonitorChanges) {
-                        var oldValue = this._data[entry[0]];
+                        var oldValue = this._data[key];
                         if (oldValue && typeof oldValue == "object") {
                             var oldValue = assign({}, oldValue);
                         }
                     }
-                    this._data[entry[0]] = newValue;
+                    this._data[key] = newValue;
                     if (this.shouldMonitorChanges) {
                         if (!deepEqual(newValue, oldValue)) {
-                            this.trigger('change', {changedKey: entry[0], newValue: newValue, oldValue: oldValue});
-                            if (entry[0] in this._dependentKeys) {
-                                this._dependentKeys[entry[0]].forEach(function(dependentKey){
+                            this.trigger('change', {changedKey: key, newValue, oldValue});
+                            if (key in this._dependentKeys) {
+                                this._dependentKeys[entry[0]].forEach((dependentKey) => {
                                     this.trigger('change', {changedKey: dependentKey, changedDependencyKey: entry[0], newDependencyValue: newValue, oldDependencyValue: oldValue});
-                                }.bind(this));
+                                });
                             }
                         }
                     }
-                }.bind(this)
+                }.bind(this);
+            }
+
+            Object.defineProperty(this, key, {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    var value = this.getValue(key);
+                    this.trigger('get', {key, value});
+                    if (this.shouldEvalFunctions && typeof this._data[key] === 'function') {
+                        return this.evaluateFunctionProperty(key);
+                    }
+                    return value;
+                }.bind(this),
+                set: setter
             });
-            this[entry[0]] = entry[1];
-        }.bind(this));
+
+            if (!isReadOnly) {
+                this[key] = val;
+            } else {
+                this._data[key] = val;
+            }
+        }
+    }
+
+    getValue(key) {
+        var val = this._data[key];
+        var i = 0;
+        var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
+
+        while(this.extends[i] && (typeof val === 'undefined' || val === null)) {
+            val = this.extends[i][mappingEntry[0]];
+            i++;
+        }
+        i = 0;
+        while (this.proxies[i] && (typeof val === 'undefined' || val === null)) {
+            val = this.proxies[i][key];
+            i++;
+        }
+        return val;
+    }
+
+    assign(data) {
+        if (data) {
+            if (Array.isArray(data)) {
+                data.forEach(key => this.set(key, null));
+            } else {
+                Object.entries(data).forEach((entry) => {
+                    this.set(entry[0], entry[1])
+                });
+            }
+        }
     }
 
     evaluateFunctionProperty(key) {
@@ -122,51 +210,6 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 }
             }
         });
-    }
-
-    proxy(obj, proxyKey, proxyAlias, isReadOnly) {
-        if (Array.isArray(obj)) {
-            obj.forEach(subObj => this.proxy.call(this, subObj, proxyKey, proxyAlias, isReadOnly));
-        } else if (typeof proxyKey == 'string') {
-            var objhash = Object.entries(this._proxyObjs).find(entry => entry[1] === obj);
-            objhash = objhash ? objhash[0] : null;
-            if (!objhash) {
-                objhash = generateHash();
-                //TODO this whole thing kind of sucks and could be done better
-                this._proxyObjs[objhash] = obj;
-                this._proxyProps[objhash] = [];
-                this.on('change', function(eventObj){
-                    if (includes(this._proxyProps[objhash], eventObj.changedKey)) {
-                        obj.trigger('change', eventObj);
-                    }
-                }.bind(this));
-                this.on('get', function(eventObj){
-                    if (includes(this._proxyProps[objhash], eventObj.key)) {
-                        obj.trigger('get', eventObj);
-                    }
-                }.bind(this));
-            }
-            if (!(proxyKey in obj)) {
-                if (!proxyAlias) proxyAlias = proxyKey;
-                var setter;
-                if (!isReadOnly) {
-                    setter = function(newValue){
-                        this[proxyKey] = newValue;
-                    }.bind(this);
-                }
-                Object.defineProperty(obj, proxyAlias, {
-                    configurable: false,
-                    enumerable: true,
-                    get: function(){
-                        return this[proxyKey];
-                    }.bind(this),
-                    set: setter
-                });
-                this._proxyProps[objhash].push(proxyKey);
-            }
-        } else {
-            Object.keys(this).forEach(key => this.proxy.call(this, obj, key, null, isReadOnly));
-        }
     }
 }
 

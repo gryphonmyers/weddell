@@ -30,6 +30,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
                 callback.apply(this, arguments);
                 off();
             });
+            return off;
         }
 
         off(eventName, callback) {

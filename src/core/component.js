@@ -3,12 +3,9 @@ var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
 var DeDupe = require('mixwith-es5').DeDupe;
-var uniq = require('array-uniq');
-var compact = require('array-compact');
 var Sig = require('./sig');
 var includes = require('../utils/includes');
 
-Sig.addTypeAlias('HTMLString', 'String');
 Sig.addTypeAlias('CSSString', 'String');
 
 var defaultOpts = {
@@ -16,177 +13,176 @@ var defaultOpts = {
     store: {},
     state: {},
     inputs: [],
-    outputs: [],
     isRoot: false,
-    passthrough: [],
-    markupFormat: 'HTMLString',
     stylesFormat: 'CSSString'
 };
 
-var defaultInitOpts = {
-};
+var defaultInitOpts = {};
 
 var Component = class extends mix(Component).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        var Store = this.constructor.Weddell.classes.Store;
+        Sig = this.constructor.Weddell.classes.Sig;
         var Pipeline = this.constructor.Weddell.classes.Pipeline;
-        this.state = new Store(opts.state);
-        this.store = new Store(Object.assign({
-            $bind: this.bindEvent.bind(this),
-            $component: this.importComponent.bind(this, 'markup')
-        }, opts.store), {shouldMonitorChanges: false, shouldEvalFunctions: false});
-        this.onInit = opts.onInit;
-        this.markupFormat = opts.markupFormat;
-        this.components = opts.components;
-        this.defaultInitOpts = defaults(opts.defaultInitOpts, defaultInitOpts);
+        var Store = this.constructor.Weddell.classes.Store;
 
         Object.defineProperties(this, {
-            isRoot: {value: opts.isRoot},
-            _transformers: {value: []},
-            _inputs : {value: opts.inputs},
-            _outputs : {value: opts.outputs},
-            _passthrough : {value: opts.passthrough},
-            inputs: {get: () => uniq(compact(this._inputs.concat(this._passthrough))) },
-            outputs: {get: () => uniq(compact(this._outputs.concat(this._passthrough))) },
-            _locals : {value: new Store(null, {shouldMonitorChanges: false, shouldEvalFunctions: false})},
-            _id : {value: generateHash()},
-            _isInit: {writable: true,value: false}
+            isRoot: { value: opts.isRoot },
+            _isInit: { writable: true, value: false},
+            defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
+            _id : { value: generateHash() },
+            inputs : { value: opts.inputs },
+            renderers: {
+                value: {}
+            }
         });
-        Object.defineProperty(this, '_pipelines', {
-            value: {
-                styles: new Pipeline({
-                    name: 'styles',
-                    inputFormat: opts.stylesFormat,
-                    targetRenderFormat: opts.targetStylesRenderFormat,
-                    isDynamic: !!opts.stylesTemplate,
-                    store: this._locals,
-                    transforms: opts.stylesTransforms,
-                    input: opts.stylesTemplate || opts.styles || null
-                }),
-                markup: new Pipeline({
-                    name: 'markup',
-                    inputFormat: opts.markupFormat,
-                    targetRenderFormat: opts.targetMarkupRenderFormat,
-                    isDynamic: !!opts.markupTemplate,
-                    transforms: opts.markupTransforms,
-                    store: this._locals,
-                    input: opts.markupTemplate || opts.markup || null
+
+        var inputMappings = this.constructor._inputMappings;
+
+        Object.defineProperties(this, {
+            props: {
+                value: new Store(this.inputs, {
+                    shouldMonitorChanges: true,
+                    extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
+                    inputMappings
                 })
             },
-            writable: true
+            store: {
+                value: new Store(Object.assign({
+                    $bind: this.bindEvent.bind(this)
+                }, opts.store), {
+                    shouldMonitorChanges: false,
+                    shouldEvalFunctions: false
+                })
+            },
+            state: {
+                value: new Store(defaults({
+                    $id: () => this._id
+                }, opts.state))
+            }
         });
+
+        Object.defineProperties(this, {
+            _componentInstances: { value:
+                Object.keys(opts.components).reduce((final, key) => {
+                    final[key] = {};
+                    return final;
+                }, {})
+            },
+            _locals: {value: new Store({}, { proxies: [this.props, this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
+        });
+
+        Object.defineProperty(this, '_pipelines', {
+            value: {
+                markup: new Pipeline({
+                    name: 'markup',
+                    store: this._locals,
+                    onRender: this.onRenderMarkup.bind(this),
+                    isDynamic: !!opts.markupTemplate,
+                    inputFormat: new Sig(opts.markupFormat),
+                    transforms: opts.markupTransforms,
+                    targetRenderFormat: opts.targetMarkupRenderFormat,
+                    input: opts.markupTemplate || opts.markup || null
+                }),
+                styles: new Pipeline({
+                    name: 'styles',
+                    store: this._locals,
+                    onRender: this.onRenderStyles.bind(this),
+                    isDynamic: !!opts.stylesTemplate,
+                    inputFormat: new Sig(opts.stylesFormat),
+                    transforms: opts.stylesTransforms,
+                    targetRenderFormat: opts.targetStylesRenderFormat,
+                    input: opts.stylesTemplate || opts.styles || null
+                })
+            }
+        });
+
+        Object.defineProperty(this, 'components', {
+            value: Object.entries(opts.components).reduce((final, entry) => {
+                final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
+                return final;
+            }, {})
+        })
+
+        Object.entries(this._pipelines).forEach(entry =>
+            entry[1].on('markeddirty', evt => {
+                this.trigger('markeddirty', Object.assign({
+                    pipeline: entry[1],
+                    pipelineName: entry[0]
+                }, evt))
+            })
+        );
+
+        ['props', 'state'].forEach((propName) => {
+            this[propName].on('change', evt => {
+                this.markDirty(evt.changedKey);
+            })
+        });
+
+        window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
     }
 
-    getOutput(pipelineName) {
-        //TODO this should only output currently rendered components, or include a flag indicating whether or not they are rendered
-        return {
-            output: this._pipelines[pipelineName].import(),
-            id: this._id,
-            components: Object.values(this.components).map(comp => comp.getOutput(pipelineName))
-        };
+    onInit() {
+        //Default event handler, noop
+    }
+
+    onRenderMarkup() {
+        //Default event handler, noop
+    }
+
+    onRenderStyles() {
+        //Default event handler, noop
+    }
+
+    createChildComponentClass(componentName, Component) {
+        if (Array.isArray(Component)) {
+            var initOpts = Component[2];
+            var inputMappings = Component[1];
+            Component = Component[0];
+        }
+
+        var parentComponent = this;
+        var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
+        var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
+        var markupTransforms = this._pipelines.markup.transforms;
+        var stylesTransforms = this._pipelines.styles.transforms;;
+
+        var obj = {}
+        obj[componentName] = class extends Component {
+            constructor(opts) {
+                super(defaults({
+                    parentComponent,
+                    targetMarkupRenderFormat,
+                    targetStylesRenderFormat,
+                    markupTransforms,
+                    stylesTransforms
+                }, opts))
+
+                this.trigger('createcomponent', {component: this, componentName});
+
+                this.on('markeddirty', evt => {
+                    parentComponent.markDirty();
+                });
+            }
+        }
+        obj[componentName]._initOpts = initOpts;
+        obj[componentName]._inputMappings = inputMappings;
+        obj[componentName]._id = generateHash();
+
+        return obj[componentName];
     }
 
     init(opts) {
         opts = defaults(opts, this.defaultInitOpts);
-
-        var consts = this.constructor.Weddell.consts;
-
-        if (!('components' in window[consts.VAR_NAME])) {
-            Object.defineProperty(window[consts.VAR_NAME], 'components', {value: {}});
+        if (!this._isInit) {
+            this._isInit = true;
+            return Promise.resolve(this.onInit(opts))
+                .then(() => {
+                    return this;
+                });
         }
-        window[consts.VAR_NAME].components[this._id] = this;
-
-        this.state.on('change', this.react.bind(this));
-        this.state.proxy([this._locals, this.store], null, null, false);
-        this.store.proxy([this._locals, this.state], null, null, true);
-        this._locals.proxy([this, this.store, this.state], null, null, true);
-
-        var promise = Promise.resolve();
-
-        if (this.onInit) {
-            promise = promise.then(() => {
-                return this.onInit.call(this, opts)
-            });
-        }
-
-        Object.entries(this._pipelines).forEach((entry) => {
-            entry[1].init();
-            entry[1].on('markeddirty', evt => {
-                this.trigger('markeddirty', {pipelineName: entry[0], pipeline: entry[1], changedKey: evt.changedKey});
-            });
-            //TODO bugfix: pipelines are initting twice
-        });
-
-        promise = promise
-            .then(function(){
-                return Promise.all(
-                    Object.entries(this.components).map((entry) => {
-                        var componentName = entry[0];
-                        var component = entry[1];
-
-                        if (Array.isArray(component)) {
-                            var componentOpts = component[2];
-                            var inputs = component[1];
-                            component = component[0];
-                        }
-                        component = defaults(component, {
-                            targetMarkupRenderFormat: this._pipelines.markup.inputFormat.parsed.returns,
-                            targetStylesRenderFormat: this._pipelines.styles.inputFormat.parsed.returns,
-                            markupTransforms: this._pipelines.markup.transforms,
-                            stylesTransforms: this._pipelines.styles.transforms
-                        });
-
-                        component = new this.constructor(component);
-                        this.trigger('createcomponent', {component, componentName});
-
-                        this.components[componentName] = component;
-
-                        component.on('markeddirty', evt => {
-                            this.markDirty();
-                        });
-
-                        return component.init.call(component, componentOpts)
-                            .then(function(){
-                                if (inputs) {
-                                    var prop;
-                                    var inputTarget;
-                                    var inputTargetKey;
-                                    for (var key in inputs) {
-                                        prop = inputs[key];
-                                        key = key.split('.');
-                                        inputTarget = component;
-
-                                        if (this.outputs.indexOf(prop) == -1) {
-                                            throw "Attempted to pass invalid output, '" + prop + "' from " + componentName;
-                                        }
-
-                                        while (key.length > 1) {
-                                            inputTargetKey = key.shift();
-                                            inputTarget = inputTarget.components[inputTargetKey];
-
-                                            if (!inputTarget) {
-                                                throw "Invalid input path supplied to component with name " + inputTargetKey;
-                                            }
-
-                                            if (inputTarget.inputs.indexOf(prop) == -1) {
-                                                throw "Attempted to pass protected or nonexistent input, " + prop + " to component, " + inputTargetKey;
-                                            }
-                                        }
-
-                                        this._locals.proxy([inputTarget._locals, inputTarget.state, inputTarget], prop, key[0], true);
-                                    }
-                                }
-                            }.bind(this));
-                    })
-                );
-            }.bind(this))
-            .then(function(){
-                this._isInit = true;
-            }.bind(this));
-
-        return promise;
+        return Promise.resolve(this);
     }
 
     bindEvent(funcText, opts) {
@@ -197,59 +193,140 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
     }
 
-    importComponent(pipelineName, componentName) {
-        if (!componentName in this.components) {
-            console.warn("No component with name", componentName);
-            return;
-        }
-        var component = this.components[componentName];
-        this.trigger('import', {component});
-        return component._pipelines[pipelineName].import();
-    }
-
     markDirty(changedKey) {
-        return Object.values(this._pipelines).forEach(pipeline => pipeline.markDirty(changedKey));
+        return Object.values(this._pipelines).forEach((pipeline, pipelineType) => {
+            pipeline.markDirty(changedKey);
+        });
     }
 
-    react(evt) {
-        this.markDirty(evt.changedKey);
+    renderStyles() {
+        this.trigger('beforerenderstyles');
+
+        return this._pipelines.styles.render()
+            .then(output => {
+                return Promise.all(Object.entries(this.components).map(entry => {
+                        if (Object.keys(this._componentInstances[entry[0]]).length) {
+                            //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
+                            //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
+                            return this._componentInstances[entry[0]][0].renderStyles();//entry[1].renderStyles();
+                        }
+                        return {component: this, output: '', wasRenderered: false};
+                    }))
+                    .then(components => {
+                        var evtObj = {
+                            output,
+                            component: this,
+                            components,
+                            wasRendered: true,
+                            renderFormat: this._pipelines.styles.targetRenderFormat
+                        };
+
+                        this.trigger('renderstyles', Object.assign({}, evtObj));
+
+                        return evtObj;
+                    });
+            });
     }
 
-    render(pipelineName) {
-        var importedComponents = {};
-        if (!pipelineName) {
-            return Object.keys(this._pipelines).map(pipelineKey => this.render(pipelineKey));
+    render(pipelineType) {
+        this.trigger('beforerender');
+
+        if (!pipelineType) {
+            return Promise.all(Object.keys(this._pipelines).map(pipelineType => this.render.call(this, pipelineType)));
         }
-        return Promise.all(
-                Object.values(this.components).map(component => component.render(pipelineName))
-            )
-            .then(componentsOutput => {
-                var pipeline = this._pipelines[pipelineName];
-                var off = this.on('import', evt => {
-                    if (includes(Object.values(this.components), evt.component)) {
-                        importedComponents[evt.component._id] = evt.component;
-                    }
-                });
-                return pipeline.render()
+        var pipeline = this._pipelines[pipelineType];
+        var args =  Array.from(arguments).slice(1);
+
+        switch(pipelineType) {
+            case 'markup':
+                var output = this.renderMarkup.apply(this, args);
+                break;
+            case 'styles':
+                output = this.renderStyles.apply(this, args);
+                break;
+            default:
+        }
+
+        return Promise.resolve(output)
+            .then(evt => {
+                this.trigger('render', Object.assign({}, evt));
+                return evt;
+            });
+    }
+
+    renderMarkup(content, props, targetFormat) {
+        this.trigger('beforerendermarkup');
+
+        var pipeline = this._pipelines.markup;
+
+        if (!targetFormat) {
+            targetFormat = pipeline.targetRenderFormat;
+        }
+
+        if (props) {
+            Object.assign(this.props, Object.entries(props)
+                .filter(entry => {
+                    var result = includes(this.inputs, entry[0]);
+                    if (!result) throw "Unsupported prop: '" + entry[0] + "' (hint: is this key in your inputs?)";
+                    return result;
+                })
+                .reduce((finalObj, entry) => {
+                    finalObj[entry[0]] = entry[1];
+                    return finalObj;
+                }, {}));
+        }
+
+        var components = {};
+        var off = this.on('rendercomponent', componentResult => {
+            if (!(componentResult.componentName in components)) {
+                components[componentResult.componentName] = [];
+            }
+            components[componentResult.componentName].push(componentResult);
+        });
+        return pipeline.render(targetFormat)
+            .then(output => {
+                var renderFormat = targetFormat.val;
+                if (!(renderFormat in this.renderers)) {
+                    throw "No appropriate component markup renderer found for format: " + renderFormat;
+                }
+                return this.renderers[renderFormat].call(this, output, content)
                     .then(output => {
                         off();
                         var evObj = {
                             output,
                             component: this,
                             id: this._id,
-                            components: componentsOutput.map(compOutput => {
-                                return Object.assign({
-                                    wasImported: compOutput.id in importedComponents
-                                }, compOutput)
-                            })
+                            components,
+                            renderFormat
                         };
 
-                        this.trigger('render', Object.assign({}, evObj));
-                        this.trigger('render' + pipelineName, Object.assign({}, evObj));
-
+                        this.trigger('rendermarkup', Object.assign({}, evObj));
                         return evObj;
                     });
             });
+    }
+
+    makeComponentInstance(componentName, index, opts) {
+        var instance = new (this.components[componentName])({
+            store: defaults({
+                $componentID: this.components[componentName]._id,
+                $instanceKey: index
+            })
+        });
+        return instance;
+    }
+
+    getComponentInstance(componentName, index) {
+        var instances = this._componentInstances[componentName]
+        if (!(index in instances)) {
+            this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
+            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
+        }
+        return Promise.resolve(instances[index]);
+    }
+
+    cleanupComponentInstances() {
+        //TODO right now, if a component becomes unused, it will continue to sit in memory and possibly generate events. We should probably clean them up.
     }
 }
 

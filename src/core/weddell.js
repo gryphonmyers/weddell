@@ -54,7 +54,8 @@ class _Weddell {
 }
 _Weddell.loadedPlugins = [];
 _Weddell.consts = {
-    VAR_NAME: '_wdl'
+    VAR_NAME: '_wdl',
+    INDEX_ATTR_NAME: 'data-component-index'
 };
 _Weddell.deps = {};
 _Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
