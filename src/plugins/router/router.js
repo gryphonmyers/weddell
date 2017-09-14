@@ -1,6 +1,7 @@
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
+var compact = require('array-compact');
 
 var defaultOpts = {};
 
@@ -30,14 +31,25 @@ class Router {
         }
 
         if (matches) {
-            promise = Promise.all(matches.map((currMatch) => {
+            promise = Promise.all(matches.map((currMatch, key) => {
+                if (key === matches.length - 1 && currMatch.route.redirect) {
+                    if (typeof currMatch.route.redirect === 'function') {
+                        this.route(currMatch.route.redirect.call(this, matches));
+                    } else {
+                        //assuming string - path
+                        this.route(currMatch.route.redirect);
+                    }
+                    return Promise.reject();
+                }
+
                 if (typeof currMatch.route.handler == 'function') {
-                    return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
+                    return Promise.resolve(currMatch.route.handler.call(this, matches));
                 } else {
                     return currMatch.route.handler;
                 }
             }))
-            .then(this.onRoute.bind(this, matches))
+            .then(results => compact(results))
+            .then(this.onRoute.bind(this, matches), ()=>{})
             .then(() => {
                 if (matches.route.replaceState) {
                     history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);

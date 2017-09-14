@@ -13,14 +13,17 @@
                     {
                         name: 'jonboy',
                         pattern: 'jonboy',
-                        handler: function(){
+                        redirect: function(obj) {
+                            this.route(obj.fullPath + 'wrong/boy');
+                        },
+                        handler: function(obj){
                             return 'MyBodyA'
                         },
                         children: [
                             {
                                 name: 'jonboy2',
                                 pattern: 'wrong/:bomba',
-                                handler: function(){
+                                handler: function(args){
                                     return 'MyBodyB'
                                 }
                             }

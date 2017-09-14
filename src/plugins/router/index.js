@@ -30,7 +30,7 @@ module.exports = function(_Weddell){
                                             .then(currentComponent => {
                                                 return currentComponent.getComponentInstance(componentName, 'router')
                                                     .then(component => {
-                                                        if (!component) throw "Could not navigate to component " + key;
+                                                        if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
                                                         jobs.push({
                                                             component,
                                                             currentComponent,
@@ -47,7 +47,7 @@ module.exports = function(_Weddell){
                                             componentName: null
                                         });
                                         return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
-                                    });
+                                    }, console.warn);
 
                             }.bind(this)
                         });

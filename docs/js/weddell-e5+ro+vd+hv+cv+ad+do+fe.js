@@ -4591,7 +4591,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     getComponentInstance(componentName, index) {
         var instances = this._componentInstances[componentName]
-        if (!(index in instances)) {
+        if (instances && !(index in instances)) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
             return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
@@ -5622,7 +5622,7 @@ module.exports = function(_Weddell){
                                             .then(currentComponent => {
                                                 return currentComponent.getComponentInstance(componentName, 'router')
                                                     .then(component => {
-                                                        if (!component) throw "Could not navigate to component " + key;
+                                                        if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
                                                         jobs.push({
                                                             component,
                                                             currentComponent,
@@ -5639,7 +5639,7 @@ module.exports = function(_Weddell){
                                             componentName: null
                                         });
                                         return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
-                                    });
+                                    }, console.warn);
 
                             }.bind(this)
                         });
@@ -5754,6 +5754,7 @@ module.exports = MachineState;
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
+var compact = require('array-compact');
 
 var defaultOpts = {};
 
@@ -5783,14 +5784,25 @@ class Router {
         }
 
         if (matches) {
-            promise = Promise.all(matches.map((currMatch) => {
+            promise = Promise.all(matches.map((currMatch, key) => {
+                if (key === matches.length - 1 && currMatch.route.redirect) {
+                    if (typeof currMatch.route.redirect === 'function') {
+                        this.route(currMatch.route.redirect.call(this, matches));
+                    } else {
+                        //assuming string - path
+                        this.route(currMatch.route.redirect);
+                    }
+                    return Promise.reject();
+                }
+
                 if (typeof currMatch.route.handler == 'function') {
-                    return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
+                    return Promise.resolve(currMatch.route.handler.call(this, matches));
                 } else {
                     return currMatch.route.handler;
                 }
             }))
-            .then(this.onRoute.bind(this, matches))
+            .then(results => compact(results))
+            .then(this.onRoute.bind(this, matches), ()=>{})
             .then(() => {
                 if (matches.route.replaceState) {
                     history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
@@ -5903,7 +5915,7 @@ class Router {
 }
 module.exports = Router;
 
-},{"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],73:[function(require,module,exports){
+},{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],73:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;

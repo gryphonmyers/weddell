@@ -1,4 +1,26 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Weddell = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+/**
+ * Expose array-compact
+ */
+
+module.exports = compact;
+
+
+/**
+ * Return an array copy without falsy values
+ */
+
+function compact (arr) {
+  return arr.filter(validate);
+}
+
+function validate (item) {
+  return !!item;
+}
+
+},{}],2:[function(require,module,exports){
 /*!
  * array-each <https://github.com/jonschlinkert/array-each>
  *
@@ -46,7 +68,7 @@ module.exports = function each(arr, cb, thisArg) {
   }
 };
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 /*!
  * array-slice <https://github.com/jonschlinkert/array-slice>
  *
@@ -83,7 +105,7 @@ function idx(arr, pos, end) {
   return pos;
 }
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -141,7 +163,7 @@ module.exports = function debounce(func, wait, immediate){
   return debounced;
 };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -237,7 +259,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":5,"./lib/keys.js":6}],5:[function(require,module,exports){
+},{"./lib/is_arguments.js":6,"./lib/keys.js":7}],6:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -259,7 +281,7 @@ function unsupported(object){
     false;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -270,7 +292,7 @@ function shim (obj) {
   return keys;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (document, promise) {
   if (typeof module !== 'undefined') module.exports = promise
   else document.ready = promise
@@ -297,7 +319,7 @@ function shim (obj) {
   })
 })
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 var FindParent = {
@@ -340,7 +362,7 @@ var FindParent = {
 
 module.exports = FindParent;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*!
  * for-in <https://github.com/jonschlinkert/for-in>
  *
@@ -358,7 +380,7 @@ module.exports = function forIn(obj, fn, thisArg) {
   }
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*!
  * for-own <https://github.com/jonschlinkert/for-own>
  *
@@ -379,7 +401,7 @@ module.exports = function forOwn(obj, fn, thisArg) {
   });
 };
 
-},{"for-in":9}],11:[function(require,module,exports){
+},{"for-in":10}],12:[function(require,module,exports){
 /*!
  * isobject <https://github.com/jonschlinkert/isobject>
  *
@@ -393,7 +415,7 @@ module.exports = function isObject(val) {
   return val != null && typeof val === 'object' && Array.isArray(val) === false;
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -535,7 +557,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }();
 });
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -557,7 +579,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":14,"array-slice":2}],14:[function(require,module,exports){
+},{"./mutable":15,"array-slice":3}],15:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -594,7 +616,7 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":1,"array-slice":2,"for-own":10,"isobject":11}],15:[function(require,module,exports){
+},{"array-each":2,"array-slice":3,"for-own":11,"isobject":12}],16:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -1022,12 +1044,12 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":16}],16:[function(require,module,exports){
+},{"isarray":17}],17:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -1145,7 +1167,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
 module.exports = App;
 
-},{"./event-emitter-mixin":19,"./sig":21,"debounce":3,"document-ready-promise":7,"mixwith-es5":12,"object.defaults/immutable":13}],18:[function(require,module,exports){
+},{"./event-emitter-mixin":20,"./sig":22,"debounce":4,"document-ready-promise":8,"mixwith-es5":13,"object.defaults/immutable":14}],19:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
@@ -1475,7 +1497,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     getComponentInstance(componentName, index) {
         var instances = this._componentInstances[componentName]
-        if (!(index in instances)) {
+        if (instances && !(index in instances)) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
             return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
@@ -1489,7 +1511,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":32,"../utils/make-hash":33,"./event-emitter-mixin":19,"./sig":21,"mixwith-es5":12,"object.defaults/immutable":13}],19:[function(require,module,exports){
+},{"../utils/includes":33,"../utils/make-hash":34,"./event-emitter-mixin":20,"./sig":22,"mixwith-es5":13,"object.defaults/immutable":14}],20:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var hasMixin = require('mixwith-es5').hasMixin;
 var defaults = require('object.defaults/immutable');
@@ -1557,7 +1579,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":32,"mixwith-es5":12,"object.defaults/immutable":13}],20:[function(require,module,exports){
+},{"../utils/includes":33,"mixwith-es5":13,"object.defaults/immutable":14}],21:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
@@ -1701,7 +1723,7 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":19,"mixwith-es5":12}],21:[function(require,module,exports){
+},{"./event-emitter-mixin":20,"mixwith-es5":13}],22:[function(require,module,exports){
 class Sig {
     constructor(str) {
         if (typeof str === 'object' && str.constructor === this.constructor) {
@@ -1827,7 +1849,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
@@ -2045,7 +2067,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":31,"../utils/includes":32,"../utils/make-hash":33,"./event-emitter-mixin":19,"deep-equal":4,"mixwith-es5":12,"object.defaults/immutable":13}],23:[function(require,module,exports){
+},{"../utils/difference":32,"../utils/includes":33,"../utils/make-hash":34,"./event-emitter-mixin":20,"deep-equal":5,"mixwith-es5":13,"object.defaults/immutable":14}],24:[function(require,module,exports){
 class Transform {
     constructor(opts) {
         var Sig = this.constructor.Weddell.classes.Sig;
@@ -2096,7 +2118,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
@@ -2163,7 +2185,7 @@ Object.values(_Weddell.classes).forEach(function(commonClass){
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":32,"./app":17,"./component":18,"./pipeline":20,"./sig":21,"./store":22,"./transform":23,"mixwith-es5":12}],25:[function(require,module,exports){
+},{"../utils/includes":33,"./app":18,"./component":19,"./pipeline":21,"./sig":22,"./store":23,"./transform":24,"mixwith-es5":13}],26:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
@@ -2196,7 +2218,7 @@ module.exports = function(_Weddell){
                                             .then(currentComponent => {
                                                 return currentComponent.getComponentInstance(componentName, 'router')
                                                     .then(component => {
-                                                        if (!component) throw "Could not navigate to component " + key;
+                                                        if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
                                                         jobs.push({
                                                             component,
                                                             currentComponent,
@@ -2213,7 +2235,7 @@ module.exports = function(_Weddell){
                                             componentName: null
                                         });
                                         return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
-                                    });
+                                    }, console.warn);
 
                             }.bind(this)
                         });
@@ -2288,7 +2310,7 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./machine-state-mixin":26,"./router":27,"./state-machine-mixin":28,"mixwith-es5":12}],26:[function(require,module,exports){
+},{"./machine-state-mixin":27,"./router":28,"./state-machine-mixin":29,"mixwith-es5":13}],27:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -2324,10 +2346,11 @@ var MachineState = Mixin(function(superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":19,"mixwith-es5":12}],27:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":20,"mixwith-es5":13}],28:[function(require,module,exports){
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
+var compact = require('array-compact');
 
 var defaultOpts = {};
 
@@ -2357,14 +2380,25 @@ class Router {
         }
 
         if (matches) {
-            promise = Promise.all(matches.map((currMatch) => {
+            promise = Promise.all(matches.map((currMatch, key) => {
+                if (key === matches.length - 1 && currMatch.route.redirect) {
+                    if (typeof currMatch.route.redirect === 'function') {
+                        this.route(currMatch.route.redirect.call(this, matches));
+                    } else {
+                        //assuming string - path
+                        this.route(currMatch.route.redirect);
+                    }
+                    return Promise.reject();
+                }
+
                 if (typeof currMatch.route.handler == 'function') {
-                    return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
+                    return Promise.resolve(currMatch.route.handler.call(this, matches));
                 } else {
                     return currMatch.route.handler;
                 }
             }))
-            .then(this.onRoute.bind(this, matches))
+            .then(results => compact(results))
+            .then(this.onRoute.bind(this, matches), ()=>{})
             .then(() => {
                 if (matches.route.replaceState) {
                     history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
@@ -2477,7 +2511,7 @@ class Router {
 }
 module.exports = Router;
 
-},{"find-parent":8,"object.defaults/immutable":13,"path-to-regexp":15}],28:[function(require,module,exports){
+},{"array-compact":1,"find-parent":9,"object.defaults/immutable":14,"path-to-regexp":16}],29:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -2561,24 +2595,24 @@ var StateMachine = Mixin(function(superClass) {
 })
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":19,"./machine-state-mixin":26,"mixwith-es5":12}],29:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":20,"./machine-state-mixin":27,"mixwith-es5":13}],30:[function(require,module,exports){
 module.exports = require('../plugins/router')(require('./weddell'));
 
-},{"../plugins/router":25,"./weddell":30}],30:[function(require,module,exports){
+},{"../plugins/router":26,"./weddell":31}],31:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":24}],31:[function(require,module,exports){
+},{"../core/weddell":25}],32:[function(require,module,exports){
 // var includes = require('./includes');
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = function(arr, val){
     return arr.some(currKey=>currKey === val);
 }
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -2589,5 +2623,5 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[29])(29)
+},{}]},{},[30])(30)
 });
