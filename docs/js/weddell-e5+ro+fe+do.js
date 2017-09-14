@@ -1583,16 +1583,29 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.stylesTransforms = opts.stylesTransforms;
         this.renderers = {};
         var Sig = this.constructor.Weddell.classes.Sig;
+
+        var consts = this.constructor.Weddell.consts;
+
+        if (!this.Component) {
+            throw "There is no base component set for this app. Can't mount.";
+        }
+        if (consts.VAR_NAME in window) {
+            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+        }
+
+        Object.defineProperty(window, consts.VAR_NAME, {
+            value: {app: this, components: {} }
+        });
+
+        this.componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
+        this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
     }
 
     renderCSS(CSSString) {
         this.styleEl.textContent = CSSString;
     }
 
-
-
     renderMarkup(evt) {
-        // debugger;
         if (!(evt.renderFormat in this.renderers)) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
@@ -1610,18 +1623,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.seal(this);
         return DOMReady
             .then(() => {
-                var consts = this.constructor.Weddell.consts;
-
-                if (!this.Component) {
-                    throw "There is no base component set for this app. Can't mount.";
-                }
-                if (consts.VAR_NAME in window) {
-                    throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
-                }
-
-                Object.defineProperty(window, consts.VAR_NAME, {
-                    value: {app: this, components: {} }
-                });
 
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
@@ -1635,14 +1636,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     document.head.appendChild(this.styleEl);
                 }
 
-                var componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
-                this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
-
-                var Component = this.constructor.Weddell.classes.Component;
-
                 var app = this;
 
-                this.component = new this.Component({
+                this.component = new (this.Component)({
                     isRoot: true,
                     targetStylesRenderFormat: app.stylesRenderFormat,
                     targetMarkupRenderFormat: app.markupRenderFormat,
@@ -1651,14 +1647,16 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 });
 
                 this.trigger('createcomponent', {component: this.component});
+                this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+                
                 this.component.on('markeddirty', evt => {
                     requestAnimationFrame(() => {
                         this.component.render(evt.pipelineName);
                     });
                 });
 
-                return this.component.init(componentOpts)
+                return this.component.init(this.componentOpts)
                     .then(() => {
                         this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
                         this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
@@ -1706,9 +1704,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
             inputs : { value: opts.inputs },
-            renderers: {
-                value: {}
-            }
+            renderers: { value: {} },
+            _tagDirectives: { value: {} }
         });
 
         var inputMappings = this.constructor._inputMappings;
@@ -1808,6 +1805,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         //Default event handler, noop
     }
 
+    addTagDirective(name, directive) {
+        this._tagDirectives[name.toUpperCase()] = directive;
+    }
+
     createChildComponentClass(componentName, Component) {
         if (Array.isArray(Component)) {
             var initOpts = Component[2];
@@ -1832,13 +1833,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     stylesTransforms
                 }, opts))
 
-                this.trigger('createcomponent', {component: this, componentName});
+                parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
+
+                this.on('createcomponent', evt => {
+                    parentComponent.trigger('createcomponent', Object.assign({}, evt));
+                });
 
                 this.on('markeddirty', evt => {
                     parentComponent.markDirty();
                 });
             }
         }
+        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -1878,10 +1884,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        if (Object.keys(this._componentInstances[entry[0]]).length) {
+                        var keys = Object.keys(this._componentInstances[entry[0]]);
+                        if (keys.length) {
                             //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
                             //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][0].renderStyles();//entry[1].renderStyles();
+                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
                         }
                         return {component: this, output: '', wasRenderered: false};
                     }))
@@ -1995,7 +2002,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
             return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
-        return Promise.resolve(instances[index]);
+        return Promise.resolve(instances ? instances[index] : null);
     }
 
     cleanupComponentInstances() {
@@ -2785,6 +2792,13 @@ var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
 
+var RouterState = mix(class {
+    constructor(opts) {
+        this.Component = opts.Component;
+        this.componentName = opts.componentName;
+    }
+}).with(MachineStateMixin);
+
 module.exports = function(_Weddell){
     return _Weddell.plugin({
         id: 'router',
@@ -2793,31 +2807,41 @@ module.exports = function(_Weddell){
                 return class extends App {
                     constructor(opts) {
                         super(opts);
+
                         this.router = new Router({
                             routes: opts.routes,
                             onRoute: function(matches, componentNames) {
-                                var component = this.component;
-                                var promises = [];
-                                var key = 0;
-                                while (component && component.components) {
-                                    if (componentNames[key]) {
-                                        var newComponent = component.getState(componentNames[key]);
-                                        if (newComponent) {
-                                            promises.push(component.changeState(newComponent));
-                                            component = newComponent;
-                                        } else {
-                                            throw "Could not navigate to component " + key;
-                                        }
-                                    } else {
-                                        if (component.currentState) {
-                                            promises.push(component.changeState(null));
-                                        }
-                                        component = component.currentState;
-                                    }
-                                    key++;
-                                }
-                                return Promise.all(promises);
+                                var jobs = [];
+
+                                return componentNames.reduce((promise, componentName) => {
+                                        return promise
+                                            .then(currentComponent => {
+                                                return currentComponent.getComponentInstance(componentName, 'router')
+                                                    .then(component => {
+                                                        if (!component) throw "Could not navigate to component " + key;
+                                                        jobs.push({
+                                                            component,
+                                                            currentComponent,
+                                                            componentName
+                                                        });
+                                                        return component;
+                                                    });
+                                            })
+                                    }, Promise.resolve(this.component))
+                                    .then(lastComponent => {
+                                        jobs.push({
+                                            currentComponent: lastComponent,
+                                            component: null,
+                                            componentName: null
+                                        });
+                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
+                                    });
+
                             }.bind(this)
+                        });
+
+                        this.on('createcomponent', evt => {
+                            evt.component.router = this.router;
                         });
                     }
 
@@ -2830,25 +2854,55 @@ module.exports = function(_Weddell){
                 }
             }),
             Component: Mixin(function(Component){
-                var RouterComponent = class extends mix(Component).with(StateMachineMixin, MachineStateMixin) {
+                var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     constructor(opts) {
-                        opts.stateClass = RouterComponent;
+                        opts.stateClass = RouterState;
                         super(opts);
+
+                        this.addTagDirective('RouterView', this.compileRouterView.bind(this));
+
                         var routerLocals = {
-                            $router: this.importRouterView.bind(this)
+                            $routerLink: this.compileRouterLink.bind(this)
                         };
                         this.store.assign(routerLocals);
+                        this._locals.assign(routerLocals);
 
-                        this.on('createcomponent', (evt) => {
-                            this.addState(evt.componentName, evt.component);
-                            evt.component.on(['exit', 'enter'], this.markDirty.bind(this));
-                        });
+                        Object.entries(this.components)
+                            .forEach(entry => {
+                                var routerState = new RouterState({
+                                    Component: entry[1],
+                                    componentName: entry[0]
+                                });
+                                this.addState(entry[0], routerState);
+                                routerState.on(['exit', 'enter'], evt => {
+                                    this.markDirty();
+                                });
+                            });
                     }
 
-                    importRouterView() {
-                        return this.currentState ? this.currentState._pipelines.markup.import() : '';
+                    compileRouterView(content, props) {
+                        if (this.currentState) {
+                            return this.getComponentInstance(this.currentState.componentName, 'router')
+                                .then(component => component.render('markup', content, props))
+                                .then(routerOutput => {
+                                    return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
+                                });
+                        }
+                        return Promise.resolve(null);
+                    }
+
+                    compileRouterLink(obj) {
+                        var matches = this.router.compileRouterLink(obj);
+                        if (matches) {
+                            return matches.fullPath;
+                        }
+                    }
+
+                    route(pathname) {
+                        this.router.route(pathname);
                     }
                 }
+
                 return RouterComponent;
             }),
             Router
@@ -2877,6 +2931,7 @@ var MachineState = Mixin(function(superClass) {
         }
 
         exitState() {
+
             return this.stateAction('onExitState', 'exit');
         }
 
@@ -2904,42 +2959,65 @@ class Router {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
+        this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
         }
     }
     //TODO allow for absolute routes prefixed with /
 
-    route(pathName, params) {
+    route(pathName) {
         var promise = Promise.resolve(null);
 
         if (typeof pathName === 'string') {
             var matches = Router.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
-        } else { //assuming a route object was passed
-            matches = [{route: pathName, match: null}];
+        } else if (pathName) {
+             //assuming an object was passed to route by named route.
+            var matches = this.compileRouterLink(pathname);
         }
+
         if (matches) {
             promise = Promise.all(matches.map((currMatch) => {
-                    if (typeof currMatch.route.handler == 'function') {
-                        return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
-                    } else {
-                        return currMatch.route.handler;
-                    }
-                }))
-                .then(this.onRoute.bind(this, matches))
-                .then(() => {
-                    if (matches.route.replaceState) {
-                        history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                    } else {
-                        history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                    }
-                    this.currentRoute = matches.fullPath;
-                });
+                if (typeof currMatch.route.handler == 'function') {
+                    return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
+                } else {
+                    return currMatch.route.handler;
+                }
+            }))
+            .then(this.onRoute.bind(this, matches))
+            .then(() => {
+                if (matches.route.replaceState) {
+                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
+                } else {
+                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
+                }
+                this.currentRoute = matches.fullPath;
+            });
         }
 
         return promise;
+    }
+
+    static getNamedRoute(name, routes) {
+        if (!name) return null;
+
+        return (function findRoute(routes, path) {
+            var matchedRoute = null;
+
+            routes.forEach(route => {
+                matchedRoute = route.name === name ? route : matchedRoute;
+
+                if (!matchedRoute && route.children) {
+                    matchedRoute = findRoute(route.children, path.concat(route));
+                }
+
+                return !matchedRoute;
+            });
+
+            return matchedRoute ? Object.assign(path.concat(matchedRoute), matchedRoute) : null;
+        })(routes, []);
     }
 
     static matchRoute(pathName, routes) {
@@ -2951,10 +3029,9 @@ class Router {
             if (match) {
                 result = [];
                 result.push({route: currRoute, match, params});
-                fullPath += match[0];
+                fullPath += match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
                 if (currRoute.children) {
-                    var newPath = match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
-                    var childMatches = Router.matchRoute(match.input.replace(newPath, ''), currRoute.children);
+                    var childMatches = Router.matchRoute(match.input.replace(fullPath, ''), currRoute.children);
                     result = childMatches ? result.concat(childMatches) : result;
                     fullPath = childMatches ? fullPath + childMatches.fullPath : fullPath;
                 }
@@ -2970,18 +3047,41 @@ class Router {
         this.routes = this.routes.concat(routes);
     }
 
+    compileRouterLink(obj) {
+
+        /*
+        * Takes an object specifying a router name and params, returns an object with compiled path and matched route
+        */
+
+        var route = Router.getNamedRoute(obj.name, this.routes);
+        if (route) {
+            var fullPath = route.map(route => pathToRegexp.compile(route.pattern)(obj.params)).join('/');
+            var matches = [{
+                fullPath,
+                route,
+                match: null
+            }];
+            matches.route = route;
+            matches.fullPath = fullPath;
+            return matches;
+        } else {
+            console.warn('could not find route with name', obj.name);
+        }
+        return null;
+    }
+
     init() {
-        if (this.routes) {
+        if (!this._isInit && this.routes) {
+            this._isInit = true;
             addEventListener('popstate', this.onPopState.bind(this));
 
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
-                    var matches = Router.matchRoute(clickedATag.getAttribute('href'), this.routes);
-                    //TODO figure out how to do route parameters / named routes
-                    if (matches) {
+                    var href = Router.matchRoute(clickedATag.getAttribute('href'), this.routes);
+                    if (href) {
                         evt.preventDefault();
-                        this.route(matches);
+                        this.route(href);
                     }
                 }
             });
@@ -3015,16 +3115,16 @@ var StateMachine = Mixin(function(superClass) {
                 stateClass: {value: opts.stateClass},
                 currentState: {writable: true, value: null},
                 previousState: {writable: true, value: null},
-                previousState: {writable: true, value: null},
                 states: {value: {}}
             });
-            if (!hasMixin(this, MachineState)) {
-                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
-            }
         }
 
         static checkIfIsState(state) {
-            return state.prototype === this.stateClass || state.prototype instanceof this.stateClass;
+            var result = hasMixin(state, MachineState);
+            if (!result) {
+                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
+            }
+            return result;
         }
 
         getState(state) {
@@ -3033,14 +3133,14 @@ var StateMachine = Mixin(function(superClass) {
             }
             if (typeof state == 'string') {
                 return this.states[state] || null;
-            } else if (state.constructor === this.stateClass || state instanceof this.stateClass) {
+            } else if (this.constructor.checkIfIsState(state)) {
                 return state;
             }
             return null;
         }
 
         addState(key, state, onEnter, onExit) {
-            if (this.stateClass.checkIfIsState(state)) {
+            if (this.constructor.checkIfIsState(state)) {
                 this.states[key] = state;
             }
         }
@@ -3076,7 +3176,8 @@ var StateMachine = Mixin(function(superClass) {
                         });
                 }
             }
-            return promise;
+            return promise
+                .then(() => this.currentState);
         }
     }
 })

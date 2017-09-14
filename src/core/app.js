@@ -30,16 +30,29 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.stylesTransforms = opts.stylesTransforms;
         this.renderers = {};
         var Sig = this.constructor.Weddell.classes.Sig;
+
+        var consts = this.constructor.Weddell.consts;
+
+        if (!this.Component) {
+            throw "There is no base component set for this app. Can't mount.";
+        }
+        if (consts.VAR_NAME in window) {
+            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+        }
+
+        Object.defineProperty(window, consts.VAR_NAME, {
+            value: {app: this, components: {} }
+        });
+
+        this.componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
+        this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
     }
 
     renderCSS(CSSString) {
         this.styleEl.textContent = CSSString;
     }
 
-
-
     renderMarkup(evt) {
-        // debugger;
         if (!(evt.renderFormat in this.renderers)) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
@@ -57,18 +70,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.seal(this);
         return DOMReady
             .then(() => {
-                var consts = this.constructor.Weddell.consts;
-
-                if (!this.Component) {
-                    throw "There is no base component set for this app. Can't mount.";
-                }
-                if (consts.VAR_NAME in window) {
-                    throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
-                }
-
-                Object.defineProperty(window, consts.VAR_NAME, {
-                    value: {app: this, components: {} }
-                });
 
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
@@ -82,14 +83,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     document.head.appendChild(this.styleEl);
                 }
 
-                var componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
-                this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
-
-                var Component = this.constructor.Weddell.classes.Component;
-
                 var app = this;
 
-                this.component = new this.Component({
+                this.component = new (this.Component)({
                     isRoot: true,
                     targetStylesRenderFormat: app.stylesRenderFormat,
                     targetMarkupRenderFormat: app.markupRenderFormat,
@@ -98,14 +94,16 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 });
 
                 this.trigger('createcomponent', {component: this.component});
+                this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+                
                 this.component.on('markeddirty', evt => {
                     requestAnimationFrame(() => {
                         this.component.render(evt.pipelineName);
                     });
                 });
 
-                return this.component.init(componentOpts)
+                return this.component.init(this.componentOpts)
                     .then(() => {
                         this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
                         this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));

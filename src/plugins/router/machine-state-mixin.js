@@ -18,6 +18,7 @@ var MachineState = Mixin(function(superClass) {
         }
 
         exitState() {
+
             return this.stateAction('onExitState', 'exit');
         }
 

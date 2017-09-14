@@ -13,7 +13,7 @@ module.exports = function(Weddell, pluginOpts){
                             value: new ActionDispatcher
                         });
                         this.on('createcomponent', evt => {
-                            this._actionDispatcher.addDispatchee(evt.component.state);
+                            this._actionDispatcher.addDispatchee(evt.component);
                             evt.component.on('createaction', evt => {
                                 this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
                             });
@@ -27,13 +27,13 @@ module.exports = function(Weddell, pluginOpts){
                     constructor(opts) {
                         super(opts);
                         var actionLocals = {
-                            $act: this._createAction.bind(this)
+                            $act: this.createAction.bind(this)
                         };
                         this.store.assign(actionLocals);
                         this._locals.assign(actionLocals);
                     }
 
-                    _createAction(actionName, actionData) {
+                    createAction(actionName, actionData) {
                         this.trigger('createaction', {actionName, actionData});
                     }
                 }

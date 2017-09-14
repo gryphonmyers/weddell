@@ -1,4 +1,26 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Weddell = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+/**
+ * Expose array-compact
+ */
+
+module.exports = compact;
+
+
+/**
+ * Return an array copy without falsy values
+ */
+
+function compact (arr) {
+  return arr.filter(validate);
+}
+
+function validate (item) {
+  return !!item;
+}
+
+},{}],2:[function(require,module,exports){
 /*!
  * array-each <https://github.com/jonschlinkert/array-each>
  *
@@ -46,7 +68,7 @@ module.exports = function each(arr, cb, thisArg) {
   }
 };
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 /*!
  * array-slice <https://github.com/jonschlinkert/array-slice>
  *
@@ -83,9 +105,9 @@ function idx(arr, pos, end) {
   return pos;
 }
 
-},{}],3:[function(require,module,exports){
-
 },{}],4:[function(require,module,exports){
+
+},{}],5:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -193,7 +215,7 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -251,7 +273,7 @@ module.exports = function debounce(func, wait, immediate){
   return debounced;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -347,7 +369,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":7,"./lib/keys.js":8}],7:[function(require,module,exports){
+},{"./lib/is_arguments.js":8,"./lib/keys.js":9}],8:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -369,7 +391,7 @@ function unsupported(object){
     false;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -380,7 +402,7 @@ function shim (obj) {
   return keys;
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (document, promise) {
   if (typeof module !== 'undefined') module.exports = promise
   else document.ready = promise
@@ -407,7 +429,7 @@ function shim (obj) {
   })
 })
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -429,7 +451,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":16}],11:[function(require,module,exports){
+},{"individual/one-version":17}],12:[function(require,module,exports){
 'use strict';
 
 var FindParent = {
@@ -472,7 +494,7 @@ var FindParent = {
 
 module.exports = FindParent;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*!
  * for-in <https://github.com/jonschlinkert/for-in>
  *
@@ -490,7 +512,7 @@ module.exports = function forIn(obj, fn, thisArg) {
   }
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /*!
  * for-own <https://github.com/jonschlinkert/for-own>
  *
@@ -511,7 +533,7 @@ module.exports = function forOwn(obj, fn, thisArg) {
   });
 };
 
-},{"for-in":12}],14:[function(require,module,exports){
+},{"for-in":13}],15:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -532,7 +554,7 @@ if (typeof document !== 'undefined') {
 module.exports = doccy;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":3}],15:[function(require,module,exports){
+},{"min-document":4}],16:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -555,7 +577,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -579,14 +601,14 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":15}],17:[function(require,module,exports){
+},{"./index.js":16}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*!
  * isobject <https://github.com/jonschlinkert/isobject>
  *
@@ -600,7 +622,7 @@ module.exports = function isObject(val) {
   return val != null && typeof val === 'object' && Array.isArray(val) === false;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -742,7 +764,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }();
 });
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1119,7 +1141,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -1141,7 +1163,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":22,"array-slice":2}],22:[function(require,module,exports){
+},{"./mutable":23,"array-slice":3}],23:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -1178,7 +1200,7 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":1,"array-slice":2,"for-own":13,"isobject":18}],23:[function(require,module,exports){
+},{"array-each":2,"array-slice":3,"for-own":14,"isobject":19}],24:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -1606,12 +1628,12 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":24}],24:[function(require,module,exports){
+},{"isarray":25}],25:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * @file prescribe
  * @description Tiny, forgiving HTML parser
@@ -2536,22 +2558,22 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":50}],27:[function(require,module,exports){
+},{"./vtree/diff.js":51}],28:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":37}],28:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":38}],29:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":33}],29:[function(require,module,exports){
+},{"./vdom/patch.js":34}],30:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -2650,7 +2672,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":41,"is-object":17}],30:[function(require,module,exports){
+},{"../vnode/is-vhook.js":42,"is-object":18}],31:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -2698,7 +2720,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":39,"../vnode/is-vnode.js":42,"../vnode/is-vtext.js":43,"../vnode/is-widget.js":44,"./apply-properties":29,"global/document":14}],31:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":40,"../vnode/is-vnode.js":43,"../vnode/is-vtext.js":44,"../vnode/is-widget.js":45,"./apply-properties":30,"global/document":15}],32:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -2785,7 +2807,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -2938,7 +2960,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":44,"../vnode/vpatch.js":47,"./apply-properties":29,"./update-widget":34}],33:[function(require,module,exports){
+},{"../vnode/is-widget.js":45,"../vnode/vpatch.js":48,"./apply-properties":30,"./update-widget":35}],34:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3020,7 +3042,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":30,"./dom-index":31,"./patch-op":32,"global/document":14,"x-is-array":51}],34:[function(require,module,exports){
+},{"./create-element":31,"./dom-index":32,"./patch-op":33,"global/document":15,"x-is-array":52}],35:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3037,7 +3059,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":44}],35:[function(require,module,exports){
+},{"../vnode/is-widget.js":45}],36:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -3066,7 +3088,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":10}],36:[function(require,module,exports){
+},{"ev-store":11}],37:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -3085,7 +3107,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -3224,7 +3246,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":40,"../vnode/is-vhook":41,"../vnode/is-vnode":42,"../vnode/is-vtext":43,"../vnode/is-widget":44,"../vnode/vnode.js":46,"../vnode/vtext.js":48,"./hooks/ev-hook.js":35,"./hooks/soft-set-hook.js":36,"./parse-tag.js":38,"x-is-array":51}],38:[function(require,module,exports){
+},{"../vnode/is-thunk":41,"../vnode/is-vhook":42,"../vnode/is-vnode":43,"../vnode/is-vtext":44,"../vnode/is-widget":45,"../vnode/vnode.js":47,"../vnode/vtext.js":49,"./hooks/ev-hook.js":36,"./hooks/soft-set-hook.js":37,"./parse-tag.js":39,"x-is-array":52}],39:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -3280,7 +3302,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":4}],39:[function(require,module,exports){
+},{"browser-split":5}],40:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -3322,14 +3344,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":40,"./is-vnode":42,"./is-vtext":43,"./is-widget":44}],40:[function(require,module,exports){
+},{"./is-thunk":41,"./is-vnode":43,"./is-vtext":44,"./is-widget":45}],41:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -3338,7 +3360,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -3347,7 +3369,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":45}],43:[function(require,module,exports){
+},{"./version":46}],44:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -3356,17 +3378,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":45}],44:[function(require,module,exports){
+},{"./version":46}],45:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 module.exports = "2"
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -3440,7 +3462,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":40,"./is-vhook":41,"./is-vnode":42,"./is-widget":44,"./version":45}],47:[function(require,module,exports){
+},{"./is-thunk":41,"./is-vhook":42,"./is-vnode":43,"./is-widget":45,"./version":46}],48:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -3464,7 +3486,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":45}],48:[function(require,module,exports){
+},{"./version":46}],49:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -3476,7 +3498,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":45}],49:[function(require,module,exports){
+},{"./version":46}],50:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -3536,7 +3558,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":41,"is-object":17}],50:[function(require,module,exports){
+},{"../vnode/is-vhook":42,"is-object":18}],51:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -3965,7 +3987,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":39,"../vnode/is-thunk":40,"../vnode/is-vnode":42,"../vnode/is-vtext":43,"../vnode/is-widget":44,"../vnode/vpatch":47,"./diff-props":49,"x-is-array":51}],51:[function(require,module,exports){
+},{"../vnode/handle-thunk":40,"../vnode/is-thunk":41,"../vnode/is-vnode":43,"../vnode/is-vtext":44,"../vnode/is-widget":45,"../vnode/vpatch":48,"./diff-props":50,"x-is-array":52}],52:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -3975,7 +3997,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -4008,16 +4030,29 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.stylesTransforms = opts.stylesTransforms;
         this.renderers = {};
         var Sig = this.constructor.Weddell.classes.Sig;
+
+        var consts = this.constructor.Weddell.consts;
+
+        if (!this.Component) {
+            throw "There is no base component set for this app. Can't mount.";
+        }
+        if (consts.VAR_NAME in window) {
+            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+        }
+
+        Object.defineProperty(window, consts.VAR_NAME, {
+            value: {app: this, components: {} }
+        });
+
+        this.componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
+        this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
     }
 
     renderCSS(CSSString) {
         this.styleEl.textContent = CSSString;
     }
 
-
-
     renderMarkup(evt) {
-        // debugger;
         if (!(evt.renderFormat in this.renderers)) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
@@ -4035,18 +4070,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.seal(this);
         return DOMReady
             .then(() => {
-                var consts = this.constructor.Weddell.consts;
-
-                if (!this.Component) {
-                    throw "There is no base component set for this app. Can't mount.";
-                }
-                if (consts.VAR_NAME in window) {
-                    throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
-                }
-
-                Object.defineProperty(window, consts.VAR_NAME, {
-                    value: {app: this, components: {} }
-                });
 
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
@@ -4060,14 +4083,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     document.head.appendChild(this.styleEl);
                 }
 
-                var componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
-                this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
-
-                var Component = this.constructor.Weddell.classes.Component;
-
                 var app = this;
 
-                this.component = new this.Component({
+                this.component = new (this.Component)({
                     isRoot: true,
                     targetStylesRenderFormat: app.stylesRenderFormat,
                     targetMarkupRenderFormat: app.markupRenderFormat,
@@ -4076,14 +4094,16 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 });
 
                 this.trigger('createcomponent', {component: this.component});
+                this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+                
                 this.component.on('markeddirty', evt => {
                     requestAnimationFrame(() => {
                         this.component.render(evt.pipelineName);
                     });
                 });
 
-                return this.component.init(componentOpts)
+                return this.component.init(this.componentOpts)
                     .then(() => {
                         this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
                         this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
@@ -4095,7 +4115,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
 module.exports = App;
 
-},{"./event-emitter-mixin":54,"./sig":56,"debounce":5,"document-ready-promise":9,"mixwith-es5":19,"object.defaults/immutable":21}],53:[function(require,module,exports){
+},{"./event-emitter-mixin":55,"./sig":57,"debounce":6,"document-ready-promise":10,"mixwith-es5":20,"object.defaults/immutable":22}],54:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
@@ -4131,9 +4151,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
             inputs : { value: opts.inputs },
-            renderers: {
-                value: {}
-            }
+            renderers: { value: {} },
+            _tagDirectives: { value: {} }
         });
 
         var inputMappings = this.constructor._inputMappings;
@@ -4233,6 +4252,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         //Default event handler, noop
     }
 
+    addTagDirective(name, directive) {
+        this._tagDirectives[name.toUpperCase()] = directive;
+    }
+
     createChildComponentClass(componentName, Component) {
         if (Array.isArray(Component)) {
             var initOpts = Component[2];
@@ -4257,13 +4280,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     stylesTransforms
                 }, opts))
 
-                this.trigger('createcomponent', {component: this, componentName});
+                parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
+
+                this.on('createcomponent', evt => {
+                    parentComponent.trigger('createcomponent', Object.assign({}, evt));
+                });
 
                 this.on('markeddirty', evt => {
                     parentComponent.markDirty();
                 });
             }
         }
+        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -4303,10 +4331,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        if (Object.keys(this._componentInstances[entry[0]]).length) {
+                        var keys = Object.keys(this._componentInstances[entry[0]]);
+                        if (keys.length) {
                             //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
                             //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][0].renderStyles();//entry[1].renderStyles();
+                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
                         }
                         return {component: this, output: '', wasRenderered: false};
                     }))
@@ -4420,7 +4449,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
             return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
-        return Promise.resolve(instances[index]);
+        return Promise.resolve(instances ? instances[index] : null);
     }
 
     cleanupComponentInstances() {
@@ -4430,7 +4459,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":73,"../utils/make-hash":74,"./event-emitter-mixin":54,"./sig":56,"mixwith-es5":19,"object.defaults/immutable":21}],54:[function(require,module,exports){
+},{"../utils/includes":74,"../utils/make-hash":75,"./event-emitter-mixin":55,"./sig":57,"mixwith-es5":20,"object.defaults/immutable":22}],55:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var hasMixin = require('mixwith-es5').hasMixin;
 var defaults = require('object.defaults/immutable');
@@ -4498,7 +4527,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":73,"mixwith-es5":19,"object.defaults/immutable":21}],55:[function(require,module,exports){
+},{"../utils/includes":74,"mixwith-es5":20,"object.defaults/immutable":22}],56:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
@@ -4642,7 +4671,7 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":54,"mixwith-es5":19}],56:[function(require,module,exports){
+},{"./event-emitter-mixin":55,"mixwith-es5":20}],57:[function(require,module,exports){
 class Sig {
     constructor(str) {
         if (typeof str === 'object' && str.constructor === this.constructor) {
@@ -4768,7 +4797,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
@@ -4986,7 +5015,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":71,"../utils/includes":73,"../utils/make-hash":74,"./event-emitter-mixin":54,"deep-equal":6,"mixwith-es5":19,"object.defaults/immutable":21}],58:[function(require,module,exports){
+},{"../utils/difference":72,"../utils/includes":74,"../utils/make-hash":75,"./event-emitter-mixin":55,"deep-equal":7,"mixwith-es5":20,"object.defaults/immutable":22}],59:[function(require,module,exports){
 class Transform {
     constructor(opts) {
         var Sig = this.constructor.Weddell.classes.Sig;
@@ -5037,7 +5066,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
@@ -5104,7 +5133,7 @@ Object.values(_Weddell.classes).forEach(function(commonClass){
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":73,"./app":52,"./component":53,"./pipeline":55,"./sig":56,"./store":57,"./transform":58,"mixwith-es5":19}],60:[function(require,module,exports){
+},{"../utils/includes":74,"./app":53,"./component":54,"./pipeline":56,"./sig":57,"./store":58,"./transform":59,"mixwith-es5":20}],61:[function(require,module,exports){
 module.exports = {
     template : function(CSSText){
         //TODO make this more efficient after compile time
@@ -5135,7 +5164,7 @@ module.exports = {
     }
 }
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var CSSVars = require('./css-vars');
 
@@ -5163,7 +5192,7 @@ module.exports = function(Weddell, pluginOpts){
     });
 };
 
-},{"./css-vars":60,"mixwith-es5":19}],62:[function(require,module,exports){
+},{"./css-vars":61,"mixwith-es5":20}],63:[function(require,module,exports){
 var Parser = require('prescribe');
 module.exports = {
     parse: function(html, h) {
@@ -5207,7 +5236,7 @@ module.exports = {
     }
 }
 
-},{"prescribe":25}],63:[function(require,module,exports){
+},{"prescribe":26}],64:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var htmltovdomparser = require('./html-to-vdom-parser');
 module.exports = function(_Weddell){
@@ -5237,12 +5266,19 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./html-to-vdom-parser":62,"mixwith-es5":19}],64:[function(require,module,exports){
+},{"./html-to-vdom-parser":63,"mixwith-es5":20}],65:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
+
+var RouterState = mix(class {
+    constructor(opts) {
+        this.Component = opts.Component;
+        this.componentName = opts.componentName;
+    }
+}).with(MachineStateMixin);
 
 module.exports = function(_Weddell){
     return _Weddell.plugin({
@@ -5252,31 +5288,41 @@ module.exports = function(_Weddell){
                 return class extends App {
                     constructor(opts) {
                         super(opts);
+
                         this.router = new Router({
                             routes: opts.routes,
                             onRoute: function(matches, componentNames) {
-                                var component = this.component;
-                                var promises = [];
-                                var key = 0;
-                                while (component && component.components) {
-                                    if (componentNames[key]) {
-                                        var newComponent = component.getState(componentNames[key]);
-                                        if (newComponent) {
-                                            promises.push(component.changeState(newComponent));
-                                            component = newComponent;
-                                        } else {
-                                            throw "Could not navigate to component " + key;
-                                        }
-                                    } else {
-                                        if (component.currentState) {
-                                            promises.push(component.changeState(null));
-                                        }
-                                        component = component.currentState;
-                                    }
-                                    key++;
-                                }
-                                return Promise.all(promises);
+                                var jobs = [];
+
+                                return componentNames.reduce((promise, componentName) => {
+                                        return promise
+                                            .then(currentComponent => {
+                                                return currentComponent.getComponentInstance(componentName, 'router')
+                                                    .then(component => {
+                                                        if (!component) throw "Could not navigate to component " + key;
+                                                        jobs.push({
+                                                            component,
+                                                            currentComponent,
+                                                            componentName
+                                                        });
+                                                        return component;
+                                                    });
+                                            })
+                                    }, Promise.resolve(this.component))
+                                    .then(lastComponent => {
+                                        jobs.push({
+                                            currentComponent: lastComponent,
+                                            component: null,
+                                            componentName: null
+                                        });
+                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
+                                    });
+
                             }.bind(this)
+                        });
+
+                        this.on('createcomponent', evt => {
+                            evt.component.router = this.router;
                         });
                     }
 
@@ -5289,25 +5335,55 @@ module.exports = function(_Weddell){
                 }
             }),
             Component: Mixin(function(Component){
-                var RouterComponent = class extends mix(Component).with(StateMachineMixin, MachineStateMixin) {
+                var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     constructor(opts) {
-                        opts.stateClass = RouterComponent;
+                        opts.stateClass = RouterState;
                         super(opts);
+
+                        this.addTagDirective('RouterView', this.compileRouterView.bind(this));
+
                         var routerLocals = {
-                            $router: this.importRouterView.bind(this)
+                            $routerLink: this.compileRouterLink.bind(this)
                         };
                         this.store.assign(routerLocals);
+                        this._locals.assign(routerLocals);
 
-                        this.on('createcomponent', (evt) => {
-                            this.addState(evt.componentName, evt.component);
-                            evt.component.on(['exit', 'enter'], this.markDirty.bind(this));
-                        });
+                        Object.entries(this.components)
+                            .forEach(entry => {
+                                var routerState = new RouterState({
+                                    Component: entry[1],
+                                    componentName: entry[0]
+                                });
+                                this.addState(entry[0], routerState);
+                                routerState.on(['exit', 'enter'], evt => {
+                                    this.markDirty();
+                                });
+                            });
                     }
 
-                    importRouterView() {
-                        return this.currentState ? this.currentState._pipelines.markup.import() : '';
+                    compileRouterView(content, props) {
+                        if (this.currentState) {
+                            return this.getComponentInstance(this.currentState.componentName, 'router')
+                                .then(component => component.render('markup', content, props))
+                                .then(routerOutput => {
+                                    return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
+                                });
+                        }
+                        return Promise.resolve(null);
+                    }
+
+                    compileRouterLink(obj) {
+                        var matches = this.router.compileRouterLink(obj);
+                        if (matches) {
+                            return matches.fullPath;
+                        }
+                    }
+
+                    route(pathname) {
+                        this.router.route(pathname);
                     }
                 }
+
                 return RouterComponent;
             }),
             Router
@@ -5315,7 +5391,7 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./machine-state-mixin":65,"./router":66,"./state-machine-mixin":67,"mixwith-es5":19}],65:[function(require,module,exports){
+},{"./machine-state-mixin":66,"./router":67,"./state-machine-mixin":68,"mixwith-es5":20}],66:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -5336,6 +5412,7 @@ var MachineState = Mixin(function(superClass) {
         }
 
         exitState() {
+
             return this.stateAction('onExitState', 'exit');
         }
 
@@ -5350,7 +5427,7 @@ var MachineState = Mixin(function(superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":54,"mixwith-es5":19}],66:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":55,"mixwith-es5":20}],67:[function(require,module,exports){
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
@@ -5363,42 +5440,65 @@ class Router {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
+        this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
         }
     }
     //TODO allow for absolute routes prefixed with /
 
-    route(pathName, params) {
+    route(pathName) {
         var promise = Promise.resolve(null);
 
         if (typeof pathName === 'string') {
             var matches = Router.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
-        } else { //assuming a route object was passed
-            matches = [{route: pathName, match: null}];
+        } else if (pathName) {
+             //assuming an object was passed to route by named route.
+            var matches = this.compileRouterLink(pathname);
         }
+
         if (matches) {
             promise = Promise.all(matches.map((currMatch) => {
-                    if (typeof currMatch.route.handler == 'function') {
-                        return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
-                    } else {
-                        return currMatch.route.handler;
-                    }
-                }))
-                .then(this.onRoute.bind(this, matches))
-                .then(() => {
-                    if (matches.route.replaceState) {
-                        history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                    } else {
-                        history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                    }
-                    this.currentRoute = matches.fullPath;
-                });
+                if (typeof currMatch.route.handler == 'function') {
+                    return Promise.resolve(currMatch.route.handler.call(currMatch.route, matches));
+                } else {
+                    return currMatch.route.handler;
+                }
+            }))
+            .then(this.onRoute.bind(this, matches))
+            .then(() => {
+                if (matches.route.replaceState) {
+                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
+                } else {
+                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
+                }
+                this.currentRoute = matches.fullPath;
+            });
         }
 
         return promise;
+    }
+
+    static getNamedRoute(name, routes) {
+        if (!name) return null;
+
+        return (function findRoute(routes, path) {
+            var matchedRoute = null;
+
+            routes.forEach(route => {
+                matchedRoute = route.name === name ? route : matchedRoute;
+
+                if (!matchedRoute && route.children) {
+                    matchedRoute = findRoute(route.children, path.concat(route));
+                }
+
+                return !matchedRoute;
+            });
+
+            return matchedRoute ? Object.assign(path.concat(matchedRoute), matchedRoute) : null;
+        })(routes, []);
     }
 
     static matchRoute(pathName, routes) {
@@ -5410,10 +5510,9 @@ class Router {
             if (match) {
                 result = [];
                 result.push({route: currRoute, match, params});
-                fullPath += match[0];
+                fullPath += match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
                 if (currRoute.children) {
-                    var newPath = match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
-                    var childMatches = Router.matchRoute(match.input.replace(newPath, ''), currRoute.children);
+                    var childMatches = Router.matchRoute(match.input.replace(fullPath, ''), currRoute.children);
                     result = childMatches ? result.concat(childMatches) : result;
                     fullPath = childMatches ? fullPath + childMatches.fullPath : fullPath;
                 }
@@ -5429,18 +5528,41 @@ class Router {
         this.routes = this.routes.concat(routes);
     }
 
+    compileRouterLink(obj) {
+
+        /*
+        * Takes an object specifying a router name and params, returns an object with compiled path and matched route
+        */
+
+        var route = Router.getNamedRoute(obj.name, this.routes);
+        if (route) {
+            var fullPath = route.map(route => pathToRegexp.compile(route.pattern)(obj.params)).join('/');
+            var matches = [{
+                fullPath,
+                route,
+                match: null
+            }];
+            matches.route = route;
+            matches.fullPath = fullPath;
+            return matches;
+        } else {
+            console.warn('could not find route with name', obj.name);
+        }
+        return null;
+    }
+
     init() {
-        if (this.routes) {
+        if (!this._isInit && this.routes) {
+            this._isInit = true;
             addEventListener('popstate', this.onPopState.bind(this));
 
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
-                    var matches = Router.matchRoute(clickedATag.getAttribute('href'), this.routes);
-                    //TODO figure out how to do route parameters / named routes
-                    if (matches) {
+                    var href = Router.matchRoute(clickedATag.getAttribute('href'), this.routes);
+                    if (href) {
                         evt.preventDefault();
-                        this.route(matches);
+                        this.route(href);
                     }
                 }
             });
@@ -5458,7 +5580,7 @@ class Router {
 }
 module.exports = Router;
 
-},{"find-parent":11,"object.defaults/immutable":21,"path-to-regexp":23}],67:[function(require,module,exports){
+},{"find-parent":12,"object.defaults/immutable":22,"path-to-regexp":24}],68:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -5474,16 +5596,16 @@ var StateMachine = Mixin(function(superClass) {
                 stateClass: {value: opts.stateClass},
                 currentState: {writable: true, value: null},
                 previousState: {writable: true, value: null},
-                previousState: {writable: true, value: null},
                 states: {value: {}}
             });
-            if (!hasMixin(this, MachineState)) {
-                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
-            }
         }
 
         static checkIfIsState(state) {
-            return state.prototype === this.stateClass || state.prototype instanceof this.stateClass;
+            var result = hasMixin(state, MachineState);
+            if (!result) {
+                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
+            }
+            return result;
         }
 
         getState(state) {
@@ -5492,14 +5614,14 @@ var StateMachine = Mixin(function(superClass) {
             }
             if (typeof state == 'string') {
                 return this.states[state] || null;
-            } else if (state.constructor === this.stateClass || state instanceof this.stateClass) {
+            } else if (this.constructor.checkIfIsState(state)) {
                 return state;
             }
             return null;
         }
 
         addState(key, state, onEnter, onExit) {
-            if (this.stateClass.checkIfIsState(state)) {
+            if (this.constructor.checkIfIsState(state)) {
                 this.states[key] = state;
             }
         }
@@ -5535,13 +5657,14 @@ var StateMachine = Mixin(function(superClass) {
                         });
                 }
             }
-            return promise;
+            return promise
+                .then(() => this.currentState);
         }
     }
 })
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":54,"./machine-state-mixin":65,"mixwith-es5":19}],68:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":55,"./machine-state-mixin":66,"mixwith-es5":20}],69:[function(require,module,exports){
 var h = require('virtual-dom/h');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
@@ -5549,6 +5672,7 @@ var VNode = require('virtual-dom/vnode/vnode');
 var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var flatMap = require('../../utils/flatmap');
+var compact = require('array-compact');
 
 var defaultComponentOpts = {
     markupFormat: '(locals:Object,h:Function)=>VNode'
@@ -5615,9 +5739,13 @@ module.exports = function(Weddell, pluginOpts) {
                         this.renderers.VNode = this.replaceVNodeComponents.bind(this);
                     }
 
+                    resolveTagDirective(node, directive) {
+
+                    }
+
                     replaceVNodeComponents(node, content, renderedComponents) {
                         if (Array.isArray(node)) {
-                            return Promise.all(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents)));
+                            return Promise.all(compact(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents))));
                         }
 
                         var Sig = this.constructor.Weddell.classes.Sig;
@@ -5627,7 +5755,10 @@ module.exports = function(Weddell, pluginOpts) {
                         }
 
                         if (node.tagName) {
-                            if (node.tagName === 'CONTENT') {
+                            if (node.tagName.toUpperCase() in this._tagDirectives) {
+                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+
+                            } else if (node.tagName === 'CONTENT') {
                                 return content;
                             } else {
                                 var componentEntry = Object.entries(this.components)
@@ -5638,7 +5769,7 @@ module.exports = function(Weddell, pluginOpts) {
                                     if (!(componentEntry[0] in renderedComponents)) {
                                         renderedComponents[componentEntry[0]] = [];
                                     }
-                                    var index = node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME] || renderedComponents[componentEntry[0]].length;
+                                    var index = (node.properties.attributes && node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentEntry[0]].length;
                                     renderedComponents[componentEntry[0]].push(null);
 
                                     return this.replaceVNodeComponents(node.children, content, renderedComponents)
@@ -5651,7 +5782,7 @@ module.exports = function(Weddell, pluginOpts) {
                                         })
                                         .then(componentOutput => {
                                             this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes});
-                                            return componentOutput.output[0]
+                                            return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
                                         });
                                 }
                             }
@@ -5660,7 +5791,7 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.children) {
                             return this.replaceVNodeComponents(node.children, content, renderedComponents)
                                 .then(children => {
-                                    node.children = children;
+                                    node.children = compact(children);
                                     return node;
                                 });
                         }
@@ -5678,7 +5809,7 @@ module.exports = function(Weddell, pluginOpts) {
     });
 }
 
-},{"../../utils/flatmap":72,"mixwith-es5":19,"object.defaults/immutable":21,"virtual-dom/diff":26,"virtual-dom/h":27,"virtual-dom/patch":28,"virtual-dom/vnode/vnode":46}],69:[function(require,module,exports){
+},{"../../utils/flatmap":73,"array-compact":1,"mixwith-es5":20,"object.defaults/immutable":22,"virtual-dom/diff":27,"virtual-dom/h":28,"virtual-dom/patch":29,"virtual-dom/vnode/vnode":47}],70:[function(require,module,exports){
 require('native-promise-only');
 module.exports = require('../plugins/css-vars')(
     require('../plugins/html-to-vdom')(
@@ -5688,26 +5819,26 @@ module.exports = require('../plugins/css-vars')(
     )
 );
 
-},{"../plugins/css-vars":61,"../plugins/html-to-vdom":63,"../plugins/router":64,"../plugins/vdom":68,"./weddell":70,"native-promise-only":20}],70:[function(require,module,exports){
+},{"../plugins/css-vars":62,"../plugins/html-to-vdom":64,"../plugins/router":65,"../plugins/vdom":69,"./weddell":71,"native-promise-only":21}],71:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":59}],71:[function(require,module,exports){
+},{"../core/weddell":60}],72:[function(require,module,exports){
 // var includes = require('./includes');
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = (arr, func) =>
     arr.reduce((final,val) =>
         final.concat(func(val)), [])
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = function(arr, val){
     return arr.some(currKey=>currKey === val);
 }
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -5718,5 +5849,5 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[69])(69)
+},{}]},{},[70])(70)
 });

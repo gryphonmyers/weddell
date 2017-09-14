@@ -33,9 +33,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
             inputs : { value: opts.inputs },
-            renderers: {
-                value: {}
-            }
+            renderers: { value: {} },
+            _tagDirectives: { value: {} }
         });
 
         var inputMappings = this.constructor._inputMappings;
@@ -135,6 +134,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         //Default event handler, noop
     }
 
+    addTagDirective(name, directive) {
+        this._tagDirectives[name.toUpperCase()] = directive;
+    }
+
     createChildComponentClass(componentName, Component) {
         if (Array.isArray(Component)) {
             var initOpts = Component[2];
@@ -159,13 +162,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     stylesTransforms
                 }, opts))
 
-                this.trigger('createcomponent', {component: this, componentName});
+                parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
+
+                this.on('createcomponent', evt => {
+                    parentComponent.trigger('createcomponent', Object.assign({}, evt));
+                });
 
                 this.on('markeddirty', evt => {
                     parentComponent.markDirty();
                 });
             }
         }
+        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -205,10 +213,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        if (Object.keys(this._componentInstances[entry[0]]).length) {
+                        var keys = Object.keys(this._componentInstances[entry[0]]);
+                        if (keys.length) {
                             //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
                             //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][0].renderStyles();//entry[1].renderStyles();
+                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
                         }
                         return {component: this, output: '', wasRenderered: false};
                     }))
@@ -322,7 +331,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
             return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
-        return Promise.resolve(instances[index]);
+        return Promise.resolve(instances ? instances[index] : null);
     }
 
     cleanupComponentInstances() {

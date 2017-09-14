@@ -4,6 +4,13 @@ var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
 
+var RouterState = mix(class {
+    constructor(opts) {
+        this.Component = opts.Component;
+        this.componentName = opts.componentName;
+    }
+}).with(MachineStateMixin);
+
 module.exports = function(_Weddell){
     return _Weddell.plugin({
         id: 'router',
@@ -12,31 +19,41 @@ module.exports = function(_Weddell){
                 return class extends App {
                     constructor(opts) {
                         super(opts);
+
                         this.router = new Router({
                             routes: opts.routes,
                             onRoute: function(matches, componentNames) {
-                                var component = this.component;
-                                var promises = [];
-                                var key = 0;
-                                while (component && component.components) {
-                                    if (componentNames[key]) {
-                                        var newComponent = component.getState(componentNames[key]);
-                                        if (newComponent) {
-                                            promises.push(component.changeState(newComponent));
-                                            component = newComponent;
-                                        } else {
-                                            throw "Could not navigate to component " + key;
-                                        }
-                                    } else {
-                                        if (component.currentState) {
-                                            promises.push(component.changeState(null));
-                                        }
-                                        component = component.currentState;
-                                    }
-                                    key++;
-                                }
-                                return Promise.all(promises);
+                                var jobs = [];
+
+                                return componentNames.reduce((promise, componentName) => {
+                                        return promise
+                                            .then(currentComponent => {
+                                                return currentComponent.getComponentInstance(componentName, 'router')
+                                                    .then(component => {
+                                                        if (!component) throw "Could not navigate to component " + key;
+                                                        jobs.push({
+                                                            component,
+                                                            currentComponent,
+                                                            componentName
+                                                        });
+                                                        return component;
+                                                    });
+                                            })
+                                    }, Promise.resolve(this.component))
+                                    .then(lastComponent => {
+                                        jobs.push({
+                                            currentComponent: lastComponent,
+                                            component: null,
+                                            componentName: null
+                                        });
+                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
+                                    });
+
                             }.bind(this)
+                        });
+
+                        this.on('createcomponent', evt => {
+                            evt.component.router = this.router;
                         });
                     }
 
@@ -49,25 +66,55 @@ module.exports = function(_Weddell){
                 }
             }),
             Component: Mixin(function(Component){
-                var RouterComponent = class extends mix(Component).with(StateMachineMixin, MachineStateMixin) {
+                var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     constructor(opts) {
-                        opts.stateClass = RouterComponent;
+                        opts.stateClass = RouterState;
                         super(opts);
+
+                        this.addTagDirective('RouterView', this.compileRouterView.bind(this));
+
                         var routerLocals = {
-                            $router: this.importRouterView.bind(this)
+                            $routerLink: this.compileRouterLink.bind(this)
                         };
                         this.store.assign(routerLocals);
+                        this._locals.assign(routerLocals);
 
-                        this.on('createcomponent', (evt) => {
-                            this.addState(evt.componentName, evt.component);
-                            evt.component.on(['exit', 'enter'], this.markDirty.bind(this));
-                        });
+                        Object.entries(this.components)
+                            .forEach(entry => {
+                                var routerState = new RouterState({
+                                    Component: entry[1],
+                                    componentName: entry[0]
+                                });
+                                this.addState(entry[0], routerState);
+                                routerState.on(['exit', 'enter'], evt => {
+                                    this.markDirty();
+                                });
+                            });
                     }
 
-                    importRouterView() {
-                        return this.currentState ? this.currentState._pipelines.markup.import() : '';
+                    compileRouterView(content, props) {
+                        if (this.currentState) {
+                            return this.getComponentInstance(this.currentState.componentName, 'router')
+                                .then(component => component.render('markup', content, props))
+                                .then(routerOutput => {
+                                    return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
+                                });
+                        }
+                        return Promise.resolve(null);
+                    }
+
+                    compileRouterLink(obj) {
+                        var matches = this.router.compileRouterLink(obj);
+                        if (matches) {
+                            return matches.fullPath;
+                        }
+                    }
+
+                    route(pathname) {
+                        this.router.route(pathname);
                     }
                 }
+
                 return RouterComponent;
             }),
             Router

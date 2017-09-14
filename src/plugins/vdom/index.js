@@ -5,6 +5,7 @@ var VNode = require('virtual-dom/vnode/vnode');
 var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var flatMap = require('../../utils/flatmap');
+var compact = require('array-compact');
 
 var defaultComponentOpts = {
     markupFormat: '(locals:Object,h:Function)=>VNode'
@@ -71,9 +72,13 @@ module.exports = function(Weddell, pluginOpts) {
                         this.renderers.VNode = this.replaceVNodeComponents.bind(this);
                     }
 
+                    resolveTagDirective(node, directive) {
+
+                    }
+
                     replaceVNodeComponents(node, content, renderedComponents) {
                         if (Array.isArray(node)) {
-                            return Promise.all(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents)));
+                            return Promise.all(compact(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents))));
                         }
 
                         var Sig = this.constructor.Weddell.classes.Sig;
@@ -83,7 +88,10 @@ module.exports = function(Weddell, pluginOpts) {
                         }
 
                         if (node.tagName) {
-                            if (node.tagName === 'CONTENT') {
+                            if (node.tagName.toUpperCase() in this._tagDirectives) {
+                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+
+                            } else if (node.tagName === 'CONTENT') {
                                 return content;
                             } else {
                                 var componentEntry = Object.entries(this.components)
@@ -94,7 +102,7 @@ module.exports = function(Weddell, pluginOpts) {
                                     if (!(componentEntry[0] in renderedComponents)) {
                                         renderedComponents[componentEntry[0]] = [];
                                     }
-                                    var index = node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME] || renderedComponents[componentEntry[0]].length;
+                                    var index = (node.properties.attributes && node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentEntry[0]].length;
                                     renderedComponents[componentEntry[0]].push(null);
 
                                     return this.replaceVNodeComponents(node.children, content, renderedComponents)
@@ -107,7 +115,7 @@ module.exports = function(Weddell, pluginOpts) {
                                         })
                                         .then(componentOutput => {
                                             this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes});
-                                            return componentOutput.output[0]
+                                            return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
                                         });
                                 }
                             }
@@ -116,7 +124,7 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.children) {
                             return this.replaceVNodeComponents(node.children, content, renderedComponents)
                                 .then(children => {
-                                    node.children = children;
+                                    node.children = compact(children);
                                     return node;
                                 });
                         }

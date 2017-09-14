@@ -961,16 +961,29 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.stylesTransforms = opts.stylesTransforms;
         this.renderers = {};
         var Sig = this.constructor.Weddell.classes.Sig;
+
+        var consts = this.constructor.Weddell.consts;
+
+        if (!this.Component) {
+            throw "There is no base component set for this app. Can't mount.";
+        }
+        if (consts.VAR_NAME in window) {
+            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+        }
+
+        Object.defineProperty(window, consts.VAR_NAME, {
+            value: {app: this, components: {} }
+        });
+
+        this.componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
+        this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
     }
 
     renderCSS(CSSString) {
         this.styleEl.textContent = CSSString;
     }
 
-
-
     renderMarkup(evt) {
-        // debugger;
         if (!(evt.renderFormat in this.renderers)) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
@@ -988,18 +1001,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.seal(this);
         return DOMReady
             .then(() => {
-                var consts = this.constructor.Weddell.consts;
-
-                if (!this.Component) {
-                    throw "There is no base component set for this app. Can't mount.";
-                }
-                if (consts.VAR_NAME in window) {
-                    throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
-                }
-
-                Object.defineProperty(window, consts.VAR_NAME, {
-                    value: {app: this, components: {} }
-                });
 
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
@@ -1013,14 +1014,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     document.head.appendChild(this.styleEl);
                 }
 
-                var componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
-                this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
-
-                var Component = this.constructor.Weddell.classes.Component;
-
                 var app = this;
 
-                this.component = new this.Component({
+                this.component = new (this.Component)({
                     isRoot: true,
                     targetStylesRenderFormat: app.stylesRenderFormat,
                     targetMarkupRenderFormat: app.markupRenderFormat,
@@ -1029,14 +1025,16 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 });
 
                 this.trigger('createcomponent', {component: this.component});
+                this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+                
                 this.component.on('markeddirty', evt => {
                     requestAnimationFrame(() => {
                         this.component.render(evt.pipelineName);
                     });
                 });
 
-                return this.component.init(componentOpts)
+                return this.component.init(this.componentOpts)
                     .then(() => {
                         this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
                         this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
@@ -1084,9 +1082,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
             inputs : { value: opts.inputs },
-            renderers: {
-                value: {}
-            }
+            renderers: { value: {} },
+            _tagDirectives: { value: {} }
         });
 
         var inputMappings = this.constructor._inputMappings;
@@ -1186,6 +1183,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         //Default event handler, noop
     }
 
+    addTagDirective(name, directive) {
+        this._tagDirectives[name.toUpperCase()] = directive;
+    }
+
     createChildComponentClass(componentName, Component) {
         if (Array.isArray(Component)) {
             var initOpts = Component[2];
@@ -1210,13 +1211,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     stylesTransforms
                 }, opts))
 
-                this.trigger('createcomponent', {component: this, componentName});
+                parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
+
+                this.on('createcomponent', evt => {
+                    parentComponent.trigger('createcomponent', Object.assign({}, evt));
+                });
 
                 this.on('markeddirty', evt => {
                     parentComponent.markDirty();
                 });
             }
         }
+        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -1256,10 +1262,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        if (Object.keys(this._componentInstances[entry[0]]).length) {
+                        var keys = Object.keys(this._componentInstances[entry[0]]);
+                        if (keys.length) {
                             //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
                             //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][0].renderStyles();//entry[1].renderStyles();
+                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
                         }
                         return {component: this, output: '', wasRenderered: false};
                     }))
@@ -1373,7 +1380,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
             return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
-        return Promise.resolve(instances[index]);
+        return Promise.resolve(instances ? instances[index] : null);
     }
 
     cleanupComponentInstances() {
@@ -2105,7 +2112,7 @@ module.exports = function(Weddell, pluginOpts){
                             value: new ActionDispatcher
                         });
                         this.on('createcomponent', evt => {
-                            this._actionDispatcher.addDispatchee(evt.component.state);
+                            this._actionDispatcher.addDispatchee(evt.component);
                             evt.component.on('createaction', evt => {
                                 this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
                             });
@@ -2119,13 +2126,13 @@ module.exports = function(Weddell, pluginOpts){
                     constructor(opts) {
                         super(opts);
                         var actionLocals = {
-                            $act: this._createAction.bind(this)
+                            $act: this.createAction.bind(this)
                         };
                         this.store.assign(actionLocals);
                         this._locals.assign(actionLocals);
                     }
 
-                    _createAction(actionName, actionData) {
+                    createAction(actionName, actionData) {
                         this.trigger('createaction', {actionName, actionData});
                     }
                 }

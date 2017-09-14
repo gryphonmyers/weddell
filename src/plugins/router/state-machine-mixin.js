@@ -13,16 +13,16 @@ var StateMachine = Mixin(function(superClass) {
                 stateClass: {value: opts.stateClass},
                 currentState: {writable: true, value: null},
                 previousState: {writable: true, value: null},
-                previousState: {writable: true, value: null},
                 states: {value: {}}
             });
-            if (!hasMixin(this, MachineState)) {
-                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
-            }
         }
 
         static checkIfIsState(state) {
-            return state.prototype === this.stateClass || state.prototype instanceof this.stateClass;
+            var result = hasMixin(state, MachineState);
+            if (!result) {
+                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
+            }
+            return result;
         }
 
         getState(state) {
@@ -31,14 +31,14 @@ var StateMachine = Mixin(function(superClass) {
             }
             if (typeof state == 'string') {
                 return this.states[state] || null;
-            } else if (state.constructor === this.stateClass || state instanceof this.stateClass) {
+            } else if (this.constructor.checkIfIsState(state)) {
                 return state;
             }
             return null;
         }
 
         addState(key, state, onEnter, onExit) {
-            if (this.stateClass.checkIfIsState(state)) {
+            if (this.constructor.checkIfIsState(state)) {
                 this.states[key] = state;
             }
         }
@@ -74,7 +74,8 @@ var StateMachine = Mixin(function(superClass) {
                         });
                 }
             }
-            return promise;
+            return promise
+                .then(() => this.currentState);
         }
     }
 })

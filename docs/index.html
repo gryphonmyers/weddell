@@ -3,53 +3,102 @@
     <head><title>My App</title></head>
     <body>
         <div id='app'></div>
-        <script src='js/weddell-e5+ro+vd.js'></script>
+        <script src='js/weddell-e5+ro+vd+ad.js'></script>
         <script>
             var App = Weddell.classes.App;
             var Component = Weddell.classes.Component;
 
             var app = new App({
+                routes: [
+                    {
+                        name: 'jonboy',
+                        pattern: 'jonboy',
+                        handler: function(){
+                            return 'MyBodyA'
+                        },
+                        children: [
+                            {
+                                name: 'jonboy2',
+                                pattern: 'wrong/:bomba',
+                                handler: function(){
+                                    return 'MyBodyB'
+                                }
+                            }
+                        ]
+                    }
+                ],
                 el: '#app',
                 // markupRenderFormat: 'HTMLString',
                 Component: class AppComponent extends Component {
                     constructor(opts) {
                         super(Object.assign({
-                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                            // markupFormat: '(locals:Object,h:Function)=>HTMLString',
                             styles: `
                                 .moo {
                                     background-color: red;
                                 }
                             `,
-                            markupTemplate: locals =>
-                            `
-                                <div>
-                                    <MyHeader bobby="foot">
-                                        <MyFooter></MyFooter>
-                                    </MyHeader>
-
-                                    <h1>${locals.myAppTitle}</h1>
-
-                                    <MyFooter></MyFooter>
-
-                                    <Accordion type="radio">
-                                        <AccordionRow accordionLabel="Bringo">
-                                            <h1>Moooo</h1>
-                                        </AccordionRow>
-
-                                        <AccordionRow accordionLabel="Boppa">
-                                            <span>Hi omnes lingua, institutis, legibus inter se differunt. Ut enim ad minim veniam, quis nostrud exercitation. Quam diu etiam furor iste tuus nos eludet?</span>
-                                        </AccordionRow>
-
-                                        <AccordionRow accordionLabel="Basdij">
-                                            <span>Idque Caesaris facere voluntate liceret: sese habere. Vivamus sagittis lacus vel augue laoreet rutrum faucibus. Contra legem facit qui id facit quod lex prohibet.</span>
-                                        </AccordionRow>
-
-                                        <AccordionRow accordionLabel="asdnASKJ">
-                                            <span>Gallia est omnis divisa in partes tres, quarum. Donec sed odio operae, eu vulputate felis rhoncus. Salutantibus vitae elit libero, a pharetra augue.</span>
-                                        </AccordionRow>
-                                    </Accordion>
-                                </div>
-                            `,
+                            markupTemplate: (locals, h) => {
+                                var el = h("div", [
+                                    h("MyHeader", {
+                                        "attributes": {
+                                            "bobby": "foot"
+                                        }
+                                    }, [
+                                        h("MyFooter")
+                                    ]),
+                                    h("h1", `${locals.myAppTitle}`),
+                                    h("MyFooter"),
+                                    h("Accordion", {
+                                        "attributes": {
+                                            "type": "radio"
+                                        }
+                                    }, [
+                                        h("AccordionRow", {
+                                            "attributes": {
+                                                "accordionLabel": "Bringo"
+                                            }
+                                        }, [
+                                            h("h1", `Moooo`),
+                                            h('a', {
+                                                attributes: {
+                                                    href: locals.$routerLink({name: 'jonboy2', params: {bomba: 'dumba'} })
+                                                }
+                                            },
+                                            "This is the link"),
+                                            h('a', {
+                                                attributes: {
+                                                    href: locals.$routerLink({name: 'jonboy', params: {bomba: 'dumba'} })
+                                                }
+                                            },
+                                            "This is the previous link")
+                                        ]),
+                                        h("AccordionRow", {
+                                            "attributes": {
+                                                "accordionLabel": "Boppa"
+                                            }
+                                        }, [
+                                            h("span", `Hi omnes lingua, institutis, legibus inter se differunt. Ut enim ad minim veniam, quis nostrud exercitation. Quam diu etiam furor iste tuus nos eludet?`)
+                                        ]),
+                                        h("AccordionRow", {
+                                            "attributes": {
+                                                "accordionLabel": "Basdij"
+                                            }
+                                        }, [
+                                            h("span", `Idque Caesaris facere voluntate liceret: sese habere. Vivamus sagittis lacus vel augue laoreet rutrum faucibus. Contra legem facit qui id facit quod lex prohibet.`)
+                                        ]),
+                                        h("AccordionRow", {
+                                            "attributes": {
+                                                "accordionLabel": "asdnASKJ"
+                                            }
+                                        }, [
+                                            h("span", `Gallia est omnis divisa in partes tres, quarum. Donec sed odio operae, eu vulputate felis rhoncus. Salutantibus vitae elit libero, a pharetra augue.`)
+                                        ])
+                                    ]),
+                                    h('RouterView')
+                                ]);
+                                return el;
+                            },
                             state: {
                                 myAppTitle: 'A compendium of frog species'
                             },
@@ -57,7 +106,7 @@
                                 Accordion: class Accordion extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
-                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                            // markupFormat: '(locals:Object,h:Function)=>HTMLString',
                                             stylesFormat: 'CSSString',
                                             state: {
                                                 boogie: 'moo',
@@ -65,12 +114,15 @@
                                                 type: 'checkbox'
                                             },
                                             inputs: ['type'],
-                                            markupTemplate: locals =>
-                                            `
-                                                <div class="accordion-wrapper" data-moo="${locals.type}">
-                                                    <content></content>
-                                                </div>
-                                            `,
+                                            markupTemplate: (locals, h) =>
+                                                h("div", {
+                                                  "attributes": {
+                                                    "data-moo": locals.type,
+                                                    "class": "accordion-wrapper"
+                                                  }
+                                                }, [
+                                                  h("content")
+                                                ]),
                                             styles: `
                                                 .accordion-label {
                                                     display: block;
@@ -172,21 +224,39 @@
                                                                 accordionLabel: 'Mew',
                                                                 type: 'checkbox'
                                                             },
-                                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
-                                                            markupTemplate: locals =>
-                                                            `
-                                                                <div class="accordion-row">
-                                                                    <input id="accordion-${locals.$componentID + locals.$id}-checkbox" name="sections-accordion" type="${locals.type}" class="accordion" />
+                                                            // markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                                            markupTemplate: (locals, h) => {
+                                                                var el = h("div.accordion-row", {
+                                                                    "attributes": {
+                                                                    }
+                                                                }, [
+                                                                    h("input.accordion", {
+                                                                        "attributes": {
+                                                                            "name": "sections-accordion",
+                                                                            "type": locals.type
+                                                                        },
+                                                                        "id": "accordion-" + locals.$componentID + locals.$id + "-checkbox"
+                                                                    }),
+                                                                    h("label.accordion-label", {
+                                                                        "attributes": {
+                                                                            "for": "accordion-" + locals.$componentID + locals.$id + "-checkbox"
+                                                                        }
+                                                                    }, [
+                                                                        h("h3", [
+                                                                            h("a", {
+                                                                                "attributes": {
+                                                                                    "href": "#"
+                                                                                }
+                                                                            }, `${locals.accordionLabel}`)
+                                                                        ])
+                                                                    ]),
+                                                                    h("div.accordion-content", [
+                                                                        h("content")
+                                                                    ])
+                                                                ]);
+                                                                return el;
+                                                            }
 
-                                                                    <label class="accordion-label" for="accordion-${locals.$componentID + locals.$id}-checkbox">
-                                                                        <h3><a href="#">${locals.accordionLabel}</a></h3>
-                                                                    </label>
-
-                                                                    <div class="accordion-content">
-                                                                        <content></content>
-                                                                    </div>
-                                                                </div>
-                                                            `
                                                         }, opts))
                                                     }
                                                 }, {
@@ -199,11 +269,14 @@
                                 MyHeader: class Header extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
-                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
-                                            markupTemplate: locals =>
-                                            `
-                                                <header data-bobby="${locals.bobby}" onclick="${locals.$bind("this.$act('disablethings', {mything:'moo'})")}">${locals.headerText}</header>
-                                            `,
+                                            // markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                            markupTemplate: (locals, h) =>
+                                                h("header", {
+                                                    "attributes": {
+                                                        "data-bobby": locals.bobby,
+                                                        "onclick": locals.$bind("this.$act('disablethings',{mything:'moo'})")
+                                                    }
+                                                }, `${locals.headerText}`),
                                             inputs: ['bobby'],
                                             state: {
                                                 headerText: 'Who doesn\'t love frogs?'
@@ -211,19 +284,36 @@
                                         }, opts))
                                     }
                                 },
-                                MyBody: class Body extends Component {
+                                MyBodyA: class Body extends Component {
+                                    constructor(opts) {
+                                        super(Object.assign({
+                                            markupTemplate: (local, h) =>
+                                                h('div', [
+                                                    h('div.mooboody', "Don't fuck me on this."),
+                                                    h('RouterView')
+                                                ]),
+                                            components: {
+                                                MyBodyB: class Body extends Component {
+                                                    constructor(opts) {
+                                                        super(Object.assign({
+                                                            markupTemplate: (local, h) =>
+                                                                h('div.shhsh', "Gosh you're such a millennium.")
+                                                        }, opts))
+                                                    }
+                                                }
+                                            }
+                                        }, opts))
+                                    }
                                 },
                                 MyFooter: class Footer extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
-                                            markupFormat: '(locals:Object,h:Function)=>HTMLString',
-                                            markupTemplate: locals =>
-                                            `
-                                                <footer>
-                                                    ${!locals.disabled ? locals.coolContent : ''}
-                                                    <div>${locals.footerText}</div>
-                                                </footer>
-                                            `,
+                                            // markupFormat: '(locals:Object,h:Function)=>HTMLString',
+                                            markupTemplate: (locals, h) =>
+                                                h("footer", [
+                                                    `${!locals.disabled ? locals.coolContent : ''}`,
+                                                    h("div", `${locals.footerText}`)
+                                                ]),
                                             state: {
                                                 disabled: false,
                                                 coolContent: 'This is cool',
@@ -233,12 +323,12 @@
                                     }
 
                                     onInit() {
-                                        this.state.on('disablethings', function(evt){
+                                        this.on('disablethings', function(evt){
                                             console.log('Disabling, sorry', evt.mything);
                                             this.disabled = true;
                                         });
                                         setTimeout(() => {
-                                            // debugger;
+                                            this.route('jonboy/wrong');//{ name: 'jonboy', params: {bogus: 'prime', dingus:'chonus'} });
                                             this.state.footerText = 'Just kidding, copyright 2017, some other guy';
                                         }, 3000);
                                     }
