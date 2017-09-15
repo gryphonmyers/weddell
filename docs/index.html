@@ -3,7 +3,7 @@
     <head><title>My App</title></head>
     <body>
         <div id='app'></div>
-        <script src='js/weddell-e5+ro+vd+ad.js'></script>
+        <script src='js/weddell-ro+vd+ad.js'></script>
         <script>
             var App = Weddell.classes.App;
             var Component = Weddell.classes.Component;
@@ -295,9 +295,13 @@
                                 MyBodyA: class Body extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
-                                            markupTemplate: (local, h) =>
+                                            markupTemplate: (locals, h) =>
                                                 h('div', [
-                                                    h('div.mooboody', "Don't fuck me on this."),
+                                                    h('div.mooboody', {
+                                                        attributes: {
+                                                            onclick: locals.$bind("this.store.$act('disablethings')")
+                                                        }
+                                                    }, "Don't fuck me on this."),
                                                     h('RouterView')
                                                 ]),
                                             components: {
@@ -333,7 +337,7 @@
                                     onInit() {
                                         this.on('disablethings', function(evt){
                                             console.log('Disabling, sorry', evt.mything);
-                                            this.disabled = true;
+                                            this.state.disabled = true;
                                         });
                                         setTimeout(() => {
                                             this.route('jonboy/wrong');//{ name: 'jonboy', params: {bogus: 'prime', dingus:'chonus'} });

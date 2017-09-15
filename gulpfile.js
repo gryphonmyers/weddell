@@ -43,9 +43,8 @@ function makeBundles(entryDir, outputDir, optsArr) {
             var files = results[0];
             return Promise.all(_.flatMap(files, file => {
                     return optsArr.map(function(opts){
-                        if (file.toLowerCase().indexOf('e5' > -1)) {
-                            opts = Object.assign({es6:false}, opts);
-                        }
+                        opts = Object.assign(opts, {es6: !(file.toLowerCase().indexOf('e5')  > -1) })
+                        // console.log(opts);
                         return makeBundle(path.join(entryDir, file), file, outputDir, opts);
                     });
                 }))
@@ -135,9 +134,11 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
     if (opts.dev) {
         bundler.plugin(watchify);
     }
+
     if (!opts.es6) {
         bundler.transform('babelify', {presets:['es2015']});
     }
+
     if (!opts.dev && !opts.es6) { //right now we skip uglify on es6 because newer uglifyify versions supporting es6 are broken
         bundler.transform(uglifyify, {global: true, ignore: ['*.css', '*.pug']});
     }

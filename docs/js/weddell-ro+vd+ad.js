@@ -430,152 +430,6 @@ function shim (obj) {
 })
 
 },{}],11:[function(require,module,exports){
-// doT.js
-// 2011-2014, Laura Doktorova, https://github.com/olado/doT
-// Licensed under the MIT license.
-
-(function () {
-	"use strict";
-
-	var doT = {
-		name: "doT",
-		version: "1.1.1",
-		templateSettings: {
-			evaluate:    /\{\{([\s\S]+?(\}?)+)\}\}/g,
-			interpolate: /\{\{=([\s\S]+?)\}\}/g,
-			encode:      /\{\{!([\s\S]+?)\}\}/g,
-			use:         /\{\{#([\s\S]+?)\}\}/g,
-			useParams:   /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
-			define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
-			defineParams:/^\s*([\w$]+):([\s\S]+)/,
-			conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
-			iterate:     /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
-			varname:	"it",
-			strip:		true,
-			append:		true,
-			selfcontained: false,
-			doNotSkipEncoded: false
-		},
-		template: undefined, //fn, compile template
-		compile:  undefined, //fn, for express
-		log: true
-	}, _globals;
-
-	doT.encodeHTMLSource = function(doNotSkipEncoded) {
-		var encodeHTMLRules = { "&": "&#38;", "<": "&#60;", ">": "&#62;", '"': "&#34;", "'": "&#39;", "/": "&#47;" },
-			matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
-		return function(code) {
-			return code ? code.toString().replace(matchHTML, function(m) {return encodeHTMLRules[m] || m;}) : "";
-		};
-	};
-
-	_globals = (function(){ return this || (0,eval)("this"); }());
-
-	/* istanbul ignore else */
-	if (typeof module !== "undefined" && module.exports) {
-		module.exports = doT;
-	} else if (typeof define === "function" && define.amd) {
-		define(function(){return doT;});
-	} else {
-		_globals.doT = doT;
-	}
-
-	var startend = {
-		append: { start: "'+(",      end: ")+'",      startencode: "'+encodeHTML(" },
-		split:  { start: "';out+=(", end: ");out+='", startencode: "';out+=encodeHTML(" }
-	}, skip = /$^/;
-
-	function resolveDefs(c, block, def) {
-		return ((typeof block === "string") ? block : block.toString())
-		.replace(c.define || skip, function(m, code, assign, value) {
-			if (code.indexOf("def.") === 0) {
-				code = code.substring(4);
-			}
-			if (!(code in def)) {
-				if (assign === ":") {
-					if (c.defineParams) value.replace(c.defineParams, function(m, param, v) {
-						def[code] = {arg: param, text: v};
-					});
-					if (!(code in def)) def[code]= value;
-				} else {
-					new Function("def", "def['"+code+"']=" + value)(def);
-				}
-			}
-			return "";
-		})
-		.replace(c.use || skip, function(m, code) {
-			if (c.useParams) code = code.replace(c.useParams, function(m, s, d, param) {
-				if (def[d] && def[d].arg && param) {
-					var rw = (d+":"+param).replace(/'|\\/g, "_");
-					def.__exp = def.__exp || {};
-					def.__exp[rw] = def[d].text.replace(new RegExp("(^|[^\\w$])" + def[d].arg + "([^\\w$])", "g"), "$1" + param + "$2");
-					return s + "def.__exp['"+rw+"']";
-				}
-			});
-			var v = new Function("def", "return " + code)(def);
-			return v ? resolveDefs(c, v, def) : v;
-		});
-	}
-
-	function unescape(code) {
-		return code.replace(/\\('|\\)/g, "$1").replace(/[\r\t\n]/g, " ");
-	}
-
-	doT.template = function(tmpl, c, def) {
-		c = c || doT.templateSettings;
-		var cse = c.append ? startend.append : startend.split, needhtmlencode, sid = 0, indv,
-			str  = (c.use || c.define) ? resolveDefs(c, tmpl, def || {}) : tmpl;
-
-		str = ("var out='" + (c.strip ? str.replace(/(^|\r|\n)\t* +| +\t*(\r|\n|$)/g," ")
-					.replace(/\r|\n|\t|\/\*[\s\S]*?\*\//g,""): str)
-			.replace(/'|\\/g, "\\$&")
-			.replace(c.interpolate || skip, function(m, code) {
-				return cse.start + unescape(code) + cse.end;
-			})
-			.replace(c.encode || skip, function(m, code) {
-				needhtmlencode = true;
-				return cse.startencode + unescape(code) + cse.end;
-			})
-			.replace(c.conditional || skip, function(m, elsecase, code) {
-				return elsecase ?
-					(code ? "';}else if(" + unescape(code) + "){out+='" : "';}else{out+='") :
-					(code ? "';if(" + unescape(code) + "){out+='" : "';}out+='");
-			})
-			.replace(c.iterate || skip, function(m, iterate, vname, iname) {
-				if (!iterate) return "';} } out+='";
-				sid+=1; indv=iname || "i"+sid; iterate=unescape(iterate);
-				return "';var arr"+sid+"="+iterate+";if(arr"+sid+"){var "+vname+","+indv+"=-1,l"+sid+"=arr"+sid+".length-1;while("+indv+"<l"+sid+"){"
-					+vname+"=arr"+sid+"["+indv+"+=1];out+='";
-			})
-			.replace(c.evaluate || skip, function(m, code) {
-				return "';" + unescape(code) + "out+='";
-			})
-			+ "';return out;")
-			.replace(/\n/g, "\\n").replace(/\t/g, '\\t').replace(/\r/g, "\\r")
-			.replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, "");
-			//.replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
-
-		if (needhtmlencode) {
-			if (!c.selfcontained && _globals && !_globals._encodeHTML) _globals._encodeHTML = doT.encodeHTMLSource(c.doNotSkipEncoded);
-			str = "var encodeHTML = typeof _encodeHTML !== 'undefined' ? _encodeHTML : ("
-				+ doT.encodeHTMLSource.toString() + "(" + (c.doNotSkipEncoded || '') + "));"
-				+ str;
-		}
-		try {
-			return new Function(c.varname, str);
-		} catch (e) {
-			/* istanbul ignore else */
-			if (typeof console !== "undefined") console.log("Could not create a template function: " + str);
-			throw e;
-		}
-	};
-
-	doT.compile = function(tmpl, def) {
-		return doT.template(tmpl, null, def);
-	};
-}());
-
-},{}],12:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -597,7 +451,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":18}],13:[function(require,module,exports){
+},{"individual/one-version":17}],12:[function(require,module,exports){
 'use strict';
 
 var FindParent = {
@@ -640,7 +494,7 @@ var FindParent = {
 
 module.exports = FindParent;
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*!
  * for-in <https://github.com/jonschlinkert/for-in>
  *
@@ -658,7 +512,7 @@ module.exports = function forIn(obj, fn, thisArg) {
   }
 };
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /*!
  * for-own <https://github.com/jonschlinkert/for-own>
  *
@@ -679,7 +533,7 @@ module.exports = function forOwn(obj, fn, thisArg) {
   });
 };
 
-},{"for-in":14}],16:[function(require,module,exports){
+},{"for-in":13}],15:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -700,7 +554,7 @@ if (typeof document !== 'undefined') {
 module.exports = doccy;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":4}],17:[function(require,module,exports){
+},{"min-document":4}],16:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -723,7 +577,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -747,14 +601,14 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":17}],19:[function(require,module,exports){
+},{"./index.js":16}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*!
  * isobject <https://github.com/jonschlinkert/isobject>
  *
@@ -768,7 +622,7 @@ module.exports = function isObject(val) {
   return val != null && typeof val === 'object' && Array.isArray(val) === false;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -910,384 +764,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }();
 });
 
-},{}],22:[function(require,module,exports){
-(function (global){
-/*! Native Promise Only
-    v0.8.1 (c) Kyle Simpson
-    MIT License: http://getify.mit-license.org
-*/
-
-(function UMD(name,context,definition){
-	// special form of UMD for polyfilling across evironments
-	context[name] = context[name] || definition();
-	if (typeof module != "undefined" && module.exports) { module.exports = context[name]; }
-	else if (typeof define == "function" && define.amd) { define(function $AMD$(){ return context[name]; }); }
-})("Promise",typeof global != "undefined" ? global : this,function DEF(){
-	/*jshint validthis:true */
-	"use strict";
-
-	var builtInProp, cycle, scheduling_queue,
-		ToString = Object.prototype.toString,
-		timer = (typeof setImmediate != "undefined") ?
-			function timer(fn) { return setImmediate(fn); } :
-			setTimeout
-	;
-
-	// dammit, IE8.
-	try {
-		Object.defineProperty({},"x",{});
-		builtInProp = function builtInProp(obj,name,val,config) {
-			return Object.defineProperty(obj,name,{
-				value: val,
-				writable: true,
-				configurable: config !== false
-			});
-		};
-	}
-	catch (err) {
-		builtInProp = function builtInProp(obj,name,val) {
-			obj[name] = val;
-			return obj;
-		};
-	}
-
-	// Note: using a queue instead of array for efficiency
-	scheduling_queue = (function Queue() {
-		var first, last, item;
-
-		function Item(fn,self) {
-			this.fn = fn;
-			this.self = self;
-			this.next = void 0;
-		}
-
-		return {
-			add: function add(fn,self) {
-				item = new Item(fn,self);
-				if (last) {
-					last.next = item;
-				}
-				else {
-					first = item;
-				}
-				last = item;
-				item = void 0;
-			},
-			drain: function drain() {
-				var f = first;
-				first = last = cycle = void 0;
-
-				while (f) {
-					f.fn.call(f.self);
-					f = f.next;
-				}
-			}
-		};
-	})();
-
-	function schedule(fn,self) {
-		scheduling_queue.add(fn,self);
-		if (!cycle) {
-			cycle = timer(scheduling_queue.drain);
-		}
-	}
-
-	// promise duck typing
-	function isThenable(o) {
-		var _then, o_type = typeof o;
-
-		if (o != null &&
-			(
-				o_type == "object" || o_type == "function"
-			)
-		) {
-			_then = o.then;
-		}
-		return typeof _then == "function" ? _then : false;
-	}
-
-	function notify() {
-		for (var i=0; i<this.chain.length; i++) {
-			notifyIsolated(
-				this,
-				(this.state === 1) ? this.chain[i].success : this.chain[i].failure,
-				this.chain[i]
-			);
-		}
-		this.chain.length = 0;
-	}
-
-	// NOTE: This is a separate function to isolate
-	// the `try..catch` so that other code can be
-	// optimized better
-	function notifyIsolated(self,cb,chain) {
-		var ret, _then;
-		try {
-			if (cb === false) {
-				chain.reject(self.msg);
-			}
-			else {
-				if (cb === true) {
-					ret = self.msg;
-				}
-				else {
-					ret = cb.call(void 0,self.msg);
-				}
-
-				if (ret === chain.promise) {
-					chain.reject(TypeError("Promise-chain cycle"));
-				}
-				else if (_then = isThenable(ret)) {
-					_then.call(ret,chain.resolve,chain.reject);
-				}
-				else {
-					chain.resolve(ret);
-				}
-			}
-		}
-		catch (err) {
-			chain.reject(err);
-		}
-	}
-
-	function resolve(msg) {
-		var _then, self = this;
-
-		// already triggered?
-		if (self.triggered) { return; }
-
-		self.triggered = true;
-
-		// unwrap
-		if (self.def) {
-			self = self.def;
-		}
-
-		try {
-			if (_then = isThenable(msg)) {
-				schedule(function(){
-					var def_wrapper = new MakeDefWrapper(self);
-					try {
-						_then.call(msg,
-							function $resolve$(){ resolve.apply(def_wrapper,arguments); },
-							function $reject$(){ reject.apply(def_wrapper,arguments); }
-						);
-					}
-					catch (err) {
-						reject.call(def_wrapper,err);
-					}
-				})
-			}
-			else {
-				self.msg = msg;
-				self.state = 1;
-				if (self.chain.length > 0) {
-					schedule(notify,self);
-				}
-			}
-		}
-		catch (err) {
-			reject.call(new MakeDefWrapper(self),err);
-		}
-	}
-
-	function reject(msg) {
-		var self = this;
-
-		// already triggered?
-		if (self.triggered) { return; }
-
-		self.triggered = true;
-
-		// unwrap
-		if (self.def) {
-			self = self.def;
-		}
-
-		self.msg = msg;
-		self.state = 2;
-		if (self.chain.length > 0) {
-			schedule(notify,self);
-		}
-	}
-
-	function iteratePromises(Constructor,arr,resolver,rejecter) {
-		for (var idx=0; idx<arr.length; idx++) {
-			(function IIFE(idx){
-				Constructor.resolve(arr[idx])
-				.then(
-					function $resolver$(msg){
-						resolver(idx,msg);
-					},
-					rejecter
-				);
-			})(idx);
-		}
-	}
-
-	function MakeDefWrapper(self) {
-		this.def = self;
-		this.triggered = false;
-	}
-
-	function MakeDef(self) {
-		this.promise = self;
-		this.state = 0;
-		this.triggered = false;
-		this.chain = [];
-		this.msg = void 0;
-	}
-
-	function Promise(executor) {
-		if (typeof executor != "function") {
-			throw TypeError("Not a function");
-		}
-
-		if (this.__NPO__ !== 0) {
-			throw TypeError("Not a promise");
-		}
-
-		// instance shadowing the inherited "brand"
-		// to signal an already "initialized" promise
-		this.__NPO__ = 1;
-
-		var def = new MakeDef(this);
-
-		this["then"] = function then(success,failure) {
-			var o = {
-				success: typeof success == "function" ? success : true,
-				failure: typeof failure == "function" ? failure : false
-			};
-			// Note: `then(..)` itself can be borrowed to be used against
-			// a different promise constructor for making the chained promise,
-			// by substituting a different `this` binding.
-			o.promise = new this.constructor(function extractChain(resolve,reject) {
-				if (typeof resolve != "function" || typeof reject != "function") {
-					throw TypeError("Not a function");
-				}
-
-				o.resolve = resolve;
-				o.reject = reject;
-			});
-			def.chain.push(o);
-
-			if (def.state !== 0) {
-				schedule(notify,def);
-			}
-
-			return o.promise;
-		};
-		this["catch"] = function $catch$(failure) {
-			return this.then(void 0,failure);
-		};
-
-		try {
-			executor.call(
-				void 0,
-				function publicResolve(msg){
-					resolve.call(def,msg);
-				},
-				function publicReject(msg) {
-					reject.call(def,msg);
-				}
-			);
-		}
-		catch (err) {
-			reject.call(def,err);
-		}
-	}
-
-	var PromisePrototype = builtInProp({},"constructor",Promise,
-		/*configurable=*/false
-	);
-
-	// Note: Android 4 cannot use `Object.defineProperty(..)` here
-	Promise.prototype = PromisePrototype;
-
-	// built-in "brand" to signal an "uninitialized" promise
-	builtInProp(PromisePrototype,"__NPO__",0,
-		/*configurable=*/false
-	);
-
-	builtInProp(Promise,"resolve",function Promise$resolve(msg) {
-		var Constructor = this;
-
-		// spec mandated checks
-		// note: best "isPromise" check that's practical for now
-		if (msg && typeof msg == "object" && msg.__NPO__ === 1) {
-			return msg;
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			resolve(msg);
-		});
-	});
-
-	builtInProp(Promise,"reject",function Promise$reject(msg) {
-		return new this(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			reject(msg);
-		});
-	});
-
-	builtInProp(Promise,"all",function Promise$all(arr) {
-		var Constructor = this;
-
-		// spec mandated checks
-		if (ToString.call(arr) != "[object Array]") {
-			return Constructor.reject(TypeError("Not an array"));
-		}
-		if (arr.length === 0) {
-			return Constructor.resolve([]);
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			var len = arr.length, msgs = Array(len), count = 0;
-
-			iteratePromises(Constructor,arr,function resolver(idx,msg) {
-				msgs[idx] = msg;
-				if (++count === len) {
-					resolve(msgs);
-				}
-			},reject);
-		});
-	});
-
-	builtInProp(Promise,"race",function Promise$race(arr) {
-		var Constructor = this;
-
-		// spec mandated checks
-		if (ToString.call(arr) != "[object Array]") {
-			return Constructor.reject(TypeError("Not an array"));
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			iteratePromises(Constructor,arr,function resolver(idx,msg){
-				resolve(msg);
-			},reject);
-		});
-	});
-
-	return Promise;
-});
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],23:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -1309,7 +786,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":24,"array-slice":3}],24:[function(require,module,exports){
+},{"./mutable":22,"array-slice":3}],22:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -1346,7 +823,7 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":2,"array-slice":3,"for-own":15,"isobject":20}],25:[function(require,module,exports){
+},{"array-each":2,"array-slice":3,"for-own":14,"isobject":19}],23:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -1774,952 +1251,27 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":26}],26:[function(require,module,exports){
+},{"isarray":24}],24:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],27:[function(require,module,exports){
-/**
- * @file prescribe
- * @description Tiny, forgiving HTML parser
- * @version v1.1.3
- * @see {@link https://github.com/krux/prescribe/}
- * @license MIT
- * @author Derek Brans
- * @copyright 2017 Krux Digital, Inc
- */
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else if(typeof exports === 'object')
-		exports["Prescribe"] = factory();
-	else
-		root["Prescribe"] = factory();
-})(this, function() {
-return /******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
-/******/ 			return installedModules[moduleId].exports;
-
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			exports: {},
-/******/ 			id: moduleId,
-/******/ 			loaded: false
-/******/ 		};
-
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
-/******/ 		// Flag the module as loaded
-/******/ 		module.loaded = true;
-
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-
-
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(0);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _HtmlParser = __webpack_require__(1);
-
-	var _HtmlParser2 = _interopRequireDefault(_HtmlParser);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-	module.exports = _HtmlParser2['default'];
-
-/***/ },
-/* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-
-	var _supports = __webpack_require__(2);
-
-	var supports = _interopRequireWildcard(_supports);
-
-	var _streamReaders = __webpack_require__(3);
-
-	var streamReaders = _interopRequireWildcard(_streamReaders);
-
-	var _fixedReadTokenFactory = __webpack_require__(6);
-
-	var _fixedReadTokenFactory2 = _interopRequireDefault(_fixedReadTokenFactory);
-
-	var _utils = __webpack_require__(5);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/**
-	 * Detection regular expressions.
-	 *
-	 * Order of detection matters: detection of one can only
-	 * succeed if detection of previous didn't
-
-	 * @type {Object}
-	 */
-	var detect = {
-	  comment: /^<!--/,
-	  endTag: /^<\//,
-	  atomicTag: /^<\s*(script|style|noscript|iframe|textarea)[\s\/>]/i,
-	  startTag: /^</,
-	  chars: /^[^<]/
-	};
-
-	/**
-	 * HtmlParser provides the capability to parse HTML and return tokens
-	 * representing the tags and content.
-	 */
-
-	var HtmlParser = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} stream The initial parse stream contents.
-	   * @param {Object} options The options
-	   * @param {boolean} options.autoFix Set to true to automatically fix errors
-	   */
-	  function HtmlParser() {
-	    var _this = this;
-
-	    var stream = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-	    _classCallCheck(this, HtmlParser);
-
-	    this.stream = stream;
-
-	    var fix = false;
-	    var fixedTokenOptions = {};
-
-	    for (var key in supports) {
-	      if (supports.hasOwnProperty(key)) {
-	        if (options.autoFix) {
-	          fixedTokenOptions[key + 'Fix'] = true; // !supports[key];
-	        }
-	        fix = fix || fixedTokenOptions[key + 'Fix'];
-	      }
-	    }
-
-	    if (fix) {
-	      this._readToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
-	        return _this._readTokenImpl();
-	      });
-	      this._peekToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
-	        return _this._peekTokenImpl();
-	      });
-	    } else {
-	      this._readToken = this._readTokenImpl;
-	      this._peekToken = this._peekTokenImpl;
-	    }
-	  }
-
-	  /**
-	   * Appends the given string to the parse stream.
-	   *
-	   * @param {string} str The string to append
-	   */
-
-
-	  HtmlParser.prototype.append = function append(str) {
-	    this.stream += str;
-	  };
-
-	  /**
-	   * Prepends the given string to the parse stream.
-	   *
-	   * @param {string} str The string to prepend
-	   */
-
-
-	  HtmlParser.prototype.prepend = function prepend(str) {
-	    this.stream = str + this.stream;
-	  };
-
-	  /**
-	   * The implementation of the token reading.
-	   *
-	   * @private
-	   * @returns {?Token}
-	   */
-
-
-	  HtmlParser.prototype._readTokenImpl = function _readTokenImpl() {
-	    var token = this._peekTokenImpl();
-	    if (token) {
-	      this.stream = this.stream.slice(token.length);
-	      return token;
-	    }
-	  };
-
-	  /**
-	   * The implementation of token peeking.
-	   *
-	   * @returns {?Token}
-	   */
-
-
-	  HtmlParser.prototype._peekTokenImpl = function _peekTokenImpl() {
-	    for (var type in detect) {
-	      if (detect.hasOwnProperty(type)) {
-	        if (detect[type].test(this.stream)) {
-	          var token = streamReaders[type](this.stream);
-
-	          if (token) {
-	            if (token.type === 'startTag' && /script|style/i.test(token.tagName)) {
-	              return null;
-	            } else {
-	              token.text = this.stream.substr(0, token.length);
-	              return token;
-	            }
-	          }
-	        }
-	      }
-	    }
-	  };
-
-	  /**
-	   * The public token peeking interface.  Delegates to the basic token peeking
-	   * or a version that performs fixups depending on the `autoFix` setting in
-	   * options.
-	   *
-	   * @returns {object}
-	   */
-
-
-	  HtmlParser.prototype.peekToken = function peekToken() {
-	    return this._peekToken();
-	  };
-
-	  /**
-	   * The public token reading interface.  Delegates to the basic token reading
-	   * or a version that performs fixups depending on the `autoFix` setting in
-	   * options.
-	   *
-	   * @returns {object}
-	   */
-
-
-	  HtmlParser.prototype.readToken = function readToken() {
-	    return this._readToken();
-	  };
-
-	  /**
-	   * Read tokens and hand to the given handlers.
-	   *
-	   * @param {Object} handlers The handlers to use for the different tokens.
-	   */
-
-
-	  HtmlParser.prototype.readTokens = function readTokens(handlers) {
-	    var tok = void 0;
-	    while (tok = this.readToken()) {
-	      // continue until we get an explicit "false" return
-	      if (handlers[tok.type] && handlers[tok.type](tok) === false) {
-	        return;
-	      }
-	    }
-	  };
-
-	  /**
-	   * Clears the parse stream.
-	   *
-	   * @returns {string} The contents of the parse stream before clearing.
-	   */
-
-
-	  HtmlParser.prototype.clear = function clear() {
-	    var rest = this.stream;
-	    this.stream = '';
-	    return rest;
-	  };
-
-	  /**
-	   * Returns the rest of the parse stream.
-	   *
-	   * @returns {string} The contents of the parse stream.
-	   */
-
-
-	  HtmlParser.prototype.rest = function rest() {
-	    return this.stream;
-	  };
-
-	  return HtmlParser;
-	}();
-
-	exports['default'] = HtmlParser;
-
-
-	HtmlParser.tokenToString = function (tok) {
-	  return tok.toString();
-	};
-
-	HtmlParser.escapeAttributes = function (attrs) {
-	  var escapedAttrs = {};
-
-	  for (var name in attrs) {
-	    if (attrs.hasOwnProperty(name)) {
-	      escapedAttrs[name] = (0, _utils.escapeQuotes)(attrs[name], null);
-	    }
-	  }
-
-	  return escapedAttrs;
-	};
-
-	HtmlParser.supports = supports;
-
-	for (var key in supports) {
-	  if (supports.hasOwnProperty(key)) {
-	    HtmlParser.browserHasFlaw = HtmlParser.browserHasFlaw || !supports[key] && key;
-	  }
-	}
-
-/***/ },
-/* 2 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	var tagSoup = false;
-	var selfClose = false;
-
-	var work = window.document.createElement('div');
-
-	try {
-	  var html = '<P><I></P></I>';
-	  work.innerHTML = html;
-	  exports.tagSoup = tagSoup = work.innerHTML !== html;
-	} catch (e) {
-	  exports.tagSoup = tagSoup = false;
-	}
-
-	try {
-	  work.innerHTML = '<P><i><P></P></i></P>';
-	  exports.selfClose = selfClose = work.childNodes.length === 2;
-	} catch (e) {
-	  exports.selfClose = selfClose = false;
-	}
-
-	work = null;
-
-	exports.tagSoup = tagSoup;
-	exports.selfClose = selfClose;
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports.comment = comment;
-	exports.chars = chars;
-	exports.startTag = startTag;
-	exports.atomicTag = atomicTag;
-	exports.endTag = endTag;
-
-	var _tokens = __webpack_require__(4);
-
-	/**
-	 * Regular Expressions for parsing tags and attributes
-	 *
-	 * @type {Object}
-	 */
-	var REGEXES = {
-	  startTag: /^<([\-A-Za-z0-9_!:]+)((?:\s+[\w\-]+(?:\s*=?\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
-	  endTag: /^<\/([\-A-Za-z0-9_:]+)[^>]*>/,
-	  attr: /(?:([\-A-Za-z0-9_]+)\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))|(?:([\-A-Za-z0-9_]+)(\s|$)+)/g,
-	  fillAttr: /^(checked|compact|declare|defer|disabled|ismap|multiple|nohref|noresize|noshade|nowrap|readonly|selected)$/i
-	};
-
-	/**
-	 * Reads a comment token
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {CommentToken}
-	 */
-	function comment(stream) {
-	  var index = stream.indexOf('-->');
-	  if (index >= 0) {
-	    return new _tokens.CommentToken(stream.substr(4, index - 1), index + 3);
-	  }
-	}
-
-	/**
-	 * Reads non-tag characters.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {CharsToken}
-	 */
-	function chars(stream) {
-	  var index = stream.indexOf('<');
-	  return new _tokens.CharsToken(index >= 0 ? index : stream.length);
-	}
-
-	/**
-	 * Reads start tag token.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {StartTagToken}
-	 */
-	function startTag(stream) {
-	  var endTagIndex = stream.indexOf('>');
-	  if (endTagIndex !== -1) {
-	    var match = stream.match(REGEXES.startTag);
-	    if (match) {
-	      var attrs = {};
-	      var booleanAttrs = {};
-	      var rest = match[2];
-
-	      match[2].replace(REGEXES.attr, function (match, name) {
-	        if (!(arguments[2] || arguments[3] || arguments[4] || arguments[5])) {
-	          attrs[name] = '';
-	        } else if (arguments[5]) {
-	          attrs[arguments[5]] = '';
-	          booleanAttrs[arguments[5]] = true;
-	        } else {
-	          attrs[name] = arguments[2] || arguments[3] || arguments[4] || REGEXES.fillAttr.test(name) && name || '';
-	        }
-
-	        rest = rest.replace(match, '');
-	      });
-
-	      return new _tokens.StartTagToken(match[1], match[0].length, attrs, booleanAttrs, !!match[3], rest.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
-	    }
-	  }
-	}
-
-	/**
-	 * Reads atomic tag token.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {AtomicTagToken}
-	 */
-	function atomicTag(stream) {
-	  var start = startTag(stream);
-	  if (start) {
-	    var rest = stream.slice(start.length);
-	    // for optimization, we check first just for the end tag
-	    if (rest.match(new RegExp('<\/\\s*' + start.tagName + '\\s*>', 'i'))) {
-	      // capturing the content is inefficient, so we do it inside the if
-	      var match = rest.match(new RegExp('([\\s\\S]*?)<\/\\s*' + start.tagName + '\\s*>', 'i'));
-	      if (match) {
-	        return new _tokens.AtomicTagToken(start.tagName, match[0].length + start.length, start.attrs, start.booleanAttrs, match[1]);
-	      }
-	    }
-	  }
-	}
-
-	/**
-	 * Reads an end tag token.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {EndTagToken}
-	 */
-	function endTag(stream) {
-	  var match = stream.match(REGEXES.endTag);
-	  if (match) {
-	    return new _tokens.EndTagToken(match[1], match[0].length);
-	  }
-	}
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports.EndTagToken = exports.AtomicTagToken = exports.StartTagToken = exports.TagToken = exports.CharsToken = exports.CommentToken = exports.Token = undefined;
-
-	var _utils = __webpack_require__(5);
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/**
-	 * Token is a base class for all token types parsed.  Note we don't actually
-	 * use intheritance due to IE8's non-existent ES5 support.
-	 */
-	var Token =
-	/**
-	 * Constructor.
-	 *
-	 * @param {string} type The type of the Token.
-	 * @param {Number} length The length of the Token text.
-	 */
-	exports.Token = function Token(type, length) {
-	  _classCallCheck(this, Token);
-
-	  this.type = type;
-	  this.length = length;
-	  this.text = '';
-	};
-
-	/**
-	 * CommentToken represents comment tags.
-	 */
-
-
-	var CommentToken = exports.CommentToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} content The content of the comment
-	   * @param {Number} length The length of the Token text.
-	   */
-	  function CommentToken(content, length) {
-	    _classCallCheck(this, CommentToken);
-
-	    this.type = 'comment';
-	    this.length = length || (content ? content.length : 0);
-	    this.text = '';
-	    this.content = content;
-	  }
-
-	  CommentToken.prototype.toString = function toString() {
-	    return '<!--' + this.content;
-	  };
-
-	  return CommentToken;
-	}();
-
-	/**
-	 * CharsToken represents non-tag characters.
-	 */
-
-
-	var CharsToken = exports.CharsToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {Number} length The length of the Token text.
-	   */
-	  function CharsToken(length) {
-	    _classCallCheck(this, CharsToken);
-
-	    this.type = 'chars';
-	    this.length = length;
-	    this.text = '';
-	  }
-
-	  CharsToken.prototype.toString = function toString() {
-	    return this.text;
-	  };
-
-	  return CharsToken;
-	}();
-
-	/**
-	 * TagToken is a base class for all tag-based Tokens.
-	 */
-
-
-	var TagToken = exports.TagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} type The type of the token.
-	   * @param {string} tagName The tag name.
-	   * @param {Number} length The length of the Token text.
-	   * @param {Object} attrs The dictionary of attributes and values
-	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
-	   *                              is a boolean attribute
-	   */
-	  function TagToken(type, tagName, length, attrs, booleanAttrs) {
-	    _classCallCheck(this, TagToken);
-
-	    this.type = type;
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	    this.attrs = attrs;
-	    this.booleanAttrs = booleanAttrs;
-	    this.unary = false;
-	    this.html5Unary = false;
-	  }
-
-	  /**
-	   * Formats the given token tag.
-	   *
-	   * @param {TagToken} tok The TagToken to format.
-	   * @param {?string} [content=null] The content of the token.
-	   * @returns {string} The formatted tag.
-	   */
-
-
-	  TagToken.formatTag = function formatTag(tok) {
-	    var content = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-	    var str = '<' + tok.tagName;
-	    for (var key in tok.attrs) {
-	      if (tok.attrs.hasOwnProperty(key)) {
-	        str += ' ' + key;
-
-	        var val = tok.attrs[key];
-	        if (typeof tok.booleanAttrs === 'undefined' || typeof tok.booleanAttrs[key] === 'undefined') {
-	          str += '="' + (0, _utils.escapeQuotes)(val) + '"';
-	        }
-	      }
-	    }
-
-	    if (tok.rest) {
-	      str += ' ' + tok.rest;
-	    }
-
-	    if (tok.unary && !tok.html5Unary) {
-	      str += '/>';
-	    } else {
-	      str += '>';
-	    }
-
-	    if (content !== undefined && content !== null) {
-	      str += content + '</' + tok.tagName + '>';
-	    }
-
-	    return str;
-	  };
-
-	  return TagToken;
-	}();
-
-	/**
-	 * StartTagToken represents a start token.
-	 */
-
-
-	var StartTagToken = exports.StartTagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} tagName The tag name.
-	   * @param {Number} length The length of the Token text
-	   * @param {Object} attrs The dictionary of attributes and values
-	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
-	   *                              is a boolean attribute
-	   * @param {boolean} unary True if the tag is a unary tag
-	   * @param {string} rest The rest of the content.
-	   */
-	  function StartTagToken(tagName, length, attrs, booleanAttrs, unary, rest) {
-	    _classCallCheck(this, StartTagToken);
-
-	    this.type = 'startTag';
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	    this.attrs = attrs;
-	    this.booleanAttrs = booleanAttrs;
-	    this.html5Unary = false;
-	    this.unary = unary;
-	    this.rest = rest;
-	  }
-
-	  StartTagToken.prototype.toString = function toString() {
-	    return TagToken.formatTag(this);
-	  };
-
-	  return StartTagToken;
-	}();
-
-	/**
-	 * AtomicTagToken represents an atomic tag.
-	 */
-
-
-	var AtomicTagToken = exports.AtomicTagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} tagName The name of the tag.
-	   * @param {Number} length The length of the tag text.
-	   * @param {Object} attrs The attributes.
-	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
-	   *                              is a boolean attribute
-	   * @param {string} content The content of the tag.
-	   */
-	  function AtomicTagToken(tagName, length, attrs, booleanAttrs, content) {
-	    _classCallCheck(this, AtomicTagToken);
-
-	    this.type = 'atomicTag';
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	    this.attrs = attrs;
-	    this.booleanAttrs = booleanAttrs;
-	    this.unary = false;
-	    this.html5Unary = false;
-	    this.content = content;
-	  }
-
-	  AtomicTagToken.prototype.toString = function toString() {
-	    return TagToken.formatTag(this, this.content);
-	  };
-
-	  return AtomicTagToken;
-	}();
-
-	/**
-	 * EndTagToken represents an end tag.
-	 */
-
-
-	var EndTagToken = exports.EndTagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} tagName The name of the tag.
-	   * @param {Number} length The length of the tag text.
-	   */
-	  function EndTagToken(tagName, length) {
-	    _classCallCheck(this, EndTagToken);
-
-	    this.type = 'endTag';
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	  }
-
-	  EndTagToken.prototype.toString = function toString() {
-	    return '</' + this.tagName + '>';
-	  };
-
-	  return EndTagToken;
-	}();
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports.escapeQuotes = escapeQuotes;
-
-	/**
-	 * Escape quotes in the given value.
-	 *
-	 * @param {string} value The value to escape.
-	 * @param {string} [defaultValue=''] The default value to return if value is falsy.
-	 * @returns {string}
-	 */
-	function escapeQuotes(value) {
-	  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
-	  // There's no lookback in JS, so /(^|[^\\])"/ only matches the first of two `"`s.
-	  // Instead, just match anything before a double-quote and escape if it's not already escaped.
-	  return !value ? defaultValue : value.replace(/([^"]*)"/g, function (_, prefix) {
-	    return (/\\/.test(prefix) ? prefix + '"' : prefix + '\\"'
-	    );
-	  });
-	}
-
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports['default'] = fixedReadTokenFactory;
-	/**
-	 * Empty Elements - HTML 4.01
-	 *
-	 * @type {RegExp}
-	 */
-	var EMPTY = /^(AREA|BASE|BASEFONT|BR|COL|FRAME|HR|IMG|INPUT|ISINDEX|LINK|META|PARAM|EMBED)$/i;
-
-	/**
-	 * Elements that you can intentionally leave open (and which close themselves)
-	 *
-	 * @type {RegExp}
-	 */
-	var CLOSESELF = /^(COLGROUP|DD|DT|LI|OPTIONS|P|TD|TFOOT|TH|THEAD|TR)$/i;
-
-	/**
-	 * Corrects a token.
-	 *
-	 * @param {Token} tok The token to correct
-	 * @returns {Token} The corrected token
-	 */
-	function correct(tok) {
-	  if (tok && tok.type === 'startTag') {
-	    tok.unary = EMPTY.test(tok.tagName) || tok.unary;
-	    tok.html5Unary = !/\/>$/.test(tok.text);
-	  }
-	  return tok;
-	}
-
-	/**
-	 * Peeks at the next token in the parser.
-	 *
-	 * @param {HtmlParser} parser The parser
-	 * @param {Function} readTokenImpl The underlying readToken implementation
-	 * @returns {Token} The next token
-	 */
-	function peekToken(parser, readTokenImpl) {
-	  var tmp = parser.stream;
-	  var tok = correct(readTokenImpl());
-	  parser.stream = tmp;
-	  return tok;
-	}
-
-	/**
-	 * Closes the last token.
-	 *
-	 * @param {HtmlParser} parser The parser
-	 * @param {Array<Token>} stack The stack
-	 */
-	function closeLast(parser, stack) {
-	  var tok = stack.pop();
-
-	  // prepend close tag to stream.
-	  parser.prepend('</' + tok.tagName + '>');
-	}
-
-	/**
-	 * Create a new token stack.
-	 *
-	 * @returns {Array<Token>}
-	 */
-	function newStack() {
-	  var stack = [];
-
-	  stack.last = function () {
-	    return this[this.length - 1];
-	  };
-
-	  stack.lastTagNameEq = function (tagName) {
-	    var last = this.last();
-	    return last && last.tagName && last.tagName.toUpperCase() === tagName.toUpperCase();
-	  };
-
-	  stack.containsTagName = function (tagName) {
-	    for (var i = 0, tok; tok = this[i]; i++) {
-	      if (tok.tagName === tagName) {
-	        return true;
-	      }
-	    }
-	    return false;
-	  };
-
-	  return stack;
-	}
-
-	/**
-	 * Return a readToken implementation that fixes input.
-	 *
-	 * @param {HtmlParser} parser The parser
-	 * @param {Object} options Options for fixing
-	 * @param {boolean} options.tagSoupFix True to fix tag soup scenarios
-	 * @param {boolean} options.selfCloseFix True to fix self-closing tags
-	 * @param {Function} readTokenImpl The underlying readToken implementation
-	 * @returns {Function}
-	 */
-	function fixedReadTokenFactory(parser, options, readTokenImpl) {
-	  var stack = newStack();
-
-	  var handlers = {
-	    startTag: function startTag(tok) {
-	      var tagName = tok.tagName;
-
-	      if (tagName.toUpperCase() === 'TR' && stack.lastTagNameEq('TABLE')) {
-	        parser.prepend('<TBODY>');
-	        prepareNextToken();
-	      } else if (options.selfCloseFix && CLOSESELF.test(tagName) && stack.containsTagName(tagName)) {
-	        if (stack.lastTagNameEq(tagName)) {
-	          closeLast(parser, stack);
-	        } else {
-	          parser.prepend('</' + tok.tagName + '>');
-	          prepareNextToken();
-	        }
-	      } else if (!tok.unary) {
-	        stack.push(tok);
-	      }
-	    },
-	    endTag: function endTag(tok) {
-	      var last = stack.last();
-	      if (last) {
-	        if (options.tagSoupFix && !stack.lastTagNameEq(tok.tagName)) {
-	          // cleanup tag soup
-	          closeLast(parser, stack);
-	        } else {
-	          stack.pop();
-	        }
-	      } else if (options.tagSoupFix) {
-	        // cleanup tag soup part 2: skip this token
-	        readTokenImpl();
-	        prepareNextToken();
-	      }
-	    }
-	  };
-
-	  function prepareNextToken() {
-	    var tok = peekToken(parser, readTokenImpl);
-	    if (tok && handlers[tok.type]) {
-	      handlers[tok.type](tok);
-	    }
-	  }
-
-	  return function fixedReadToken() {
-	    prepareNextToken();
-	    return correct(readTokenImpl());
-	  };
-	}
-
-/***/ }
-/******/ ])
-});
-;
-},{}],28:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":52}],29:[function(require,module,exports){
+},{"./vtree/diff.js":49}],26:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":39}],30:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":36}],27:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":35}],31:[function(require,module,exports){
+},{"./vdom/patch.js":32}],28:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -2818,7 +1370,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":43,"is-object":19}],32:[function(require,module,exports){
+},{"../vnode/is-vhook.js":40,"is-object":18}],29:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -2866,7 +1418,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":41,"../vnode/is-vnode.js":44,"../vnode/is-vtext.js":45,"../vnode/is-widget.js":46,"./apply-properties":31,"global/document":16}],33:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":38,"../vnode/is-vnode.js":41,"../vnode/is-vtext.js":42,"../vnode/is-widget.js":43,"./apply-properties":28,"global/document":15}],30:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -2953,7 +1505,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],34:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -3106,7 +1658,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":46,"../vnode/vpatch.js":49,"./apply-properties":31,"./update-widget":36}],35:[function(require,module,exports){
+},{"../vnode/is-widget.js":43,"../vnode/vpatch.js":46,"./apply-properties":28,"./update-widget":33}],32:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3188,7 +1740,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":32,"./dom-index":33,"./patch-op":34,"global/document":16,"x-is-array":53}],36:[function(require,module,exports){
+},{"./create-element":29,"./dom-index":30,"./patch-op":31,"global/document":15,"x-is-array":50}],33:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3205,7 +1757,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":46}],37:[function(require,module,exports){
+},{"../vnode/is-widget.js":43}],34:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -3234,7 +1786,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":12}],38:[function(require,module,exports){
+},{"ev-store":11}],35:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -3253,7 +1805,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],39:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -3392,7 +1944,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":42,"../vnode/is-vhook":43,"../vnode/is-vnode":44,"../vnode/is-vtext":45,"../vnode/is-widget":46,"../vnode/vnode.js":48,"../vnode/vtext.js":50,"./hooks/ev-hook.js":37,"./hooks/soft-set-hook.js":38,"./parse-tag.js":40,"x-is-array":53}],40:[function(require,module,exports){
+},{"../vnode/is-thunk":39,"../vnode/is-vhook":40,"../vnode/is-vnode":41,"../vnode/is-vtext":42,"../vnode/is-widget":43,"../vnode/vnode.js":45,"../vnode/vtext.js":47,"./hooks/ev-hook.js":34,"./hooks/soft-set-hook.js":35,"./parse-tag.js":37,"x-is-array":50}],37:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -3448,7 +2000,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":5}],41:[function(require,module,exports){
+},{"browser-split":5}],38:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -3490,14 +2042,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":42,"./is-vnode":44,"./is-vtext":45,"./is-widget":46}],42:[function(require,module,exports){
+},{"./is-thunk":39,"./is-vnode":41,"./is-vtext":42,"./is-widget":43}],39:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],43:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -3506,7 +2058,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],44:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -3515,7 +2067,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":47}],45:[function(require,module,exports){
+},{"./version":44}],42:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -3524,17 +2076,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":47}],46:[function(require,module,exports){
+},{"./version":44}],43:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],47:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = "2"
 
-},{}],48:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -3608,7 +2160,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":42,"./is-vhook":43,"./is-vnode":44,"./is-widget":46,"./version":47}],49:[function(require,module,exports){
+},{"./is-thunk":39,"./is-vhook":40,"./is-vnode":41,"./is-widget":43,"./version":44}],46:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -3632,7 +2184,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":47}],50:[function(require,module,exports){
+},{"./version":44}],47:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -3644,7 +2196,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":47}],51:[function(require,module,exports){
+},{"./version":44}],48:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -3704,7 +2256,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":43,"is-object":19}],52:[function(require,module,exports){
+},{"../vnode/is-vhook":40,"is-object":18}],49:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -4133,7 +2685,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":41,"../vnode/is-thunk":42,"../vnode/is-vnode":44,"../vnode/is-vtext":45,"../vnode/is-widget":46,"../vnode/vpatch":49,"./diff-props":51,"x-is-array":53}],53:[function(require,module,exports){
+},{"../vnode/handle-thunk":38,"../vnode/is-thunk":39,"../vnode/is-vnode":41,"../vnode/is-vtext":42,"../vnode/is-widget":43,"../vnode/vpatch":46,"./diff-props":48,"x-is-array":50}],50:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -4143,7 +2695,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],54:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -4261,7 +2813,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
 module.exports = App;
 
-},{"./event-emitter-mixin":56,"./sig":58,"debounce":6,"document-ready-promise":10,"mixwith-es5":21,"object.defaults/immutable":23}],55:[function(require,module,exports){
+},{"./event-emitter-mixin":53,"./sig":55,"debounce":6,"document-ready-promise":10,"mixwith-es5":20,"object.defaults/immutable":21}],52:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
@@ -4605,7 +3157,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":77,"../utils/make-hash":78,"./event-emitter-mixin":56,"./sig":58,"mixwith-es5":21,"object.defaults/immutable":23}],56:[function(require,module,exports){
+},{"../utils/includes":70,"../utils/make-hash":71,"./event-emitter-mixin":53,"./sig":55,"mixwith-es5":20,"object.defaults/immutable":21}],53:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var hasMixin = require('mixwith-es5').hasMixin;
 var defaults = require('object.defaults/immutable');
@@ -4673,7 +3225,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":77,"mixwith-es5":21,"object.defaults/immutable":23}],57:[function(require,module,exports){
+},{"../utils/includes":70,"mixwith-es5":20,"object.defaults/immutable":21}],54:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
@@ -4817,7 +3369,7 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":56,"mixwith-es5":21}],58:[function(require,module,exports){
+},{"./event-emitter-mixin":53,"mixwith-es5":20}],55:[function(require,module,exports){
 class Sig {
     constructor(str) {
         if (typeof str === 'object' && str.constructor === this.constructor) {
@@ -4943,7 +3495,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],59:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
@@ -5161,7 +3713,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":75,"../utils/includes":77,"../utils/make-hash":78,"./event-emitter-mixin":56,"deep-equal":7,"mixwith-es5":21,"object.defaults/immutable":23}],60:[function(require,module,exports){
+},{"../utils/difference":68,"../utils/includes":70,"../utils/make-hash":71,"./event-emitter-mixin":53,"deep-equal":7,"mixwith-es5":20,"object.defaults/immutable":21}],57:[function(require,module,exports){
 class Transform {
     constructor(opts) {
         var Sig = this.constructor.Weddell.classes.Sig;
@@ -5212,7 +3764,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],61:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
@@ -5279,156 +3831,76 @@ Object.values(_Weddell.classes).forEach(function(commonClass){
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":77,"./app":54,"./component":55,"./pipeline":57,"./sig":58,"./store":59,"./transform":60,"mixwith-es5":21}],62:[function(require,module,exports){
-module.exports = {
-    template : function(CSSText){
-        //TODO make this more efficient after compile time
-        return function(locals){
-            var reg = /var\(([^\\\)(]+)\)/g;
-            var output = CSSText;
-            while(output.match(reg)){
-                output = output.replace(reg, function(fullMatch, group){
-                    return group.split(',')
-                        .map(function(str){
-                            return str.trim();
-                        })
-                        .map(function(val){
-                            return val.replace(/--(.*)/g, function(fullMatch, group){
-                                if (group in locals) {
-                                    return locals[group];
-                                }
-                                return '';
-                            });
-                        })
-                        .reduce(function(finalVal, currVal){
-                            return finalVal ? finalVal : currVal;
-                        }, '');
-                });
-            }
-            return output;
-        }
-    }
-}
+},{"../utils/includes":70,"./app":51,"./component":52,"./pipeline":54,"./sig":55,"./store":56,"./transform":57,"mixwith-es5":20}],59:[function(require,module,exports){
+var mix = require('mixwith-es5').mix;
+var EventEmitterMixin = require('../../core/event-emitter-mixin');
+var hasMixin = require('mixwith-es5').hasMixin;
 
-},{}],63:[function(require,module,exports){
+var ActionDispatcher = class extends mix(ActionDispatcher).with(EventEmitterMixin) {
+    constructor(opts) {
+        super(opts);
+        this._dispatchees = [];
+    }
+
+    addDispatchee(dispatchee) {
+        if (!hasMixin(dispatchee, EventEmitterMixin)) {
+            console.warn("Attempted to add a non-event emitter object as a dispatchee to the action dispatcher.");
+        }
+        if (this._dispatchees.indexOf(dispatchee) === -1) {
+            this._dispatchees.push(dispatchee);
+            return this.trigger('adddispatchee', {dispatchee});
+        }
+        return false;
+    }
+
+    dispatch(actionName, actionData) {
+        var result = this._dispatchees.map(dispatchee =>
+            dispatchee.trigger(actionName, Object.assign({}, actionData)));
+        this.trigger('dispatch', {actionName, actionData});
+        return result;
+    }
+};
+
+module.exports = ActionDispatcher;
+
+},{"../../core/event-emitter-mixin":53,"mixwith-es5":20}],60:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
-var CSSVars = require('./css-vars');
+var ActionDispatcher = require('./action-dispatcher');
 
 module.exports = function(Weddell, pluginOpts){
     return Weddell.plugin({
-        id: 'css-vars',
+        id: 'action-dispatcher',
         classes:  {
             App: Mixin(function(App){
                 App = class extends App {
                     constructor(opts) {
                         super(opts);
-                        var Transform = this.constructor.Weddell.classes.Transform;
-                        this.stylesTransforms.push(new Transform({
-                            from: 'CSSString',
-                            to: '(locals:Object)=>CSSString',
-                            func: function(input) {
-                                return CSSVars.template(input);
-                            }
-                        }));
+                        Object.defineProperty(this, '_actionDispatcher', {
+                            value: new ActionDispatcher
+                        });
+                        this.on('createcomponent', evt => {
+                            this._actionDispatcher.addDispatchee(evt.component);
+                            evt.component.on('createaction', evt => {
+                                this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
+                            });
+                        });
                     }
                 }
                 return App;
-            })
-        }
-    });
-};
-
-},{"./css-vars":62,"mixwith-es5":21}],64:[function(require,module,exports){
-var Mixin = require('mixwith-es5').Mixin;
-var doT = require('dot');
-module.exports = function(Weddell, doTOpts){
-    if (doTOpts) {
-        dot.templateSettings = doTOpts;
-    }
-    return Weddell.plugin({
-        id: 'dot',
-        classes:  {
-            App: Mixin(function(App){
-                App = class extends App {
-                    constructor(opts) {
-                        super(opts);
-                        var Transform = this.constructor.Weddell.classes.Transform;
-                        var Sig = this.constructor.Weddell.classes.Sig;
-                        Sig.addTypeAlias('doT', 'HTMLString');
-                        this.markupTransforms.push(new Transform({
-                            from: 'doT',
-                            to: '(locals:Object)=>HTMLString',
-                            func: function(input) {
-                                //TODO Dot allows for compile-time data (static partials, etc) as 3rd arg. Need to figure out where this would be defined and passed in
-                                return doT.template(input, null, null);
-                            }
-                        }));
-                    }
-                }
-                return App;
-            })
-        }
-    });
-}
-
-},{"dot":11,"mixwith-es5":21}],65:[function(require,module,exports){
-var Mixin = require('mixwith-es5').Mixin;
-var defaults = require('object.defaults/immutable');
-var defaultOpts = {};
-
-module.exports = function(_Weddell, opts){
-    return _Weddell.plugin({
-        id: 'fetcher',
-        classes:  {
+            }),
             Component: Mixin(function(Component){
-                var Component = class extends Component {
+                Component = class extends Component {
                     constructor(opts) {
-                        opts = defaults(opts, defaultOpts);
                         super(opts);
-                        if (opts.markupTemplateURL) {
-                            this.markupTemplateURL = opts.markupTemplateURL;
-                            this._pipelines.markup._isDynamic = true;
-                        } else if (opts.markupURL) {
-                            this.markupURL = opts.markupURL;
-                        }
-                        if (opts.stylesTemplateURL) {
-                            this.stylesTemplateURL = opts.stylesTemplateURL;
-                            this._pipelines.styles._isDynamic = true;
-                        } else if (this.stylesURL = opts.stylesURL) {
-                            this.stylesURL = opts.stylesURL;
-                        }
-                        //TODO add data fetch for component state
-                        //TODO arbitrary asset loading (html and CSS partials, posisbly images etc)
-                        //TODO caching
-                        //TODO component assets?
+                        var actionLocals = {
+                            $act: this.createAction.bind(this)
+                        };
+                        this.store.assign(actionLocals);
+                        this._locals.assign(actionLocals);
                     }
 
-                    init(opts) {
-                        //TODO lazy fetch on demand
-                        var superInit = super.init;
-                        return Promise.all([
-                                this.fetchAsset('markup'),
-                                this.fetchAsset('styles')
-                            ])
-                            .then(() => superInit.call(this,opts));
-                    }
-
-                    fetchAsset(pipelineName) {
-                        var promise = Promise.resolve();
-                        var pipeline = this._pipelines[pipelineName]
-                        var assetURLName = pipeline._isDynamic ? pipelineName + 'TemplateURL': pipelineName + 'URL';
-                        var assetName = pipeline._isDynamic ? 'template' : 'static';
-                        if (!(pipeline[assetName]) && this[assetURLName]) {
-                            promise = fetch(this[assetURLName])
-                                .then(res => res.text())
-                                .then(responseText => {
-                                    pipeline.input = responseText;
-                                    pipeline.processInput();
-                                }, (err) => {
-                                    throw err;
-                                });
-                        }
-                        return promise;
+                    createAction(actionName, actionData) {
+                        this.trigger('createaction', {actionName, actionData});
                     }
                 }
                 return Component;
@@ -5437,81 +3909,7 @@ module.exports = function(_Weddell, opts){
     });
 }
 
-},{"mixwith-es5":21,"object.defaults/immutable":23}],66:[function(require,module,exports){
-var Parser = require('prescribe');
-module.exports = {
-    parse: function(html, h) {
-        var parser = new Parser(html.trim());
-        var nodes = [];
-        var current;
-
-        parser.readTokens({
-            chars: function(tok) {
-                if (current) {
-                    current.children.push(tok.text);
-                } else {
-                    nodes.push(tok.text);
-                }
-            },
-            startTag: function(tok){
-                if (tok.unary || tok.html5Unary || tok.tagName === 'input') {
-                    //NOTE this is how we will handle unary elements. Prescribe's unary element detection isn't perfect, so in the case of input elements, for example, we need to check for those explicity.
-                    var node = h(tok.tagName, {attributes: Object.assign({}, tok.attrs, tok.booleanAttrs)});
-                    if (current) {
-                        current.children.push(node);
-                    } else {
-                        nodes.push(node);
-                    }
-                } else {
-                    current = {tok, parent: current, children:[]};
-                }
-            },
-            endTag: function(tok){
-                //TODO add support for SVG
-                var node = h(current.tok.tagName, {attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs)}, current.children);
-                current = current.parent;
-                if (!current) {
-                    nodes.push(node);
-                } else {
-                    current.children.push(node);
-                }
-            }
-        });
-        return nodes;
-    }
-}
-
-},{"prescribe":27}],67:[function(require,module,exports){
-var Mixin = require('mixwith-es5').Mixin;
-var htmltovdomparser = require('./html-to-vdom-parser');
-module.exports = function(_Weddell){
-    return _Weddell.plugin({
-        id: 'html-to-vdom',
-        requires: 'vdom',
-        classes:  {
-            App: Mixin(function(App){
-                App = class extends App {
-                    constructor(opts) {
-                        super(opts);
-                        var Transform = this.constructor.Weddell.classes.Transform;
-                        var h = this.constructor.Weddell.deps.h;
-
-                        this.markupTransforms.push(new Transform({
-                            from: 'HTMLString',
-                            to: 'VNode',
-                            func: function(input) {
-                                return htmltovdomparser.parse(input, h);
-                            }
-                        }));
-                    }
-                }
-                return App;
-            })
-        }
-    });
-}
-
-},{"./html-to-vdom-parser":66,"mixwith-es5":21}],68:[function(require,module,exports){
+},{"./action-dispatcher":59,"mixwith-es5":20}],61:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
@@ -5636,7 +4034,7 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./machine-state-mixin":69,"./router":70,"./state-machine-mixin":71,"mixwith-es5":21}],69:[function(require,module,exports){
+},{"./machine-state-mixin":62,"./router":63,"./state-machine-mixin":64,"mixwith-es5":20}],62:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -5672,7 +4070,7 @@ var MachineState = Mixin(function(superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":56,"mixwith-es5":21}],70:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":53,"mixwith-es5":20}],63:[function(require,module,exports){
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
@@ -5837,7 +4235,7 @@ class Router {
 }
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],71:[function(require,module,exports){
+},{"array-compact":1,"find-parent":12,"object.defaults/immutable":21,"path-to-regexp":23}],64:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -5921,7 +4319,7 @@ var StateMachine = Mixin(function(superClass) {
 })
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":56,"./machine-state-mixin":69,"mixwith-es5":21}],72:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":53,"./machine-state-mixin":62,"mixwith-es5":20}],65:[function(require,module,exports){
 var h = require('virtual-dom/h');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
@@ -6066,42 +4464,31 @@ module.exports = function(Weddell, pluginOpts) {
     });
 }
 
-},{"../../utils/flatmap":76,"array-compact":1,"mixwith-es5":21,"object.defaults/immutable":23,"virtual-dom/diff":28,"virtual-dom/h":29,"virtual-dom/patch":30,"virtual-dom/vnode/vnode":48}],73:[function(require,module,exports){
-require('native-promise-only');
-module.exports = require('../plugins/css-vars')(
-    require('../plugins/html-to-vdom')(
-        require('../plugins/vdom')(
-            require('../plugins/doT')(
-                require('../plugins/fetcher')(
-                    require('../plugins/router')(
-                        require('./weddell')
-                    )
-                )
-            )
-        )
-    )
+},{"../../utils/flatmap":69,"array-compact":1,"mixwith-es5":20,"object.defaults/immutable":21,"virtual-dom/diff":25,"virtual-dom/h":26,"virtual-dom/patch":27,"virtual-dom/vnode/vnode":45}],66:[function(require,module,exports){
+module.exports = require('../plugins/vdom')(
+    require('../plugins/action-dispatcher')(require('../plugins/router')(require('./weddell')))
 );
 
-},{"../plugins/css-vars":63,"../plugins/doT":64,"../plugins/fetcher":65,"../plugins/html-to-vdom":67,"../plugins/router":68,"../plugins/vdom":72,"./weddell":74,"native-promise-only":22}],74:[function(require,module,exports){
+},{"../plugins/action-dispatcher":60,"../plugins/router":61,"../plugins/vdom":65,"./weddell":67}],67:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":61}],75:[function(require,module,exports){
+},{"../core/weddell":58}],68:[function(require,module,exports){
 // var includes = require('./includes');
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],76:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = (arr, func) =>
     arr.reduce((final,val) =>
         final.concat(func(val)), [])
 
-},{}],77:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports = function(arr, val){
     return arr.some(currKey=>currKey === val);
 }
 
-},{}],78:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -6112,5 +4499,5 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[73])(73)
+},{}]},{},[66])(66)
 });
