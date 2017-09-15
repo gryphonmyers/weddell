@@ -4,8 +4,10 @@ module.exports = require('../plugins/action-dispatcher')(
         require('../plugins/html-to-vdom')(
             require('../plugins/doT')(
                 require('../plugins/fetcher')(
-                    require('../plugins/vdom')(
-                        require('../plugins/router')(require('./weddell'))
+                    require('../plugins/html')(
+                        require('../plugins/vdom')(
+                            require('../plugins/router')(require('./weddell'))
+                        )
                     )
                 )
             )

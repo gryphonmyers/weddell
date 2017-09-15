@@ -14,7 +14,7 @@
                         name: 'jonboy',
                         pattern: 'jonboy',
                         redirect: function(obj) {
-                            this.route(obj.fullPath + 'wrong/boy');
+                            return obj.fullPath + 'wrong/boy';
                         },
                         handler: function(obj){
                             return 'MyBodyA'
@@ -103,7 +103,11 @@
                                 return el;
                             },
                             state: {
-                                myAppTitle: 'A compendium of frog species'
+                                myAppTitle: 'A compendium of frog species',
+                                numberOfThings: 1,
+                                appTitlePlusNumThings: function() {
+                                    return this.myAppTitle + this.numberOfThings;
+                                }
                             },
                             components: {
                                 Accordion: class Accordion extends Component {
@@ -277,11 +281,12 @@
                                                 h("header", {
                                                     "attributes": {
                                                         "data-bobby": locals.bobby,
-                                                        "onclick": locals.$bind("this.$act('disablethings',{mything:'moo'})")
+                                                        "onclick": locals.$bind("this.state.numba++")
                                                     }
-                                                }, `${locals.headerText}`),
+                                                }, `${locals.headerText + locals.numba}`),
                                             inputs: ['bobby'],
                                             state: {
+                                                numba: 1,
                                                 headerText: 'Who doesn\'t love frogs?'
                                             }
                                         }, opts))
