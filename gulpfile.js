@@ -22,7 +22,7 @@ var colors = require('colors');
 var config = require('./package.json');
 
 gulp.task('build', function() {
-    return makeBundles('./src/presets', './dist', [{es6: true}]);
+    return makeBundles('./src/presets', './dist', [{}]);
 });
 
 gulp.task('compile-discs', function() {
@@ -30,7 +30,7 @@ gulp.task('compile-discs', function() {
 });
 
 gulp.task('compile-dev', function() {
-    return makeBundles('./src/presets', './docs/js', [{es6: true, dev:true}]);
+    return makeBundles('./src/presets', './docs/js', [{dev:true}]);
 });
 
 function makeBundles(entryDir, outputDir, optsArr) {

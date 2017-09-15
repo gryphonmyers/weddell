@@ -4144,6 +4144,16 @@ function isArray(obj) {
 }
 
 },{}],54:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -4161,25 +4171,31 @@ var defaultOpts = {
     stylesTransforms: []
 };
 
-var App = class extends mix(App).with(EventEmitterMixin) {
-    constructor(opts) {
+var App = function (_mix$with) {
+    _inherits(App, _mix$with);
+
+    function App(opts) {
+        _classCallCheck(this, App);
+
         opts = defaults(opts, defaultOpts);
-        super(opts);
-        this.el = opts.el;
-        this.styleEl = opts.styleEl;
-        this.Component = opts.Component;
-        this.component = null;
-        this.renderInterval = opts.renderInterval;
-        this.stylesRenderFormat = opts.stylesRenderFormat;
-        this.markupRenderFormat = opts.markupRenderFormat;
-        this.markupTransforms = opts.markupTransforms;
-        this.stylesTransforms = opts.stylesTransforms;
-        this.renderers = {};
-        var Sig = this.constructor.Weddell.classes.Sig;
 
-        var consts = this.constructor.Weddell.consts;
+        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, opts));
 
-        if (!this.Component) {
+        _this.el = opts.el;
+        _this.styleEl = opts.styleEl;
+        _this.Component = opts.Component;
+        _this.component = null;
+        _this.renderInterval = opts.renderInterval;
+        _this.stylesRenderFormat = opts.stylesRenderFormat;
+        _this.markupRenderFormat = opts.markupRenderFormat;
+        _this.markupTransforms = opts.markupTransforms;
+        _this.stylesTransforms = opts.stylesTransforms;
+        _this.renderers = {};
+        var Sig = _this.constructor.Weddell.classes.Sig;
+
+        var consts = _this.constructor.Weddell.consts;
+
+        if (!_this.Component) {
             throw "There is no base component set for this app. Can't mount.";
         }
         if (consts.VAR_NAME in window) {
@@ -4187,51 +4203,58 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
-            value: {app: this, components: {} }
+            value: { app: _this, components: {} }
         });
 
-        this.componentOpts = Array.isArray(this.Component) ? this.Component[1] : {};
-        this.Component = Array.isArray(this.Component) ? this.Component[0] : this.Component;
+        _this.componentOpts = Array.isArray(_this.Component) ? _this.Component[1] : {};
+        _this.Component = Array.isArray(_this.Component) ? _this.Component[0] : _this.Component;
+        return _this;
     }
 
-    renderCSS(CSSString) {
-        this.styleEl.textContent = CSSString;
-    }
-
-    renderMarkup(evt) {
-        if (!(evt.renderFormat in this.renderers)) {
-            throw "No appropriate markup renderer found for format: " + evt.renderFormat;
+    _createClass(App, [{
+        key: 'renderCSS',
+        value: function renderCSS(CSSString) {
+            this.styleEl.textContent = CSSString;
         }
-        this.renderers[evt.renderFormat].call(this, evt.output);
-    }
-
-    renderStyles(evt) {
-        var flattenStyles = function(obj) {
-            return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
+    }, {
+        key: 'renderMarkup',
+        value: function renderMarkup(evt) {
+            if (!(evt.renderFormat in this.renderers)) {
+                throw "No appropriate markup renderer found for format: " + evt.renderFormat;
+            }
+            this.renderers[evt.renderFormat].call(this, evt.output);
         }
-        this.renderCSS(flattenStyles(evt));
-    }
+    }, {
+        key: 'renderStyles',
+        value: function renderStyles(evt) {
+            var flattenStyles = function flattenStyles(obj) {
+                return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
+            };
+            this.renderCSS(flattenStyles(evt));
+        }
+    }, {
+        key: 'init',
+        value: function init() {
+            var _this2 = this;
 
-    init() {
-        Object.seal(this);
-        return DOMReady
-            .then(() => {
+            Object.seal(this);
+            return DOMReady.then(function () {
 
-                if (typeof this.el == 'string') {
-                    this.el = document.querySelector(this.el);
+                if (typeof _this2.el == 'string') {
+                    _this2.el = document.querySelector(_this2.el);
                 }
 
-                if (typeof this.styleEl == 'string') {
-                    this.styleEl = document.querySelector(this.styleEl);
-                } else if (!this.styleEl) {
-                    this.styleEl = document.createElement('style');
-                    this.styleEl.setAttribute('type', 'text/css');
-                    document.head.appendChild(this.styleEl);
+                if (typeof _this2.styleEl == 'string') {
+                    _this2.styleEl = document.querySelector(_this2.styleEl);
+                } else if (!_this2.styleEl) {
+                    _this2.styleEl = document.createElement('style');
+                    _this2.styleEl.setAttribute('type', 'text/css');
+                    document.head.appendChild(_this2.styleEl);
                 }
 
-                var app = this;
+                var app = _this2;
 
-                this.component = new (this.Component)({
+                _this2.component = new _this2.Component({
                     isRoot: true,
                     targetStylesRenderFormat: app.stylesRenderFormat,
                     targetMarkupRenderFormat: app.markupRenderFormat,
@@ -4239,29 +4262,43 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     stylesTransforms: app.stylesTransforms
                 });
 
-                this.trigger('createcomponent', {component: this.component});
-                this.trigger('createrootcomponent', {component: this.component});
-                this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
-                
-                this.component.on('markeddirty', evt => {
-                    requestAnimationFrame(() => {
-                        this.component.render(evt.pipelineName);
+                _this2.trigger('createcomponent', { component: _this2.component });
+                _this2.trigger('createrootcomponent', { component: _this2.component });
+                _this2.component.on('createcomponent', function (evt) {
+                    return _this2.trigger('createcomponent', Object.assign({}, evt));
+                });
+
+                _this2.component.on('markeddirty', function (evt) {
+                    requestAnimationFrame(function () {
+                        _this2.component.render(evt.pipelineName);
                     });
                 });
 
-                return this.component.init(this.componentOpts)
-                    .then(() => {
-                        this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
-                        this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
-                        this.component.render();
-                    })
-            })
-    }
-}
+                return _this2.component.init(_this2.componentOpts).then(function () {
+                    _this2.component.on('rendermarkup', debounce(_this2.renderMarkup.bind(_this2), _this2.renderInterval));
+                    _this2.component.on('renderstyles', debounce(_this2.renderStyles.bind(_this2), _this2.renderInterval));
+                    _this2.component.render();
+                });
+            });
+        }
+    }]);
+
+    return App;
+}(mix(App).with(EventEmitterMixin));
 
 module.exports = App;
 
 },{"./event-emitter-mixin":56,"./sig":58,"debounce":6,"document-ready-promise":10,"mixwith-es5":21,"object.defaults/immutable":23}],55:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var EventEmitterMixin = require('./event-emitter-mixin');
 var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
@@ -4283,37 +4320,43 @@ var defaultOpts = {
 
 var defaultInitOpts = {};
 
-var Component = class extends mix(Component).with(EventEmitterMixin) {
-    constructor(opts) {
-        opts = defaults(opts, defaultOpts);
-        super(opts);
-        Sig = this.constructor.Weddell.classes.Sig;
-        var Pipeline = this.constructor.Weddell.classes.Pipeline;
-        var Store = this.constructor.Weddell.classes.Store;
+var Component = function (_mix$with) {
+    _inherits(Component, _mix$with);
 
-        Object.defineProperties(this, {
+    function Component(opts) {
+        _classCallCheck(this, Component);
+
+        opts = defaults(opts, defaultOpts);
+
+        var _this = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opts));
+
+        Sig = _this.constructor.Weddell.classes.Sig;
+        var Pipeline = _this.constructor.Weddell.classes.Pipeline;
+        var Store = _this.constructor.Weddell.classes.Store;
+
+        Object.defineProperties(_this, {
             isRoot: { value: opts.isRoot },
-            _isInit: { writable: true, value: false},
+            _isInit: { writable: true, value: false },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
-            _id : { value: generateHash() },
-            inputs : { value: opts.inputs },
+            _id: { value: generateHash() },
+            inputs: { value: opts.inputs },
             renderers: { value: {} },
             _tagDirectives: { value: {} }
         });
 
-        var inputMappings = this.constructor._inputMappings;
+        var inputMappings = _this.constructor._inputMappings;
 
-        Object.defineProperties(this, {
+        Object.defineProperties(_this, {
             props: {
-                value: new Store(this.inputs, {
+                value: new Store(_this.inputs, {
                     shouldMonitorChanges: true,
-                    extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
-                    inputMappings
+                    extends: opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null,
+                    inputMappings: inputMappings
                 })
             },
             store: {
                 value: new Store(Object.assign({
-                    $bind: this.bindEvent.bind(this)
+                    $bind: _this.bindEvent.bind(_this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
@@ -4321,27 +4364,28 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             },
             state: {
                 value: new Store(defaults({
-                    $id: () => this._id
+                    $id: function $id() {
+                        return _this._id;
+                    }
                 }, opts.state))
             }
         });
 
-        Object.defineProperties(this, {
-            _componentInstances: { value:
-                Object.keys(opts.components).reduce((final, key) => {
+        Object.defineProperties(_this, {
+            _componentInstances: { value: Object.keys(opts.components).reduce(function (final, key) {
                     final[key] = {};
                     return final;
                 }, {})
             },
-            _locals: {value: new Store({}, { proxies: [this.props, this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
+            _locals: { value: new Store({}, { proxies: [_this.props, _this.state, _this.store], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
         });
 
-        Object.defineProperty(this, '_pipelines', {
+        Object.defineProperty(_this, '_pipelines', {
             value: {
                 markup: new Pipeline({
                     name: 'markup',
-                    store: this._locals,
-                    onRender: this.onRenderMarkup.bind(this),
+                    store: _this._locals,
+                    onRender: _this.onRenderMarkup.bind(_this),
                     isDynamic: !!opts.markupTemplate,
                     inputFormat: new Sig(opts.markupFormat),
                     transforms: opts.markupTransforms,
@@ -4350,8 +4394,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 }),
                 styles: new Pipeline({
                     name: 'styles',
-                    store: this._locals,
-                    onRender: this.onRenderStyles.bind(this),
+                    store: _this._locals,
+                    onRender: _this.onRenderStyles.bind(_this),
                     isDynamic: !!opts.stylesTemplate,
                     inputFormat: new Sig(opts.stylesFormat),
                     transforms: opts.stylesTransforms,
@@ -4361,339 +4405,425 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }
         });
 
-        Object.defineProperty(this, 'components', {
-            value: Object.entries(opts.components).reduce((final, entry) => {
-                final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
+        Object.defineProperty(_this, 'components', {
+            value: Object.entries(opts.components).reduce(function (final, entry) {
+                final[entry[0]] = _this.createChildComponentClass(entry[0], entry[1]);
                 return final;
             }, {})
-        })
+        });
 
-        Object.entries(this._pipelines).forEach(entry =>
-            entry[1].on('markeddirty', evt => {
-                this.trigger('markeddirty', Object.assign({
+        Object.entries(_this._pipelines).forEach(function (entry) {
+            return entry[1].on('markeddirty', function (evt) {
+                _this.trigger('markeddirty', Object.assign({
                     pipeline: entry[1],
                     pipelineName: entry[0]
-                }, evt))
-            })
-        );
-
-        ['props', 'state'].forEach((propName) => {
-            this[propName].on('change', evt => {
-                this.markDirty(evt.changedKey);
-            })
+                }, evt));
+            });
         });
 
-        window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+        ['props', 'state'].forEach(function (propName) {
+            _this[propName].on('change', function (evt) {
+                _this.markDirty(evt.changedKey);
+            });
+        });
+
+        window[_this.constructor.Weddell.consts.VAR_NAME].components[_this._id] = _this;
+        return _this;
     }
 
-    onInit() {
-        //Default event handler, noop
-    }
-
-    onRenderMarkup() {
-        //Default event handler, noop
-    }
-
-    onRenderStyles() {
-        //Default event handler, noop
-    }
-
-    addTagDirective(name, directive) {
-        this._tagDirectives[name.toUpperCase()] = directive;
-    }
-
-    createChildComponentClass(componentName, Component) {
-        if (Array.isArray(Component)) {
-            var initOpts = Component[2];
-            var inputMappings = Component[1];
-            Component = Component[0];
+    _createClass(Component, [{
+        key: 'onInit',
+        value: function onInit() {
+            //Default event handler, noop
         }
+    }, {
+        key: 'onRenderMarkup',
+        value: function onRenderMarkup() {
+            //Default event handler, noop
+        }
+    }, {
+        key: 'onRenderStyles',
+        value: function onRenderStyles() {
+            //Default event handler, noop
+        }
+    }, {
+        key: 'addTagDirective',
+        value: function addTagDirective(name, directive) {
+            this._tagDirectives[name.toUpperCase()] = directive;
+        }
+    }, {
+        key: 'createChildComponentClass',
+        value: function createChildComponentClass(componentName, Component) {
+            if (Array.isArray(Component)) {
+                var initOpts = Component[2];
+                var inputMappings = Component[1];
+                Component = Component[0];
+            }
 
-        var parentComponent = this;
-        var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
-        var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
-        var markupTransforms = this._pipelines.markup.transforms;
-        var stylesTransforms = this._pipelines.styles.transforms;;
+            var parentComponent = this;
+            var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
+            var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
+            var markupTransforms = this._pipelines.markup.transforms;
+            var stylesTransforms = this._pipelines.styles.transforms;;
 
-        var obj = {}
-        obj[componentName] = class extends Component {
-            constructor(opts) {
-                super(defaults({
-                    parentComponent,
-                    targetMarkupRenderFormat,
-                    targetStylesRenderFormat,
-                    markupTransforms,
-                    stylesTransforms
-                }, opts))
+            var obj = {};
+            obj[componentName] = function (_Component) {
+                _inherits(_class, _Component);
 
-                parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
+                function _class(opts) {
+                    _classCallCheck(this, _class);
 
-                this.on('createcomponent', evt => {
-                    parentComponent.trigger('createcomponent', Object.assign({}, evt));
-                });
+                    var _this2 = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, defaults({
+                        parentComponent: parentComponent,
+                        targetMarkupRenderFormat: targetMarkupRenderFormat,
+                        targetStylesRenderFormat: targetStylesRenderFormat,
+                        markupTransforms: markupTransforms,
+                        stylesTransforms: stylesTransforms
+                    }, opts)));
 
-                this.on('markeddirty', evt => {
-                    parentComponent.markDirty();
+                    parentComponent.trigger('createcomponent', { component: _this2, parentComponent: parentComponent, componentName: componentName });
+
+                    _this2.on('createcomponent', function (evt) {
+                        parentComponent.trigger('createcomponent', Object.assign({}, evt));
+                    });
+
+                    _this2.on('markeddirty', function (evt) {
+                        parentComponent.markDirty();
+                    });
+                    return _this2;
+                }
+
+                return _class;
+            }(Component);
+            this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
+            obj[componentName]._initOpts = initOpts;
+            obj[componentName]._inputMappings = inputMappings;
+            obj[componentName]._id = generateHash();
+
+            return obj[componentName];
+        }
+    }, {
+        key: 'init',
+        value: function init(opts) {
+            var _this3 = this;
+
+            opts = defaults(opts, this.defaultInitOpts);
+            if (!this._isInit) {
+                this._isInit = true;
+                return Promise.resolve(this.onInit(opts)).then(function () {
+                    return _this3;
                 });
             }
+            return Promise.resolve(this);
         }
-        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
-        obj[componentName]._initOpts = initOpts;
-        obj[componentName]._inputMappings = inputMappings;
-        obj[componentName]._id = generateHash();
-
-        return obj[componentName];
-    }
-
-    init(opts) {
-        opts = defaults(opts, this.defaultInitOpts);
-        if (!this._isInit) {
-            this._isInit = true;
-            return Promise.resolve(this.onInit(opts))
-                .then(() => {
-                    return this;
-                });
+    }, {
+        key: 'bindEvent',
+        value: function bindEvent(funcText, opts) {
+            var consts = this.constructor.Weddell.consts;
+            return "(function(event){" + (opts && opts.preventDefault ? 'event.preventDefault();' : '') + (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') + funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
         }
-        return Promise.resolve(this);
-    }
-
-    bindEvent(funcText, opts) {
-        var consts = this.constructor.Weddell.consts;
-        return "(function(event){" +
-            (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
-            (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
-            funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
-    }
-
-    markDirty(changedKey) {
-        return Object.values(this._pipelines).forEach((pipeline, pipelineType) => {
-            pipeline.markDirty(changedKey);
-        });
-    }
-
-    renderStyles() {
-        this.trigger('beforerenderstyles');
-
-        return this._pipelines.styles.render()
-            .then(output => {
-                return Promise.all(Object.entries(this.components).map(entry => {
-                        var keys = Object.keys(this._componentInstances[entry[0]]);
-                        if (keys.length) {
-                            //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
-                            //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
-                        }
-                        return {component: this, output: '', wasRenderered: false};
-                    }))
-                    .then(components => {
-                        var evtObj = {
-                            output,
-                            component: this,
-                            components,
-                            wasRendered: true,
-                            renderFormat: this._pipelines.styles.targetRenderFormat
-                        };
-
-                        this.trigger('renderstyles', Object.assign({}, evtObj));
-
-                        return evtObj;
-                    });
+    }, {
+        key: 'markDirty',
+        value: function markDirty(changedKey) {
+            return Object.values(this._pipelines).forEach(function (pipeline, pipelineType) {
+                pipeline.markDirty(changedKey);
             });
-    }
-
-    render(pipelineType) {
-        this.trigger('beforerender');
-
-        if (!pipelineType) {
-            return Promise.all(Object.keys(this._pipelines).map(pipelineType => this.render.call(this, pipelineType)));
         }
-        var pipeline = this._pipelines[pipelineType];
-        var args =  Array.from(arguments).slice(1);
+    }, {
+        key: 'renderStyles',
+        value: function renderStyles() {
+            var _this4 = this;
 
-        switch(pipelineType) {
-            case 'markup':
-                var output = this.renderMarkup.apply(this, args);
-                break;
-            case 'styles':
-                output = this.renderStyles.apply(this, args);
-                break;
-            default:
+            this.trigger('beforerenderstyles');
+
+            return this._pipelines.styles.render().then(function (output) {
+                return Promise.all(Object.entries(_this4.components).map(function (entry) {
+                    var keys = Object.keys(_this4._componentInstances[entry[0]]);
+                    if (keys.length) {
+                        //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
+                        //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
+                        return _this4._componentInstances[entry[0]][keys[0]].renderStyles(); //entry[1].renderStyles();
+                    }
+                    return { component: _this4, output: '', wasRenderered: false };
+                })).then(function (components) {
+                    var evtObj = {
+                        output: output,
+                        component: _this4,
+                        components: components,
+                        wasRendered: true,
+                        renderFormat: _this4._pipelines.styles.targetRenderFormat
+                    };
+
+                    _this4.trigger('renderstyles', Object.assign({}, evtObj));
+
+                    return evtObj;
+                });
+            });
         }
+    }, {
+        key: 'render',
+        value: function render(pipelineType) {
+            var _this5 = this;
 
-        return Promise.resolve(output)
-            .then(evt => {
-                this.trigger('render', Object.assign({}, evt));
+            this.trigger('beforerender');
+
+            if (!pipelineType) {
+                return Promise.all(Object.keys(this._pipelines).map(function (pipelineType) {
+                    return _this5.render.call(_this5, pipelineType);
+                }));
+            }
+            var pipeline = this._pipelines[pipelineType];
+            var args = Array.from(arguments).slice(1);
+
+            switch (pipelineType) {
+                case 'markup':
+                    var output = this.renderMarkup.apply(this, args);
+                    break;
+                case 'styles':
+                    output = this.renderStyles.apply(this, args);
+                    break;
+                default:
+            }
+
+            return Promise.resolve(output).then(function (evt) {
+                _this5.trigger('render', Object.assign({}, evt));
                 return evt;
             });
-    }
-
-    renderMarkup(content, props, targetFormat) {
-        this.trigger('beforerendermarkup');
-
-        var pipeline = this._pipelines.markup;
-
-        if (!targetFormat) {
-            targetFormat = pipeline.targetRenderFormat;
         }
+    }, {
+        key: 'renderMarkup',
+        value: function renderMarkup(content, props, targetFormat) {
+            var _this6 = this;
 
-        if (props) {
-            Object.assign(this.props, Object.entries(props)
-                .filter(entry => {
-                    var result = includes(this.inputs, entry[0]);
+            this.trigger('beforerendermarkup');
+
+            var pipeline = this._pipelines.markup;
+
+            if (!targetFormat) {
+                targetFormat = pipeline.targetRenderFormat;
+            }
+
+            if (props) {
+                Object.assign(this.props, Object.entries(props).filter(function (entry) {
+                    var result = includes(_this6.inputs, entry[0]);
                     if (!result) throw "Unsupported prop: '" + entry[0] + "' (hint: is this key in your inputs?)";
                     return result;
-                })
-                .reduce((finalObj, entry) => {
+                }).reduce(function (finalObj, entry) {
                     finalObj[entry[0]] = entry[1];
                     return finalObj;
                 }, {}));
-        }
-
-        var components = {};
-        var off = this.on('rendercomponent', componentResult => {
-            if (!(componentResult.componentName in components)) {
-                components[componentResult.componentName] = [];
             }
-            components[componentResult.componentName].push(componentResult);
-        });
-        return pipeline.render(targetFormat)
-            .then(output => {
+
+            var components = {};
+            var off = this.on('rendercomponent', function (componentResult) {
+                if (!(componentResult.componentName in components)) {
+                    components[componentResult.componentName] = [];
+                }
+                components[componentResult.componentName].push(componentResult);
+            });
+            return pipeline.render(targetFormat).then(function (output) {
                 var renderFormat = targetFormat.val;
-                if (!(renderFormat in this.renderers)) {
+                if (!(renderFormat in _this6.renderers)) {
                     throw "No appropriate component markup renderer found for format: " + renderFormat;
                 }
-                return this.renderers[renderFormat].call(this, output, content)
-                    .then(output => {
-                        off();
-                        var evObj = {
-                            output,
-                            component: this,
-                            id: this._id,
-                            components,
-                            renderFormat
-                        };
+                return _this6.renderers[renderFormat].call(_this6, output, content).then(function (output) {
+                    off();
+                    var evObj = {
+                        output: output,
+                        component: _this6,
+                        id: _this6._id,
+                        components: components,
+                        renderFormat: renderFormat
+                    };
 
-                        this.trigger('rendermarkup', Object.assign({}, evObj));
-                        return evObj;
-                    });
+                    _this6.trigger('rendermarkup', Object.assign({}, evObj));
+                    return evObj;
+                });
             });
-    }
-
-    makeComponentInstance(componentName, index, opts) {
-        var instance = new (this.components[componentName])({
-            store: defaults({
-                $componentID: this.components[componentName]._id,
-                $instanceKey: index
-            })
-        });
-        return instance;
-    }
-
-    getComponentInstance(componentName, index) {
-        var instances = this._componentInstances[componentName]
-        if (instances && !(index in instances)) {
-            this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
-            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
         }
-        return Promise.resolve(instances ? instances[index] : null);
-    }
+    }, {
+        key: 'makeComponentInstance',
+        value: function makeComponentInstance(componentName, index, opts) {
+            var instance = new this.components[componentName]({
+                store: defaults({
+                    $componentID: this.components[componentName]._id,
+                    $instanceKey: index
+                })
+            });
+            return instance;
+        }
+    }, {
+        key: 'getComponentInstance',
+        value: function getComponentInstance(componentName, index) {
+            var instances = this._componentInstances[componentName];
+            if (instances && !(index in instances)) {
+                this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
+                return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
+            }
+            return Promise.resolve(instances ? instances[index] : null);
+        }
+    }, {
+        key: 'cleanupComponentInstances',
+        value: function cleanupComponentInstances() {
+            //TODO right now, if a component becomes unused, it will continue to sit in memory and possibly generate events. We should probably clean them up.
+        }
+    }]);
 
-    cleanupComponentInstances() {
-        //TODO right now, if a component becomes unused, it will continue to sit in memory and possibly generate events. We should probably clean them up.
-    }
-}
+    return Component;
+}(mix(Component).with(EventEmitterMixin));
 
 module.exports = Component;
 
 },{"../utils/includes":77,"../utils/make-hash":78,"./event-emitter-mixin":56,"./sig":58,"mixwith-es5":21,"object.defaults/immutable":23}],56:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Mixin = require('mixwith-es5').Mixin;
 var hasMixin = require('mixwith-es5').hasMixin;
 var defaults = require('object.defaults/immutable');
 var includes = require('../utils/includes');
 
-var EventEmitterMixin = Mixin(function(superClass) {
-    return class extends superClass {
-        constructor(opts) {
-            super(opts);
-            Object.defineProperties(this, {
-                _callbacks: {value: {}}
+var EventEmitterMixin = Mixin(function (superClass) {
+    return function (_superClass) {
+        _inherits(_class, _superClass);
+
+        function _class(opts) {
+            _classCallCheck(this, _class);
+
+            var _this = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
+
+            Object.defineProperties(_this, {
+                _callbacks: { value: {} }
             });
+            return _this;
         }
 
-        on(eventName, callback) {
-            if (Array.isArray(eventName)) {
-                eventName.forEach(evName => this.on(evName, callback));
-            } else {
-                if (!(eventName in this._callbacks)) {
-                    this._callbacks[eventName] = [];
-                }
-                this._callbacks[eventName] = this._callbacks[eventName].concat(callback);
-            }
-            return () => this.off(eventName, callback);
-        }
+        _createClass(_class, [{
+            key: 'on',
+            value: function on(eventName, callback) {
+                var _this2 = this;
 
-        once(eventName, callback) {
-            var self = this;
-            var off = this.on(eventName, function() {
-                callback.apply(this, arguments);
-                off();
-            });
-            return off;
-        }
-
-        off(eventName, callback) {
-            if (Array.isArray(eventName)) {
-                return eventName.map(off, callback);
-            } else {
-                if (eventName in this._callbacks) {
-                    var i = this._callbacks[eventName].indexOf(callback);
-                    if (i > -1) {
-                        this._callbacks[eventName].splice(i, 1);
+                if (Array.isArray(eventName)) {
+                    eventName.forEach(function (evName) {
+                        return _this2.on(evName, callback);
+                    });
+                } else {
+                    if (!(eventName in this._callbacks)) {
+                        this._callbacks[eventName] = [];
                     }
-                    if (!this._callbacks[eventName].length) {
-                        delete this._callbacks[eventName];
-                    }
-                    return true;
+                    this._callbacks[eventName] = this._callbacks[eventName].concat(callback);
                 }
-                return false;
+                return function () {
+                    return _this2.off(eventName, callback);
+                };
             }
-        }
+        }, {
+            key: 'once',
+            value: function once(eventName, callback) {
+                var self = this;
+                var off = this.on(eventName, function () {
+                    callback.apply(this, arguments);
+                    off();
+                });
+                return off;
+            }
+        }, {
+            key: 'off',
+            value: function (_off) {
+                function off(_x, _x2) {
+                    return _off.apply(this, arguments);
+                }
 
-        trigger(eventName, eventObj, thisArg) {
-            if (Array.isArray(eventName)) {
-                return eventName.map(evtName => this.trigger(evtName, eventObj, thisArg));
-            } else {
-                if (eventName in this._callbacks) {
-                    return this._callbacks[eventName].map(cb => cb.call(thisArg || this, eventObj));
+                off.toString = function () {
+                    return _off.toString();
+                };
+
+                return off;
+            }(function (eventName, callback) {
+                if (Array.isArray(eventName)) {
+                    return eventName.map(off, callback);
+                } else {
+                    if (eventName in this._callbacks) {
+                        var i = this._callbacks[eventName].indexOf(callback);
+                        if (i > -1) {
+                            this._callbacks[eventName].splice(i, 1);
+                        }
+                        if (!this._callbacks[eventName].length) {
+                            delete this._callbacks[eventName];
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            })
+        }, {
+            key: 'trigger',
+            value: function trigger(eventName, eventObj, thisArg) {
+                var _this3 = this;
+
+                if (Array.isArray(eventName)) {
+                    return eventName.map(function (evtName) {
+                        return _this3.trigger(evtName, eventObj, thisArg);
+                    });
+                } else {
+                    if (eventName in this._callbacks) {
+                        return this._callbacks[eventName].map(function (cb) {
+                            return cb.call(thisArg || _this3, eventObj);
+                        });
+                    }
                 }
             }
-        }
-    }
+        }]);
+
+        return _class;
+    }(superClass);
 });
 
 module.exports = EventEmitterMixin;
 
 },{"../utils/includes":77,"mixwith-es5":21,"object.defaults/immutable":23}],57:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
-var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
-    constructor(opts) {
-        super(opts);
-        var Sig = this.constructor.Weddell.classes.Sig;
-        Object.defineProperties(this, {
-            isDirty: {value: false, writable: true},
-            name: {value: opts.name},
-            template: {value: null, writable: true},
-            input: {value: opts.input, writable: true},
-            static: {value: null, writable: true},
-            onRender: {value: opts.onRender},
-            _store: {value: opts.store},
-            _cache: {value: null, writable: true},
-            _watchedProperties: {value: {}, writable: true},
-            _promise: {value: Promise.resolve(), writable: true},
-            _requestHandle: {value: null, writable: true},
-            _currentResolve: {value: null, writable: true},
+var Pipeline = function (_mix$with) {
+    _inherits(Pipeline, _mix$with);
+
+    function Pipeline(opts) {
+        _classCallCheck(this, Pipeline);
+
+        var _this = _possibleConstructorReturn(this, (Pipeline.__proto__ || Object.getPrototypeOf(Pipeline)).call(this, opts));
+
+        var Sig = _this.constructor.Weddell.classes.Sig;
+        Object.defineProperties(_this, {
+            isDirty: { value: false, writable: true },
+            name: { value: opts.name },
+            template: { value: null, writable: true },
+            input: { value: opts.input, writable: true },
+            static: { value: null, writable: true },
+            onRender: { value: opts.onRender },
+            _store: { value: opts.store },
+            _cache: { value: null, writable: true },
+            _watchedProperties: { value: {}, writable: true },
+            _promise: { value: Promise.resolve(), writable: true },
+            _requestHandle: { value: null, writable: true },
+            _currentResolve: { value: null, writable: true },
             inputFormat: { value: new Sig(opts.inputFormat) },
             _isDynamic: { value: opts.isDynamic, writable: true },
             transforms: { value: opts.transforms, writable: true },
@@ -4701,242 +4831,290 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
             _instances: { value: {}, writable: true },
             _isInit: { value: false, writable: true }
         });
+        return _this;
     }
 
-    init() {
-        if (!this._isInit) {
-            if (this.input) {
-                this.template = this.processInput(this.targetRenderFormat);
+    _createClass(Pipeline, [{
+        key: 'init',
+        value: function init() {
+            if (!this._isInit) {
+                if (this.input) {
+                    this.template = this.processInput(this.targetRenderFormat);
+                }
+                this._isInit = true;
             }
-            this._isInit = true;
         }
-    }
+    }, {
+        key: 'processInput',
+        value: function processInput(targetRenderFormat) {
+            var _this2 = this;
 
-    processInput(targetRenderFormat) {
-        var input = this.input;
-        var Transform = this.constructor.Weddell.classes.Transform;
-        var Sig = this.constructor.Weddell.classes.Sig;
-        var transforms;
-        var inputFormat = this.inputFormat;
-        var template;
-        //TODO clean up this mess of a function
-        if (this._isDynamic && inputFormat.parsed.type !== 'function') {
-            var transforms = Transform.getMatchingTransforms(this.transforms, inputFormat, '(locals:Object, ...Any)=>Any')
-            if (!transforms) {
-                throw "Could not find appropriate transform to turn " + this.inputFormat + " into a template function.";
-            }
-            var templateTransform;
-            transforms = transforms
-                .reduce((finalVal, transform) => {
+            var input = this.input;
+            var Transform = this.constructor.Weddell.classes.Transform;
+            var Sig = this.constructor.Weddell.classes.Sig;
+            var transforms;
+            var inputFormat = this.inputFormat;
+            var template;
+            //TODO clean up this mess of a function
+            if (this._isDynamic && inputFormat.parsed.type !== 'function') {
+                var transforms = Transform.getMatchingTransforms(this.transforms, inputFormat, '(locals:Object, ...Any)=>Any');
+                if (!transforms) {
+                    throw "Could not find appropriate transform to turn " + this.inputFormat + " into a template function.";
+                }
+                var templateTransform;
+                transforms = transforms.reduce(function (finalVal, transform) {
                     if (!finalVal) {
                         var returnType = new Sig(transform.to.parsed.returns);
-                        var result = Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
+                        var result = Transform.getTransformPath(_this2.transforms, returnType, targetRenderFormat);
                         if (result) {
                             templateTransform = transform;
                         }
                     }
                     return finalVal || result;
                 }, null);
-            if (!transforms) {
-                throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + targetRenderFormat.validated;
-            }
-            template = Transform.compose(templateTransform.applyTransform(input), transforms);
-        } else if (this._isDynamic && inputFormat.parsed.type === 'function') {
-            var returnType = new Sig(this.inputFormat.parsed.returns);
-            transforms = this.transforms
-                .reduce((finalVal, transform) => {
-                    return finalVal || Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
+                if (!transforms) {
+                    throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + targetRenderFormat.validated;
+                }
+                template = Transform.compose(templateTransform.applyTransform(input), transforms);
+            } else if (this._isDynamic && inputFormat.parsed.type === 'function') {
+                var returnType = new Sig(this.inputFormat.parsed.returns);
+                transforms = this.transforms.reduce(function (finalVal, transform) {
+                    return finalVal || Transform.getTransformPath(_this2.transforms, returnType, targetRenderFormat);
                 }, null);
 
-            if (!targetRenderFormat.checkIfMatch(returnType)) {
-                if (!transforms) {
-                    throw "Could not find a tranform path from " + returnType.validated + ' to ' + targetRenderFormat.validated;
+                if (!targetRenderFormat.checkIfMatch(returnType)) {
+                    if (!transforms) {
+                        throw "Could not find a tranform path from " + returnType.validated + ' to ' + targetRenderFormat.validated;
+                    }
+                    template = Transform.compose(input, transforms);
+                } else {
+                    template = input;
                 }
-                template = Transform.compose(input, transforms);
             } else {
-                template = input;
+                transforms = Transform.getTransformPath(this.transforms, this.inputFormat, targetRenderFormat);
+
+                if (!transforms) {
+                    throw "Could not find appropriate transform for " + this.inputFormat.validated + " to " + targetRenderFormat.validated;
+                }
+
+                template = function template() {
+                    return Transform.applyTransforms(input, transforms);
+                };
             }
-        } else {
-            transforms = Transform.getTransformPath(this.transforms, this.inputFormat, targetRenderFormat);
 
-            if (!transforms){
-                throw "Could not find appropriate transform for " + this.inputFormat.validated + " to " + targetRenderFormat.validated;
+            return template;
+        }
+    }, {
+        key: 'markDirty',
+        value: function markDirty(changedKey) {
+            if (!this.isDirty && (!changedKey || changedKey in this._watchedProperties)) {
+                this.isDirty = true;
+                this.trigger('markeddirty', { changedKey: changedKey });
+                return true;
             }
-
-            template = function(){ return Transform.applyTransforms(input, transforms) };
+            return false;
         }
-
-        return template;
-    }
-
-    markDirty(changedKey) {
-        if (!this.isDirty && (!changedKey || (changedKey in this._watchedProperties))) {
-            this.isDirty = true;
-            this.trigger('markeddirty', {changedKey});
-            return true;
+    }, {
+        key: 'callTemplate',
+        value: function callTemplate(locals, template) {
+            return template.call(this, locals);
         }
-        return false;
-    }
+    }, {
+        key: 'render',
+        value: function render(targetFormat) {
+            var _this3 = this;
 
-    callTemplate(locals, template) {
-        return template.call(this, locals);
-    }
-
-    render(targetFormat) {
-        if (!this._isInit) {
-            this.init();
-        }
-        if (this.isDirty || !this._cache) {
-            var Sig = this.constructor.Weddell.classes.Sig;
-            var template = this.template;
-            if (targetFormat) {
-                targetFormat = new Sig(targetFormat);
-                //TODO cache processed input formats so we don't run into cases where processInput is running every time state changes. We could probably also remove the initialization process and have this only happen lazily
-                template = !targetFormat.checkIfMatch(this.targetRenderFormat) ? this.processInput(targetFormat) : this.template;
+            if (!this._isInit) {
+                this.init();
             }
-            var accessed = {};
-            var off = this._store.on('get', function(evt){
-                accessed[evt.key] = 1;
-            });
-            var output = template ? this.callTemplate(this._store, template) : this.static;
-            //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
-            off();
-            this._watchedProperties = accessed;
+            if (this.isDirty || !this._cache) {
+                var Sig = this.constructor.Weddell.classes.Sig;
+                var template = this.template;
+                if (targetFormat) {
+                    targetFormat = new Sig(targetFormat);
+                    //TODO cache processed input formats so we don't run into cases where processInput is running every time state changes. We could probably also remove the initialization process and have this only happen lazily
+                    template = !targetFormat.checkIfMatch(this.targetRenderFormat) ? this.processInput(targetFormat) : this.template;
+                }
+                var accessed = {};
+                var off = this._store.on('get', function (evt) {
+                    accessed[evt.key] = 1;
+                });
+                var output = template ? this.callTemplate(this._store, template) : this.static;
+                //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
+                off();
+                this._watchedProperties = accessed;
 
-            return Promise.resolve(output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
-                .then(() => {
-                    this.isDirty = false;
-                    this._cache = output
-                    this.trigger('render', {output});
+                return Promise.resolve(output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output).then(function () {
+                    _this3.isDirty = false;
+                    _this3._cache = output;
+                    _this3.trigger('render', { output: output });
                     return output;
                 }) : null);
+            }
+            return Promise.resolve(this._cache);
         }
-        return Promise.resolve(this._cache);
-    }
-}
+    }]);
+
+    return Pipeline;
+}(mix(Pipeline).with(EventEmitterMixin));
 
 module.exports = Pipeline;
 
 },{"./event-emitter-mixin":56,"mixwith-es5":21}],58:[function(require,module,exports){
-class Sig {
-    constructor(str) {
-        if (typeof str === 'object' && str.constructor === this.constructor) {
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Sig = function () {
+    function Sig(str) {
+        var _this = this;
+
+        _classCallCheck(this, Sig);
+
+        if ((typeof str === 'undefined' ? 'undefined' : _typeof(str)) === 'object' && str.constructor === this.constructor) {
             Object.defineProperties(this, Object.getOwnPropertyDescriptors(str));
         } else {
-            this.val = typeof str === 'object' ? this.constructor.format(str) : str;
+            this.val = (typeof str === 'undefined' ? 'undefined' : _typeof(str)) === 'object' ? this.constructor.format(str) : str;
             Object.defineProperties(this, {
                 _parsed: { value: null, writable: true },
                 _validated: { value: null, writable: true },
                 parsed: {
-                    get: () => this._parsed ? this._parsed : this._parsed = this.constructor.parse(this.val)
+                    get: function get() {
+                        return _this._parsed ? _this._parsed : _this._parsed = _this.constructor.parse(_this.val);
+                    }
                 },
                 validated: {
-                    get: () => this._validated ? this._validated : this._validated = this.constructor.format(this.parsed)
+                    get: function get() {
+                        return _this._validated ? _this._validated : _this._validated = _this.constructor.format(_this.parsed);
+                    }
                 }
             });
         }
     }
 
-    static parseArgs(str) {
-        return str ? str.split(',').map(arg => {
-            var rest = arg.split('...');
-            if (rest.length > 1) {
-                arg = rest[1];
-                return this.parseVal(arg, true);
+    _createClass(Sig, [{
+        key: 'checkIfMatch',
+        value: function checkIfMatch(sig, strict) {
+            if (typeof sig === 'string') {
+                sig = new this.constructor(sig);
             }
-            return this.parseVal(arg);
-        }) : [];
-    }
+            return sig.validated === this.validated || this.constructor.compare(this.parsed, sig.parsed, strict);
+        }
+    }, {
+        key: 'wrap',
+        value: function wrap(funcName, args) {
+            return new this.constructor((funcName ? funcName + ':' : '') + '(' + (args ? args.join(',') : '') + ')=>' + this.val);
+        }
+    }], [{
+        key: 'parseArgs',
+        value: function parseArgs(str) {
+            var _this2 = this;
 
-    static parse(str) {
-        var arr;
-        var formatted = {};
-        var arr = new RegExp(this.pattern).exec(str);
-        if (arr) {
-            if (arr[1] || arr[2] || arr[3]) {
-                //func arguments and body
-                return {
-                    type: 'function',
-                    name: arr[1],
-                    args: this.parseArgs(arr[2]),
-                    returns: this.parse(arr[3])
+            return str ? str.split(',').map(function (arg) {
+                var rest = arg.split('...');
+                if (rest.length > 1) {
+                    arg = rest[1];
+                    return _this2.parseVal(arg, true);
                 }
-            } else if (arr[4]) {
-                //not func
-                return this.parseVal(arr[4]);
+                return _this2.parseVal(arg);
+            }) : [];
+        }
+    }, {
+        key: 'parse',
+        value: function parse(str) {
+            var arr;
+            var formatted = {};
+            var arr = new RegExp(this.pattern).exec(str);
+            if (arr) {
+                if (arr[1] || arr[2] || arr[3]) {
+                    //func arguments and body
+                    return {
+                        type: 'function',
+                        name: arr[1],
+                        args: this.parseArgs(arr[2]),
+                        returns: this.parse(arr[3])
+                    };
+                } else if (arr[4]) {
+                    //not func
+                    return this.parseVal(arr[4]);
+                }
+            }
+            console.warn("No matches for signature:", str, "Please ensure it is valid");
+        }
+    }, {
+        key: 'parseVal',
+        value: function parseVal(str, variadic) {
+            var parsed = str.split(':').map(function (str) {
+                return str.trim();
+            });
+            return { name: parsed[1] ? parsed[0] : undefined, type: parsed[1] || parsed[0], variadic: variadic };
+        }
+    }, {
+        key: 'formatVal',
+        value: function formatVal(obj) {
+            return obj.name ? obj.name + ':' + obj.type : obj.type;
+        }
+    }, {
+        key: 'formatArgs',
+        value: function formatArgs(args) {
+            var _this3 = this;
+
+            return args.map(function (arg) {
+                return (arg.variadic && '...' || '') + _this3.formatVal(arg);
+            }).join(',');
+        }
+    }, {
+        key: 'formatFunc',
+        value: function formatFunc(obj) {
+            return (obj.name ? obj.name + ':' : '') + '(' + this.formatArgs(obj.args) + ')=>' + this.format(obj.returns);
+        }
+    }, {
+        key: 'format',
+        value: function format(obj) {
+            if (obj.type === 'function') {
+                return this.formatFunc(obj);
+            } else {
+                return this.formatVal(obj);
             }
         }
-        console.warn("No matches for signature:", str, "Please ensure it is valid");
-    }
-
-    static parseVal(str, variadic) {
-        var parsed = str.split(':').map(str => str.trim());
-        return {name: parsed[1] ? parsed[0] : undefined, type: parsed[1] || parsed[0], variadic};
-    }
-
-    static formatVal(obj) {
-        return obj.name ? obj.name + ':' + obj.type : obj.type;
-    }
-
-    static formatArgs(args) {
-        return args.map(arg => {
-            return ((arg.variadic && '...') || '') + this.formatVal(arg);
-        }).join(',');
-    }
-
-    static formatFunc(obj) {
-        return (obj.name ? obj.name + ':' : '') + '(' + this.formatArgs(obj.args) + ')=>' + this.format(obj.returns)
-    }
-
-    static format(obj) {
-        if (obj.type === 'function') {
-            return this.formatFunc(obj);
-        } else {
-            return this.formatVal(obj);
+    }, {
+        key: 'compare',
+        value: function compare(obj1, obj2, strict) {
+            return obj1 && obj2 && this.compareTypes(obj1.type, obj2.type, strict) && (!obj1.name || !obj2.name || obj1.name === obj2.name) && obj1.variadic === obj1.variadic && (obj1.type !== 'function' && obj2.type !== 'function' || this.compare(obj1.returns, obj2.returns));
         }
-    }
-
-    static compare(obj1, obj2, strict) {
-        return obj1 && obj2 &&
-            this.compareTypes(obj1.type, obj2.type, strict) &&
-            (!obj1.name || !obj2.name || obj1.name === obj2.name) &&
-            obj1.variadic === obj1.variadic &&
-            ((obj1.type !== 'function' && obj2.type !== 'function') ||
-            this.compare(obj1.returns, obj2.returns));        
-    }
-
-    static compareTypes(type1, type2, strict) {
-        return type1 === 'Any' ||
-            type2 === 'Any' ||
-            type1 === type2 ||
-            (strict ? false : this.checkTypeAliases(type1, type2));
-    }
-
-    static checkTypeAliases(type1, type2) {
-        //TODO recursive check to get inherited aliases
-        return this.customTypes.filter((typeObj) => typeObj.alias === type1)
-            .some((typeObj) => typeObj.type === type2) ||
-            this.customTypes.filter((typeObj) => typeObj.alias === type2)
-                .some((typeObj) => typeObj.type === type1)
-    }
-
-    static addTypeAlias(alias, type) {
-        if (alias === 'Any') throw "Cannot alias a type to 'Any'";
-        this.customTypes.push({type, alias});
-    }
-
-    checkIfMatch(sig, strict) {
-        if (typeof sig === 'string') {
-            sig = new this.constructor(sig);
+    }, {
+        key: 'compareTypes',
+        value: function compareTypes(type1, type2, strict) {
+            return type1 === 'Any' || type2 === 'Any' || type1 === type2 || (strict ? false : this.checkTypeAliases(type1, type2));
         }
-        return sig.validated === this.validated ||
-            this.constructor.compare(this.parsed, sig.parsed, strict);
-    }
+    }, {
+        key: 'checkTypeAliases',
+        value: function checkTypeAliases(type1, type2) {
+            //TODO recursive check to get inherited aliases
+            return this.customTypes.filter(function (typeObj) {
+                return typeObj.alias === type1;
+            }).some(function (typeObj) {
+                return typeObj.type === type2;
+            }) || this.customTypes.filter(function (typeObj) {
+                return typeObj.alias === type2;
+            }).some(function (typeObj) {
+                return typeObj.type === type1;
+            });
+        }
+    }, {
+        key: 'addTypeAlias',
+        value: function addTypeAlias(alias, type) {
+            if (alias === 'Any') throw "Cannot alias a type to 'Any'";
+            this.customTypes.push({ type: type, alias: alias });
+        }
+    }]);
 
-    wrap(funcName, args) {
-        return new this.constructor((funcName ? funcName + ':' : '') + '(' + (args ? args.join(',') : '') + ')=>' + this.val);
-    }
-}
+    return Sig;
+}();
 
 Sig.pattern = /(?:(?:(?:([^\(]*):)*\(([^\(]+)\)=>(.*))|(.+))/;
 Sig.customTypes = [];
@@ -4944,6 +5122,18 @@ Sig.customTypes = [];
 module.exports = Sig;
 
 },{}],59:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
@@ -4958,261 +5148,322 @@ var defaultOpts = {
     inputMappings: {}
 };
 
-var Store = class extends mix(Store).with(EventEmitterMixin) {
-    constructor(data, opts) {
-        opts = defaults(opts, defaultOpts);
-        super();
+var Store = function (_mix$with) {
+    _inherits(Store, _mix$with);
 
-        Object.defineProperties(this, {
-            shouldMonitorChanges: {value: opts.shouldMonitorChanges},
-            shouldEvalFunctions: {value: opts.shouldEvalFunctions},
-            _data: {configurable: false,value: {}},
-            _dependencyKeys: {configurable: false,value: {}},
-            _dependentKeys: {configurable: false,value: {}},
-            _proxyObjs: {configurable: false,value: {}},
-            _proxyProps: {configurable: false,value: {}},
+    function Store(data, opts) {
+        _classCallCheck(this, Store);
+
+        opts = defaults(opts, defaultOpts);
+
+        var _this = _possibleConstructorReturn(this, (Store.__proto__ || Object.getPrototypeOf(Store)).call(this));
+
+        Object.defineProperties(_this, {
+            shouldMonitorChanges: { value: opts.shouldMonitorChanges },
+            shouldEvalFunctions: { value: opts.shouldEvalFunctions },
+            _data: { configurable: false, value: {} },
+            _dependencyKeys: { configurable: false, value: {} },
+            _dependentKeys: { configurable: false, value: {} },
+            _proxyObjs: { configurable: false, value: {} },
+            _proxyProps: { configurable: false, value: {} },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
             inputMappings: { value: opts.inputMappings }
         });
 
-        difference(Object.values(this.inputMappings), Object.keys(data)).forEach(key => {
-            this.set(key, null);
+        difference(Object.values(_this.inputMappings), Object.keys(data)).forEach(function (key) {
+            _this.set(key, null);
         });
 
         if (data) {
-            this.assign(data);
+            _this.assign(data);
         }
 
-        this.extends.forEach(obj => {
-            obj.on('change', function(evt){
+        _this.extends.forEach(function (obj) {
+            obj.on('change', function (evt) {
                 if (evt.changedKey in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.changedKey = this.inputMappings[evt.changedKey];
                     this.trigger('change', evt);
                 }
-            }.bind(this));
+            }.bind(_this));
 
-            obj.on('get', function(evt){
+            obj.on('get', function (evt) {
                 if (evt.key in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.key = this.inputMappings[evt.key];
                     this.trigger('change', evt);
                 }
-            }.bind(this));
+            }.bind(_this));
         });
 
-        Object.keys(this.inputMappings).forEach(key => {
-            this.set(key, null, true);
+        Object.keys(_this.inputMappings).forEach(function (key) {
+            _this.set(key, null, true);
         });
 
-        this.proxies.forEach(proxy => {
-            Object.keys(proxy).forEach(key => {
-                this.set(key, null, true);
+        _this.proxies.forEach(function (proxy) {
+            Object.keys(proxy).forEach(function (key) {
+                _this.set(key, null, true);
             });
 
-            proxy.on('change', evt => {
-                if (!(evt.changedKey in this._data) && !(evt.changedKey in this.inputMappings)) {
-                    this.trigger('change', Object.assign({}, evt));
+            proxy.on('change', function (evt) {
+                if (!(evt.changedKey in _this._data) && !(evt.changedKey in _this.inputMappings)) {
+                    _this.trigger('change', Object.assign({}, evt));
                 }
             });
-            proxy.on('get', evt => {
-                if (!(evt.key in this._data) && !(evt.key in this.inputMappings)) {
-                    this.trigger('get', Object.assign({}, evt));
+            proxy.on('get', function (evt) {
+                if (!(evt.key in _this._data) && !(evt.key in _this.inputMappings)) {
+                    _this.trigger('get', Object.assign({}, evt));
                 }
             });
         });
+        return _this;
     }
 
-    set(key, val, isReadOnly) {
-        if (!(key in this)) {
-            if (!isReadOnly) {
-                var setter = function(newValue) {
-                    if (this.shouldMonitorChanges) {
-                        var oldValue = this._data[key];
-                        if (oldValue && typeof oldValue == "object") {
-                            var oldValue = assign({}, oldValue);
-                        }
-                    }
-                    this._data[key] = newValue;
-                    if (this.shouldMonitorChanges) {
-                        if (!deepEqual(newValue, oldValue)) {
-                            this.trigger('change', {changedKey: key, newValue, oldValue});
-                            if (key in this._dependentKeys) {
-                                this._dependentKeys[entry[0]].forEach((dependentKey) => {
-                                    this.trigger('change', {changedKey: dependentKey, changedDependencyKey: entry[0], newDependencyValue: newValue, oldDependencyValue: oldValue});
-                                });
+    _createClass(Store, [{
+        key: 'set',
+        value: function set(key, val, isReadOnly) {
+            if (!(key in this)) {
+                if (!isReadOnly) {
+                    var setter = function (newValue) {
+                        var _this2 = this;
+
+                        if (this.shouldMonitorChanges) {
+                            var oldValue = this._data[key];
+                            if (oldValue && (typeof oldValue === 'undefined' ? 'undefined' : _typeof(oldValue)) == "object") {
+                                var oldValue = assign({}, oldValue);
                             }
                         }
-                    }
-                }.bind(this);
-            }
+                        this._data[key] = newValue;
+                        if (this.shouldMonitorChanges) {
+                            if (!deepEqual(newValue, oldValue)) {
+                                this.trigger('change', { changedKey: key, newValue: newValue, oldValue: oldValue });
+                                if (key in this._dependentKeys) {
+                                    this._dependentKeys[entry[0]].forEach(function (dependentKey) {
+                                        _this2.trigger('change', { changedKey: dependentKey, changedDependencyKey: entry[0], newDependencyValue: newValue, oldDependencyValue: oldValue });
+                                    });
+                                }
+                            }
+                        }
+                    }.bind(this);
+                }
 
-            Object.defineProperty(this, key, {
-                configurable: false,
-                enumerable: true,
-                get: function() {
-                    var value = this.getValue(key);
-                    this.trigger('get', {key, value});
-                    if (this.shouldEvalFunctions && typeof this._data[key] === 'function') {
-                        return this.evaluateFunctionProperty(key);
-                    }
-                    return value;
-                }.bind(this),
-                set: setter
+                Object.defineProperty(this, key, {
+                    configurable: false,
+                    enumerable: true,
+                    get: function () {
+                        var value = this.getValue(key);
+                        this.trigger('get', { key: key, value: value });
+                        if (this.shouldEvalFunctions && typeof this._data[key] === 'function') {
+                            return this.evaluateFunctionProperty(key);
+                        }
+                        return value;
+                    }.bind(this),
+                    set: setter
+                });
+
+                if (!isReadOnly) {
+                    this[key] = val;
+                } else {
+                    this._data[key] = val;
+                }
+            }
+        }
+    }, {
+        key: 'getValue',
+        value: function getValue(key) {
+            var val = this._data[key];
+            var i = 0;
+            var mappingEntry = Object.entries(this.inputMappings).find(function (entry) {
+                return key === entry[1];
             });
 
-            if (!isReadOnly) {
-                this[key] = val;
-            } else {
-                this._data[key] = val;
+            while (this.extends[i] && (typeof val === 'undefined' || val === null)) {
+                val = this.extends[i][mappingEntry[0]];
+                i++;
             }
-        }
-    }
-
-    getValue(key) {
-        var val = this._data[key];
-        var i = 0;
-        var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
-
-        while(this.extends[i] && (typeof val === 'undefined' || val === null)) {
-            val = this.extends[i][mappingEntry[0]];
-            i++;
-        }
-        i = 0;
-        while (this.proxies[i] && (typeof val === 'undefined' || val === null)) {
-            val = this.proxies[i][key];
-            i++;
-        }
-        return val;
-    }
-
-    assign(data) {
-        if (data) {
-            if (Array.isArray(data)) {
-                data.forEach(key => this.set(key, null));
-            } else {
-                Object.entries(data).forEach((entry) => {
-                    this.set(entry[0], entry[1])
-                });
+            i = 0;
+            while (this.proxies[i] && (typeof val === 'undefined' || val === null)) {
+                val = this.proxies[i][key];
+                i++;
             }
+            return val;
         }
-    }
+    }, {
+        key: 'assign',
+        value: function assign(data) {
+            var _this3 = this;
 
-    evaluateFunctionProperty(key) {
-        var dependencyKeys = [];
-        var off = this.on('get', function(evt){
-            dependencyKeys.push(evt.key);
-        });
-        this.trigger('evaluate.before', {key: key});
-        var result = this._data[key].call(this);
-        this.trigger('evaluate', {key: key});
-        off();
-
-        this.setDependencyKeys(key, dependencyKeys);
-
-        return result;
-    }
-
-    setDependencyKeys(key, dependencyKeys) {
-        if (key in this._dependencyKeys) {
-            var unusedKeys = difference(this._dependencyKeys[key], dependencyKeys);
-            var newKeys = difference(dependencyKeys, this._dependencyKeys[key]);
-        } else {
-            unusedKeys = [];
-            newKeys = dependencyKeys;
-        }
-
-        newKeys.forEach(function(newKey){
-            if (!(newKey in this._dependentKeys)) {
-                this._dependentKeys[newKey] = [key];
-            } else if (!includes(this._dependentKeys[newKey], key)) {
-                this._dependentKeys[newKey] = this._dependentKeys[newKey].concat(key);
-            }
-        }.bind(this));
-
-        unusedKeys.forEach(function(unusedKey){
-            if (unusedKey in this._dependentKeys) {
-                var i = this._dependentKeys[unusedKey].indexOf(key);
-                if (i > -1) {
-                    this._dependentKeys[unusedKey].splice(i,1);
+            if (data) {
+                if (Array.isArray(data)) {
+                    data.forEach(function (key) {
+                        return _this3.set(key, null);
+                    });
+                } else {
+                    Object.entries(data).forEach(function (entry) {
+                        _this3.set(entry[0], entry[1]);
+                    });
                 }
             }
-        }.bind(this));
-
-        return this._dependencyKeys[key] = dependencyKeys;
-    }
-
-    watch(key, func, shouldWaitForDefined) {
-        if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
-        if (!Array.isArray(key)) {
-            key = [key];
         }
-        this.on('change', function(evt){
-            if (includes(key, evt.changedKey)) {
-                var vals = key.map(currKey=>this[currKey]);
-                if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
-                    func.apply(this, vals);
-                }
+    }, {
+        key: 'evaluateFunctionProperty',
+        value: function evaluateFunctionProperty(key) {
+            var dependencyKeys = [];
+            var off = this.on('get', function (evt) {
+                dependencyKeys.push(evt.key);
+            });
+            this.trigger('evaluate.before', { key: key });
+            var result = this._data[key].call(this);
+            this.trigger('evaluate', { key: key });
+            off();
+
+            this.setDependencyKeys(key, dependencyKeys);
+
+            return result;
+        }
+    }, {
+        key: 'setDependencyKeys',
+        value: function setDependencyKeys(key, dependencyKeys) {
+            if (key in this._dependencyKeys) {
+                var unusedKeys = difference(this._dependencyKeys[key], dependencyKeys);
+                var newKeys = difference(dependencyKeys, this._dependencyKeys[key]);
+            } else {
+                unusedKeys = [];
+                newKeys = dependencyKeys;
             }
-        });
-    }
-}
+
+            newKeys.forEach(function (newKey) {
+                if (!(newKey in this._dependentKeys)) {
+                    this._dependentKeys[newKey] = [key];
+                } else if (!includes(this._dependentKeys[newKey], key)) {
+                    this._dependentKeys[newKey] = this._dependentKeys[newKey].concat(key);
+                }
+            }.bind(this));
+
+            unusedKeys.forEach(function (unusedKey) {
+                if (unusedKey in this._dependentKeys) {
+                    var i = this._dependentKeys[unusedKey].indexOf(key);
+                    if (i > -1) {
+                        this._dependentKeys[unusedKey].splice(i, 1);
+                    }
+                }
+            }.bind(this));
+
+            return this._dependencyKeys[key] = dependencyKeys;
+        }
+    }, {
+        key: 'watch',
+        value: function watch(key, func, shouldWaitForDefined) {
+            if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
+            if (!Array.isArray(key)) {
+                key = [key];
+            }
+            this.on('change', function (evt) {
+                var _this4 = this;
+
+                if (includes(key, evt.changedKey)) {
+                    var vals = key.map(function (currKey) {
+                        return _this4[currKey];
+                    });
+                    if (!shouldWaitForDefined || vals.every(function (val) {
+                        return typeof val !== 'undefined';
+                    })) {
+                        func.apply(this, vals);
+                    }
+                }
+            });
+        }
+    }]);
+
+    return Store;
+}(mix(Store).with(EventEmitterMixin));
 
 module.exports = Store;
 
 },{"../utils/difference":75,"../utils/includes":77,"../utils/make-hash":78,"./event-emitter-mixin":56,"deep-equal":7,"mixwith-es5":21,"object.defaults/immutable":23}],60:[function(require,module,exports){
-class Transform {
-    constructor(opts) {
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Transform = function () {
+    function Transform(opts) {
+        _classCallCheck(this, Transform);
+
         var Sig = this.constructor.Weddell.classes.Sig;
         this.func = opts.func;
         this.from = new Sig(opts.from);
         this.to = new Sig(opts.to);
     }
 
-    applyTransform(input) {
-        return this.func(input);
-    }
-
-    static applyTransforms(input, transforms) {
-        return transforms.reduce((finalVal, transform) => {
-            return Array.isArray(transform) ? this.applyTransforms(finalVal, transform) : transform.applyTransform(finalVal);
-        }, input);
-    }
-
-    static getMatchingTransforms(transforms, from, to) {
-        return transforms.filter(transform => {
-            return (!to || transform.to.checkIfMatch(to)) && (!from || transform.from.checkIfMatch(from));
-        });
-    }
-
-    static compose(func, transforms) {
-        return transforms.reduce((composed, transform) => {
-            return function(){
-                return transform.applyTransform(composed.apply(this, arguments));
-            }
-        }, func);
-    }
-
-    static getTransformPath(transforms, from, to, _soFar) {
-        //TODO add heuristics to make this process faster
-        if (!_soFar) _soFar = [];
-        if (from.checkIfMatch(to)) {
-            return _soFar;
+    _createClass(Transform, [{
+        key: "applyTransform",
+        value: function applyTransform(input) {
+            return this.func(input);
         }
-        return transforms.filter(transform => {
-            return transform.from.checkIfMatch(from, true);
-        }).reduce((finalVal, transform) => {
-            return finalVal || this.getTransformPath(transforms, transform.to, to, _soFar.concat(transform));
-        }, null);
-    }
-}
+    }], [{
+        key: "applyTransforms",
+        value: function applyTransforms(input, transforms) {
+            var _this = this;
+
+            return transforms.reduce(function (finalVal, transform) {
+                return Array.isArray(transform) ? _this.applyTransforms(finalVal, transform) : transform.applyTransform(finalVal);
+            }, input);
+        }
+    }, {
+        key: "getMatchingTransforms",
+        value: function getMatchingTransforms(transforms, from, to) {
+            return transforms.filter(function (transform) {
+                return (!to || transform.to.checkIfMatch(to)) && (!from || transform.from.checkIfMatch(from));
+            });
+        }
+    }, {
+        key: "compose",
+        value: function compose(func, transforms) {
+            return transforms.reduce(function (composed, transform) {
+                return function () {
+                    return transform.applyTransform(composed.apply(this, arguments));
+                };
+            }, func);
+        }
+    }, {
+        key: "getTransformPath",
+        value: function getTransformPath(transforms, from, to, _soFar) {
+            var _this2 = this;
+
+            //TODO add heuristics to make this process faster
+            if (!_soFar) _soFar = [];
+            if (from.checkIfMatch(to)) {
+                return _soFar;
+            }
+            return transforms.filter(function (transform) {
+                return transform.from.checkIfMatch(from, true);
+            }).reduce(function (finalVal, transform) {
+                return finalVal || _this2.getTransformPath(transforms, transform.to, to, _soFar.concat(transform));
+            }, null);
+        }
+    }]);
+
+    return Transform;
+}();
 
 Transform.heuristics = {};
 
 module.exports = Transform;
 
 },{}],61:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
@@ -5222,253 +5473,333 @@ var Transform = require('./transform');
 var Sig = require('./sig');
 var includes = require('../utils/includes');
 
-class _Weddell {
-    static plugin(pluginObj) {
-        class NewWeddell extends _Weddell {};
-        if (!pluginObj.id) {
-            throw 'Got a plugin with no ID assigned. Aborting';
-        }
-        if (!includes(NewWeddell.loadedPlugins, pluginObj.id)) {
-            if (pluginObj.requires && !includes(NewWeddell.loadedPlugins, pluginObj.requires)) {
-                [].concat(pluginObj.requires).forEach((plugReq) => {
-                    throw 'Plugin ' + pluginObj.id + ' requires the plugin ' + plugReq + ', which is not loaded. Load ' + plugReq + ' first.';
-                });
-            }
-            if (pluginObj.classes) {
-                Object.entries(pluginObj.classes).forEach((entry) => {
-                    var className = entry[0];
-                    var classOrMixin = entry[1];
-                    if (className in NewWeddell.classes) {
-                        // Core class, we assume a mixin was passed and we should mix it
-                        NewWeddell.classes[className] = mix(NewWeddell.classes[className]).with(classOrMixin);
-                    } else {
-                        // Helper class
-                        NewWeddell.classes[className] = classOrMixin;
-                    }
-                });
-                Object.values(NewWeddell.classes).forEach(function(commonClass){
-                    commonClass.NewWeddell = NewWeddell;
-                });
-            }
-
-            if (pluginObj.deps) {
-                Object.entries(pluginObj.deps).forEach((entry) => {
-                    if (entry[0] in NewWeddell.deps) {
-                        throw 'Dependency conflict while loading plugin: ' + entry[0] + ' is taken.';
-                    }
-                    NewWeddell.deps[entry[0]] = entry[1];
-                });
-            }
-
-            NewWeddell.loadedPlugins.push(pluginObj.id);
-        } else {
-            console.warn('Plugin ' + pluginObj.id + ' already loaded. Ignoring.');
-        }
-        return NewWeddell;
+var _Weddell = function () {
+    function _Weddell() {
+        _classCallCheck(this, _Weddell);
     }
-}
+
+    _createClass(_Weddell, null, [{
+        key: 'plugin',
+        value: function plugin(pluginObj) {
+            var NewWeddell = function (_Weddell2) {
+                _inherits(NewWeddell, _Weddell2);
+
+                function NewWeddell() {
+                    _classCallCheck(this, NewWeddell);
+
+                    return _possibleConstructorReturn(this, (NewWeddell.__proto__ || Object.getPrototypeOf(NewWeddell)).apply(this, arguments));
+                }
+
+                return NewWeddell;
+            }(_Weddell);
+
+            ;
+            if (!pluginObj.id) {
+                throw 'Got a plugin with no ID assigned. Aborting';
+            }
+            if (!includes(NewWeddell.loadedPlugins, pluginObj.id)) {
+                if (pluginObj.requires && !includes(NewWeddell.loadedPlugins, pluginObj.requires)) {
+                    [].concat(pluginObj.requires).forEach(function (plugReq) {
+                        throw 'Plugin ' + pluginObj.id + ' requires the plugin ' + plugReq + ', which is not loaded. Load ' + plugReq + ' first.';
+                    });
+                }
+                if (pluginObj.classes) {
+                    Object.entries(pluginObj.classes).forEach(function (entry) {
+                        var className = entry[0];
+                        var classOrMixin = entry[1];
+                        if (className in NewWeddell.classes) {
+                            // Core class, we assume a mixin was passed and we should mix it
+                            NewWeddell.classes[className] = mix(NewWeddell.classes[className]).with(classOrMixin);
+                        } else {
+                            // Helper class
+                            NewWeddell.classes[className] = classOrMixin;
+                        }
+                    });
+                    Object.values(NewWeddell.classes).forEach(function (commonClass) {
+                        commonClass.NewWeddell = NewWeddell;
+                    });
+                }
+
+                if (pluginObj.deps) {
+                    Object.entries(pluginObj.deps).forEach(function (entry) {
+                        if (entry[0] in NewWeddell.deps) {
+                            throw 'Dependency conflict while loading plugin: ' + entry[0] + ' is taken.';
+                        }
+                        NewWeddell.deps[entry[0]] = entry[1];
+                    });
+                }
+
+                NewWeddell.loadedPlugins.push(pluginObj.id);
+            } else {
+                console.warn('Plugin ' + pluginObj.id + ' already loaded. Ignoring.');
+            }
+            return NewWeddell;
+        }
+    }]);
+
+    return _Weddell;
+}();
+
 _Weddell.loadedPlugins = [];
 _Weddell.consts = {
     VAR_NAME: '_wdl',
     INDEX_ATTR_NAME: 'data-component-index'
 };
 _Weddell.deps = {};
-_Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
-Object.values(_Weddell.classes).forEach(function(commonClass){
+_Weddell.classes = { App: App, Component: Component, Store: Store, Pipeline: Pipeline, Transform: Transform, Sig: Sig };
+Object.values(_Weddell.classes).forEach(function (commonClass) {
     commonClass.Weddell = _Weddell;
 });
 module.exports = _Weddell;
 
 },{"../utils/includes":77,"./app":54,"./component":55,"./pipeline":57,"./sig":58,"./store":59,"./transform":60,"mixwith-es5":21}],62:[function(require,module,exports){
+'use strict';
+
 module.exports = {
-    template : function(CSSText){
+    template: function template(CSSText) {
         //TODO make this more efficient after compile time
-        return function(locals){
+        return function (locals) {
             var reg = /var\(([^\\\)(]+)\)/g;
             var output = CSSText;
-            while(output.match(reg)){
-                output = output.replace(reg, function(fullMatch, group){
-                    return group.split(',')
-                        .map(function(str){
-                            return str.trim();
-                        })
-                        .map(function(val){
-                            return val.replace(/--(.*)/g, function(fullMatch, group){
-                                if (group in locals) {
-                                    return locals[group];
-                                }
-                                return '';
-                            });
-                        })
-                        .reduce(function(finalVal, currVal){
-                            return finalVal ? finalVal : currVal;
-                        }, '');
+            while (output.match(reg)) {
+                output = output.replace(reg, function (fullMatch, group) {
+                    return group.split(',').map(function (str) {
+                        return str.trim();
+                    }).map(function (val) {
+                        return val.replace(/--(.*)/g, function (fullMatch, group) {
+                            if (group in locals) {
+                                return locals[group];
+                            }
+                            return '';
+                        });
+                    }).reduce(function (finalVal, currVal) {
+                        return finalVal ? finalVal : currVal;
+                    }, '');
                 });
             }
             return output;
-        }
+        };
     }
-}
+};
 
 },{}],63:[function(require,module,exports){
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Mixin = require('mixwith-es5').Mixin;
 var CSSVars = require('./css-vars');
 
-module.exports = function(Weddell, pluginOpts){
+module.exports = function (Weddell, pluginOpts) {
     return Weddell.plugin({
         id: 'css-vars',
-        classes:  {
-            App: Mixin(function(App){
-                App = class extends App {
-                    constructor(opts) {
-                        super(opts);
-                        var Transform = this.constructor.Weddell.classes.Transform;
-                        this.stylesTransforms.push(new Transform({
+        classes: {
+            App: Mixin(function (_App) {
+                _App = function (_App2) {
+                    _inherits(App, _App2);
+
+                    function App(opts) {
+                        _classCallCheck(this, App);
+
+                        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, opts));
+
+                        var Transform = _this.constructor.Weddell.classes.Transform;
+                        _this.stylesTransforms.push(new Transform({
                             from: 'CSSString',
                             to: '(locals:Object)=>CSSString',
-                            func: function(input) {
+                            func: function func(input) {
                                 return CSSVars.template(input);
                             }
                         }));
+                        return _this;
                     }
-                }
-                return App;
+
+                    return App;
+                }(_App);
+                return _App;
             })
         }
     });
 };
 
 },{"./css-vars":62,"mixwith-es5":21}],64:[function(require,module,exports){
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Mixin = require('mixwith-es5').Mixin;
 var doT = require('dot');
-module.exports = function(Weddell, doTOpts){
+module.exports = function (Weddell, doTOpts) {
     if (doTOpts) {
         dot.templateSettings = doTOpts;
     }
     return Weddell.plugin({
         id: 'dot',
-        classes:  {
-            App: Mixin(function(App){
-                App = class extends App {
-                    constructor(opts) {
-                        super(opts);
-                        var Transform = this.constructor.Weddell.classes.Transform;
-                        var Sig = this.constructor.Weddell.classes.Sig;
+        classes: {
+            App: Mixin(function (_App) {
+                _App = function (_App2) {
+                    _inherits(App, _App2);
+
+                    function App(opts) {
+                        _classCallCheck(this, App);
+
+                        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, opts));
+
+                        var Transform = _this.constructor.Weddell.classes.Transform;
+                        var Sig = _this.constructor.Weddell.classes.Sig;
                         Sig.addTypeAlias('doT', 'HTMLString');
-                        this.markupTransforms.push(new Transform({
+                        _this.markupTransforms.push(new Transform({
                             from: 'doT',
                             to: '(locals:Object)=>HTMLString',
-                            func: function(input) {
+                            func: function func(input) {
                                 //TODO Dot allows for compile-time data (static partials, etc) as 3rd arg. Need to figure out where this would be defined and passed in
                                 return doT.template(input, null, null);
                             }
                         }));
+                        return _this;
                     }
-                }
-                return App;
+
+                    return App;
+                }(_App);
+                return _App;
             })
         }
     });
-}
+};
 
 },{"dot":11,"mixwith-es5":21}],65:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var defaultOpts = {};
 
-module.exports = function(_Weddell, opts){
+module.exports = function (_Weddell, opts) {
     return _Weddell.plugin({
         id: 'fetcher',
-        classes:  {
-            Component: Mixin(function(Component){
-                var Component = class extends Component {
-                    constructor(opts) {
+        classes: {
+            Component: Mixin(function (Component) {
+                var Component = function (_Component) {
+                    _inherits(Component, _Component);
+
+                    function Component(opts) {
+                        _classCallCheck(this, Component);
+
                         opts = defaults(opts, defaultOpts);
-                        super(opts);
+
+                        var _this = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opts));
+
                         if (opts.markupTemplateURL) {
-                            this.markupTemplateURL = opts.markupTemplateURL;
-                            this._pipelines.markup._isDynamic = true;
+                            _this.markupTemplateURL = opts.markupTemplateURL;
+                            _this._pipelines.markup._isDynamic = true;
                         } else if (opts.markupURL) {
-                            this.markupURL = opts.markupURL;
+                            _this.markupURL = opts.markupURL;
                         }
                         if (opts.stylesTemplateURL) {
-                            this.stylesTemplateURL = opts.stylesTemplateURL;
-                            this._pipelines.styles._isDynamic = true;
-                        } else if (this.stylesURL = opts.stylesURL) {
-                            this.stylesURL = opts.stylesURL;
+                            _this.stylesTemplateURL = opts.stylesTemplateURL;
+                            _this._pipelines.styles._isDynamic = true;
+                        } else if (_this.stylesURL = opts.stylesURL) {
+                            _this.stylesURL = opts.stylesURL;
                         }
                         //TODO add data fetch for component state
                         //TODO arbitrary asset loading (html and CSS partials, posisbly images etc)
                         //TODO caching
                         //TODO component assets?
+                        return _this;
                     }
 
-                    init(opts) {
-                        //TODO lazy fetch on demand
-                        var superInit = super.init;
-                        return Promise.all([
-                                this.fetchAsset('markup'),
-                                this.fetchAsset('styles')
-                            ])
-                            .then(() => superInit.call(this,opts));
-                    }
+                    _createClass(Component, [{
+                        key: 'init',
+                        value: function init(opts) {
+                            var _this2 = this;
 
-                    fetchAsset(pipelineName) {
-                        var promise = Promise.resolve();
-                        var pipeline = this._pipelines[pipelineName]
-                        var assetURLName = pipeline._isDynamic ? pipelineName + 'TemplateURL': pipelineName + 'URL';
-                        var assetName = pipeline._isDynamic ? 'template' : 'static';
-                        if (!(pipeline[assetName]) && this[assetURLName]) {
-                            promise = fetch(this[assetURLName])
-                                .then(res => res.text())
-                                .then(responseText => {
+                            //TODO lazy fetch on demand
+                            var superInit = _get(Component.prototype.__proto__ || Object.getPrototypeOf(Component.prototype), 'init', this);
+                            return Promise.all([this.fetchAsset('markup'), this.fetchAsset('styles')]).then(function () {
+                                return superInit.call(_this2, opts);
+                            });
+                        }
+                    }, {
+                        key: 'fetchAsset',
+                        value: function fetchAsset(pipelineName) {
+                            var promise = Promise.resolve();
+                            var pipeline = this._pipelines[pipelineName];
+                            var assetURLName = pipeline._isDynamic ? pipelineName + 'TemplateURL' : pipelineName + 'URL';
+                            var assetName = pipeline._isDynamic ? 'template' : 'static';
+                            if (!pipeline[assetName] && this[assetURLName]) {
+                                promise = fetch(this[assetURLName]).then(function (res) {
+                                    return res.text();
+                                }).then(function (responseText) {
                                     pipeline.input = responseText;
                                     pipeline.processInput();
-                                }, (err) => {
+                                }, function (err) {
                                     throw err;
                                 });
+                            }
+                            return promise;
                         }
-                        return promise;
-                    }
-                }
+                    }]);
+
+                    return Component;
+                }(Component);
                 return Component;
             })
         }
     });
-}
+};
 
 },{"mixwith-es5":21,"object.defaults/immutable":23}],66:[function(require,module,exports){
+'use strict';
+
 var Parser = require('prescribe');
 module.exports = {
-    parse: function(html, h) {
+    parse: function parse(html, h) {
         var parser = new Parser(html.trim());
         var nodes = [];
         var current;
 
         parser.readTokens({
-            chars: function(tok) {
+            chars: function chars(tok) {
                 if (current) {
                     current.children.push(tok.text);
                 } else {
                     nodes.push(tok.text);
                 }
             },
-            startTag: function(tok){
+            startTag: function startTag(tok) {
                 if (tok.unary || tok.html5Unary || tok.tagName === 'input') {
                     //NOTE this is how we will handle unary elements. Prescribe's unary element detection isn't perfect, so in the case of input elements, for example, we need to check for those explicity.
-                    var node = h(tok.tagName, {attributes: Object.assign({}, tok.attrs, tok.booleanAttrs)});
+                    var node = h(tok.tagName, { attributes: Object.assign({}, tok.attrs, tok.booleanAttrs) });
                     if (current) {
                         current.children.push(node);
                     } else {
                         nodes.push(node);
                     }
                 } else {
-                    current = {tok, parent: current, children:[]};
+                    current = { tok: tok, parent: current, children: [] };
                 }
             },
-            endTag: function(tok){
+            endTag: function endTag(tok) {
                 //TODO add support for SVG
-                var node = h(current.tok.tagName, {attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs)}, current.children);
+                var node = h(current.tok.tagName, { attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs) }, current.children);
                 current = current.parent;
                 if (!current) {
                     nodes.push(node);
@@ -5479,200 +5810,286 @@ module.exports = {
         });
         return nodes;
     }
-}
+};
 
 },{"prescribe":27}],67:[function(require,module,exports){
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Mixin = require('mixwith-es5').Mixin;
 var htmltovdomparser = require('./html-to-vdom-parser');
-module.exports = function(_Weddell){
+module.exports = function (_Weddell) {
     return _Weddell.plugin({
         id: 'html-to-vdom',
         requires: 'vdom',
-        classes:  {
-            App: Mixin(function(App){
-                App = class extends App {
-                    constructor(opts) {
-                        super(opts);
-                        var Transform = this.constructor.Weddell.classes.Transform;
-                        var h = this.constructor.Weddell.deps.h;
+        classes: {
+            App: Mixin(function (_App) {
+                _App = function (_App2) {
+                    _inherits(App, _App2);
 
-                        this.markupTransforms.push(new Transform({
+                    function App(opts) {
+                        _classCallCheck(this, App);
+
+                        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, opts));
+
+                        var Transform = _this.constructor.Weddell.classes.Transform;
+                        var h = _this.constructor.Weddell.deps.h;
+
+                        _this.markupTransforms.push(new Transform({
                             from: 'HTMLString',
                             to: 'VNode',
-                            func: function(input) {
+                            func: function func(input) {
                                 return htmltovdomparser.parse(input, h);
                             }
                         }));
+                        return _this;
                     }
-                }
-                return App;
+
+                    return App;
+                }(_App);
+                return _App;
             })
         }
     });
-}
+};
 
 },{"./html-to-vdom-parser":66,"mixwith-es5":21}],68:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
 
-var RouterState = mix(class {
-    constructor(opts) {
+var RouterState = mix(function () {
+    function _class(opts) {
+        _classCallCheck(this, _class);
+
         this.Component = opts.Component;
         this.componentName = opts.componentName;
     }
-}).with(MachineStateMixin);
 
-module.exports = function(_Weddell){
+    return _class;
+}()).with(MachineStateMixin);
+
+module.exports = function (_Weddell) {
     return _Weddell.plugin({
         id: 'router',
-        classes:  {
-            App: Mixin(function(App){
-                return class extends App {
-                    constructor(opts) {
-                        super(opts);
+        classes: {
+            App: Mixin(function (App) {
+                return function (_App) {
+                    _inherits(_class2, _App);
 
-                        this.router = new Router({
+                    function _class2(opts) {
+                        _classCallCheck(this, _class2);
+
+                        var _this = _possibleConstructorReturn(this, (_class2.__proto__ || Object.getPrototypeOf(_class2)).call(this, opts));
+
+                        _this.router = new Router({
                             routes: opts.routes,
-                            onRoute: function(matches, componentNames) {
+                            onRoute: function (matches, componentNames) {
                                 var jobs = [];
 
-                                return componentNames.reduce((promise, componentName) => {
-                                        return promise
-                                            .then(currentComponent => {
-                                                return currentComponent.getComponentInstance(componentName, 'router')
-                                                    .then(component => {
-                                                        if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
-                                                        jobs.push({
-                                                            component,
-                                                            currentComponent,
-                                                            componentName
-                                                        });
-                                                        return component;
-                                                    });
-                                            })
-                                    }, Promise.resolve(this.component))
-                                    .then(lastComponent => {
-                                        jobs.push({
-                                            currentComponent: lastComponent,
-                                            component: null,
-                                            componentName: null
+                                return componentNames.reduce(function (promise, componentName) {
+                                    return promise.then(function (currentComponent) {
+                                        return currentComponent.getComponentInstance(componentName, 'router').then(function (component) {
+                                            if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.'); // throw "Could not navigate to component " + key;
+                                            jobs.push({
+                                                component: component,
+                                                currentComponent: currentComponent,
+                                                componentName: componentName
+                                            });
+                                            return component;
                                         });
-                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
-                                    }, console.warn);
-
-                            }.bind(this)
+                                    });
+                                }, Promise.resolve(this.component)).then(function (lastComponent) {
+                                    jobs.push({
+                                        currentComponent: lastComponent,
+                                        component: null,
+                                        componentName: null
+                                    });
+                                    return Promise.all(jobs.map(function (obj) {
+                                        return obj.currentComponent.changeState(obj.componentName);
+                                    }));
+                                }, console.warn);
+                            }.bind(_this)
                         });
 
-                        this.on('createcomponent', evt => {
-                            evt.component.router = this.router;
+                        _this.on('createcomponent', function (evt) {
+                            evt.component.router = _this.router;
                         });
+                        return _this;
                     }
 
-                    init() {
-                        return super.init()
-                            .then(() => {
-                                return this.router.init();
+                    _createClass(_class2, [{
+                        key: 'init',
+                        value: function init() {
+                            var _this2 = this;
+
+                            return _get(_class2.prototype.__proto__ || Object.getPrototypeOf(_class2.prototype), 'init', this).call(this).then(function () {
+                                return _this2.router.init();
                             });
-                    }
-                }
-            }),
-            Component: Mixin(function(Component){
-                var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
-                    constructor(opts) {
-                        opts.stateClass = RouterState;
-                        super(opts);
+                        }
+                    }]);
 
-                        this.addTagDirective('RouterView', this.compileRouterView.bind(this));
+                    return _class2;
+                }(App);
+            }),
+            Component: Mixin(function (Component) {
+                var RouterComponent = function (_mix$with) {
+                    _inherits(RouterComponent, _mix$with);
+
+                    function RouterComponent(opts) {
+                        _classCallCheck(this, RouterComponent);
+
+                        opts.stateClass = RouterState;
+
+                        var _this3 = _possibleConstructorReturn(this, (RouterComponent.__proto__ || Object.getPrototypeOf(RouterComponent)).call(this, opts));
+
+                        _this3.addTagDirective('RouterView', _this3.compileRouterView.bind(_this3));
 
                         var routerLocals = {
-                            $routerLink: this.compileRouterLink.bind(this)
+                            $routerLink: _this3.compileRouterLink.bind(_this3)
                         };
-                        this.store.assign(routerLocals);
-                        this._locals.assign(routerLocals);
+                        _this3.store.assign(routerLocals);
+                        _this3._locals.assign(routerLocals);
 
-                        Object.entries(this.components)
-                            .forEach(entry => {
-                                var routerState = new RouterState({
-                                    Component: entry[1],
-                                    componentName: entry[0]
-                                });
-                                this.addState(entry[0], routerState);
-                                routerState.on(['exit', 'enter'], evt => {
-                                    this.markDirty();
-                                });
+                        Object.entries(_this3.components).forEach(function (entry) {
+                            var routerState = new RouterState({
+                                Component: entry[1],
+                                componentName: entry[0]
                             });
+                            _this3.addState(entry[0], routerState);
+                            routerState.on(['exit', 'enter'], function (evt) {
+                                _this3.markDirty();
+                            });
+                        });
+                        return _this3;
                     }
 
-                    compileRouterView(content, props) {
-                        if (this.currentState) {
-                            return this.getComponentInstance(this.currentState.componentName, 'router')
-                                .then(component => component.render('markup', content, props))
-                                .then(routerOutput => {
+                    _createClass(RouterComponent, [{
+                        key: 'compileRouterView',
+                        value: function compileRouterView(content, props) {
+                            if (this.currentState) {
+                                return this.getComponentInstance(this.currentState.componentName, 'router').then(function (component) {
+                                    return component.render('markup', content, props);
+                                }).then(function (routerOutput) {
                                     return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
                                 });
+                            }
+                            return Promise.resolve(null);
                         }
-                        return Promise.resolve(null);
-                    }
-
-                    compileRouterLink(obj) {
-                        var matches = this.router.compileRouterLink(obj);
-                        if (matches) {
-                            return matches.fullPath;
+                    }, {
+                        key: 'compileRouterLink',
+                        value: function compileRouterLink(obj) {
+                            var matches = this.router.compileRouterLink(obj);
+                            if (matches) {
+                                return matches.fullPath;
+                            }
                         }
-                    }
+                    }, {
+                        key: 'route',
+                        value: function route(pathname) {
+                            this.router.route(pathname);
+                        }
+                    }]);
 
-                    route(pathname) {
-                        this.router.route(pathname);
-                    }
-                }
+                    return RouterComponent;
+                }(mix(Component).with(StateMachineMixin));
 
                 return RouterComponent;
             }),
-            Router
+            Router: Router
         }
     });
-}
+};
 
 },{"./machine-state-mixin":69,"./router":70,"./state-machine-mixin":71,"mixwith-es5":21}],69:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
 var Mixin = require('mixwith-es5').Mixin;
 
-var MachineState = Mixin(function(superClass) {
-    return class extends mix(superClass).with(DeDupe(EventEmitterMixin)) {
-        constructor(opts) {
-            super(opts);
-            this.onEnterState = opts.onEnterState;
-            this.onExitState = opts.onExitState;
-            this.onUpdateState = opts.onUpdateState;
+var MachineState = Mixin(function (superClass) {
+    return function (_mix$with) {
+        _inherits(_class, _mix$with);
+
+        function _class(opts) {
+            _classCallCheck(this, _class);
+
+            var _this = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
+
+            _this.onEnterState = opts.onEnterState;
+            _this.onExitState = opts.onExitState;
+            _this.onUpdateState = opts.onUpdateState;
+            return _this;
         }
 
-        stateAction(methodName, eventName) {
-            return Promise.resolve(this[methodName] && this[methodName]())
-                .then(() => this.trigger(eventName));
-        }
+        _createClass(_class, [{
+            key: 'stateAction',
+            value: function stateAction(methodName, eventName) {
+                var _this2 = this;
 
-        exitState() {
+                return Promise.resolve(this[methodName] && this[methodName]()).then(function () {
+                    return _this2.trigger(eventName);
+                });
+            }
+        }, {
+            key: 'exitState',
+            value: function exitState() {
 
-            return this.stateAction('onExitState', 'exit');
-        }
+                return this.stateAction('onExitState', 'exit');
+            }
+        }, {
+            key: 'enterState',
+            value: function enterState() {
+                return this.stateAction('onEnterState', 'enter');
+            }
+        }, {
+            key: 'updateState',
+            value: function updateState() {
+                return this.stateAction('onUpdateState', 'update');
+            }
+        }]);
 
-        enterState() {
-            return this.stateAction('onEnterState', 'enter');
-        }
-
-        updateState() {
-            return this.stateAction('onUpdateState', 'update');
-        }
-    }
+        return _class;
+    }(mix(superClass).with(DeDupe(EventEmitterMixin)));
 });
 module.exports = MachineState;
 
 },{"../../core/event-emitter-mixin":56,"mixwith-es5":21}],70:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
@@ -5680,8 +6097,10 @@ var compact = require('array-compact');
 
 var defaultOpts = {};
 
-class Router {
-    constructor(opts) {
+var Router = function () {
+    function Router(opts) {
+        _classCallCheck(this, Router);
+
         opts = defaults(opts, defaultOpts);
         this.currentRoute = null;
         this.routes = [];
@@ -5693,151 +6112,180 @@ class Router {
     }
     //TODO allow for absolute routes prefixed with /
 
-    route(pathName) {
-        var promise = Promise.resolve(null);
+    _createClass(Router, [{
+        key: 'route',
+        value: function route(pathName) {
+            var _this = this;
 
-        if (typeof pathName === 'string') {
-            var matches = Router.matchRoute(pathName, this.routes);
-        } else if (Array.isArray(pathName)) {
-            matches = pathName;
-        } else if (pathName) {
-             //assuming an object was passed to route by named route.
-            var matches = this.compileRouterLink(pathname);
-        }
+            var promise = Promise.resolve(null);
 
-        if (matches) {
-            promise = Promise.all(matches.map((currMatch, key) => {
-                if (key === matches.length - 1 && currMatch.route.redirect) {
-                    if (typeof currMatch.route.redirect === 'function') {
-                        this.route(currMatch.route.redirect.call(this, matches));
-                    } else {
-                        //assuming string - path
-                        this.route(currMatch.route.redirect);
-                    }
-                    return Promise.reject();
-                }
-
-                if (typeof currMatch.route.handler == 'function') {
-                    return Promise.resolve(currMatch.route.handler.call(this, matches));
-                } else {
-                    return currMatch.route.handler;
-                }
-            }))
-            .then(results => compact(results))
-            .then(this.onRoute.bind(this, matches), ()=>{})
-            .then(() => {
-                if (matches.route.replaceState) {
-                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                } else {
-                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                }
-                this.currentRoute = matches.fullPath;
-            });
-        }
-
-        return promise;
-    }
-
-    static getNamedRoute(name, routes) {
-        if (!name) return null;
-
-        return (function findRoute(routes, path) {
-            var matchedRoute = null;
-
-            routes.forEach(route => {
-                matchedRoute = route.name === name ? route : matchedRoute;
-
-                if (!matchedRoute && route.children) {
-                    matchedRoute = findRoute(route.children, path.concat(route));
-                }
-
-                return !matchedRoute;
-            });
-
-            return matchedRoute ? Object.assign(path.concat(matchedRoute), matchedRoute) : null;
-        })(routes, []);
-    }
-
-    static matchRoute(pathName, routes) {
-        var result = null;
-        var fullPath = '';
-        routes.forEach(function(currRoute){
-            var params = [];
-            var match = pathToRegexp(currRoute.pattern, params, {end:false}).exec(pathName);
-            if (match) {
-                result = [];
-                result.push({route: currRoute, match, params});
-                fullPath += match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
-                if (currRoute.children) {
-                    var childMatches = Router.matchRoute(match.input.replace(fullPath, ''), currRoute.children);
-                    result = childMatches ? result.concat(childMatches) : result;
-                    fullPath = childMatches ? fullPath + childMatches.fullPath : fullPath;
-                }
-                result.route = result[result.length - 1].route;
-                result.fullPath = fullPath;
-                return false;
+            if (typeof pathName === 'string') {
+                var matches = Router.matchRoute(pathName, this.routes);
+            } else if (Array.isArray(pathName)) {
+                matches = pathName;
+            } else if (pathName) {
+                //assuming an object was passed to route by named route.
+                var matches = this.compileRouterLink(pathname);
             }
-        });
-        return result;
-    }
 
-    addRoutes(routes) {
-        this.routes = this.routes.concat(routes);
-    }
-
-    compileRouterLink(obj) {
-
-        /*
-        * Takes an object specifying a router name and params, returns an object with compiled path and matched route
-        */
-
-        var route = Router.getNamedRoute(obj.name, this.routes);
-        if (route) {
-            var fullPath = route.map(route => pathToRegexp.compile(route.pattern)(obj.params)).join('/');
-            var matches = [{
-                fullPath,
-                route,
-                match: null
-            }];
-            matches.route = route;
-            matches.fullPath = fullPath;
-            return matches;
-        } else {
-            console.warn('could not find route with name', obj.name);
-        }
-        return null;
-    }
-
-    init() {
-        if (!this._isInit && this.routes) {
-            this._isInit = true;
-            addEventListener('popstate', this.onPopState.bind(this));
-
-            document.body.addEventListener('click', (evt) => {
-                var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
-                if (clickedATag) {
-                    var href = Router.matchRoute(clickedATag.getAttribute('href'), this.routes);
-                    if (href) {
-                        evt.preventDefault();
-                        this.route(href);
+            if (matches) {
+                promise = Promise.all(matches.map(function (currMatch, key) {
+                    if (key === matches.length - 1 && currMatch.route.redirect) {
+                        if (typeof currMatch.route.redirect === 'function') {
+                            _this.route(currMatch.route.redirect.call(_this, matches));
+                        } else {
+                            //assuming string - path
+                            _this.route(currMatch.route.redirect);
+                        }
+                        return Promise.reject();
                     }
+
+                    if (typeof currMatch.route.handler == 'function') {
+                        return Promise.resolve(currMatch.route.handler.call(_this, matches));
+                    } else {
+                        return currMatch.route.handler;
+                    }
+                })).then(function (results) {
+                    return compact(results);
+                }).then(this.onRoute.bind(this, matches), function () {}).then(function () {
+                    if (matches.route.replaceState) {
+                        history.replaceState({ fullPath: matches.fullPath }, document.title, matches.fullPath);
+                    } else {
+                        history.pushState({ fullPath: matches.fullPath }, document.title, matches.fullPath);
+                    }
+                    _this.currentRoute = matches.fullPath;
+                });
+            }
+
+            return promise;
+        }
+    }, {
+        key: 'addRoutes',
+        value: function addRoutes(routes) {
+            this.routes = this.routes.concat(routes);
+        }
+    }, {
+        key: 'compileRouterLink',
+        value: function compileRouterLink(obj) {
+
+            /*
+            * Takes an object specifying a router name and params, returns an object with compiled path and matched route
+            */
+
+            var route = Router.getNamedRoute(obj.name, this.routes);
+            if (route) {
+                var fullPath = route.map(function (route) {
+                    return pathToRegexp.compile(route.pattern)(obj.params);
+                }).join('/');
+                var matches = [{
+                    fullPath: fullPath,
+                    route: route,
+                    match: null
+                }];
+                matches.route = route;
+                matches.fullPath = fullPath;
+                return matches;
+            } else {
+                console.warn('could not find route with name', obj.name);
+            }
+            return null;
+        }
+    }, {
+        key: 'init',
+        value: function init() {
+            var _this2 = this;
+
+            if (!this._isInit && this.routes) {
+                this._isInit = true;
+                addEventListener('popstate', this.onPopState.bind(this));
+
+                document.body.addEventListener('click', function (evt) {
+                    var clickedATag = findParent.byMatcher(evt.target, function (el) {
+                        return el.tagName === 'A';
+                    });
+                    if (clickedATag) {
+                        var href = Router.matchRoute(clickedATag.getAttribute('href'), _this2.routes);
+                        if (href) {
+                            evt.preventDefault();
+                            _this2.route(href);
+                        }
+                    }
+                });
+
+                return this.route(location.pathname + location.hash);
+            }
+            return Promise.resolve();
+        }
+    }, {
+        key: 'onPopState',
+        value: function onPopState() {
+            if (evt && evt.fullPath) {
+                this.route(evt.fullPath);
+            }
+        }
+    }], [{
+        key: 'getNamedRoute',
+        value: function getNamedRoute(name, routes) {
+            if (!name) return null;
+
+            return function findRoute(routes, path) {
+                var matchedRoute = null;
+
+                routes.forEach(function (route) {
+                    matchedRoute = route.name === name ? route : matchedRoute;
+
+                    if (!matchedRoute && route.children) {
+                        matchedRoute = findRoute(route.children, path.concat(route));
+                    }
+
+                    return !matchedRoute;
+                });
+
+                return matchedRoute ? Object.assign(path.concat(matchedRoute), matchedRoute) : null;
+            }(routes, []);
+        }
+    }, {
+        key: 'matchRoute',
+        value: function matchRoute(pathName, routes) {
+            var result = null;
+            var fullPath = '';
+            routes.forEach(function (currRoute) {
+                var params = [];
+                var match = pathToRegexp(currRoute.pattern, params, { end: false }).exec(pathName);
+                if (match) {
+                    result = [];
+                    result.push({ route: currRoute, match: match, params: params });
+                    fullPath += match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
+                    if (currRoute.children) {
+                        var childMatches = Router.matchRoute(match.input.replace(fullPath, ''), currRoute.children);
+                        result = childMatches ? result.concat(childMatches) : result;
+                        fullPath = childMatches ? fullPath + childMatches.fullPath : fullPath;
+                    }
+                    result.route = result[result.length - 1].route;
+                    result.fullPath = fullPath;
+                    return false;
                 }
             });
-
-            return this.route(location.pathname + location.hash);
+            return result;
         }
-        return Promise.resolve();
-    }
+    }]);
 
-    onPopState() {
-        if (evt && evt.fullPath) {
-            this.route(evt.fullPath);
-        }
-    }
-}
+    return Router;
+}();
+
 module.exports = Router;
 
 },{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],71:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -5845,83 +6293,108 @@ var MachineState = require('./machine-state-mixin');
 var Mixin = require('mixwith-es5').Mixin;
 var hasMixin = require('mixwith-es5').hasMixin;
 
-var StateMachine = Mixin(function(superClass) {
-    return class extends mix(superClass).with(DeDupe(EventEmitterMixin)) {
-        constructor(opts) {
-            super(opts);
-            Object.defineProperties(this, {
-                stateClass: {value: opts.stateClass},
-                currentState: {writable: true, value: null},
-                previousState: {writable: true, value: null},
-                states: {value: {}}
+var StateMachine = Mixin(function (superClass) {
+    return function (_mix$with) {
+        _inherits(_class, _mix$with);
+
+        function _class(opts) {
+            _classCallCheck(this, _class);
+
+            var _this = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
+
+            Object.defineProperties(_this, {
+                stateClass: { value: opts.stateClass },
+                currentState: { writable: true, value: null },
+                previousState: { writable: true, value: null },
+                states: { value: {} }
             });
+            return _this;
         }
 
-        static checkIfIsState(state) {
-            var result = hasMixin(state, MachineState);
-            if (!result) {
-                console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
-            }
-            return result;
-        }
-
-        getState(state) {
-            if (!state) {
+        _createClass(_class, [{
+            key: 'getState',
+            value: function getState(state) {
+                if (!state) {
+                    return null;
+                }
+                if (typeof state == 'string') {
+                    return this.states[state] || null;
+                } else if (this.constructor.checkIfIsState(state)) {
+                    return state;
+                }
                 return null;
             }
-            if (typeof state == 'string') {
-                return this.states[state] || null;
-            } else if (this.constructor.checkIfIsState(state)) {
-                return state;
+        }, {
+            key: 'addState',
+            value: function addState(key, state, onEnter, onExit) {
+                if (this.constructor.checkIfIsState(state)) {
+                    this.states[key] = state;
+                }
             }
-            return null;
-        }
+        }, {
+            key: 'changeState',
+            value: function changeState(state) {
+                var _this2 = this;
 
-        addState(key, state, onEnter, onExit) {
-            if (this.constructor.checkIfIsState(state)) {
-                this.states[key] = state;
-            }
-        }
+                state = this.getState(state);
 
-        changeState(state) {
-            state = this.getState(state);
-
-            var promise = Promise.resolve();
-            if (state && this.currentState === state) {
-                promise = Promise.resolve(this.currentState.updateState())
-                    .then(() => {
-                        this.trigger('updatestate', {updatedState: this.currentState});
-                        return this.onUpdateState ? this.onUpdateState() : null;
+                var promise = Promise.resolve();
+                if (state && this.currentState === state) {
+                    promise = Promise.resolve(this.currentState.updateState()).then(function () {
+                        _this2.trigger('updatestate', { updatedState: _this2.currentState });
+                        return _this2.onUpdateState ? _this2.onUpdateState() : null;
                     });
-            } else {
-                if (this.currentState) {
-                    promise = Promise.resolve(this.currentState.exitState())
-                        .then(() => {
-                            this.trigger('exitstate', {exitedState: this.currentState, enteredState: state});
-                            this.previousState = this.currentState;
-                            this.currentState = null;
-                            return this.onExitState ? this.onExitState() : null;
+                } else {
+                    if (this.currentState) {
+                        promise = Promise.resolve(this.currentState.exitState()).then(function () {
+                            _this2.trigger('exitstate', { exitedState: _this2.currentState, enteredState: state });
+                            _this2.previousState = _this2.currentState;
+                            _this2.currentState = null;
+                            return _this2.onExitState ? _this2.onExitState() : null;
                         });
-                }
-                if (state) {
-                    promise = promise
-                        .then(() => state.enterState())
-                        .then(() => {
-                            this.currentState = state;
-                            this.trigger('enterstate', {exitedState: this.currentState, enteredState: state});
+                    }
+                    if (state) {
+                        promise = promise.then(function () {
+                            return state.enterState();
+                        }).then(function () {
+                            _this2.currentState = state;
+                            _this2.trigger('enterstate', { exitedState: _this2.currentState, enteredState: state });
 
-                            return this.onEnterState ? this.onEnterState() : null;
+                            return _this2.onEnterState ? _this2.onEnterState() : null;
                         });
+                    }
                 }
+                return promise.then(function () {
+                    return _this2.currentState;
+                });
             }
-            return promise
-                .then(() => this.currentState);
-        }
-    }
-})
+        }], [{
+            key: 'checkIfIsState',
+            value: function checkIfIsState(state) {
+                var result = hasMixin(state, MachineState);
+                if (!result) {
+                    console.warn("Supplied state class does not extend MachineState. Expect unreliable results.");
+                }
+                return result;
+            }
+        }]);
+
+        return _class;
+    }(mix(superClass).with(DeDupe(EventEmitterMixin)));
+});
 module.exports = StateMachine;
 
 },{"../../core/event-emitter-mixin":56,"./machine-state-mixin":69,"mixwith-es5":21}],72:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var h = require('virtual-dom/h');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
@@ -5939,177 +6412,225 @@ var defaultAppOpts = {
     markupRenderFormat: 'VNode'
 };
 
-module.exports = function(Weddell, pluginOpts) {
+module.exports = function (Weddell, pluginOpts) {
     return Weddell.plugin({
         id: 'vdom',
-        classes:  {
-            Sig: Mixin(function(Sig){
-                Sig = class extends Sig {};
-                Sig.addTypeAlias('hscript', 'String');
-                Sig.addTypeAlias('VNode', 'Object');
-                return Sig;
-            }),
-            App: Mixin(function(App){
-                return class extends App {
-                    constructor(opts) {
-                        opts = defaults(opts, defaultAppOpts);
-                        super(opts);
-                        this.vTree = new VNode('div');
-                        var Transform = this.constructor.Weddell.classes.Transform;
+        classes: {
+            Sig: Mixin(function (_Sig) {
+                _Sig = function (_Sig2) {
+                    _inherits(Sig, _Sig2);
 
-                        this.markupTransforms.push(new Transform({
+                    function Sig() {
+                        _classCallCheck(this, Sig);
+
+                        return _possibleConstructorReturn(this, (Sig.__proto__ || Object.getPrototypeOf(Sig)).apply(this, arguments));
+                    }
+
+                    return Sig;
+                }(_Sig);
+                _Sig.addTypeAlias('hscript', 'String');
+                _Sig.addTypeAlias('VNode', 'Object');
+                return _Sig;
+            }),
+            App: Mixin(function (App) {
+                return function (_App) {
+                    _inherits(_class, _App);
+
+                    function _class(opts) {
+                        _classCallCheck(this, _class);
+
+                        opts = defaults(opts, defaultAppOpts);
+
+                        var _this2 = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
+
+                        _this2.vTree = new VNode('div');
+                        var Transform = _this2.constructor.Weddell.classes.Transform;
+
+                        _this2.markupTransforms.push(new Transform({
                             from: 'hscript',
                             to: '(locals:Object,h:Function)=>VNode',
-                            func: function(input){
+                            func: function func(input) {
                                 return new Function('locals', 'h', input);
                             }
                         }));
 
-                        this.renderers.VNode = this.renderVNode.bind(this);
+                        _this2.renderers.VNode = _this2.renderVNode.bind(_this2);
+                        return _this2;
                     }
 
-                    renderVNode(newTree) {
-                        if (Array.isArray(newTree)) {
-                            console.warn('Your markup must have one root node. Only using the first one for now.');
-                            newTree = newTree[0];
+                    _createClass(_class, [{
+                        key: 'renderVNode',
+                        value: function renderVNode(newTree) {
+                            if (Array.isArray(newTree)) {
+                                console.warn('Your markup must have one root node. Only using the first one for now.');
+                                newTree = newTree[0];
+                            }
+                            var patches = VDOMDiff(this.vTree, newTree);
+                            var rootNode = VDOMPatch(this.el, patches);
+                            this.el = rootNode;
+                            this.vTree = newTree;
                         }
-                        var patches = VDOMDiff(this.vTree, newTree);
-                        var rootNode = VDOMPatch(this.el, patches);
-                        this.el = rootNode;
-                        this.vTree = newTree;
-                    }
-                }
+                    }]);
+
+                    return _class;
+                }(App);
             }),
-            Pipeline: Mixin(function(Pipeline){
-                return class extends Pipeline {
-                    callTemplate(locals, template) {
-                        return template.call(this, locals, h);
+            Pipeline: Mixin(function (Pipeline) {
+                return function (_Pipeline) {
+                    _inherits(_class2, _Pipeline);
+
+                    function _class2() {
+                        _classCallCheck(this, _class2);
+
+                        return _possibleConstructorReturn(this, (_class2.__proto__ || Object.getPrototypeOf(_class2)).apply(this, arguments));
                     }
-                };
+
+                    _createClass(_class2, [{
+                        key: 'callTemplate',
+                        value: function callTemplate(locals, template) {
+                            return template.call(this, locals, h);
+                        }
+                    }]);
+
+                    return _class2;
+                }(Pipeline);
             }),
-            Component: Mixin(function(Component){
-                var Component = class extends Component {
-                    constructor(opts) {
+            Component: Mixin(function (Component) {
+                var Component = function (_Component) {
+                    _inherits(Component, _Component);
+
+                    function Component(opts) {
+                        _classCallCheck(this, Component);
+
                         opts = defaults(opts, defaultComponentOpts);
-                        super(opts);
 
-                        this.renderers.VNode = this.replaceVNodeComponents.bind(this);
+                        var _this4 = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opts));
+
+                        _this4.renderers.VNode = _this4.replaceVNodeComponents.bind(_this4);
+                        return _this4;
                     }
 
-                    resolveTagDirective(node, directive) {
+                    _createClass(Component, [{
+                        key: 'resolveTagDirective',
+                        value: function resolveTagDirective(node, directive) {}
+                    }, {
+                        key: 'replaceVNodeComponents',
+                        value: function replaceVNodeComponents(node, content, renderedComponents) {
+                            var _this5 = this;
 
-                    }
+                            if (Array.isArray(node)) {
+                                return Promise.all(compact(flatMap(node, function (childNode) {
+                                    return _this5.replaceVNodeComponents(childNode, content, renderedComponents);
+                                })));
+                            }
 
-                    replaceVNodeComponents(node, content, renderedComponents) {
-                        if (Array.isArray(node)) {
-                            return Promise.all(compact(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents))));
-                        }
+                            var Sig = this.constructor.Weddell.classes.Sig;
 
-                        var Sig = this.constructor.Weddell.classes.Sig;
+                            if (!renderedComponents) {
+                                renderedComponents = {};
+                            }
 
-                        if (!renderedComponents) {
-                            renderedComponents = {};
-                        }
-
-                        if (node.tagName) {
-                            if (node.tagName.toUpperCase() in this._tagDirectives) {
-                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
-
-                            } else if (node.tagName === 'CONTENT') {
-                                return content;
-                            } else {
-                                var componentEntry = Object.entries(this.components)
-                                    .find(entry => {
-                                        return entry[0].toLowerCase() == node.tagName.toLowerCase()
+                            if (node.tagName) {
+                                if (node.tagName.toUpperCase() in this._tagDirectives) {
+                                    return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+                                } else if (node.tagName === 'CONTENT') {
+                                    return content;
+                                } else {
+                                    var componentEntry = Object.entries(this.components).find(function (entry) {
+                                        return entry[0].toLowerCase() == node.tagName.toLowerCase();
                                     });
-                                if (componentEntry) {
-                                    if (!(componentEntry[0] in renderedComponents)) {
-                                        renderedComponents[componentEntry[0]] = [];
-                                    }
-                                    var index = (node.properties.attributes && node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentEntry[0]].length;
-                                    renderedComponents[componentEntry[0]].push(null);
+                                    if (componentEntry) {
+                                        if (!(componentEntry[0] in renderedComponents)) {
+                                            renderedComponents[componentEntry[0]] = [];
+                                        }
+                                        var index = node.properties.attributes && node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME] || renderedComponents[componentEntry[0]].length;
+                                        renderedComponents[componentEntry[0]].push(null);
 
-                                    return this.replaceVNodeComponents(node.children, content, renderedComponents)
-                                        .then(componentContent => {
-                                            return this.getComponentInstance(componentEntry[0], index)
-                                                .then(componentInstance => {
-                                                    renderedComponents[index] = componentInstance;
-                                                    return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'));
-                                                });
-                                        })
-                                        .then(componentOutput => {
-                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes});
-                                            return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
+                                        return this.replaceVNodeComponents(node.children, content, renderedComponents).then(function (componentContent) {
+                                            return _this5.getComponentInstance(componentEntry[0], index).then(function (componentInstance) {
+                                                renderedComponents[index] = componentInstance;
+                                                return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'));
+                                            });
+                                        }).then(function (componentOutput) {
+                                            _this5.trigger('rendercomponent', { componentOutput: componentOutput, componentName: node.tagName, props: node.properties.attributes });
+                                            return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output;
                                         });
+                                    }
                                 }
                             }
-                        }
 
-                        if (node.children) {
-                            return this.replaceVNodeComponents(node.children, content, renderedComponents)
-                                .then(children => {
+                            if (node.children) {
+                                return this.replaceVNodeComponents(node.children, content, renderedComponents).then(function (children) {
                                     node.children = compact(children);
                                     return node;
                                 });
-                        }
+                            }
 
-                        return Promise.resolve(node);
-                    }
-                }
+                            return Promise.resolve(node);
+                        }
+                    }]);
+
+                    return Component;
+                }(Component);
                 return Component;
             }),
-            VNode
+            VNode: VNode
         },
         deps: {
-            h
+            h: h
         }
     });
-}
+};
 
 },{"../../utils/flatmap":76,"array-compact":1,"mixwith-es5":21,"object.defaults/immutable":23,"virtual-dom/diff":28,"virtual-dom/h":29,"virtual-dom/patch":30,"virtual-dom/vnode/vnode":48}],73:[function(require,module,exports){
+'use strict';
+
 require('native-promise-only');
-module.exports = require('../plugins/css-vars')(
-    require('../plugins/html-to-vdom')(
-        require('../plugins/vdom')(
-            require('../plugins/doT')(
-                require('../plugins/fetcher')(
-                    require('../plugins/router')(
-                        require('./weddell')
-                    )
-                )
-            )
-        )
-    )
-);
+module.exports = require('../plugins/css-vars')(require('../plugins/html-to-vdom')(require('../plugins/vdom')(require('../plugins/doT')(require('../plugins/fetcher')(require('../plugins/router')(require('./weddell')))))));
 
 },{"../plugins/css-vars":63,"../plugins/doT":64,"../plugins/fetcher":65,"../plugins/html-to-vdom":67,"../plugins/router":68,"../plugins/vdom":72,"./weddell":74,"native-promise-only":22}],74:[function(require,module,exports){
+'use strict';
+
 module.exports = require('../core/weddell');
 
 },{"../core/weddell":61}],75:[function(require,module,exports){
+"use strict";
+
 // var includes = require('./includes');
-module.exports = function(arr1, arr2) {
-    return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
+module.exports = function (arr1, arr2) {
+    return arr1.filter(function (i) {
+        return arr2.indexOf(i) < 0;
+    });
 };
 
 },{}],76:[function(require,module,exports){
-module.exports = (arr, func) =>
-    arr.reduce((final,val) =>
-        final.concat(func(val)), [])
+"use strict";
+
+module.exports = function (arr, func) {
+    return arr.reduce(function (final, val) {
+        return final.concat(func(val));
+    }, []);
+};
 
 },{}],77:[function(require,module,exports){
-module.exports = function(arr, val){
-    return arr.some(currKey=>currKey === val);
-}
+"use strict";
+
+module.exports = function (arr, val) {
+    return arr.some(function (currKey) {
+        return currKey === val;
+    });
+};
 
 },{}],78:[function(require,module,exports){
+"use strict";
+
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-  for (var i = 0; i < 5; i++)
+  for (var i = 0; i < 5; i++) {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
+  }return text;
 };
 
 },{}]},{},[73])(73)

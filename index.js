@@ -1,1 +1,1 @@
-module.exports = require('./src/presets/core+router+vdom');
+module.exports = require('./src/presets/weddell-ro+vd');

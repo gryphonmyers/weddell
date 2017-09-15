@@ -704,383 +704,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 });
 
 },{}],15:[function(require,module,exports){
-(function (global){
-/*! Native Promise Only
-    v0.8.1 (c) Kyle Simpson
-    MIT License: http://getify.mit-license.org
-*/
-
-(function UMD(name,context,definition){
-	// special form of UMD for polyfilling across evironments
-	context[name] = context[name] || definition();
-	if (typeof module != "undefined" && module.exports) { module.exports = context[name]; }
-	else if (typeof define == "function" && define.amd) { define(function $AMD$(){ return context[name]; }); }
-})("Promise",typeof global != "undefined" ? global : this,function DEF(){
-	/*jshint validthis:true */
-	"use strict";
-
-	var builtInProp, cycle, scheduling_queue,
-		ToString = Object.prototype.toString,
-		timer = (typeof setImmediate != "undefined") ?
-			function timer(fn) { return setImmediate(fn); } :
-			setTimeout
-	;
-
-	// dammit, IE8.
-	try {
-		Object.defineProperty({},"x",{});
-		builtInProp = function builtInProp(obj,name,val,config) {
-			return Object.defineProperty(obj,name,{
-				value: val,
-				writable: true,
-				configurable: config !== false
-			});
-		};
-	}
-	catch (err) {
-		builtInProp = function builtInProp(obj,name,val) {
-			obj[name] = val;
-			return obj;
-		};
-	}
-
-	// Note: using a queue instead of array for efficiency
-	scheduling_queue = (function Queue() {
-		var first, last, item;
-
-		function Item(fn,self) {
-			this.fn = fn;
-			this.self = self;
-			this.next = void 0;
-		}
-
-		return {
-			add: function add(fn,self) {
-				item = new Item(fn,self);
-				if (last) {
-					last.next = item;
-				}
-				else {
-					first = item;
-				}
-				last = item;
-				item = void 0;
-			},
-			drain: function drain() {
-				var f = first;
-				first = last = cycle = void 0;
-
-				while (f) {
-					f.fn.call(f.self);
-					f = f.next;
-				}
-			}
-		};
-	})();
-
-	function schedule(fn,self) {
-		scheduling_queue.add(fn,self);
-		if (!cycle) {
-			cycle = timer(scheduling_queue.drain);
-		}
-	}
-
-	// promise duck typing
-	function isThenable(o) {
-		var _then, o_type = typeof o;
-
-		if (o != null &&
-			(
-				o_type == "object" || o_type == "function"
-			)
-		) {
-			_then = o.then;
-		}
-		return typeof _then == "function" ? _then : false;
-	}
-
-	function notify() {
-		for (var i=0; i<this.chain.length; i++) {
-			notifyIsolated(
-				this,
-				(this.state === 1) ? this.chain[i].success : this.chain[i].failure,
-				this.chain[i]
-			);
-		}
-		this.chain.length = 0;
-	}
-
-	// NOTE: This is a separate function to isolate
-	// the `try..catch` so that other code can be
-	// optimized better
-	function notifyIsolated(self,cb,chain) {
-		var ret, _then;
-		try {
-			if (cb === false) {
-				chain.reject(self.msg);
-			}
-			else {
-				if (cb === true) {
-					ret = self.msg;
-				}
-				else {
-					ret = cb.call(void 0,self.msg);
-				}
-
-				if (ret === chain.promise) {
-					chain.reject(TypeError("Promise-chain cycle"));
-				}
-				else if (_then = isThenable(ret)) {
-					_then.call(ret,chain.resolve,chain.reject);
-				}
-				else {
-					chain.resolve(ret);
-				}
-			}
-		}
-		catch (err) {
-			chain.reject(err);
-		}
-	}
-
-	function resolve(msg) {
-		var _then, self = this;
-
-		// already triggered?
-		if (self.triggered) { return; }
-
-		self.triggered = true;
-
-		// unwrap
-		if (self.def) {
-			self = self.def;
-		}
-
-		try {
-			if (_then = isThenable(msg)) {
-				schedule(function(){
-					var def_wrapper = new MakeDefWrapper(self);
-					try {
-						_then.call(msg,
-							function $resolve$(){ resolve.apply(def_wrapper,arguments); },
-							function $reject$(){ reject.apply(def_wrapper,arguments); }
-						);
-					}
-					catch (err) {
-						reject.call(def_wrapper,err);
-					}
-				})
-			}
-			else {
-				self.msg = msg;
-				self.state = 1;
-				if (self.chain.length > 0) {
-					schedule(notify,self);
-				}
-			}
-		}
-		catch (err) {
-			reject.call(new MakeDefWrapper(self),err);
-		}
-	}
-
-	function reject(msg) {
-		var self = this;
-
-		// already triggered?
-		if (self.triggered) { return; }
-
-		self.triggered = true;
-
-		// unwrap
-		if (self.def) {
-			self = self.def;
-		}
-
-		self.msg = msg;
-		self.state = 2;
-		if (self.chain.length > 0) {
-			schedule(notify,self);
-		}
-	}
-
-	function iteratePromises(Constructor,arr,resolver,rejecter) {
-		for (var idx=0; idx<arr.length; idx++) {
-			(function IIFE(idx){
-				Constructor.resolve(arr[idx])
-				.then(
-					function $resolver$(msg){
-						resolver(idx,msg);
-					},
-					rejecter
-				);
-			})(idx);
-		}
-	}
-
-	function MakeDefWrapper(self) {
-		this.def = self;
-		this.triggered = false;
-	}
-
-	function MakeDef(self) {
-		this.promise = self;
-		this.state = 0;
-		this.triggered = false;
-		this.chain = [];
-		this.msg = void 0;
-	}
-
-	function Promise(executor) {
-		if (typeof executor != "function") {
-			throw TypeError("Not a function");
-		}
-
-		if (this.__NPO__ !== 0) {
-			throw TypeError("Not a promise");
-		}
-
-		// instance shadowing the inherited "brand"
-		// to signal an already "initialized" promise
-		this.__NPO__ = 1;
-
-		var def = new MakeDef(this);
-
-		this["then"] = function then(success,failure) {
-			var o = {
-				success: typeof success == "function" ? success : true,
-				failure: typeof failure == "function" ? failure : false
-			};
-			// Note: `then(..)` itself can be borrowed to be used against
-			// a different promise constructor for making the chained promise,
-			// by substituting a different `this` binding.
-			o.promise = new this.constructor(function extractChain(resolve,reject) {
-				if (typeof resolve != "function" || typeof reject != "function") {
-					throw TypeError("Not a function");
-				}
-
-				o.resolve = resolve;
-				o.reject = reject;
-			});
-			def.chain.push(o);
-
-			if (def.state !== 0) {
-				schedule(notify,def);
-			}
-
-			return o.promise;
-		};
-		this["catch"] = function $catch$(failure) {
-			return this.then(void 0,failure);
-		};
-
-		try {
-			executor.call(
-				void 0,
-				function publicResolve(msg){
-					resolve.call(def,msg);
-				},
-				function publicReject(msg) {
-					reject.call(def,msg);
-				}
-			);
-		}
-		catch (err) {
-			reject.call(def,err);
-		}
-	}
-
-	var PromisePrototype = builtInProp({},"constructor",Promise,
-		/*configurable=*/false
-	);
-
-	// Note: Android 4 cannot use `Object.defineProperty(..)` here
-	Promise.prototype = PromisePrototype;
-
-	// built-in "brand" to signal an "uninitialized" promise
-	builtInProp(PromisePrototype,"__NPO__",0,
-		/*configurable=*/false
-	);
-
-	builtInProp(Promise,"resolve",function Promise$resolve(msg) {
-		var Constructor = this;
-
-		// spec mandated checks
-		// note: best "isPromise" check that's practical for now
-		if (msg && typeof msg == "object" && msg.__NPO__ === 1) {
-			return msg;
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			resolve(msg);
-		});
-	});
-
-	builtInProp(Promise,"reject",function Promise$reject(msg) {
-		return new this(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			reject(msg);
-		});
-	});
-
-	builtInProp(Promise,"all",function Promise$all(arr) {
-		var Constructor = this;
-
-		// spec mandated checks
-		if (ToString.call(arr) != "[object Array]") {
-			return Constructor.reject(TypeError("Not an array"));
-		}
-		if (arr.length === 0) {
-			return Constructor.resolve([]);
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			var len = arr.length, msgs = Array(len), count = 0;
-
-			iteratePromises(Constructor,arr,function resolver(idx,msg) {
-				msgs[idx] = msg;
-				if (++count === len) {
-					resolve(msgs);
-				}
-			},reject);
-		});
-	});
-
-	builtInProp(Promise,"race",function Promise$race(arr) {
-		var Constructor = this;
-
-		// spec mandated checks
-		if (ToString.call(arr) != "[object Array]") {
-			return Constructor.reject(TypeError("Not an array"));
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			iteratePromises(Constructor,arr,function resolver(idx,msg){
-				resolve(msg);
-			},reject);
-		});
-	});
-
-	return Promise;
-});
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],16:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -1102,7 +725,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":17,"array-slice":3}],17:[function(require,module,exports){
+},{"./mutable":16,"array-slice":3}],16:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -1139,7 +762,7 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":2,"array-slice":3,"for-own":12,"isobject":13}],18:[function(require,module,exports){
+},{"array-each":2,"array-slice":3,"for-own":12,"isobject":13}],17:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -1567,11 +1190,936 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":19}],19:[function(require,module,exports){
+},{"isarray":18}],18:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
+},{}],19:[function(require,module,exports){
+/**
+ * @file prescribe
+ * @description Tiny, forgiving HTML parser
+ * @version v1.1.3
+ * @see {@link https://github.com/krux/prescribe/}
+ * @license MIT
+ * @author Derek Brans
+ * @copyright 2017 Krux Digital, Inc
+ */
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["Prescribe"] = factory();
+	else
+		root["Prescribe"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _HtmlParser = __webpack_require__(1);
+
+	var _HtmlParser2 = _interopRequireDefault(_HtmlParser);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	module.exports = _HtmlParser2['default'];
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+
+	var _supports = __webpack_require__(2);
+
+	var supports = _interopRequireWildcard(_supports);
+
+	var _streamReaders = __webpack_require__(3);
+
+	var streamReaders = _interopRequireWildcard(_streamReaders);
+
+	var _fixedReadTokenFactory = __webpack_require__(6);
+
+	var _fixedReadTokenFactory2 = _interopRequireDefault(_fixedReadTokenFactory);
+
+	var _utils = __webpack_require__(5);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	/**
+	 * Detection regular expressions.
+	 *
+	 * Order of detection matters: detection of one can only
+	 * succeed if detection of previous didn't
+
+	 * @type {Object}
+	 */
+	var detect = {
+	  comment: /^<!--/,
+	  endTag: /^<\//,
+	  atomicTag: /^<\s*(script|style|noscript|iframe|textarea)[\s\/>]/i,
+	  startTag: /^</,
+	  chars: /^[^<]/
+	};
+
+	/**
+	 * HtmlParser provides the capability to parse HTML and return tokens
+	 * representing the tags and content.
+	 */
+
+	var HtmlParser = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {string} stream The initial parse stream contents.
+	   * @param {Object} options The options
+	   * @param {boolean} options.autoFix Set to true to automatically fix errors
+	   */
+	  function HtmlParser() {
+	    var _this = this;
+
+	    var stream = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+	    _classCallCheck(this, HtmlParser);
+
+	    this.stream = stream;
+
+	    var fix = false;
+	    var fixedTokenOptions = {};
+
+	    for (var key in supports) {
+	      if (supports.hasOwnProperty(key)) {
+	        if (options.autoFix) {
+	          fixedTokenOptions[key + 'Fix'] = true; // !supports[key];
+	        }
+	        fix = fix || fixedTokenOptions[key + 'Fix'];
+	      }
+	    }
+
+	    if (fix) {
+	      this._readToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
+	        return _this._readTokenImpl();
+	      });
+	      this._peekToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
+	        return _this._peekTokenImpl();
+	      });
+	    } else {
+	      this._readToken = this._readTokenImpl;
+	      this._peekToken = this._peekTokenImpl;
+	    }
+	  }
+
+	  /**
+	   * Appends the given string to the parse stream.
+	   *
+	   * @param {string} str The string to append
+	   */
+
+
+	  HtmlParser.prototype.append = function append(str) {
+	    this.stream += str;
+	  };
+
+	  /**
+	   * Prepends the given string to the parse stream.
+	   *
+	   * @param {string} str The string to prepend
+	   */
+
+
+	  HtmlParser.prototype.prepend = function prepend(str) {
+	    this.stream = str + this.stream;
+	  };
+
+	  /**
+	   * The implementation of the token reading.
+	   *
+	   * @private
+	   * @returns {?Token}
+	   */
+
+
+	  HtmlParser.prototype._readTokenImpl = function _readTokenImpl() {
+	    var token = this._peekTokenImpl();
+	    if (token) {
+	      this.stream = this.stream.slice(token.length);
+	      return token;
+	    }
+	  };
+
+	  /**
+	   * The implementation of token peeking.
+	   *
+	   * @returns {?Token}
+	   */
+
+
+	  HtmlParser.prototype._peekTokenImpl = function _peekTokenImpl() {
+	    for (var type in detect) {
+	      if (detect.hasOwnProperty(type)) {
+	        if (detect[type].test(this.stream)) {
+	          var token = streamReaders[type](this.stream);
+
+	          if (token) {
+	            if (token.type === 'startTag' && /script|style/i.test(token.tagName)) {
+	              return null;
+	            } else {
+	              token.text = this.stream.substr(0, token.length);
+	              return token;
+	            }
+	          }
+	        }
+	      }
+	    }
+	  };
+
+	  /**
+	   * The public token peeking interface.  Delegates to the basic token peeking
+	   * or a version that performs fixups depending on the `autoFix` setting in
+	   * options.
+	   *
+	   * @returns {object}
+	   */
+
+
+	  HtmlParser.prototype.peekToken = function peekToken() {
+	    return this._peekToken();
+	  };
+
+	  /**
+	   * The public token reading interface.  Delegates to the basic token reading
+	   * or a version that performs fixups depending on the `autoFix` setting in
+	   * options.
+	   *
+	   * @returns {object}
+	   */
+
+
+	  HtmlParser.prototype.readToken = function readToken() {
+	    return this._readToken();
+	  };
+
+	  /**
+	   * Read tokens and hand to the given handlers.
+	   *
+	   * @param {Object} handlers The handlers to use for the different tokens.
+	   */
+
+
+	  HtmlParser.prototype.readTokens = function readTokens(handlers) {
+	    var tok = void 0;
+	    while (tok = this.readToken()) {
+	      // continue until we get an explicit "false" return
+	      if (handlers[tok.type] && handlers[tok.type](tok) === false) {
+	        return;
+	      }
+	    }
+	  };
+
+	  /**
+	   * Clears the parse stream.
+	   *
+	   * @returns {string} The contents of the parse stream before clearing.
+	   */
+
+
+	  HtmlParser.prototype.clear = function clear() {
+	    var rest = this.stream;
+	    this.stream = '';
+	    return rest;
+	  };
+
+	  /**
+	   * Returns the rest of the parse stream.
+	   *
+	   * @returns {string} The contents of the parse stream.
+	   */
+
+
+	  HtmlParser.prototype.rest = function rest() {
+	    return this.stream;
+	  };
+
+	  return HtmlParser;
+	}();
+
+	exports['default'] = HtmlParser;
+
+
+	HtmlParser.tokenToString = function (tok) {
+	  return tok.toString();
+	};
+
+	HtmlParser.escapeAttributes = function (attrs) {
+	  var escapedAttrs = {};
+
+	  for (var name in attrs) {
+	    if (attrs.hasOwnProperty(name)) {
+	      escapedAttrs[name] = (0, _utils.escapeQuotes)(attrs[name], null);
+	    }
+	  }
+
+	  return escapedAttrs;
+	};
+
+	HtmlParser.supports = supports;
+
+	for (var key in supports) {
+	  if (supports.hasOwnProperty(key)) {
+	    HtmlParser.browserHasFlaw = HtmlParser.browserHasFlaw || !supports[key] && key;
+	  }
+	}
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	var tagSoup = false;
+	var selfClose = false;
+
+	var work = window.document.createElement('div');
+
+	try {
+	  var html = '<P><I></P></I>';
+	  work.innerHTML = html;
+	  exports.tagSoup = tagSoup = work.innerHTML !== html;
+	} catch (e) {
+	  exports.tagSoup = tagSoup = false;
+	}
+
+	try {
+	  work.innerHTML = '<P><i><P></P></i></P>';
+	  exports.selfClose = selfClose = work.childNodes.length === 2;
+	} catch (e) {
+	  exports.selfClose = selfClose = false;
+	}
+
+	work = null;
+
+	exports.tagSoup = tagSoup;
+	exports.selfClose = selfClose;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	exports.comment = comment;
+	exports.chars = chars;
+	exports.startTag = startTag;
+	exports.atomicTag = atomicTag;
+	exports.endTag = endTag;
+
+	var _tokens = __webpack_require__(4);
+
+	/**
+	 * Regular Expressions for parsing tags and attributes
+	 *
+	 * @type {Object}
+	 */
+	var REGEXES = {
+	  startTag: /^<([\-A-Za-z0-9_!:]+)((?:\s+[\w\-]+(?:\s*=?\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
+	  endTag: /^<\/([\-A-Za-z0-9_:]+)[^>]*>/,
+	  attr: /(?:([\-A-Za-z0-9_]+)\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))|(?:([\-A-Za-z0-9_]+)(\s|$)+)/g,
+	  fillAttr: /^(checked|compact|declare|defer|disabled|ismap|multiple|nohref|noresize|noshade|nowrap|readonly|selected)$/i
+	};
+
+	/**
+	 * Reads a comment token
+	 *
+	 * @param {string} stream The input stream
+	 * @returns {CommentToken}
+	 */
+	function comment(stream) {
+	  var index = stream.indexOf('-->');
+	  if (index >= 0) {
+	    return new _tokens.CommentToken(stream.substr(4, index - 1), index + 3);
+	  }
+	}
+
+	/**
+	 * Reads non-tag characters.
+	 *
+	 * @param {string} stream The input stream
+	 * @returns {CharsToken}
+	 */
+	function chars(stream) {
+	  var index = stream.indexOf('<');
+	  return new _tokens.CharsToken(index >= 0 ? index : stream.length);
+	}
+
+	/**
+	 * Reads start tag token.
+	 *
+	 * @param {string} stream The input stream
+	 * @returns {StartTagToken}
+	 */
+	function startTag(stream) {
+	  var endTagIndex = stream.indexOf('>');
+	  if (endTagIndex !== -1) {
+	    var match = stream.match(REGEXES.startTag);
+	    if (match) {
+	      var attrs = {};
+	      var booleanAttrs = {};
+	      var rest = match[2];
+
+	      match[2].replace(REGEXES.attr, function (match, name) {
+	        if (!(arguments[2] || arguments[3] || arguments[4] || arguments[5])) {
+	          attrs[name] = '';
+	        } else if (arguments[5]) {
+	          attrs[arguments[5]] = '';
+	          booleanAttrs[arguments[5]] = true;
+	        } else {
+	          attrs[name] = arguments[2] || arguments[3] || arguments[4] || REGEXES.fillAttr.test(name) && name || '';
+	        }
+
+	        rest = rest.replace(match, '');
+	      });
+
+	      return new _tokens.StartTagToken(match[1], match[0].length, attrs, booleanAttrs, !!match[3], rest.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
+	    }
+	  }
+	}
+
+	/**
+	 * Reads atomic tag token.
+	 *
+	 * @param {string} stream The input stream
+	 * @returns {AtomicTagToken}
+	 */
+	function atomicTag(stream) {
+	  var start = startTag(stream);
+	  if (start) {
+	    var rest = stream.slice(start.length);
+	    // for optimization, we check first just for the end tag
+	    if (rest.match(new RegExp('<\/\\s*' + start.tagName + '\\s*>', 'i'))) {
+	      // capturing the content is inefficient, so we do it inside the if
+	      var match = rest.match(new RegExp('([\\s\\S]*?)<\/\\s*' + start.tagName + '\\s*>', 'i'));
+	      if (match) {
+	        return new _tokens.AtomicTagToken(start.tagName, match[0].length + start.length, start.attrs, start.booleanAttrs, match[1]);
+	      }
+	    }
+	  }
+	}
+
+	/**
+	 * Reads an end tag token.
+	 *
+	 * @param {string} stream The input stream
+	 * @returns {EndTagToken}
+	 */
+	function endTag(stream) {
+	  var match = stream.match(REGEXES.endTag);
+	  if (match) {
+	    return new _tokens.EndTagToken(match[1], match[0].length);
+	  }
+	}
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	exports.EndTagToken = exports.AtomicTagToken = exports.StartTagToken = exports.TagToken = exports.CharsToken = exports.CommentToken = exports.Token = undefined;
+
+	var _utils = __webpack_require__(5);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	/**
+	 * Token is a base class for all token types parsed.  Note we don't actually
+	 * use intheritance due to IE8's non-existent ES5 support.
+	 */
+	var Token =
+	/**
+	 * Constructor.
+	 *
+	 * @param {string} type The type of the Token.
+	 * @param {Number} length The length of the Token text.
+	 */
+	exports.Token = function Token(type, length) {
+	  _classCallCheck(this, Token);
+
+	  this.type = type;
+	  this.length = length;
+	  this.text = '';
+	};
+
+	/**
+	 * CommentToken represents comment tags.
+	 */
+
+
+	var CommentToken = exports.CommentToken = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {string} content The content of the comment
+	   * @param {Number} length The length of the Token text.
+	   */
+	  function CommentToken(content, length) {
+	    _classCallCheck(this, CommentToken);
+
+	    this.type = 'comment';
+	    this.length = length || (content ? content.length : 0);
+	    this.text = '';
+	    this.content = content;
+	  }
+
+	  CommentToken.prototype.toString = function toString() {
+	    return '<!--' + this.content;
+	  };
+
+	  return CommentToken;
+	}();
+
+	/**
+	 * CharsToken represents non-tag characters.
+	 */
+
+
+	var CharsToken = exports.CharsToken = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {Number} length The length of the Token text.
+	   */
+	  function CharsToken(length) {
+	    _classCallCheck(this, CharsToken);
+
+	    this.type = 'chars';
+	    this.length = length;
+	    this.text = '';
+	  }
+
+	  CharsToken.prototype.toString = function toString() {
+	    return this.text;
+	  };
+
+	  return CharsToken;
+	}();
+
+	/**
+	 * TagToken is a base class for all tag-based Tokens.
+	 */
+
+
+	var TagToken = exports.TagToken = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {string} type The type of the token.
+	   * @param {string} tagName The tag name.
+	   * @param {Number} length The length of the Token text.
+	   * @param {Object} attrs The dictionary of attributes and values
+	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
+	   *                              is a boolean attribute
+	   */
+	  function TagToken(type, tagName, length, attrs, booleanAttrs) {
+	    _classCallCheck(this, TagToken);
+
+	    this.type = type;
+	    this.length = length;
+	    this.text = '';
+	    this.tagName = tagName;
+	    this.attrs = attrs;
+	    this.booleanAttrs = booleanAttrs;
+	    this.unary = false;
+	    this.html5Unary = false;
+	  }
+
+	  /**
+	   * Formats the given token tag.
+	   *
+	   * @param {TagToken} tok The TagToken to format.
+	   * @param {?string} [content=null] The content of the token.
+	   * @returns {string} The formatted tag.
+	   */
+
+
+	  TagToken.formatTag = function formatTag(tok) {
+	    var content = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+	    var str = '<' + tok.tagName;
+	    for (var key in tok.attrs) {
+	      if (tok.attrs.hasOwnProperty(key)) {
+	        str += ' ' + key;
+
+	        var val = tok.attrs[key];
+	        if (typeof tok.booleanAttrs === 'undefined' || typeof tok.booleanAttrs[key] === 'undefined') {
+	          str += '="' + (0, _utils.escapeQuotes)(val) + '"';
+	        }
+	      }
+	    }
+
+	    if (tok.rest) {
+	      str += ' ' + tok.rest;
+	    }
+
+	    if (tok.unary && !tok.html5Unary) {
+	      str += '/>';
+	    } else {
+	      str += '>';
+	    }
+
+	    if (content !== undefined && content !== null) {
+	      str += content + '</' + tok.tagName + '>';
+	    }
+
+	    return str;
+	  };
+
+	  return TagToken;
+	}();
+
+	/**
+	 * StartTagToken represents a start token.
+	 */
+
+
+	var StartTagToken = exports.StartTagToken = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {string} tagName The tag name.
+	   * @param {Number} length The length of the Token text
+	   * @param {Object} attrs The dictionary of attributes and values
+	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
+	   *                              is a boolean attribute
+	   * @param {boolean} unary True if the tag is a unary tag
+	   * @param {string} rest The rest of the content.
+	   */
+	  function StartTagToken(tagName, length, attrs, booleanAttrs, unary, rest) {
+	    _classCallCheck(this, StartTagToken);
+
+	    this.type = 'startTag';
+	    this.length = length;
+	    this.text = '';
+	    this.tagName = tagName;
+	    this.attrs = attrs;
+	    this.booleanAttrs = booleanAttrs;
+	    this.html5Unary = false;
+	    this.unary = unary;
+	    this.rest = rest;
+	  }
+
+	  StartTagToken.prototype.toString = function toString() {
+	    return TagToken.formatTag(this);
+	  };
+
+	  return StartTagToken;
+	}();
+
+	/**
+	 * AtomicTagToken represents an atomic tag.
+	 */
+
+
+	var AtomicTagToken = exports.AtomicTagToken = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {string} tagName The name of the tag.
+	   * @param {Number} length The length of the tag text.
+	   * @param {Object} attrs The attributes.
+	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
+	   *                              is a boolean attribute
+	   * @param {string} content The content of the tag.
+	   */
+	  function AtomicTagToken(tagName, length, attrs, booleanAttrs, content) {
+	    _classCallCheck(this, AtomicTagToken);
+
+	    this.type = 'atomicTag';
+	    this.length = length;
+	    this.text = '';
+	    this.tagName = tagName;
+	    this.attrs = attrs;
+	    this.booleanAttrs = booleanAttrs;
+	    this.unary = false;
+	    this.html5Unary = false;
+	    this.content = content;
+	  }
+
+	  AtomicTagToken.prototype.toString = function toString() {
+	    return TagToken.formatTag(this, this.content);
+	  };
+
+	  return AtomicTagToken;
+	}();
+
+	/**
+	 * EndTagToken represents an end tag.
+	 */
+
+
+	var EndTagToken = exports.EndTagToken = function () {
+	  /**
+	   * Constructor.
+	   *
+	   * @param {string} tagName The name of the tag.
+	   * @param {Number} length The length of the tag text.
+	   */
+	  function EndTagToken(tagName, length) {
+	    _classCallCheck(this, EndTagToken);
+
+	    this.type = 'endTag';
+	    this.length = length;
+	    this.text = '';
+	    this.tagName = tagName;
+	  }
+
+	  EndTagToken.prototype.toString = function toString() {
+	    return '</' + this.tagName + '>';
+	  };
+
+	  return EndTagToken;
+	}();
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	exports.escapeQuotes = escapeQuotes;
+
+	/**
+	 * Escape quotes in the given value.
+	 *
+	 * @param {string} value The value to escape.
+	 * @param {string} [defaultValue=''] The default value to return if value is falsy.
+	 * @returns {string}
+	 */
+	function escapeQuotes(value) {
+	  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+
+	  // There's no lookback in JS, so /(^|[^\\])"/ only matches the first of two `"`s.
+	  // Instead, just match anything before a double-quote and escape if it's not already escaped.
+	  return !value ? defaultValue : value.replace(/([^"]*)"/g, function (_, prefix) {
+	    return (/\\/.test(prefix) ? prefix + '"' : prefix + '\\"'
+	    );
+	  });
+	}
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	exports['default'] = fixedReadTokenFactory;
+	/**
+	 * Empty Elements - HTML 4.01
+	 *
+	 * @type {RegExp}
+	 */
+	var EMPTY = /^(AREA|BASE|BASEFONT|BR|COL|FRAME|HR|IMG|INPUT|ISINDEX|LINK|META|PARAM|EMBED)$/i;
+
+	/**
+	 * Elements that you can intentionally leave open (and which close themselves)
+	 *
+	 * @type {RegExp}
+	 */
+	var CLOSESELF = /^(COLGROUP|DD|DT|LI|OPTIONS|P|TD|TFOOT|TH|THEAD|TR)$/i;
+
+	/**
+	 * Corrects a token.
+	 *
+	 * @param {Token} tok The token to correct
+	 * @returns {Token} The corrected token
+	 */
+	function correct(tok) {
+	  if (tok && tok.type === 'startTag') {
+	    tok.unary = EMPTY.test(tok.tagName) || tok.unary;
+	    tok.html5Unary = !/\/>$/.test(tok.text);
+	  }
+	  return tok;
+	}
+
+	/**
+	 * Peeks at the next token in the parser.
+	 *
+	 * @param {HtmlParser} parser The parser
+	 * @param {Function} readTokenImpl The underlying readToken implementation
+	 * @returns {Token} The next token
+	 */
+	function peekToken(parser, readTokenImpl) {
+	  var tmp = parser.stream;
+	  var tok = correct(readTokenImpl());
+	  parser.stream = tmp;
+	  return tok;
+	}
+
+	/**
+	 * Closes the last token.
+	 *
+	 * @param {HtmlParser} parser The parser
+	 * @param {Array<Token>} stack The stack
+	 */
+	function closeLast(parser, stack) {
+	  var tok = stack.pop();
+
+	  // prepend close tag to stream.
+	  parser.prepend('</' + tok.tagName + '>');
+	}
+
+	/**
+	 * Create a new token stack.
+	 *
+	 * @returns {Array<Token>}
+	 */
+	function newStack() {
+	  var stack = [];
+
+	  stack.last = function () {
+	    return this[this.length - 1];
+	  };
+
+	  stack.lastTagNameEq = function (tagName) {
+	    var last = this.last();
+	    return last && last.tagName && last.tagName.toUpperCase() === tagName.toUpperCase();
+	  };
+
+	  stack.containsTagName = function (tagName) {
+	    for (var i = 0, tok; tok = this[i]; i++) {
+	      if (tok.tagName === tagName) {
+	        return true;
+	      }
+	    }
+	    return false;
+	  };
+
+	  return stack;
+	}
+
+	/**
+	 * Return a readToken implementation that fixes input.
+	 *
+	 * @param {HtmlParser} parser The parser
+	 * @param {Object} options Options for fixing
+	 * @param {boolean} options.tagSoupFix True to fix tag soup scenarios
+	 * @param {boolean} options.selfCloseFix True to fix self-closing tags
+	 * @param {Function} readTokenImpl The underlying readToken implementation
+	 * @returns {Function}
+	 */
+	function fixedReadTokenFactory(parser, options, readTokenImpl) {
+	  var stack = newStack();
+
+	  var handlers = {
+	    startTag: function startTag(tok) {
+	      var tagName = tok.tagName;
+
+	      if (tagName.toUpperCase() === 'TR' && stack.lastTagNameEq('TABLE')) {
+	        parser.prepend('<TBODY>');
+	        prepareNextToken();
+	      } else if (options.selfCloseFix && CLOSESELF.test(tagName) && stack.containsTagName(tagName)) {
+	        if (stack.lastTagNameEq(tagName)) {
+	          closeLast(parser, stack);
+	        } else {
+	          parser.prepend('</' + tok.tagName + '>');
+	          prepareNextToken();
+	        }
+	      } else if (!tok.unary) {
+	        stack.push(tok);
+	      }
+	    },
+	    endTag: function endTag(tok) {
+	      var last = stack.last();
+	      if (last) {
+	        if (options.tagSoupFix && !stack.lastTagNameEq(tok.tagName)) {
+	          // cleanup tag soup
+	          closeLast(parser, stack);
+	        } else {
+	          stack.pop();
+	        }
+	      } else if (options.tagSoupFix) {
+	        // cleanup tag soup part 2: skip this token
+	        readTokenImpl();
+	        prepareNextToken();
+	      }
+	    }
+	  };
+
+	  function prepareNextToken() {
+	    var tok = peekToken(parser, readTokenImpl);
+	    if (tok && handlers[tok.type]) {
+	      handlers[tok.type](tok);
+	    }
+	  }
+
+	  return function fixedReadToken() {
+	    prepareNextToken();
+	    return correct(readTokenImpl());
+	  };
+	}
+
+/***/ }
+/******/ ])
+});
+;
 },{}],20:[function(require,module,exports){
 'use strict';
 
@@ -1717,7 +2265,7 @@ var App = function (_mix$with) {
 
 module.exports = App;
 
-},{"./event-emitter-mixin":22,"./sig":24,"debounce":4,"document-ready-promise":8,"mixwith-es5":14,"object.defaults/immutable":16}],21:[function(require,module,exports){
+},{"./event-emitter-mixin":22,"./sig":24,"debounce":4,"document-ready-promise":8,"mixwith-es5":14,"object.defaults/immutable":15}],21:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2103,7 +2651,7 @@ var Component = function (_mix$with) {
 
 module.exports = Component;
 
-},{"../utils/includes":39,"../utils/make-hash":40,"./event-emitter-mixin":22,"./sig":24,"mixwith-es5":14,"object.defaults/immutable":16}],22:[function(require,module,exports){
+},{"../utils/includes":37,"../utils/make-hash":38,"./event-emitter-mixin":22,"./sig":24,"mixwith-es5":14,"object.defaults/immutable":15}],22:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2217,7 +2765,7 @@ var EventEmitterMixin = Mixin(function (superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":39,"mixwith-es5":14,"object.defaults/immutable":16}],23:[function(require,module,exports){
+},{"../utils/includes":37,"mixwith-es5":14,"object.defaults/immutable":15}],23:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2810,7 +3358,7 @@ var Store = function (_mix$with) {
 
 module.exports = Store;
 
-},{"../utils/difference":38,"../utils/includes":39,"../utils/make-hash":40,"./event-emitter-mixin":22,"deep-equal":5,"mixwith-es5":14,"object.defaults/immutable":16}],26:[function(require,module,exports){
+},{"../utils/difference":36,"../utils/includes":37,"../utils/make-hash":38,"./event-emitter-mixin":22,"deep-equal":5,"mixwith-es5":14,"object.defaults/immutable":15}],26:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2981,137 +3529,7 @@ Object.values(_Weddell.classes).forEach(function (commonClass) {
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":39,"./app":20,"./component":21,"./pipeline":23,"./sig":24,"./store":25,"./transform":26,"mixwith-es5":14}],28:[function(require,module,exports){
-'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var mix = require('mixwith-es5').mix;
-var EventEmitterMixin = require('../../core/event-emitter-mixin');
-var hasMixin = require('mixwith-es5').hasMixin;
-
-var ActionDispatcher = function (_mix$with) {
-    _inherits(ActionDispatcher, _mix$with);
-
-    function ActionDispatcher(opts) {
-        _classCallCheck(this, ActionDispatcher);
-
-        var _this = _possibleConstructorReturn(this, (ActionDispatcher.__proto__ || Object.getPrototypeOf(ActionDispatcher)).call(this, opts));
-
-        _this._dispatchees = [];
-        return _this;
-    }
-
-    _createClass(ActionDispatcher, [{
-        key: 'addDispatchee',
-        value: function addDispatchee(dispatchee) {
-            if (!hasMixin(dispatchee, EventEmitterMixin)) {
-                console.warn("Attempted to add a non-event emitter object as a dispatchee to the action dispatcher.");
-            }
-            if (this._dispatchees.indexOf(dispatchee) === -1) {
-                this._dispatchees.push(dispatchee);
-                return this.trigger('adddispatchee', { dispatchee: dispatchee });
-            }
-            return false;
-        }
-    }, {
-        key: 'dispatch',
-        value: function dispatch(actionName, actionData) {
-            var result = this._dispatchees.map(function (dispatchee) {
-                return dispatchee.trigger(actionName, Object.assign({}, actionData));
-            });
-            this.trigger('dispatch', { actionName: actionName, actionData: actionData });
-            return result;
-        }
-    }]);
-
-    return ActionDispatcher;
-}(mix(ActionDispatcher).with(EventEmitterMixin));
-
-module.exports = ActionDispatcher;
-
-},{"../../core/event-emitter-mixin":22,"mixwith-es5":14}],29:[function(require,module,exports){
-'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var Mixin = require('mixwith-es5').Mixin;
-var ActionDispatcher = require('./action-dispatcher');
-
-module.exports = function (Weddell, pluginOpts) {
-    return Weddell.plugin({
-        id: 'action-dispatcher',
-        classes: {
-            App: Mixin(function (_App) {
-                _App = function (_App2) {
-                    _inherits(App, _App2);
-
-                    function App(opts) {
-                        _classCallCheck(this, App);
-
-                        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, opts));
-
-                        Object.defineProperty(_this, '_actionDispatcher', {
-                            value: new ActionDispatcher()
-                        });
-                        _this.on('createcomponent', function (evt) {
-                            _this._actionDispatcher.addDispatchee(evt.component);
-                            evt.component.on('createaction', function (evt) {
-                                _this._actionDispatcher.dispatch(evt.actionName, evt.actionData);
-                            });
-                        });
-                        return _this;
-                    }
-
-                    return App;
-                }(_App);
-                return _App;
-            }),
-            Component: Mixin(function (_Component) {
-                _Component = function (_Component2) {
-                    _inherits(Component, _Component2);
-
-                    function Component(opts) {
-                        _classCallCheck(this, Component);
-
-                        var _this2 = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opts));
-
-                        var actionLocals = {
-                            $act: _this2.createAction.bind(_this2)
-                        };
-                        _this2.store.assign(actionLocals);
-                        _this2._locals.assign(actionLocals);
-                        return _this2;
-                    }
-
-                    _createClass(Component, [{
-                        key: 'createAction',
-                        value: function createAction(actionName, actionData) {
-                            this.trigger('createaction', { actionName: actionName, actionData: actionData });
-                        }
-                    }]);
-
-                    return Component;
-                }(_Component);
-                return _Component;
-            })
-        }
-    });
-};
-
-},{"./action-dispatcher":28,"mixwith-es5":14}],30:[function(require,module,exports){
+},{"../utils/includes":37,"./app":20,"./component":21,"./pipeline":23,"./sig":24,"./store":25,"./transform":26,"mixwith-es5":14}],28:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -3160,12 +3578,10 @@ module.exports = function (Weddell, doTOpts) {
     });
 };
 
-},{"dot":9,"mixwith-es5":14}],31:[function(require,module,exports){
+},{"dot":9,"mixwith-es5":14}],29:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -3173,14 +3589,64 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var Parser = require('prescribe');
 var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
-var defaultOpts = {};
+var includes = require('../../utils/includes');
 
-module.exports = function (_Weddell, opts) {
-    return _Weddell.plugin({
-        id: 'fetcher',
+var defaultComponentOpts = {
+    markupFormat: 'HTMLString'
+};
+var defaultAppOpts = {
+    markupRenderFormat: 'HTMLString'
+};
+
+module.exports = function (Weddell, pluginOpts) {
+    return Weddell.plugin({
+        id: 'html',
         classes: {
+            Sig: Mixin(function (_Sig) {
+                _Sig = function (_Sig2) {
+                    _inherits(Sig, _Sig2);
+
+                    function Sig() {
+                        _classCallCheck(this, Sig);
+
+                        return _possibleConstructorReturn(this, (Sig.__proto__ || Object.getPrototypeOf(Sig)).apply(this, arguments));
+                    }
+
+                    return Sig;
+                }(_Sig);
+                _Sig.addTypeAlias('HTMLString', 'String');
+                return _Sig;
+            }),
+            App: Mixin(function (App) {
+                return function (_App) {
+                    _inherits(_class, _App);
+
+                    function _class(opts) {
+                        _classCallCheck(this, _class);
+
+                        opts = defaults(opts, defaultAppOpts);
+
+                        var _this2 = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
+
+                        _this2.renderers.HTMLString = _this2.renderHTML.bind(_this2);
+                        return _this2;
+                    }
+
+                    _createClass(_class, [{
+                        key: 'renderHTML',
+                        value: function renderHTML(html) {
+                            if (this.el) {
+                                this.el.innerHTML = html;
+                            }
+                        }
+                    }]);
+
+                    return _class;
+                }(App);
+            }),
             Component: Mixin(function (Component) {
                 var Component = function (_Component) {
                     _inherits(Component, _Component);
@@ -3188,58 +3654,85 @@ module.exports = function (_Weddell, opts) {
                     function Component(opts) {
                         _classCallCheck(this, Component);
 
-                        opts = defaults(opts, defaultOpts);
+                        opts = defaults(opts, defaultComponentOpts);
 
-                        var _this = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opts));
+                        var _this3 = _possibleConstructorReturn(this, (Component.__proto__ || Object.getPrototypeOf(Component)).call(this, opts));
 
-                        if (opts.markupTemplateURL) {
-                            _this.markupTemplateURL = opts.markupTemplateURL;
-                            _this._pipelines.markup._isDynamic = true;
-                        } else if (opts.markupURL) {
-                            _this.markupURL = opts.markupURL;
-                        }
-                        if (opts.stylesTemplateURL) {
-                            _this.stylesTemplateURL = opts.stylesTemplateURL;
-                            _this._pipelines.styles._isDynamic = true;
-                        } else if (_this.stylesURL = opts.stylesURL) {
-                            _this.stylesURL = opts.stylesURL;
-                        }
-                        //TODO add data fetch for component state
-                        //TODO arbitrary asset loading (html and CSS partials, posisbly images etc)
-                        //TODO caching
-                        //TODO component assets?
-                        return _this;
+                        _this3.renderers.HTMLString = _this3.interpolateHTMLComponents.bind(_this3);
+                        return _this3;
                     }
 
                     _createClass(Component, [{
-                        key: 'init',
-                        value: function init(opts) {
-                            var _this2 = this;
+                        key: 'interpolateHTMLComponents',
+                        value: function interpolateHTMLComponents(HTMLStr, content, renderedComponents) {
+                            var _this4 = this;
 
-                            //TODO lazy fetch on demand
-                            var superInit = _get(Component.prototype.__proto__ || Object.getPrototypeOf(Component.prototype), 'init', this);
-                            return Promise.all([this.fetchAsset('markup'), this.fetchAsset('styles')]).then(function () {
-                                return superInit.call(_this2, opts);
-                            });
-                        }
-                    }, {
-                        key: 'fetchAsset',
-                        value: function fetchAsset(pipelineName) {
-                            var promise = Promise.resolve();
-                            var pipeline = this._pipelines[pipelineName];
-                            var assetURLName = pipeline._isDynamic ? pipelineName + 'TemplateURL' : pipelineName + 'URL';
-                            var assetName = pipeline._isDynamic ? 'template' : 'static';
-                            if (!pipeline[assetName] && this[assetURLName]) {
-                                promise = fetch(this[assetURLName]).then(function (res) {
-                                    return res.text();
-                                }).then(function (responseText) {
-                                    pipeline.input = responseText;
-                                    pipeline.processInput();
-                                }, function (err) {
-                                    throw err;
-                                });
+                            var parser = new Parser(HTMLStr.trim());
+                            var componentNames = Object.keys(this.components);
+                            var component;
+                            var tagDepth = 0;
+                            var result = [];
+                            var contentTagDepth;
+
+                            if (!renderedComponents) {
+                                renderedComponents = {};
                             }
-                            return promise;
+
+                            parser.readTokens({
+                                chars: function chars(tok) {
+                                    (component ? component.contents : result).push(tok.text);
+                                },
+                                startTag: function startTag(tok) {
+                                    tagDepth++;
+                                    var outputArr = component ? component.contents : result;
+                                    if (!component && includes(componentNames, tok.tagName)) {
+                                        if (!(tok.tagName in renderedComponents)) {
+                                            renderedComponents[tok.tagName] = [];
+                                        }
+                                        var index = tok.attrs[_this4.constructor.Weddell.consts.INDEX_ATTR_NAME] || renderedComponents[tok.tagName].length;
+
+                                        component = {
+                                            Component: _this4.components[tok.tagName],
+                                            depth: tagDepth,
+                                            name: tok.tagName,
+                                            props: Object.assign({}, tok.attrs, tok.booleanAttrs),
+                                            contents: [],
+                                            index: index
+                                        };
+                                        renderedComponents[tok.tagName].push(component);
+                                    } else if (tok.tagName === 'content') {
+                                        contentTagDepth = tagDepth;
+                                    } else {
+                                        outputArr.push(tok.text);
+                                    }
+                                },
+                                endTag: function endTag(tok) {
+                                    var outputArr = component ? component.contents : result;
+                                    if (component && tok.tagName === component.name && component.depth === tagDepth) {
+                                        var currComp = component;
+                                        result.push(_this4.interpolateHTMLComponents(component.contents.join(''), null, renderedComponents).then(function (componentContent) {
+                                            return _this4.getComponentInstance(tok.tagName, currComp.index).then(function (componentInstance) {
+                                                var renderFormat = componentInstance._pipelines.markup.targetRenderFormat;
+                                                return componentInstance.render('markup', componentContent, currComp.props, renderFormat);
+                                            });
+                                        }).then(function (componentOutput) {
+                                            _this4.trigger('rendercomponent', { componentOutput: componentOutput, componentName: tok.tagName, props: currComp.props });
+                                            return componentOutput.output;
+                                        }));
+                                        component = null;
+                                    } else if (tok.tagName === 'content' && tagDepth === contentTagDepth) {
+                                        outputArr.push(_this4.interpolateHTMLComponents(content || ''));
+                                        contentTagDepth = null;
+                                    } else {
+                                        outputArr.push(tok.text);
+                                    }
+                                    tagDepth--;
+                                }
+                            });
+
+                            return Promise.all(result).then(function (results) {
+                                return results.join('');
+                            });
                         }
                     }]);
 
@@ -3251,7 +3744,7 @@ module.exports = function (_Weddell, opts) {
     });
 };
 
-},{"mixwith-es5":14,"object.defaults/immutable":16}],32:[function(require,module,exports){
+},{"../../utils/includes":37,"mixwith-es5":14,"object.defaults/immutable":15,"prescribe":19}],30:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3413,7 +3906,7 @@ module.exports = function (_Weddell) {
     });
 };
 
-},{"./machine-state-mixin":33,"./router":34,"./state-machine-mixin":35,"mixwith-es5":14}],33:[function(require,module,exports){
+},{"./machine-state-mixin":31,"./router":32,"./state-machine-mixin":33,"mixwith-es5":14}],31:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3476,7 +3969,7 @@ var MachineState = Mixin(function (superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":22,"mixwith-es5":14}],34:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":22,"mixwith-es5":14}],32:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3668,7 +4161,7 @@ var Router = function () {
 
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":10,"object.defaults/immutable":16,"path-to-regexp":18}],35:[function(require,module,exports){
+},{"array-compact":1,"find-parent":10,"object.defaults/immutable":15,"path-to-regexp":17}],33:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3777,18 +4270,17 @@ var StateMachine = Mixin(function (superClass) {
 });
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":22,"./machine-state-mixin":33,"mixwith-es5":14}],36:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":22,"./machine-state-mixin":31,"mixwith-es5":14}],34:[function(require,module,exports){
 'use strict';
 
-require('native-promise-only');
-module.exports = require('../plugins/action-dispatcher')(require('../plugins/doT')(require('../plugins/fetcher')(require('../plugins/router')(require('./weddell')))));
+module.exports = require('../plugins/doT')(require('../plugins/html')(require('../plugins/router')(require('./weddell'))));
 
-},{"../plugins/action-dispatcher":29,"../plugins/doT":30,"../plugins/fetcher":31,"../plugins/router":32,"./weddell":37,"native-promise-only":15}],37:[function(require,module,exports){
+},{"../plugins/doT":28,"../plugins/html":29,"../plugins/router":30,"./weddell":35}],35:[function(require,module,exports){
 'use strict';
 
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":27}],38:[function(require,module,exports){
+},{"../core/weddell":27}],36:[function(require,module,exports){
 "use strict";
 
 // var includes = require('./includes');
@@ -3798,7 +4290,7 @@ module.exports = function (arr1, arr2) {
     });
 };
 
-},{}],39:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, val) {
@@ -3807,7 +4299,7 @@ module.exports = function (arr, val) {
     });
 };
 
-},{}],40:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 
 module.exports = function makeid() {
@@ -3819,5 +4311,5 @@ module.exports = function makeid() {
   }return text;
 };
 
-},{}]},{},[36])(36)
+},{}]},{},[34])(34)
 });
