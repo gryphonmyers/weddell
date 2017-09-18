@@ -3762,7 +3762,7 @@ class Router {
         return Promise.resolve();
     }
 
-    onPopState() {
+    onPopState(evt) {
         if (evt && evt.fullPath) {
             this.route(evt.fullPath);
         }

@@ -6547,7 +6547,7 @@ var Router = function () {
         }
     }, {
         key: 'onPopState',
-        value: function onPopState() {
+        value: function onPopState(evt) {
             if (evt && evt.fullPath) {
                 this.route(evt.fullPath);
             }
