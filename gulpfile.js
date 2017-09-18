@@ -77,7 +77,7 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
         parsed.ext = '.html';
         parsed.name += '-disc';
     } else if (! opts.dev) {
-        parsed.name += '-' + config.version;
+        // parsed.name += '-' + config.version;
         parsed.ext = '.min' + parsed.ext;
     }
     parsed.base = parsed.name + parsed.ext;
