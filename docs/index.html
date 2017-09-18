@@ -6,7 +6,7 @@
         <script src='js/weddell-ro+vd+ad.js'></script>
         <script>
             var App = Weddell.classes.App;
-            var Component = Weddell.classes.Component;
+            // var Component = Weddell.classes.Component;
 
             var app = new App({
                 routes: [
@@ -32,7 +32,7 @@
                 ],
                 el: '#app',
                 // markupRenderFormat: 'HTMLString',
-                Component: class AppComponent extends Component {
+                Component: Component => class AppComponent extends Component {
                     constructor(opts) {
                         super(Object.assign({
                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',
@@ -110,7 +110,7 @@
                                 }
                             },
                             components: {
-                                Accordion: class Accordion extends Component {
+                                Accordion: Component => class Accordion extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
                                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',
@@ -223,7 +223,7 @@
                                                 }
                                             `,
                                             components: {
-                                                AccordionRow: [class AccordionRow extends Component {
+                                                AccordionRow: [Component => class AccordionRow extends Component {
                                                     constructor(opts) {
                                                         super(Object.assign({
                                                             inputs: ['type', 'accordionLabel'],
@@ -273,7 +273,7 @@
                                         }, opts));
                                     }
                                 },
-                                MyHeader: class Header extends Component {
+                                MyHeader: Component => class Header extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
                                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',
@@ -292,7 +292,7 @@
                                         }, opts))
                                     }
                                 },
-                                MyBodyA: class Body extends Component {
+                                MyBodyA: Component => class Body extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
                                             markupTemplate: (locals, h) =>
@@ -305,7 +305,7 @@
                                                     h('RouterView')
                                                 ]),
                                             components: {
-                                                MyBodyB: class Body extends Component {
+                                                MyBodyB: Component => class Body extends Component {
                                                     constructor(opts) {
                                                         super(Object.assign({
                                                             markupTemplate: (local, h) =>
@@ -317,7 +317,7 @@
                                         }, opts))
                                     }
                                 },
-                                MyFooter: class Footer extends Component {
+                                MyFooter: Component => class Footer extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
                                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',

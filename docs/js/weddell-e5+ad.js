@@ -945,6 +945,8 @@ var mix = require('mixwith-es5').mix;
 var debounce = require('debounce');
 var Sig = require('./sig');
 var EventEmitterMixin = require('./event-emitter-mixin');
+var isApplicationOf = require('mixwith-es5').isApplicationOf;
+var Component = require('./component');
 
 Sig.addTypeAlias('CSSString', 'String');
 
@@ -968,7 +970,8 @@ var App = function (_mix$with) {
 
         _this.el = opts.el;
         _this.styleEl = opts.styleEl;
-        _this.Component = opts.Component;
+        _this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
+        _this.Component = _this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         _this.component = null;
         _this.renderInterval = opts.renderInterval;
         _this.stylesRenderFormat = opts.stylesRenderFormat;
@@ -990,9 +993,6 @@ var App = function (_mix$with) {
         Object.defineProperty(window, consts.VAR_NAME, {
             value: { app: _this, components: {} }
         });
-
-        _this.componentOpts = Array.isArray(_this.Component) ? _this.Component[1] : {};
-        _this.Component = Array.isArray(_this.Component) ? _this.Component[0] : _this.Component;
         return _this;
     }
 
@@ -1018,13 +1018,39 @@ var App = function (_mix$with) {
             this.renderCSS(flattenStyles(evt));
         }
     }, {
+        key: 'makeComponentClass',
+        value: function makeComponentClass(ComponentClass) {
+            if (ComponentClass.prototype && (ComponentClass.prototype instanceof Component || ComponentClass.prototype.constructor === Component)) {
+                if (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component) {
+                    return ComponentClass;
+                }
+                throw "Component input is a class extending Component, but it does not have necessary plugins applied to it. Consider using a factory function instead.";
+            } else if (typeof ComponentClass === 'function') {
+                // We got a non-Component class function, so we assuming it is a component factory function
+                return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+            } else {
+                //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
+                throw "Unsupported component input";
+            }
+        }
+    }, {
+        key: 'makeComponent',
+        value: function makeComponent(componentInput) {
+            return new this.Component({
+                isRoot: true,
+                targetStylesRenderFormat: this.stylesRenderFormat,
+                targetMarkupRenderFormat: this.markupRenderFormat,
+                markupTransforms: this.markupTransforms,
+                stylesTransforms: this.stylesTransforms
+            });
+        }
+    }, {
         key: 'init',
         value: function init() {
             var _this2 = this;
 
             Object.seal(this);
             return DOMReady.then(function () {
-
                 if (typeof _this2.el == 'string') {
                     _this2.el = document.querySelector(_this2.el);
                 }
@@ -1037,15 +1063,7 @@ var App = function (_mix$with) {
                     document.head.appendChild(_this2.styleEl);
                 }
 
-                var app = _this2;
-
-                _this2.component = new _this2.Component({
-                    isRoot: true,
-                    targetStylesRenderFormat: app.stylesRenderFormat,
-                    targetMarkupRenderFormat: app.markupRenderFormat,
-                    markupTransforms: app.markupTransforms,
-                    stylesTransforms: app.stylesTransforms
-                });
+                _this2.component = _this2.makeComponent(_this2.Component);
 
                 _this2.trigger('createcomponent', { component: _this2.component });
                 _this2.trigger('createrootcomponent', { component: _this2.component });
@@ -1059,7 +1077,7 @@ var App = function (_mix$with) {
                     });
                 });
 
-                return _this2.component.init(_this2.componentOpts).then(function () {
+                return _this2.component.init(_this2.componentInitOpts).then(function () {
                     _this2.component.on('rendermarkup', debounce(_this2.renderMarkup.bind(_this2), _this2.renderInterval));
                     _this2.component.on('renderstyles', debounce(_this2.renderStyles.bind(_this2), _this2.renderInterval));
                     _this2.component.render();
@@ -1073,7 +1091,7 @@ var App = function (_mix$with) {
 
 module.exports = App;
 
-},{"./event-emitter-mixin":17,"./sig":19,"debounce":3,"document-ready-promise":7,"mixwith-es5":11,"object.defaults/immutable":13}],16:[function(require,module,exports){
+},{"./component":16,"./event-emitter-mixin":17,"./sig":19,"debounce":3,"document-ready-promise":7,"mixwith-es5":11,"object.defaults/immutable":13}],16:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1237,13 +1255,28 @@ var Component = function (_mix$with) {
             this._tagDirectives[name.toUpperCase()] = directive;
         }
     }, {
-        key: 'createChildComponentClass',
-        value: function createChildComponentClass(componentName, Component) {
-            if (Array.isArray(Component)) {
-                var initOpts = Component[2];
-                var inputMappings = Component[1];
-                Component = Component[0];
+        key: 'makeComponentClass',
+        value: function makeComponentClass(ComponentClass) {
+            if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
+                return ComponentClass;
+            } else if (typeof ComponentClass === 'function') {
+                // We got a non-Component class function, so we assuming it is a component factory function
+                return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+            } else {
+                //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
+                throw "Unsupported component input";
             }
+        }
+    }, {
+        key: 'createChildComponentClass',
+        value: function createChildComponentClass(componentName, ChildComponent) {
+            if (Array.isArray(ChildComponent)) {
+                var initOpts = ChildComponent[2];
+                var inputMappings = ChildComponent[1];
+                ChildComponent = ChildComponent[0];
+            }
+
+            ChildComponent = this.makeComponentClass(ChildComponent);
 
             var parentComponent = this;
             var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
@@ -1252,8 +1285,8 @@ var Component = function (_mix$with) {
             var stylesTransforms = this._pipelines.styles.transforms;;
 
             var obj = {};
-            obj[componentName] = function (_Component) {
-                _inherits(_class, _Component);
+            obj[componentName] = function (_ChildComponent) {
+                _inherits(_class, _ChildComponent);
 
                 function _class(opts) {
                     _classCallCheck(this, _class);
@@ -1279,7 +1312,7 @@ var Component = function (_mix$with) {
                 }
 
                 return _class;
-            }(Component);
+            }(ChildComponent);
             this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
             obj[componentName]._initOpts = initOpts;
             obj[componentName]._inputMappings = inputMappings;

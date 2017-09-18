@@ -138,12 +138,27 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this._tagDirectives[name.toUpperCase()] = directive;
     }
 
-    createChildComponentClass(componentName, Component) {
-        if (Array.isArray(Component)) {
-            var initOpts = Component[2];
-            var inputMappings = Component[1];
-            Component = Component[0];
+
+    makeComponentClass(ComponentClass) {
+        if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
+            return ComponentClass;
+        } else if (typeof ComponentClass === 'function') {
+            // We got a non-Component class function, so we assuming it is a component factory function
+            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+        } else {
+            //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
+            throw "Unsupported component input";
         }
+    }
+
+    createChildComponentClass(componentName, ChildComponent) {
+        if (Array.isArray(ChildComponent)) {
+            var initOpts = ChildComponent[2];
+            var inputMappings = ChildComponent[1];
+            ChildComponent = ChildComponent[0];
+        }
+
+        ChildComponent = this.makeComponentClass(ChildComponent);
 
         var parentComponent = this;
         var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
@@ -152,7 +167,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var stylesTransforms = this._pipelines.styles.transforms;;
 
         var obj = {}
-        obj[componentName] = class extends Component {
+        obj[componentName] = class extends ChildComponent {
             constructor(opts) {
                 super(defaults({
                     parentComponent,
