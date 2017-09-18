@@ -3083,7 +3083,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         var i = 0;
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
-        while(this.extends[i] && (typeof val === 'undefined' || val === null)) {
+        while(mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
             val = this.extends[i][mappingEntry[0]];
             i++;
         }

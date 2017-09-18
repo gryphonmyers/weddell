@@ -3519,7 +3519,7 @@ var Store = function (_mix$with) {
                 return key === entry[1];
             });
 
-            while (this.extends[i] && (typeof val === 'undefined' || val === null)) {
+            while (mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
                 val = this.extends[i][mappingEntry[0]];
                 i++;
             }
