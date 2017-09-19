@@ -78,7 +78,10 @@ module.exports = function(Weddell, pluginOpts) {
 
                     replaceVNodeComponents(node, content, renderedComponents) {
                         if (Array.isArray(node)) {
-                            return Promise.all(compact(flatMap(node, childNode => this.replaceVNodeComponents(childNode, content, renderedComponents))));
+                            return Promise.all(node.reduce((final, childNode) => {
+                                var result = this.replaceVNodeComponents(childNode, content, renderedComponents);
+                                return result ? final.concat(result) : final;
+                            }, []));
                         }
 
                         var Sig = this.constructor.Weddell.classes.Sig;
@@ -92,7 +95,7 @@ module.exports = function(Weddell, pluginOpts) {
                                 return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
 
                             } else if (node.tagName === 'CONTENT') {
-                                return content;
+                                return this.replaceVNodeComponents(content, null, renderedComponents);
                             } else {
                                 var componentEntry = Object.entries(this.components)
                                     .find(entry => {
@@ -124,7 +127,9 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.children) {
                             return this.replaceVNodeComponents(node.children, content, renderedComponents)
                                 .then(children => {
-                                    node.children = compact(children);
+                                    node.children = children.reduce((final, child) => {
+                                        return child ? final.concat(child) : final;
+                                    }, []);
                                     return node;
                                 });
                         }

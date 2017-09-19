@@ -6757,9 +6757,10 @@ module.exports = function (Weddell, pluginOpts) {
                             var _this5 = this;
 
                             if (Array.isArray(node)) {
-                                return Promise.all(compact(flatMap(node, function (childNode) {
-                                    return _this5.replaceVNodeComponents(childNode, content, renderedComponents);
-                                })));
+                                return Promise.all(node.reduce(function (final, childNode) {
+                                    var result = _this5.replaceVNodeComponents(childNode, content, renderedComponents);
+                                    return result ? final.concat(result) : final;
+                                }, []));
                             }
 
                             var Sig = this.constructor.Weddell.classes.Sig;
@@ -6772,7 +6773,7 @@ module.exports = function (Weddell, pluginOpts) {
                                 if (node.tagName.toUpperCase() in this._tagDirectives) {
                                     return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
                                 } else if (node.tagName === 'CONTENT') {
-                                    return content;
+                                    return this.replaceVNodeComponents(content, null, renderedComponents);
                                 } else {
                                     var componentEntry = Object.entries(this.components).find(function (entry) {
                                         return entry[0].toLowerCase() == node.tagName.toLowerCase();
@@ -6799,7 +6800,9 @@ module.exports = function (Weddell, pluginOpts) {
 
                             if (node.children) {
                                 return this.replaceVNodeComponents(node.children, content, renderedComponents).then(function (children) {
-                                    node.children = compact(children);
+                                    node.children = children.reduce(function (final, child) {
+                                        return child ? final.concat(child) : final;
+                                    }, []);
                                     return node;
                                 });
                             }
