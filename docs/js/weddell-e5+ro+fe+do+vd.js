@@ -4154,6 +4154,61 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var mix = require('mixwith-es5').mix;
+var EventEmitterMixin = require('./event-emitter-mixin');
+var hasMixin = require('mixwith-es5').hasMixin;
+
+var ActionDispatcher = function (_mix$with) {
+    _inherits(ActionDispatcher, _mix$with);
+
+    function ActionDispatcher(opts) {
+        _classCallCheck(this, ActionDispatcher);
+
+        var _this = _possibleConstructorReturn(this, (ActionDispatcher.__proto__ || Object.getPrototypeOf(ActionDispatcher)).call(this, opts));
+
+        _this._dispatchees = [];
+        return _this;
+    }
+
+    _createClass(ActionDispatcher, [{
+        key: 'addDispatchee',
+        value: function addDispatchee(dispatchee) {
+            if (!hasMixin(dispatchee, EventEmitterMixin)) {
+                console.warn("Attempted to add a non-event emitter object as a dispatchee to the action dispatcher.");
+            }
+            if (this._dispatchees.indexOf(dispatchee) === -1) {
+                this._dispatchees.push(dispatchee);
+                return this.trigger('adddispatchee', { dispatchee: dispatchee });
+            }
+            return false;
+        }
+    }, {
+        key: 'dispatch',
+        value: function dispatch(actionName, actionData) {
+            var result = this._dispatchees.map(function (dispatchee) {
+                return dispatchee.trigger(actionName, Object.assign({}, actionData));
+            });
+            this.trigger('dispatch', { actionName: actionName, actionData: actionData });
+            return result;
+        }
+    }]);
+
+    return ActionDispatcher;
+}(mix(ActionDispatcher).with(EventEmitterMixin));
+
+module.exports = ActionDispatcher;
+
+},{"./event-emitter-mixin":57,"mixwith-es5":21}],55:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -4162,6 +4217,7 @@ var Sig = require('./sig');
 var EventEmitterMixin = require('./event-emitter-mixin');
 var isApplicationOf = require('mixwith-es5').isApplicationOf;
 var Component = require('./component');
+var ActionDispatcher = require('./action-dispatcher');
 
 Sig.addTypeAlias('CSSString', 'String');
 
@@ -4208,6 +4264,17 @@ var App = function (_mix$with) {
         Object.defineProperty(window, consts.VAR_NAME, {
             value: { app: _this, components: {} }
         });
+
+        Object.defineProperty(_this, '_actionDispatcher', {
+            value: new ActionDispatcher()
+        });
+
+        _this.on('createcomponent', function (evt) {
+            _this._actionDispatcher.addDispatchee(evt.component);
+            evt.component.on('createaction', function (evt) {
+                _this._actionDispatcher.dispatch(evt.actionName, evt.actionData);
+            });
+        });
         return _this;
     }
 
@@ -4223,6 +4290,7 @@ var App = function (_mix$with) {
                 throw "No appropriate markup renderer found for format: " + evt.renderFormat;
             }
             this.renderers[evt.renderFormat].call(this, evt.output);
+            this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
         }
     }, {
         key: 'renderStyles',
@@ -4231,6 +4299,7 @@ var App = function (_mix$with) {
                 return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
             };
             this.renderCSS(flattenStyles(evt));
+            this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
         }
     }, {
         key: 'makeComponentClass',
@@ -4306,7 +4375,7 @@ var App = function (_mix$with) {
 
 module.exports = App;
 
-},{"./component":55,"./event-emitter-mixin":56,"./sig":58,"debounce":6,"document-ready-promise":10,"mixwith-es5":21,"object.defaults/immutable":23}],55:[function(require,module,exports){
+},{"./action-dispatcher":54,"./component":56,"./event-emitter-mixin":57,"./sig":59,"debounce":6,"document-ready-promise":10,"mixwith-es5":21,"object.defaults/immutable":23}],56:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4374,7 +4443,8 @@ var Component = function (_mix$with) {
             },
             store: {
                 value: new Store(Object.assign({
-                    $bind: _this.bindEvent.bind(_this)
+                    $bind: _this.bindEvent.bind(_this),
+                    $act: _this.createAction.bind(_this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
@@ -4450,6 +4520,11 @@ var Component = function (_mix$with) {
     }
 
     _createClass(Component, [{
+        key: 'createAction',
+        value: function createAction(actionName, actionData) {
+            this.trigger('createaction', { actionName: actionName, actionData: actionData });
+        }
+    }, {
         key: 'onInit',
         value: function onInit() {
             //Default event handler, noop
@@ -4707,7 +4782,7 @@ var Component = function (_mix$with) {
 
 module.exports = Component;
 
-},{"../utils/includes":75,"../utils/make-hash":76,"./event-emitter-mixin":56,"./sig":58,"mixwith-es5":21,"object.defaults/immutable":23}],56:[function(require,module,exports){
+},{"../utils/includes":76,"../utils/make-hash":77,"./event-emitter-mixin":57,"./sig":59,"mixwith-es5":21,"object.defaults/immutable":23}],57:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4821,7 +4896,7 @@ var EventEmitterMixin = Mixin(function (superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":75,"mixwith-es5":21,"object.defaults/immutable":23}],57:[function(require,module,exports){
+},{"../utils/includes":76,"mixwith-es5":21,"object.defaults/immutable":23}],58:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4993,7 +5068,7 @@ var Pipeline = function (_mix$with) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":56,"mixwith-es5":21}],58:[function(require,module,exports){
+},{"./event-emitter-mixin":57,"mixwith-es5":21}],59:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5154,7 +5229,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5414,7 +5489,7 @@ var Store = function (_mix$with) {
 
 module.exports = Store;
 
-},{"../utils/difference":73,"../utils/includes":75,"../utils/make-hash":76,"./event-emitter-mixin":56,"deep-equal":7,"mixwith-es5":21,"object.defaults/immutable":23}],60:[function(require,module,exports){
+},{"../utils/difference":74,"../utils/includes":76,"../utils/make-hash":77,"./event-emitter-mixin":57,"deep-equal":7,"mixwith-es5":21,"object.defaults/immutable":23}],61:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5486,7 +5561,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5585,7 +5660,7 @@ Object.values(_Weddell.classes).forEach(function (commonClass) {
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":75,"./app":54,"./component":55,"./pipeline":57,"./sig":58,"./store":59,"./transform":60,"mixwith-es5":21}],62:[function(require,module,exports){
+},{"../utils/includes":76,"./app":55,"./component":56,"./pipeline":58,"./sig":59,"./store":60,"./transform":61,"mixwith-es5":21}],63:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -5634,7 +5709,7 @@ module.exports = function (Weddell, doTOpts) {
     });
 };
 
-},{"dot":11,"mixwith-es5":21}],63:[function(require,module,exports){
+},{"dot":11,"mixwith-es5":21}],64:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5725,7 +5800,7 @@ module.exports = function (_Weddell, opts) {
     });
 };
 
-},{"mixwith-es5":21,"object.defaults/immutable":23}],64:[function(require,module,exports){
+},{"mixwith-es5":21,"object.defaults/immutable":23}],65:[function(require,module,exports){
 'use strict';
 
 var Parser = require('prescribe');
@@ -5771,7 +5846,7 @@ module.exports = {
     }
 };
 
-},{"prescribe":27}],65:[function(require,module,exports){
+},{"prescribe":27}],66:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -5817,7 +5892,7 @@ module.exports = function (_Weddell) {
     });
 };
 
-},{"./html-to-vdom-parser":64,"mixwith-es5":21}],66:[function(require,module,exports){
+},{"./html-to-vdom-parser":65,"mixwith-es5":21}],67:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5979,7 +6054,7 @@ module.exports = function (_Weddell) {
     });
 };
 
-},{"./machine-state-mixin":67,"./router":68,"./state-machine-mixin":69,"mixwith-es5":21}],67:[function(require,module,exports){
+},{"./machine-state-mixin":68,"./router":69,"./state-machine-mixin":70,"mixwith-es5":21}],68:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6042,7 +6117,7 @@ var MachineState = Mixin(function (superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":56,"mixwith-es5":21}],68:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":57,"mixwith-es5":21}],69:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6234,7 +6309,7 @@ var Router = function () {
 
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],69:[function(require,module,exports){
+},{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],70:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6343,7 +6418,7 @@ var StateMachine = Mixin(function (superClass) {
 });
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":56,"./machine-state-mixin":67,"mixwith-es5":21}],70:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":57,"./machine-state-mixin":68,"mixwith-es5":21}],71:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6544,18 +6619,18 @@ module.exports = function (Weddell, pluginOpts) {
     });
 };
 
-},{"../../utils/flatmap":74,"array-compact":1,"mixwith-es5":21,"object.defaults/immutable":23,"virtual-dom/diff":28,"virtual-dom/h":29,"virtual-dom/patch":30,"virtual-dom/vnode/vnode":48}],71:[function(require,module,exports){
+},{"../../utils/flatmap":75,"array-compact":1,"mixwith-es5":21,"object.defaults/immutable":23,"virtual-dom/diff":28,"virtual-dom/h":29,"virtual-dom/patch":30,"virtual-dom/vnode/vnode":48}],72:[function(require,module,exports){
 'use strict';
 
 require('native-promise-only');
 module.exports = require('../plugins/html-to-vdom')(require('../plugins/vdom')(require('../plugins/doT')(require('../plugins/fetcher')(require('../plugins/router')(require('./weddell'))))));
 
-},{"../plugins/doT":62,"../plugins/fetcher":63,"../plugins/html-to-vdom":65,"../plugins/router":66,"../plugins/vdom":70,"./weddell":72,"native-promise-only":22}],72:[function(require,module,exports){
+},{"../plugins/doT":63,"../plugins/fetcher":64,"../plugins/html-to-vdom":66,"../plugins/router":67,"../plugins/vdom":71,"./weddell":73,"native-promise-only":22}],73:[function(require,module,exports){
 'use strict';
 
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":61}],73:[function(require,module,exports){
+},{"../core/weddell":62}],74:[function(require,module,exports){
 "use strict";
 
 // var includes = require('./includes');
@@ -6565,7 +6640,7 @@ module.exports = function (arr1, arr2) {
     });
 };
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, func) {
@@ -6574,7 +6649,7 @@ module.exports = function (arr, func) {
     }, []);
 };
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, val) {
@@ -6583,7 +6658,7 @@ module.exports = function (arr, val) {
     });
 };
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 "use strict";
 
 module.exports = function makeid() {
@@ -6595,5 +6670,5 @@ module.exports = function makeid() {
   }return text;
 };
 
-},{}]},{},[71])(71)
+},{}]},{},[72])(72)
 });

@@ -2696,6 +2696,38 @@ function isArray(obj) {
 }
 
 },{}],51:[function(require,module,exports){
+var mix = require('mixwith-es5').mix;
+var EventEmitterMixin = require('./event-emitter-mixin');
+var hasMixin = require('mixwith-es5').hasMixin;
+
+var ActionDispatcher = class extends mix(ActionDispatcher).with(EventEmitterMixin) {
+    constructor(opts) {
+        super(opts);
+        this._dispatchees = [];
+    }
+
+    addDispatchee(dispatchee) {
+        if (!hasMixin(dispatchee, EventEmitterMixin)) {
+            console.warn("Attempted to add a non-event emitter object as a dispatchee to the action dispatcher.");
+        }
+        if (this._dispatchees.indexOf(dispatchee) === -1) {
+            this._dispatchees.push(dispatchee);
+            return this.trigger('adddispatchee', {dispatchee});
+        }
+        return false;
+    }
+
+    dispatch(actionName, actionData) {
+        var result = this._dispatchees.map(dispatchee =>
+            dispatchee.trigger(actionName, Object.assign({}, actionData)));
+        this.trigger('dispatch', {actionName, actionData});
+        return result;
+    }
+};
+
+module.exports = ActionDispatcher;
+
+},{"./event-emitter-mixin":54,"mixwith-es5":20}],52:[function(require,module,exports){
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -2704,6 +2736,7 @@ var Sig = require('./sig');
 var EventEmitterMixin = require('./event-emitter-mixin');
 var isApplicationOf = require('mixwith-es5').isApplicationOf;
 var Component = require('./component');
+var ActionDispatcher = require('./action-dispatcher');
 
 Sig.addTypeAlias('CSSString', 'String');
 
@@ -2744,6 +2777,17 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.defineProperty(window, consts.VAR_NAME, {
             value: {app: this, components: {} }
         });
+
+        Object.defineProperty(this, '_actionDispatcher', {
+            value: new ActionDispatcher
+        });
+
+        this.on('createcomponent', evt => {
+            this._actionDispatcher.addDispatchee(evt.component);
+            evt.component.on('createaction', evt => {
+                this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
+            });
+        });
     }
 
     renderCSS(CSSString) {
@@ -2755,6 +2799,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
         this.renderers[evt.renderFormat].call(this, evt.output);
+        this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
     }
 
     renderStyles(evt) {
@@ -2762,6 +2807,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
         }
         this.renderCSS(flattenStyles(evt));
+        this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
     }
 
     makeComponentClass(ComponentClass) {
@@ -2829,7 +2875,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
 module.exports = App;
 
-},{"./component":52,"./event-emitter-mixin":53,"./sig":55,"debounce":6,"document-ready-promise":10,"mixwith-es5":20,"object.defaults/immutable":21}],52:[function(require,module,exports){
+},{"./action-dispatcher":51,"./component":53,"./event-emitter-mixin":54,"./sig":56,"debounce":6,"document-ready-promise":10,"mixwith-es5":20,"object.defaults/immutable":21}],53:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
@@ -2881,7 +2927,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             },
             store: {
                 value: new Store(Object.assign({
-                    $bind: this.bindEvent.bind(this)
+                    $bind: this.bindEvent.bind(this),
+                    $act: this.createAction.bind(this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
@@ -2952,6 +2999,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
 
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+    }
+
+    createAction(actionName, actionData) {
+        this.trigger('createaction', {actionName, actionData});
     }
 
     onInit() {
@@ -3188,7 +3239,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":68,"../utils/make-hash":69,"./event-emitter-mixin":53,"./sig":55,"mixwith-es5":20,"object.defaults/immutable":21}],53:[function(require,module,exports){
+},{"../utils/includes":69,"../utils/make-hash":70,"./event-emitter-mixin":54,"./sig":56,"mixwith-es5":20,"object.defaults/immutable":21}],54:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var hasMixin = require('mixwith-es5').hasMixin;
 var defaults = require('object.defaults/immutable');
@@ -3256,7 +3307,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":68,"mixwith-es5":20,"object.defaults/immutable":21}],54:[function(require,module,exports){
+},{"../utils/includes":69,"mixwith-es5":20,"object.defaults/immutable":21}],55:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
@@ -3400,7 +3451,7 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":53,"mixwith-es5":20}],55:[function(require,module,exports){
+},{"./event-emitter-mixin":54,"mixwith-es5":20}],56:[function(require,module,exports){
 class Sig {
     constructor(str) {
         if (typeof str === 'object' && str.constructor === this.constructor) {
@@ -3526,7 +3577,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
@@ -3744,7 +3795,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":66,"../utils/includes":68,"../utils/make-hash":69,"./event-emitter-mixin":53,"deep-equal":7,"mixwith-es5":20,"object.defaults/immutable":21}],57:[function(require,module,exports){
+},{"../utils/difference":67,"../utils/includes":69,"../utils/make-hash":70,"./event-emitter-mixin":54,"deep-equal":7,"mixwith-es5":20,"object.defaults/immutable":21}],58:[function(require,module,exports){
 class Transform {
     constructor(opts) {
         var Sig = this.constructor.Weddell.classes.Sig;
@@ -3795,7 +3846,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
@@ -3862,7 +3913,7 @@ Object.values(_Weddell.classes).forEach(function(commonClass){
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":68,"./app":51,"./component":52,"./pipeline":54,"./sig":55,"./store":56,"./transform":57,"mixwith-es5":20}],59:[function(require,module,exports){
+},{"../utils/includes":69,"./app":52,"./component":53,"./pipeline":55,"./sig":56,"./store":57,"./transform":58,"mixwith-es5":20}],60:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
@@ -3987,7 +4038,7 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./machine-state-mixin":60,"./router":61,"./state-machine-mixin":62,"mixwith-es5":20}],60:[function(require,module,exports){
+},{"./machine-state-mixin":61,"./router":62,"./state-machine-mixin":63,"mixwith-es5":20}],61:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -4023,7 +4074,7 @@ var MachineState = Mixin(function(superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":53,"mixwith-es5":20}],61:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":54,"mixwith-es5":20}],62:[function(require,module,exports){
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
@@ -4188,7 +4239,7 @@ class Router {
 }
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":12,"object.defaults/immutable":21,"path-to-regexp":23}],62:[function(require,module,exports){
+},{"array-compact":1,"find-parent":12,"object.defaults/immutable":21,"path-to-regexp":23}],63:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -4272,7 +4323,7 @@ var StateMachine = Mixin(function(superClass) {
 })
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":53,"./machine-state-mixin":60,"mixwith-es5":20}],63:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":54,"./machine-state-mixin":61,"mixwith-es5":20}],64:[function(require,module,exports){
 var h = require('virtual-dom/h');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
@@ -4422,31 +4473,31 @@ module.exports = function(Weddell, pluginOpts) {
     });
 }
 
-},{"../../utils/flatmap":67,"array-compact":1,"mixwith-es5":20,"object.defaults/immutable":21,"virtual-dom/diff":25,"virtual-dom/h":26,"virtual-dom/patch":27,"virtual-dom/vnode/vnode":45}],64:[function(require,module,exports){
+},{"../../utils/flatmap":68,"array-compact":1,"mixwith-es5":20,"object.defaults/immutable":21,"virtual-dom/diff":25,"virtual-dom/h":26,"virtual-dom/patch":27,"virtual-dom/vnode/vnode":45}],65:[function(require,module,exports){
 module.exports = require('../plugins/vdom')(
     require('../plugins/router')(require('./weddell'))
 );
 
-},{"../plugins/router":59,"../plugins/vdom":63,"./weddell":65}],65:[function(require,module,exports){
+},{"../plugins/router":60,"../plugins/vdom":64,"./weddell":66}],66:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":58}],66:[function(require,module,exports){
+},{"../core/weddell":59}],67:[function(require,module,exports){
 // var includes = require('./includes');
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = (arr, func) =>
     arr.reduce((final,val) =>
         final.concat(func(val)), [])
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = function(arr, val){
     return arr.some(currKey=>currKey === val);
 }
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -4457,5 +4508,5 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[64])(64)
+},{}]},{},[65])(65)
 });

@@ -1,5 +1,5 @@
 var mix = require('mixwith-es5').mix;
-var EventEmitterMixin = require('../../core/event-emitter-mixin');
+var EventEmitterMixin = require('./event-emitter-mixin');
 var hasMixin = require('mixwith-es5').hasMixin;
 
 var ActionDispatcher = class extends mix(ActionDispatcher).with(EventEmitterMixin) {
