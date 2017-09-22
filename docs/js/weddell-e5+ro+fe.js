@@ -3349,10 +3349,15 @@ var Router = function () {
             */
 
             var route = Router.getNamedRoute(obj.name, this.routes);
+
             if (route) {
-                var fullPath = route.map(function (route) {
-                    return pathToRegexp.compile(route.pattern)(obj.params);
-                }).join('/');
+                try {
+                    var fullPath = route.map(function (route) {
+                        return pathToRegexp.compile(route.pattern)(obj.params);
+                    }).join('/');
+                } catch (err) {
+                    throw "Encountered error trying to build router link: " + err.toString();
+                }
                 var matches = [{
                     fullPath: fullPath,
                     route: route,
@@ -3401,24 +3406,30 @@ var Router = function () {
         }
     }], [{
         key: 'getNamedRoute',
-        value: function getNamedRoute(name, routes) {
+        value: function getNamedRoute(name, routes, currPath) {
+            var _this3 = this;
+
             if (!name) return null;
+            if (!currPath) currPath = [];
 
-            return function findRoute(routes, path) {
-                var matchedRoute = null;
+            var matchedRoute = null;
 
-                routes.forEach(function (route) {
-                    matchedRoute = route.name === name ? route : matchedRoute;
+            routes.forEach(function (route) {
+                matchedRoute = route.name === name ? route : matchedRoute;
 
-                    if (!matchedRoute && route.children) {
-                        matchedRoute = findRoute(route.children, path.concat(route));
-                    }
+                if (!matchedRoute && route.children) {
+                    matchedRoute = _this3.getNamedRoute(name, route.children, currPath.concat(route));
+                }
 
-                    return !matchedRoute;
-                });
+                return !matchedRoute;
+            });
 
-                return matchedRoute ? Object.assign(path.concat(matchedRoute), matchedRoute) : null;
-            }(routes, []);
+            if (matchedRoute) {
+                matchedRoute = Object.assign({ route: matchedRoute }, matchedRoute);
+                matchedRoute = Object.assign(currPath.concat(matchedRoute.route), matchedRoute);
+            }
+
+            return matchedRoute || null;
         }
     }, {
         key: 'matchRoute',
