@@ -2447,7 +2447,6 @@ class Router {
             this.addRoutes(opts.routes);
         }
     }
-    //TODO allow for absolute routes prefixed with /
 
     route(pathName) {
         var promise = Promise.resolve(null);
@@ -2524,10 +2523,9 @@ class Router {
 
         var Router = this;
 
-        routes.forEach(function(currRoute) {
+        routes.every(function(currRoute) {
             var params = [];
-            var newPath = routePath.concat({route: currRoute, params})
-            if (currRoute.pattern.indexOf('dorfo') > -1) debugger;
+            var newPath = routePath.concat({route: currRoute, params});
             var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : newPath.reduce((finalPattern, pathObj) => {
                 return pathObj.route.pattern.charAt(0) === '/' ? pathObj.route.pattern : finalPattern + pathObj.route.pattern;
             }, '');

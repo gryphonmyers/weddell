@@ -11,6 +11,14 @@
             var app = new App({
                 routes: [
                     {
+                        name: 'homePage',
+                        pattern: '/:pageName/:localeCode?',
+                        handler: function() {
+                            debugger;
+                            return 'HomePage'
+                        }
+                    },
+                    {
                         name: 'jonboy',
                         pattern: '/jonboy/',
                         redirect: function(obj) {

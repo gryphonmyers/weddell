@@ -16,7 +16,6 @@ class Router {
             this.addRoutes(opts.routes);
         }
     }
-    //TODO allow for absolute routes prefixed with /
 
     route(pathName) {
         var promise = Promise.resolve(null);
@@ -69,7 +68,7 @@ class Router {
 
         var matchedRoute = null;
 
-        routes.forEach(route => {
+        routes.every(route => {
             matchedRoute = route.name === name ? route : matchedRoute;
 
             if (!matchedRoute && route.children) {
@@ -93,7 +92,7 @@ class Router {
 
         var Router = this;
 
-        routes.forEach(function(currRoute) {
+        routes.every(function(currRoute) {
             var params = [];
             var newPath = routePath.concat({route: currRoute, params});
             var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : newPath.reduce((finalPattern, pathObj) => {

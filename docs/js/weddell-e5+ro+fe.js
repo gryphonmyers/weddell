@@ -3286,7 +3286,6 @@ var Router = function () {
             this.addRoutes(opts.routes);
         }
     }
-    //TODO allow for absolute routes prefixed with /
 
     _createClass(Router, [{
         key: 'route',
@@ -3440,10 +3439,9 @@ var Router = function () {
 
             var Router = this;
 
-            routes.forEach(function (currRoute) {
+            routes.every(function (currRoute) {
                 var params = [];
                 var newPath = routePath.concat({ route: currRoute, params: params });
-                if (currRoute.pattern.indexOf('dorfo') > -1) debugger;
                 var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : newPath.reduce(function (finalPattern, pathObj) {
                     return pathObj.route.pattern.charAt(0) === '/' ? pathObj.route.pattern : finalPattern + pathObj.route.pattern;
                 }, '');
