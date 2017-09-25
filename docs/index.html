@@ -12,9 +12,9 @@
                 routes: [
                     {
                         name: 'jonboy',
-                        pattern: 'jonboy',
+                        pattern: '/jonboy/',
                         redirect: function(obj) {
-                            return obj.fullPath + 'wrong/boy';
+                            return obj.fullPath + 'wrong/boy/';
                         },
                         handler: function(obj){
                             return 'MyBodyA'
@@ -22,9 +22,16 @@
                         children: [
                             {
                                 name: 'jonboy2',
-                                pattern: 'wrong/:bomba',
+                                pattern: 'wrong/:bomba/',
                                 handler: function(args){
                                     return 'MyBodyB'
+                                }
+                            },
+                            {
+                                name: 'windham',
+                                pattern: '/dorfo/dongu/:bing',
+                                handler: function(args) {
+                                    return 'MyBodyC'
                                 }
                             }
                         ]
@@ -74,7 +81,13 @@
                                                     href: locals.$routerLink({name: 'jonboy', params: {bomba: 'dumba'} })
                                                 }
                                             },
-                                            "This is the previous link")
+                                            "This is the previous link"),
+                                            h('a', {
+                                                attributes: {
+                                                    href: locals.$routerLink({name: 'windham', params: {bing: 'woosh'} })
+                                                }
+                                            },
+                                            "This is a weird link")
                                         ]),
                                         h("AccordionRow", {
                                             "attributes": {
@@ -293,7 +306,7 @@
                                     }
                                     onInit() {
                                         this.on('renderdommarkup', function(){
-                                            debugger;
+                                            console.log('rendered dom');
                                         })
                                     }
                                 },
@@ -315,6 +328,14 @@
                                                         super(Object.assign({
                                                             markupTemplate: (local, h) =>
                                                                 h('div.shhsh', "Gosh you're such a millennium.")
+                                                        }, opts))
+                                                    }
+                                                },
+                                                MyBodyC: Component => class Body extends Component {
+                                                    constructor(opts) {
+                                                        super(Object.assign({
+                                                            markupTemplate: (local, h) =>
+                                                                h('div.whut', "Ho there partner.")
                                                         }, opts))
                                                     }
                                                 }
@@ -345,7 +366,7 @@
                                             this.state.disabled = true;
                                         });
                                         setTimeout(() => {
-                                            this.route('jonboy/wrong');//{ name: 'jonboy', params: {bogus: 'prime', dingus:'chonus'} });
+                                            this.route('/jonboy/wrong/');//{ name: 'jonboy', params: {bogus: 'prime', dingus:'chonus'} });
                                             this.state.footerText = 'Just kidding, copyright 2017, some other guy';
                                         }, 3000);
                                     }

@@ -87,26 +87,31 @@ class Router {
         return matchedRoute || null;
     }
 
-    static matchRoute(pathName, routes) {
+    static matchRoute(pathName, routes, routePath) {
+        if (!routePath) routePath = [];
         var result = null;
-        var fullPath = '';
-        routes.forEach(function(currRoute){
+
+        var Router = this;
+
+        routes.forEach(function(currRoute) {
             var params = [];
-            var match = pathToRegexp(currRoute.pattern, params, {end:false}).exec(pathName);
+            var newPath = routePath.concat({route: currRoute, params});
+            var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : newPath.reduce((finalPattern, pathObj) => {
+                return pathObj.route.pattern.charAt(0) === '/' ? pathObj.route.pattern : finalPattern + pathObj.route.pattern;
+            }, '');
+
+            var match = pathToRegexp(currPattern, params, {}).exec(pathName);
+
             if (match) {
-                result = [];
-                result.push({route: currRoute, match, params});
-                fullPath += match[0].charAt(match[0].length - 1) == '/' ? match[0] : match[0] + '/';
-                if (currRoute.children) {
-                    var childMatches = Router.matchRoute(match.input.replace(fullPath, ''), currRoute.children);
-                    result = childMatches ? result.concat(childMatches) : result;
-                    fullPath = childMatches ? fullPath + childMatches.fullPath : fullPath;
-                }
+                result = newPath;
                 result.route = result[result.length - 1].route;
-                result.fullPath = fullPath;
-                return false;
+                result.fullPath = match[0];
+            } else if (currRoute.children) {
+                result = Router.matchRoute(pathName, currRoute.children, newPath);
             }
+            return !result;
         });
+
         return result;
     }
 
@@ -124,7 +129,10 @@ class Router {
 
         if (route) {
             try {
-                var fullPath = route.map(route => pathToRegexp.compile(route.pattern)(obj.params)).join('/');
+                var fullPath = route.reduce((finalPath, pathRoute) => {
+                    var segment = pathToRegexp.compile(pathRoute.pattern)(obj.params);
+                    return pathRoute.pattern.charAt(0) === '/' ? segment : finalPath + segment;
+                }, '');
             } catch (err) {
                 throw "Encountered error trying to build router link: " + err.toString();
             }
