@@ -4307,11 +4307,12 @@ var Router = function () {
                 promise = Promise.all(matches.map(function (currMatch, key) {
                     if (key === matches.length - 1 && currMatch.route.redirect) {
                         if (typeof currMatch.route.redirect === 'function') {
-                            _this.route(currMatch.route.redirect.call(_this, matches));
+                            var redirectPath = currMatch.route.redirect.call(_this, matches);
                         } else {
                             //assuming string - path
-                            _this.route(currMatch.route.redirect);
+                            redirectPath = currMatch.route.redirect;
                         }
+                        if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
                         return Promise.reject();
                     }
 
@@ -4414,7 +4415,7 @@ var Router = function () {
 
             var matchedRoute = null;
 
-            routes.forEach(function (route) {
+            routes.every(function (route) {
                 matchedRoute = route.name === name ? route : matchedRoute;
 
                 if (!matchedRoute && route.children) {
@@ -4441,19 +4442,26 @@ var Router = function () {
 
             routes.every(function (currRoute) {
                 var params = [];
-                var newPath = routePath.concat({ route: currRoute, params: params });
-                var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : newPath.reduce(function (finalPattern, pathObj) {
-                    return pathObj.route.pattern.charAt(0) === '/' ? pathObj.route.pattern : finalPattern + pathObj.route.pattern;
+
+                var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(function (pathObj) {
+                    return pathObj.route;
+                }).concat(currRoute).reduce(function (finalPattern, pathObj) {
+                    return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
                 }, '');
 
                 var match = pathToRegexp(currPattern, params, {}).exec(pathName);
+                var newPath = routePath.concat({ route: currRoute, match: match, params: params });
 
                 if (match) {
                     result = newPath;
+                }
+                if (currRoute.children) {
+                    var childResult = Router.matchRoute(pathName, currRoute.children, newPath);
+                    result = childResult || result;
+                }
+                if (result) {
                     result.route = result[result.length - 1].route;
-                    result.fullPath = match[0];
-                } else if (currRoute.children) {
-                    result = Router.matchRoute(pathName, currRoute.children, newPath);
+                    result.fullPath = result[result.length - 1].match[0];
                 }
                 return !result;
             });

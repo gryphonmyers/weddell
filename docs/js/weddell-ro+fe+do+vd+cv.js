@@ -5790,11 +5790,12 @@ class Router {
             promise = Promise.all(matches.map((currMatch, key) => {
                 if (key === matches.length - 1 && currMatch.route.redirect) {
                     if (typeof currMatch.route.redirect === 'function') {
-                        this.route(currMatch.route.redirect.call(this, matches));
+                        var redirectPath = currMatch.route.redirect.call(this, matches);
                     } else {
                         //assuming string - path
-                        this.route(currMatch.route.redirect);
+                        redirectPath = currMatch.route.redirect;
                     }
+                    if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
                     return Promise.reject();
                 }
 
@@ -5825,7 +5826,7 @@ class Router {
 
         var matchedRoute = null;
 
-        routes.forEach(route => {
+        routes.every(route => {
             matchedRoute = route.name === name ? route : matchedRoute;
 
             if (!matchedRoute && route.children) {
@@ -5851,19 +5852,24 @@ class Router {
 
         routes.every(function(currRoute) {
             var params = [];
-            var newPath = routePath.concat({route: currRoute, params});
-            var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : newPath.reduce((finalPattern, pathObj) => {
-                return pathObj.route.pattern.charAt(0) === '/' ? pathObj.route.pattern : finalPattern + pathObj.route.pattern;
+
+            var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(pathObj => pathObj.route).concat(currRoute).reduce((finalPattern, pathObj) => {
+                return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
             }, '');
 
             var match = pathToRegexp(currPattern, params, {}).exec(pathName);
+            var newPath = routePath.concat({route: currRoute, match, params})
 
             if (match) {
                 result = newPath;
+            }
+            if (currRoute.children) {
+                var childResult = Router.matchRoute(pathName, currRoute.children, newPath);
+                result = childResult || result;
+            }
+            if (result) {
                 result.route = result[result.length - 1].route;
-                result.fullPath = match[0];
-            } else if (currRoute.children) {
-                result = Router.matchRoute(pathName, currRoute.children, newPath);
+                result.fullPath = result[result.length - 1].match[0];
             }
             return !result;
         });
