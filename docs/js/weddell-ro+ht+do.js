@@ -3545,7 +3545,7 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName, matches)));
+                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches})));
                                     }, console.warn);
 
                             }.bind(this)
@@ -3582,14 +3582,7 @@ module.exports = function(_Weddell){
                             Object.entries(this.components)
                                 .forEach(entry => {
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
-                                        finalObj[methods[0]] = (evt) => {
-                                            return this.getComponentInstance(entry[0]).then(componentInstance => {
-                                                return Promise.all([
-                                                    this.constructor[methods[0]] ? this.constructor[methods[0]].call(this.constructor, Object.assign({component: componentInstance}, evt)) : null,
-                                                    componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({component: componentInstance}, evt)) : null
-                                                ])
-                                            })
-                                        };
+                                        finalObj[methods[0]] = evt => this.getComponentInstance(entry[0]).then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
                                         return finalObj;
                                     }, {
                                         Component: entry[1],
@@ -3903,8 +3896,9 @@ var StateMachine = Mixin(function(superClass) {
 
         changeState(state, evt) {
             state = this.getState(state);
-            
+
             var promise = Promise.resolve();
+            
             if (state && this.currentState === state) {
                 promise = Promise.resolve(this.currentState.updateState(Object.assign({updatedState: this.currentState}, evt)))
                     .then(() => {
@@ -3918,16 +3912,16 @@ var StateMachine = Mixin(function(superClass) {
                             this.trigger('exitstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
                             this.previousState = this.currentState;
                             this.currentState = null;
-                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
+                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)) : null;
                         });
                 }
                 if (state) {
                     promise = promise
-                        .then(() => state.enterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
+                        .then(() => state.enterState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)))
                         .then(() => {
                             this.currentState = state;
-                            this.trigger('enterstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
-                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
+                            this.trigger('enterstate', Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt));
+                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt)) : null;
                         });
                 }
             }

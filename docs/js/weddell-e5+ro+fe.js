@@ -3102,7 +3102,7 @@ module.exports = function (_Weddell) {
                                         componentName: null
                                     });
                                     return Promise.all(jobs.map(function (obj) {
-                                        return obj.currentComponent.changeState(obj.componentName, matches);
+                                        return obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, { matches: matches });
                                     }));
                                 }, console.warn);
                             }.bind(_this)
@@ -3152,7 +3152,7 @@ module.exports = function (_Weddell) {
                                 var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce(function (finalObj, methods) {
                                     finalObj[methods[0]] = function (evt) {
                                         return _this3.getComponentInstance(entry[0]).then(function (componentInstance) {
-                                            return Promise.all([_this3.constructor[methods[0]] ? _this3.constructor[methods[0]].call(_this3.constructor, Object.assign({ component: componentInstance }, evt)) : null, componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({ component: componentInstance }, evt)) : null]);
+                                            return Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null);
                                         });
                                     };
                                     return finalObj;
@@ -3548,6 +3548,7 @@ var StateMachine = Mixin(function (superClass) {
                 state = this.getState(state);
 
                 var promise = Promise.resolve();
+
                 if (state && this.currentState === state) {
                     promise = Promise.resolve(this.currentState.updateState(Object.assign({ updatedState: this.currentState }, evt))).then(function () {
                         _this2.trigger('updatestate', Object.assign({ updatedState: _this2.currentState }, evt));
@@ -3559,16 +3560,16 @@ var StateMachine = Mixin(function (superClass) {
                             _this2.trigger('exitstate', Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt));
                             _this2.previousState = _this2.currentState;
                             _this2.currentState = null;
-                            return _this2.onExitState ? _this2.onExitState(Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt)) : null;
+                            return _this2.onExitState ? _this2.onExitState(Object.assign({ exitedState: _this2.previousState, enteredState: state }, evt)) : null;
                         });
                     }
                     if (state) {
                         promise = promise.then(function () {
-                            return state.enterState(Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt));
+                            return state.enterState(Object.assign({ exitedState: _this2.previousState, enteredState: state }, evt));
                         }).then(function () {
                             _this2.currentState = state;
-                            _this2.trigger('enterstate', Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt));
-                            return _this2.onEnterState ? _this2.onEnterState(Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt)) : null;
+                            _this2.trigger('enterstate', Object.assign({ exitedState: _this2.previousState, enteredState: _this2.currentState }, evt));
+                            return _this2.onEnterState ? _this2.onEnterState(Object.assign({ exitedState: _this2.previousState, enteredState: _this2.currentState }, evt)) : null;
                         });
                     }
                 }

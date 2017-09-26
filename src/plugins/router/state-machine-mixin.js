@@ -45,8 +45,9 @@ var StateMachine = Mixin(function(superClass) {
 
         changeState(state, evt) {
             state = this.getState(state);
-            
+
             var promise = Promise.resolve();
+            
             if (state && this.currentState === state) {
                 promise = Promise.resolve(this.currentState.updateState(Object.assign({updatedState: this.currentState}, evt)))
                     .then(() => {
@@ -60,16 +61,16 @@ var StateMachine = Mixin(function(superClass) {
                             this.trigger('exitstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
                             this.previousState = this.currentState;
                             this.currentState = null;
-                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
+                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)) : null;
                         });
                 }
                 if (state) {
                     promise = promise
-                        .then(() => state.enterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
+                        .then(() => state.enterState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)))
                         .then(() => {
                             this.currentState = state;
-                            this.trigger('enterstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
-                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
+                            this.trigger('enterstate', Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt));
+                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt)) : null;
                         });
                 }
             }
