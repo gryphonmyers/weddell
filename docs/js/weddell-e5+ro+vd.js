@@ -4277,8 +4277,8 @@ var Store = function (_mix$with) {
                             if (!deepEqual(newValue, oldValue)) {
                                 this.trigger('change', { changedKey: key, newValue: newValue, oldValue: oldValue });
                                 if (key in this._dependentKeys) {
-                                    this._dependentKeys[entry[0]].forEach(function (dependentKey) {
-                                        _this2.trigger('change', { changedKey: dependentKey, changedDependencyKey: entry[0], newDependencyValue: newValue, oldDependencyValue: oldValue });
+                                    this._dependentKeys[key].forEach(function (dependentKey) {
+                                        _this2.trigger('change', { changedKey: dependentKey, changedDependencyKey: key, newDependencyValue: newValue, oldDependencyValue: oldValue });
                                     });
                                 }
                             }
