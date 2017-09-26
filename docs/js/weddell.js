@@ -1521,8 +1521,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 var setter = function(newValue) {
                     if (this.shouldMonitorChanges) {
                         var oldValue = this._data[key];
-                        if (oldValue && typeof oldValue == "object") {
-                            var oldValue = assign({}, oldValue);
+                        if (oldValue && typeof oldValue === "object") {
+                            oldValue = Object.assign({}, oldValue);
                         }
                     }
                     this._data[key] = newValue;

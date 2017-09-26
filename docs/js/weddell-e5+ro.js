@@ -2622,8 +2622,8 @@ var Store = function (_mix$with) {
 
                         if (this.shouldMonitorChanges) {
                             var oldValue = this._data[key];
-                            if (oldValue && (typeof oldValue === 'undefined' ? 'undefined' : _typeof(oldValue)) == "object") {
-                                var oldValue = assign({}, oldValue);
+                            if (oldValue && (typeof oldValue === 'undefined' ? 'undefined' : _typeof(oldValue)) === "object") {
+                                oldValue = Object.assign({}, oldValue);
                             }
                         }
                         this._data[key] = newValue;
