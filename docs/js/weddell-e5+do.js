@@ -1550,6 +1550,7 @@ var Component = function (_mix$with) {
             if (!this._isInit) {
                 this._isInit = true;
                 return Promise.resolve(this.onInit(opts)).then(function () {
+                    _this3.trigger('init');
                     return _this3;
                 });
             }

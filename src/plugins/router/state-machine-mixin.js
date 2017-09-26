@@ -43,34 +43,33 @@ var StateMachine = Mixin(function(superClass) {
             }
         }
 
-        changeState(state) {
+        changeState(state, evt) {
             state = this.getState(state);
-
+            
             var promise = Promise.resolve();
             if (state && this.currentState === state) {
-                promise = Promise.resolve(this.currentState.updateState())
+                promise = Promise.resolve(this.currentState.updateState(Object.assign({updatedState: this.currentState}, evt)))
                     .then(() => {
-                        this.trigger('updatestate', {updatedState: this.currentState});
-                        return this.onUpdateState ? this.onUpdateState() : null;
+                        this.trigger('updatestate', Object.assign({updatedState: this.currentState}, evt));
+                        return this.onUpdateState ? this.onUpdateState(Object.assign({updatedState: this.currentState}, evt)) : null;
                     });
             } else {
                 if (this.currentState) {
-                    promise = Promise.resolve(this.currentState.exitState())
+                    promise = Promise.resolve(this.currentState.exitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
                         .then(() => {
-                            this.trigger('exitstate', {exitedState: this.currentState, enteredState: state});
+                            this.trigger('exitstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
                             this.previousState = this.currentState;
                             this.currentState = null;
-                            return this.onExitState ? this.onExitState() : null;
+                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
                         });
                 }
                 if (state) {
                     promise = promise
-                        .then(() => state.enterState())
+                        .then(() => state.enterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
                         .then(() => {
                             this.currentState = state;
-                            this.trigger('enterstate', {exitedState: this.currentState, enteredState: state});
-
-                            return this.onEnterState ? this.onEnterState() : null;
+                            this.trigger('enterstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
+                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
                         });
                 }
             }

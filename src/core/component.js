@@ -207,6 +207,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this._isInit = true;
             return Promise.resolve(this.onInit(opts))
                 .then(() => {
+                    this.trigger('init');
                     return this;
                 });
         }

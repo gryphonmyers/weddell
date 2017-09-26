@@ -12,22 +12,21 @@ var MachineState = Mixin(function(superClass) {
             this.onUpdateState = opts.onUpdateState;
         }
 
-        stateAction(methodName, eventName) {
-            return Promise.resolve(this[methodName] && this[methodName]())
-                .then(() => this.trigger(eventName));
+        stateAction(methodName, eventName, evt) {
+            return Promise.resolve(this[methodName] && this[methodName](Object.assign({}, evt)))
+                .then(() => this.trigger(eventName, Object.assign({}, evt)));
         }
 
-        exitState() {
-
-            return this.stateAction('onExitState', 'exit');
+        exitState(evt) {
+            return this.stateAction('onExitState', 'exit', evt);
         }
 
-        enterState() {
-            return this.stateAction('onEnterState', 'enter');
+        enterState(evt) {
+            return this.stateAction('onEnterState', 'enter', evt);
         }
 
-        updateState() {
-            return this.stateAction('onUpdateState', 'update');
+        updateState(evt) {
+            return this.stateAction('onUpdateState', 'update', evt);
         }
     }
 });

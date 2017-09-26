@@ -4533,6 +4533,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this._isInit = true;
             return Promise.resolve(this.onInit(opts))
                 .then(() => {
+                    this.trigger('init');
                     return this;
                 });
         }
@@ -5642,7 +5643,7 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
+                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName, matches)));
                                     }, console.warn);
 
                             }.bind(this)
@@ -5675,17 +5676,29 @@ module.exports = function(_Weddell){
                         this.store.assign(routerLocals);
                         this._locals.assign(routerLocals);
 
-                        Object.entries(this.components)
-                            .forEach(entry => {
-                                var routerState = new RouterState({
-                                    Component: entry[1],
-                                    componentName: entry[0]
+                        this.on('init', () => {
+                            Object.entries(this.components)
+                                .forEach(entry => {
+                                    var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
+                                        finalObj[methods[0]] = (evt) => {
+                                            return this.getComponentInstance(entry[0]).then(componentInstance => {
+                                                return Promise.all([
+                                                    this.constructor[methods[0]] ? this.constructor[methods[0]].call(this.constructor, Object.assign({component: componentInstance}, evt)) : null,
+                                                    componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({component: componentInstance}, evt)) : null
+                                                ])
+                                            })
+                                        };
+                                        return finalObj;
+                                    }, {
+                                        Component: entry[1],
+                                        componentName: entry[0]
+                                    }));
+                                    this.addState(entry[0], routerState);
+                                    routerState.on(['exit', 'enter'], evt => {
+                                        this.markDirty();
+                                    });
                                 });
-                                this.addState(entry[0], routerState);
-                                routerState.on(['exit', 'enter'], evt => {
-                                    this.markDirty();
-                                });
-                            });
+                        })
                     }
 
                     compileRouterView(content, props) {
@@ -5733,22 +5746,21 @@ var MachineState = Mixin(function(superClass) {
             this.onUpdateState = opts.onUpdateState;
         }
 
-        stateAction(methodName, eventName) {
-            return Promise.resolve(this[methodName] && this[methodName]())
-                .then(() => this.trigger(eventName));
+        stateAction(methodName, eventName, evt) {
+            return Promise.resolve(this[methodName] && this[methodName](Object.assign({}, evt)))
+                .then(() => this.trigger(eventName, Object.assign({}, evt)));
         }
 
-        exitState() {
-
-            return this.stateAction('onExitState', 'exit');
+        exitState(evt) {
+            return this.stateAction('onExitState', 'exit', evt);
         }
 
-        enterState() {
-            return this.stateAction('onEnterState', 'enter');
+        enterState(evt) {
+            return this.stateAction('onEnterState', 'enter', evt);
         }
 
-        updateState() {
-            return this.stateAction('onUpdateState', 'update');
+        updateState(evt) {
+            return this.stateAction('onUpdateState', 'update', evt);
         }
     }
 });
@@ -5987,34 +5999,33 @@ var StateMachine = Mixin(function(superClass) {
             }
         }
 
-        changeState(state) {
+        changeState(state, evt) {
             state = this.getState(state);
-
+            
             var promise = Promise.resolve();
             if (state && this.currentState === state) {
-                promise = Promise.resolve(this.currentState.updateState())
+                promise = Promise.resolve(this.currentState.updateState(Object.assign({updatedState: this.currentState}, evt)))
                     .then(() => {
-                        this.trigger('updatestate', {updatedState: this.currentState});
-                        return this.onUpdateState ? this.onUpdateState() : null;
+                        this.trigger('updatestate', Object.assign({updatedState: this.currentState}, evt));
+                        return this.onUpdateState ? this.onUpdateState(Object.assign({updatedState: this.currentState}, evt)) : null;
                     });
             } else {
                 if (this.currentState) {
-                    promise = Promise.resolve(this.currentState.exitState())
+                    promise = Promise.resolve(this.currentState.exitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
                         .then(() => {
-                            this.trigger('exitstate', {exitedState: this.currentState, enteredState: state});
+                            this.trigger('exitstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
                             this.previousState = this.currentState;
                             this.currentState = null;
-                            return this.onExitState ? this.onExitState() : null;
+                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
                         });
                 }
                 if (state) {
                     promise = promise
-                        .then(() => state.enterState())
+                        .then(() => state.enterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
                         .then(() => {
                             this.currentState = state;
-                            this.trigger('enterstate', {exitedState: this.currentState, enteredState: state});
-
-                            return this.onEnterState ? this.onEnterState() : null;
+                            this.trigger('enterstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
+                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)) : null;
                         });
                 }
             }

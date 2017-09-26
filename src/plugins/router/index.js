@@ -46,7 +46,7 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName)));
+                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState(obj.componentName, matches)));
                                     }, console.warn);
 
                             }.bind(this)
@@ -79,17 +79,29 @@ module.exports = function(_Weddell){
                         this.store.assign(routerLocals);
                         this._locals.assign(routerLocals);
 
-                        Object.entries(this.components)
-                            .forEach(entry => {
-                                var routerState = new RouterState({
-                                    Component: entry[1],
-                                    componentName: entry[0]
+                        this.on('init', () => {
+                            Object.entries(this.components)
+                                .forEach(entry => {
+                                    var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
+                                        finalObj[methods[0]] = (evt) => {
+                                            return this.getComponentInstance(entry[0]).then(componentInstance => {
+                                                return Promise.all([
+                                                    this.constructor[methods[0]] ? this.constructor[methods[0]].call(this.constructor, Object.assign({component: componentInstance}, evt)) : null,
+                                                    componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({component: componentInstance}, evt)) : null
+                                                ])
+                                            })
+                                        };
+                                        return finalObj;
+                                    }, {
+                                        Component: entry[1],
+                                        componentName: entry[0]
+                                    }));
+                                    this.addState(entry[0], routerState);
+                                    routerState.on(['exit', 'enter'], evt => {
+                                        this.markDirty();
+                                    });
                                 });
-                                this.addState(entry[0], routerState);
-                                routerState.on(['exit', 'enter'], evt => {
-                                    this.markDirty();
-                                });
-                            });
+                        })
                     }
 
                     compileRouterView(content, props) {

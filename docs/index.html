@@ -40,6 +40,25 @@
                 el: '#app',
                 // markupRenderFormat: 'HTMLString',
                 Component: Component => class AppComponent extends Component {
+                    static onEnterState(evt) {
+                        console.log(evt);
+                    }
+                    static onExitState(evt) {
+                        console.log(evt);
+                    }
+                    static onUpdateState(evt) {
+                        console.log(evt);
+                    }
+                    onEnter(evt) {
+                        console.log(evt);
+                    }
+                    onExit(evt) {
+                        console.log(evt);
+                    }
+                    onUpdate(evt) {
+                        console.log(evt);
+                    }
+
                     constructor(opts) {
                         super(Object.assign({
                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',
@@ -330,6 +349,24 @@
                                                                 h('div.shhsh', "Gosh you're such a millennium.")
                                                         }, opts))
                                                     }
+                                                    static onEnterState(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    static onExitState(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    static onUpdateState(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    onEnter(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    onExit(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    onUpdate(evt) {
+                                                        console.log(evt);
+                                                    }
                                                 },
                                                 MyBodyC: Component => class Body extends Component {
                                                     constructor(opts) {
@@ -338,9 +375,47 @@
                                                                 h('div.whut', "Ho there partner.")
                                                         }, opts))
                                                     }
+
+                                                    static onEnterState(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    static onExitState(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    static onUpdateState(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    onEnter(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    onExit(evt) {
+                                                        console.log(evt);
+                                                    }
+                                                    onUpdate(evt) {
+                                                        console.log(evt);
+                                                    }
                                                 }
                                             }
                                         }, opts))
+                                    }
+
+                                    static onEnterState(evt) {
+                                        console.log(evt);
+                                    }
+                                    static onExitState(evt) {
+                                        console.log(evt);
+                                    }
+                                    static onUpdateState(evt) {
+                                        console.log(evt);
+                                    }
+                                    onEnter(evt) {
+                                        console.log(evt);
+                                    }
+                                    onExit(evt) {
+                                        console.log(evt);
+                                    }
+                                    onUpdate(evt) {
+                                        console.log(evt);
                                     }
                                 },
                                 MyFooter: Component => class Footer extends Component {

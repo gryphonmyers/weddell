@@ -2048,6 +2048,7 @@ var Component = function (_mix$with) {
             if (!this._isInit) {
                 this._isInit = true;
                 return Promise.resolve(this.onInit(opts)).then(function () {
+                    _this3.trigger('init');
                     return _this3;
                 });
             }
@@ -3296,7 +3297,7 @@ module.exports = function (_Weddell) {
                                         componentName: null
                                     });
                                     return Promise.all(jobs.map(function (obj) {
-                                        return obj.currentComponent.changeState(obj.componentName);
+                                        return obj.currentComponent.changeState(obj.componentName, matches);
                                     }));
                                 }, console.warn);
                             }.bind(_this)
@@ -3341,14 +3342,23 @@ module.exports = function (_Weddell) {
                         _this3.store.assign(routerLocals);
                         _this3._locals.assign(routerLocals);
 
-                        Object.entries(_this3.components).forEach(function (entry) {
-                            var routerState = new RouterState({
-                                Component: entry[1],
-                                componentName: entry[0]
-                            });
-                            _this3.addState(entry[0], routerState);
-                            routerState.on(['exit', 'enter'], function (evt) {
-                                _this3.markDirty();
+                        _this3.on('init', function () {
+                            Object.entries(_this3.components).forEach(function (entry) {
+                                var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce(function (finalObj, methods) {
+                                    finalObj[methods[0]] = function (evt) {
+                                        return _this3.getComponentInstance(entry[0]).then(function (componentInstance) {
+                                            return Promise.all([_this3.constructor[methods[0]] ? _this3.constructor[methods[0]].call(_this3.constructor, Object.assign({ component: componentInstance }, evt)) : null, componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({ component: componentInstance }, evt)) : null]);
+                                        });
+                                    };
+                                    return finalObj;
+                                }, {
+                                    Component: entry[1],
+                                    componentName: entry[0]
+                                }));
+                                _this3.addState(entry[0], routerState);
+                                routerState.on(['exit', 'enter'], function (evt) {
+                                    _this3.markDirty();
+                                });
                             });
                         });
                         return _this3;
@@ -3424,28 +3434,27 @@ var MachineState = Mixin(function (superClass) {
 
         _createClass(_class, [{
             key: 'stateAction',
-            value: function stateAction(methodName, eventName) {
+            value: function stateAction(methodName, eventName, evt) {
                 var _this2 = this;
 
-                return Promise.resolve(this[methodName] && this[methodName]()).then(function () {
-                    return _this2.trigger(eventName);
+                return Promise.resolve(this[methodName] && this[methodName](Object.assign({}, evt))).then(function () {
+                    return _this2.trigger(eventName, Object.assign({}, evt));
                 });
             }
         }, {
             key: 'exitState',
-            value: function exitState() {
-
-                return this.stateAction('onExitState', 'exit');
+            value: function exitState(evt) {
+                return this.stateAction('onExitState', 'exit', evt);
             }
         }, {
             key: 'enterState',
-            value: function enterState() {
-                return this.stateAction('onEnterState', 'enter');
+            value: function enterState(evt) {
+                return this.stateAction('onEnterState', 'enter', evt);
             }
         }, {
             key: 'updateState',
-            value: function updateState() {
-                return this.stateAction('onUpdateState', 'update');
+            value: function updateState(evt) {
+                return this.stateAction('onUpdateState', 'update', evt);
             }
         }]);
 
@@ -3728,34 +3737,33 @@ var StateMachine = Mixin(function (superClass) {
             }
         }, {
             key: 'changeState',
-            value: function changeState(state) {
+            value: function changeState(state, evt) {
                 var _this2 = this;
 
                 state = this.getState(state);
 
                 var promise = Promise.resolve();
                 if (state && this.currentState === state) {
-                    promise = Promise.resolve(this.currentState.updateState()).then(function () {
-                        _this2.trigger('updatestate', { updatedState: _this2.currentState });
-                        return _this2.onUpdateState ? _this2.onUpdateState() : null;
+                    promise = Promise.resolve(this.currentState.updateState(Object.assign({ updatedState: this.currentState }, evt))).then(function () {
+                        _this2.trigger('updatestate', Object.assign({ updatedState: _this2.currentState }, evt));
+                        return _this2.onUpdateState ? _this2.onUpdateState(Object.assign({ updatedState: _this2.currentState }, evt)) : null;
                     });
                 } else {
                     if (this.currentState) {
-                        promise = Promise.resolve(this.currentState.exitState()).then(function () {
-                            _this2.trigger('exitstate', { exitedState: _this2.currentState, enteredState: state });
+                        promise = Promise.resolve(this.currentState.exitState(Object.assign({ exitedState: this.currentState, enteredState: state }, evt))).then(function () {
+                            _this2.trigger('exitstate', Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt));
                             _this2.previousState = _this2.currentState;
                             _this2.currentState = null;
-                            return _this2.onExitState ? _this2.onExitState() : null;
+                            return _this2.onExitState ? _this2.onExitState(Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt)) : null;
                         });
                     }
                     if (state) {
                         promise = promise.then(function () {
-                            return state.enterState();
+                            return state.enterState(Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt));
                         }).then(function () {
                             _this2.currentState = state;
-                            _this2.trigger('enterstate', { exitedState: _this2.currentState, enteredState: state });
-
-                            return _this2.onEnterState ? _this2.onEnterState() : null;
+                            _this2.trigger('enterstate', Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt));
+                            return _this2.onEnterState ? _this2.onEnterState(Object.assign({ exitedState: _this2.currentState, enteredState: state }, evt)) : null;
                         });
                     }
                 }
