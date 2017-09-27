@@ -55,13 +55,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
-            },
-            state: {
-                value: new Store(defaults({
-                    $id: () => this._id
-                }, opts.state))
             }
         });
+
+        Object.defineProperty(this, 'state', {
+            value: new Store(defaults({
+                $id: () => this._id
+            }, opts.state), {
+                overrides: [this.props]
+            })
+        })
 
         Object.defineProperties(this, {
             _componentInstances: { value:
@@ -70,7 +73,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     return final;
                 }, {})
             },
-            _locals: {value: new Store({}, { proxies: [this.props, this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
+            _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
         });
 
         Object.defineProperty(this, '_pipelines', {

@@ -25,6 +25,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _dependentKeys: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
             _proxyProps: {configurable: false,value: {}},
+            overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
             inputMappings: { value: opts.inputMappings }
@@ -60,17 +61,17 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             this.set(key, null, true);
         });
 
-        this.proxies.forEach(proxy => {
-            Object.keys(proxy).forEach(key => {
+        this.proxies.concat(this.overrides).forEach(obj => {
+            Object.keys(obj).forEach(key => {
                 this.set(key, null, true);
             });
 
-            proxy.on('change', evt => {
+            obj.on('change', evt => {
                 if (!(evt.changedKey in this._data) && !(evt.changedKey in this.inputMappings)) {
                     this.trigger('change', Object.assign({}, evt));
                 }
             });
-            proxy.on('get', evt => {
+            obj.on('get', evt => {
                 if (!(evt.key in this._data) && !(evt.key in this.inputMappings)) {
                     this.trigger('get', Object.assign({}, evt));
                 }
@@ -125,8 +126,19 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     getValue(key) {
-        var val = this._data[key];
         var i = 0;
+        var val;
+
+        while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
+            val = this.overrides[i][key];
+            i++;
+        }
+
+        i = 0;
+        if (!val) {
+            val = this._data[key];
+        }
+
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
         while(mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {

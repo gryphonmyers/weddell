@@ -789,13 +789,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
-            },
-            state: {
-                value: new Store(defaults({
-                    $id: () => this._id
-                }, opts.state))
             }
         });
+
+        Object.defineProperty(this, 'state', {
+            value: new Store(defaults({
+                $id: () => this._id
+            }, opts.state), {
+                overrides: [this.props]
+            })
+        })
 
         Object.defineProperties(this, {
             _componentInstances: { value:
@@ -804,7 +807,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     return final;
                 }, {})
             },
-            _locals: {value: new Store({}, { proxies: [this.props, this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
+            _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
         });
 
         Object.defineProperty(this, '_pipelines', {
@@ -1462,6 +1465,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _dependentKeys: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
             _proxyProps: {configurable: false,value: {}},
+            overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
             inputMappings: { value: opts.inputMappings }
@@ -1497,17 +1501,17 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             this.set(key, null, true);
         });
 
-        this.proxies.forEach(proxy => {
-            Object.keys(proxy).forEach(key => {
+        this.proxies.concat(this.overrides).forEach(obj => {
+            Object.keys(obj).forEach(key => {
                 this.set(key, null, true);
             });
 
-            proxy.on('change', evt => {
+            obj.on('change', evt => {
                 if (!(evt.changedKey in this._data) && !(evt.changedKey in this.inputMappings)) {
                     this.trigger('change', Object.assign({}, evt));
                 }
             });
-            proxy.on('get', evt => {
+            obj.on('get', evt => {
                 if (!(evt.key in this._data) && !(evt.key in this.inputMappings)) {
                     this.trigger('get', Object.assign({}, evt));
                 }
@@ -1562,8 +1566,20 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     getValue(key) {
-        var val = this._data[key];
+        // if (key === 'myAppTitle') debugger;
         var i = 0;
+        var val;
+
+        while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
+            val = this.overrides[i][key];
+            i++;
+        }
+
+        i = 0;
+        if (!val) {
+            val = this._data[key];
+        }
+
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
         while(mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {

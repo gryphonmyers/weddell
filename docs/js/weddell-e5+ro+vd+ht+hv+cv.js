@@ -4303,14 +4303,17 @@ var Component = function (_mix$with) {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
-            },
-            state: {
-                value: new Store(defaults({
-                    $id: function $id() {
-                        return _this._id;
-                    }
-                }, opts.state))
             }
+        });
+
+        Object.defineProperty(_this, 'state', {
+            value: new Store(defaults({
+                $id: function $id() {
+                    return _this._id;
+                }
+            }, opts.state), {
+                overrides: [_this.props]
+            })
         });
 
         Object.defineProperties(_this, {
@@ -4319,7 +4322,7 @@ var Component = function (_mix$with) {
                     return final;
                 }, {})
             },
-            _locals: { value: new Store({}, { proxies: [_this.props, _this.state, _this.store], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
+            _locals: { value: new Store({}, { proxies: [_this.state, _this.store], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
         });
 
         Object.defineProperty(_this, '_pipelines', {
@@ -5129,6 +5132,7 @@ var Store = function (_mix$with) {
             _dependentKeys: { configurable: false, value: {} },
             _proxyObjs: { configurable: false, value: {} },
             _proxyProps: { configurable: false, value: {} },
+            overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
             inputMappings: { value: opts.inputMappings }
@@ -5164,17 +5168,17 @@ var Store = function (_mix$with) {
             _this.set(key, null, true);
         });
 
-        _this.proxies.forEach(function (proxy) {
-            Object.keys(proxy).forEach(function (key) {
+        _this.proxies.concat(_this.overrides).forEach(function (obj) {
+            Object.keys(obj).forEach(function (key) {
                 _this.set(key, null, true);
             });
 
-            proxy.on('change', function (evt) {
+            obj.on('change', function (evt) {
                 if (!(evt.changedKey in _this._data) && !(evt.changedKey in _this.inputMappings)) {
                     _this.trigger('change', Object.assign({}, evt));
                 }
             });
-            proxy.on('get', function (evt) {
+            obj.on('get', function (evt) {
                 if (!(evt.key in _this._data) && !(evt.key in _this.inputMappings)) {
                     _this.trigger('get', Object.assign({}, evt));
                 }
@@ -5235,8 +5239,20 @@ var Store = function (_mix$with) {
     }, {
         key: 'getValue',
         value: function getValue(key) {
-            var val = this._data[key];
+            // if (key === 'myAppTitle') debugger;
             var i = 0;
+            var val;
+
+            while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
+                val = this.overrides[i][key];
+                i++;
+            }
+
+            i = 0;
+            if (!val) {
+                val = this._data[key];
+            }
+
             var mappingEntry = Object.entries(this.inputMappings).find(function (entry) {
                 return key === entry[1];
             });

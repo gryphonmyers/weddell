@@ -305,7 +305,7 @@
                                         }, opts));
                                     }
                                 },
-                                MyHeader: Component => class Header extends Component {
+                                MyHeader: [Component => class Header extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
                                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',
@@ -315,9 +315,10 @@
                                                         "data-bobby": locals.bobby,
                                                         "onclick": locals.$bind("this.state.numba++")
                                                     }
-                                                }, `${locals.headerText + locals.numba}`),
-                                            inputs: ['bobby'],
+                                                }, `${locals.headerText + locals.numba} ${locals.myAppTitle}`),
+                                            inputs: ['myAppTitle','bobby'],
                                             state: {
+                                                myAppTitle: 'ningus',
                                                 numba: 1,
                                                 headerText: 'Who doesn\'t love frogs?'
                                             }
@@ -327,8 +328,11 @@
                                         this.on('renderdommarkup', function(){
                                             console.log('rendered dom');
                                         })
+                                        console.log(this.state, this.props);
                                     }
-                                },
+                                }, {
+                                    myAppTitle: 'myAppTitle'
+                                }],
                                 MyBodyA: Component => class Body extends Component {
                                     constructor(opts) {
                                         super(Object.assign({
