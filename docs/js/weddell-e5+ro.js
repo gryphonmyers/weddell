@@ -2668,7 +2668,6 @@ var Store = function (_mix$with) {
     }, {
         key: 'getValue',
         value: function getValue(key) {
-            // if (key === 'myAppTitle') debugger;
             var i = 0;
             var val;
 

@@ -3710,7 +3710,6 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     getValue(key) {
-        // if (key === 'myAppTitle') debugger;
         var i = 0;
         var val;
 
@@ -4400,6 +4399,7 @@ module.exports = function(Weddell, pluginOpts) {
                         opts = defaults(opts, defaultAppOpts);
                         super(opts);
                         this.vTree = new VNode('div');
+                        this.rootNode = document.createElement('div');
                         var Transform = this.constructor.Weddell.classes.Transform;
 
                         this.markupTransforms.push(new Transform({
@@ -4414,13 +4414,16 @@ module.exports = function(Weddell, pluginOpts) {
                     }
 
                     renderVNode(newTree) {
+                        if (!this.rootNode.parentNode) {
+                            this.el.appendChild(this.rootNode);
+                        }
                         if (Array.isArray(newTree)) {
                             console.warn('Your markup must have one root node. Only using the first one for now.');
                             newTree = newTree[0];
                         }
                         var patches = VDOMDiff(this.vTree, newTree);
-                        var rootNode = VDOMPatch(this.el, patches);
-                        this.el = rootNode;
+                        var rootNode = VDOMPatch(this.rootNode, patches);
+                        this.rootNode = rootNode;
                         this.vTree = newTree;
                     }
                 }

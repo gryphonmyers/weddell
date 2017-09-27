@@ -2064,7 +2064,6 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     getValue(key) {
-        // if (key === 'myAppTitle') debugger;
         var i = 0;
         var val;
 
