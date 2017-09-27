@@ -2705,21 +2705,26 @@ return /******/ (function(modules) { // webpackBootstrap
 });
 ;
 },{}],28:[function(require,module,exports){
+var createElement = require("./vdom/create-element.js")
+
+module.exports = createElement
+
+},{"./vdom/create-element.js":33}],29:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":52}],29:[function(require,module,exports){
+},{"./vtree/diff.js":53}],30:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":39}],30:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":40}],31:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":35}],31:[function(require,module,exports){
+},{"./vdom/patch.js":36}],32:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -2818,7 +2823,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":43,"is-object":19}],32:[function(require,module,exports){
+},{"../vnode/is-vhook.js":44,"is-object":19}],33:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -2866,7 +2871,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":41,"../vnode/is-vnode.js":44,"../vnode/is-vtext.js":45,"../vnode/is-widget.js":46,"./apply-properties":31,"global/document":16}],33:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":42,"../vnode/is-vnode.js":45,"../vnode/is-vtext.js":46,"../vnode/is-widget.js":47,"./apply-properties":32,"global/document":16}],34:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -2953,7 +2958,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -3106,7 +3111,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":46,"../vnode/vpatch.js":49,"./apply-properties":31,"./update-widget":36}],35:[function(require,module,exports){
+},{"../vnode/is-widget.js":47,"../vnode/vpatch.js":50,"./apply-properties":32,"./update-widget":37}],36:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3188,7 +3193,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":32,"./dom-index":33,"./patch-op":34,"global/document":16,"x-is-array":53}],36:[function(require,module,exports){
+},{"./create-element":33,"./dom-index":34,"./patch-op":35,"global/document":16,"x-is-array":54}],37:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3205,7 +3210,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":46}],37:[function(require,module,exports){
+},{"../vnode/is-widget.js":47}],38:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -3234,7 +3239,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":12}],38:[function(require,module,exports){
+},{"ev-store":12}],39:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -3253,7 +3258,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -3392,7 +3397,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":42,"../vnode/is-vhook":43,"../vnode/is-vnode":44,"../vnode/is-vtext":45,"../vnode/is-widget":46,"../vnode/vnode.js":48,"../vnode/vtext.js":50,"./hooks/ev-hook.js":37,"./hooks/soft-set-hook.js":38,"./parse-tag.js":40,"x-is-array":53}],40:[function(require,module,exports){
+},{"../vnode/is-thunk":43,"../vnode/is-vhook":44,"../vnode/is-vnode":45,"../vnode/is-vtext":46,"../vnode/is-widget":47,"../vnode/vnode.js":49,"../vnode/vtext.js":51,"./hooks/ev-hook.js":38,"./hooks/soft-set-hook.js":39,"./parse-tag.js":41,"x-is-array":54}],41:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -3448,7 +3453,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":5}],41:[function(require,module,exports){
+},{"browser-split":5}],42:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -3490,14 +3495,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":42,"./is-vnode":44,"./is-vtext":45,"./is-widget":46}],42:[function(require,module,exports){
+},{"./is-thunk":43,"./is-vnode":45,"./is-vtext":46,"./is-widget":47}],43:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -3506,7 +3511,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -3515,7 +3520,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":47}],45:[function(require,module,exports){
+},{"./version":48}],46:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -3524,17 +3529,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":47}],46:[function(require,module,exports){
+},{"./version":48}],47:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = "2"
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -3608,7 +3613,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":42,"./is-vhook":43,"./is-vnode":44,"./is-widget":46,"./version":47}],49:[function(require,module,exports){
+},{"./is-thunk":43,"./is-vhook":44,"./is-vnode":45,"./is-widget":47,"./version":48}],50:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -3632,7 +3637,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":47}],50:[function(require,module,exports){
+},{"./version":48}],51:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -3644,7 +3649,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":47}],51:[function(require,module,exports){
+},{"./version":48}],52:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -3704,7 +3709,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":43,"is-object":19}],52:[function(require,module,exports){
+},{"../vnode/is-vhook":44,"is-object":19}],53:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -4133,7 +4138,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":41,"../vnode/is-thunk":42,"../vnode/is-vnode":44,"../vnode/is-vtext":45,"../vnode/is-widget":46,"../vnode/vpatch":49,"./diff-props":51,"x-is-array":53}],53:[function(require,module,exports){
+},{"../vnode/handle-thunk":42,"../vnode/is-thunk":43,"../vnode/is-vnode":45,"../vnode/is-vtext":46,"../vnode/is-widget":47,"../vnode/vpatch":50,"./diff-props":52,"x-is-array":54}],54:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -4143,7 +4148,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4198,7 +4203,7 @@ var ActionDispatcher = function (_mix$with) {
 
 module.exports = ActionDispatcher;
 
-},{"./event-emitter-mixin":57,"mixwith-es5":21}],55:[function(require,module,exports){
+},{"./event-emitter-mixin":58,"mixwith-es5":21}],56:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4375,7 +4380,7 @@ var App = function (_mix$with) {
 
 module.exports = App;
 
-},{"./action-dispatcher":54,"./component":56,"./event-emitter-mixin":57,"./sig":59,"debounce":6,"document-ready-promise":10,"mixwith-es5":21,"object.defaults/immutable":23}],56:[function(require,module,exports){
+},{"./action-dispatcher":55,"./component":57,"./event-emitter-mixin":58,"./sig":60,"debounce":6,"document-ready-promise":10,"mixwith-es5":21,"object.defaults/immutable":23}],57:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4786,7 +4791,7 @@ var Component = function (_mix$with) {
 
 module.exports = Component;
 
-},{"../utils/includes":76,"../utils/make-hash":77,"./event-emitter-mixin":57,"./sig":59,"mixwith-es5":21,"object.defaults/immutable":23}],57:[function(require,module,exports){
+},{"../utils/includes":77,"../utils/make-hash":78,"./event-emitter-mixin":58,"./sig":60,"mixwith-es5":21,"object.defaults/immutable":23}],58:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4900,7 +4905,7 @@ var EventEmitterMixin = Mixin(function (superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":76,"mixwith-es5":21,"object.defaults/immutable":23}],58:[function(require,module,exports){
+},{"../utils/includes":77,"mixwith-es5":21,"object.defaults/immutable":23}],59:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5072,7 +5077,7 @@ var Pipeline = function (_mix$with) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":57,"mixwith-es5":21}],59:[function(require,module,exports){
+},{"./event-emitter-mixin":58,"mixwith-es5":21}],60:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5233,7 +5238,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -5505,7 +5510,7 @@ var Store = function (_mix$with) {
 
 module.exports = Store;
 
-},{"../utils/difference":74,"../utils/includes":76,"../utils/make-hash":77,"./event-emitter-mixin":57,"deep-equal":7,"mixwith-es5":21,"object.defaults/immutable":23}],61:[function(require,module,exports){
+},{"../utils/difference":75,"../utils/includes":77,"../utils/make-hash":78,"./event-emitter-mixin":58,"deep-equal":7,"mixwith-es5":21,"object.defaults/immutable":23}],62:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5577,7 +5582,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5676,7 +5681,7 @@ Object.values(_Weddell.classes).forEach(function (commonClass) {
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":76,"./app":55,"./component":56,"./pipeline":58,"./sig":59,"./store":60,"./transform":61,"mixwith-es5":21}],63:[function(require,module,exports){
+},{"../utils/includes":77,"./app":56,"./component":57,"./pipeline":59,"./sig":60,"./store":61,"./transform":62,"mixwith-es5":21}],64:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -5725,7 +5730,7 @@ module.exports = function (Weddell, doTOpts) {
     });
 };
 
-},{"dot":11,"mixwith-es5":21}],64:[function(require,module,exports){
+},{"dot":11,"mixwith-es5":21}],65:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5816,7 +5821,7 @@ module.exports = function (_Weddell, opts) {
     });
 };
 
-},{"mixwith-es5":21,"object.defaults/immutable":23}],65:[function(require,module,exports){
+},{"mixwith-es5":21,"object.defaults/immutable":23}],66:[function(require,module,exports){
 'use strict';
 
 var Parser = require('prescribe');
@@ -5862,7 +5867,7 @@ module.exports = {
     }
 };
 
-},{"prescribe":27}],66:[function(require,module,exports){
+},{"prescribe":27}],67:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -5908,7 +5913,7 @@ module.exports = function (_Weddell) {
     });
 };
 
-},{"./html-to-vdom-parser":65,"mixwith-es5":21}],67:[function(require,module,exports){
+},{"./html-to-vdom-parser":66,"mixwith-es5":21}],68:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6079,7 +6084,7 @@ module.exports = function (_Weddell) {
     });
 };
 
-},{"./machine-state-mixin":68,"./router":69,"./state-machine-mixin":70,"mixwith-es5":21}],68:[function(require,module,exports){
+},{"./machine-state-mixin":69,"./router":70,"./state-machine-mixin":71,"mixwith-es5":21}],69:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6141,7 +6146,7 @@ var MachineState = Mixin(function (superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":57,"mixwith-es5":21}],69:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":58,"mixwith-es5":21}],70:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6357,7 +6362,7 @@ var Router = function () {
 
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],70:[function(require,module,exports){
+},{"array-compact":1,"find-parent":13,"object.defaults/immutable":23,"path-to-regexp":25}],71:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6466,7 +6471,7 @@ var StateMachine = Mixin(function (superClass) {
 });
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":57,"./machine-state-mixin":68,"mixwith-es5":21}],71:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":58,"./machine-state-mixin":69,"mixwith-es5":21}],72:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6485,6 +6490,7 @@ var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var flatMap = require('../../utils/flatmap');
 var compact = require('array-compact');
+var createElement = require('virtual-dom/create-element');
 
 var defaultComponentOpts = {
     markupFormat: '(locals:Object,h:Function)=>VNode'
@@ -6525,8 +6531,8 @@ module.exports = function (Weddell, pluginOpts) {
 
                         var _this2 = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
 
-                        _this2.vTree = new VNode('div');
-                        _this2.rootNode = document.createElement('div');
+                        _this2.vTree = h('div');
+                        _this2.rootNode = createElement(_this2.vTree);
                         var Transform = _this2.constructor.Weddell.classes.Transform;
 
                         _this2.markupTransforms.push(new Transform({
@@ -6671,18 +6677,18 @@ module.exports = function (Weddell, pluginOpts) {
     });
 };
 
-},{"../../utils/flatmap":75,"array-compact":1,"mixwith-es5":21,"object.defaults/immutable":23,"virtual-dom/diff":28,"virtual-dom/h":29,"virtual-dom/patch":30,"virtual-dom/vnode/vnode":48}],72:[function(require,module,exports){
+},{"../../utils/flatmap":76,"array-compact":1,"mixwith-es5":21,"object.defaults/immutable":23,"virtual-dom/create-element":28,"virtual-dom/diff":29,"virtual-dom/h":30,"virtual-dom/patch":31,"virtual-dom/vnode/vnode":49}],73:[function(require,module,exports){
 'use strict';
 
 require('native-promise-only');
 module.exports = require('../plugins/html-to-vdom')(require('../plugins/vdom')(require('../plugins/doT')(require('../plugins/fetcher')(require('../plugins/router')(require('./weddell'))))));
 
-},{"../plugins/doT":63,"../plugins/fetcher":64,"../plugins/html-to-vdom":66,"../plugins/router":67,"../plugins/vdom":71,"./weddell":73,"native-promise-only":22}],73:[function(require,module,exports){
+},{"../plugins/doT":64,"../plugins/fetcher":65,"../plugins/html-to-vdom":67,"../plugins/router":68,"../plugins/vdom":72,"./weddell":74,"native-promise-only":22}],74:[function(require,module,exports){
 'use strict';
 
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":62}],74:[function(require,module,exports){
+},{"../core/weddell":63}],75:[function(require,module,exports){
 "use strict";
 
 // var includes = require('./includes');
@@ -6692,7 +6698,7 @@ module.exports = function (arr1, arr2) {
     });
 };
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, func) {
@@ -6701,7 +6707,7 @@ module.exports = function (arr, func) {
     }, []);
 };
 
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, val) {
@@ -6710,7 +6716,7 @@ module.exports = function (arr, val) {
     });
 };
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 "use strict";
 
 module.exports = function makeid() {
@@ -6722,5 +6728,5 @@ module.exports = function makeid() {
   }return text;
 };
 
-},{}]},{},[72])(72)
+},{}]},{},[73])(73)
 });

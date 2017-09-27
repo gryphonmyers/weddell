@@ -6,6 +6,7 @@ var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var flatMap = require('../../utils/flatmap');
 var compact = require('array-compact');
+var createElement = require('virtual-dom/create-element');
 
 var defaultComponentOpts = {
     markupFormat: '(locals:Object,h:Function)=>VNode'
@@ -30,8 +31,8 @@ module.exports = function(Weddell, pluginOpts) {
                     constructor(opts) {
                         opts = defaults(opts, defaultAppOpts);
                         super(opts);
-                        this.vTree = new VNode('div');
-                        this.rootNode = document.createElement('div');
+                        this.vTree = h('div');
+                        this.rootNode = createElement(this.vTree);
                         var Transform = this.constructor.Weddell.classes.Transform;
 
                         this.markupTransforms.push(new Transform({

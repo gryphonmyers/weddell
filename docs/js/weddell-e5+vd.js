@@ -1158,21 +1158,26 @@ module.exports = function defaults(target, objects) {
 };
 
 },{"array-each":2,"array-slice":3,"for-own":13,"isobject":18}],23:[function(require,module,exports){
+var createElement = require("./vdom/create-element.js")
+
+module.exports = createElement
+
+},{"./vdom/create-element.js":28}],24:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":47}],24:[function(require,module,exports){
+},{"./vtree/diff.js":48}],25:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":34}],25:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":35}],26:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":30}],26:[function(require,module,exports){
+},{"./vdom/patch.js":31}],27:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -1271,7 +1276,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":38,"is-object":17}],27:[function(require,module,exports){
+},{"../vnode/is-vhook.js":39,"is-object":17}],28:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -1319,7 +1324,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":36,"../vnode/is-vnode.js":39,"../vnode/is-vtext.js":40,"../vnode/is-widget.js":41,"./apply-properties":26,"global/document":14}],28:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":37,"../vnode/is-vnode.js":40,"../vnode/is-vtext.js":41,"../vnode/is-widget.js":42,"./apply-properties":27,"global/document":14}],29:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -1406,7 +1411,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -1559,7 +1564,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":41,"../vnode/vpatch.js":44,"./apply-properties":26,"./update-widget":31}],30:[function(require,module,exports){
+},{"../vnode/is-widget.js":42,"../vnode/vpatch.js":45,"./apply-properties":27,"./update-widget":32}],31:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -1641,7 +1646,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":27,"./dom-index":28,"./patch-op":29,"global/document":14,"x-is-array":48}],31:[function(require,module,exports){
+},{"./create-element":28,"./dom-index":29,"./patch-op":30,"global/document":14,"x-is-array":49}],32:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -1658,7 +1663,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":41}],32:[function(require,module,exports){
+},{"../vnode/is-widget.js":42}],33:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -1687,7 +1692,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":11}],33:[function(require,module,exports){
+},{"ev-store":11}],34:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -1706,7 +1711,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -1845,7 +1850,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":37,"../vnode/is-vhook":38,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vnode.js":43,"../vnode/vtext.js":45,"./hooks/ev-hook.js":32,"./hooks/soft-set-hook.js":33,"./parse-tag.js":35,"x-is-array":48}],35:[function(require,module,exports){
+},{"../vnode/is-thunk":38,"../vnode/is-vhook":39,"../vnode/is-vnode":40,"../vnode/is-vtext":41,"../vnode/is-widget":42,"../vnode/vnode.js":44,"../vnode/vtext.js":46,"./hooks/ev-hook.js":33,"./hooks/soft-set-hook.js":34,"./parse-tag.js":36,"x-is-array":49}],36:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -1901,7 +1906,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":5}],36:[function(require,module,exports){
+},{"browser-split":5}],37:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -1943,14 +1948,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":37,"./is-vnode":39,"./is-vtext":40,"./is-widget":41}],37:[function(require,module,exports){
+},{"./is-thunk":38,"./is-vnode":40,"./is-vtext":41,"./is-widget":42}],38:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -1959,7 +1964,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -1968,7 +1973,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":42}],40:[function(require,module,exports){
+},{"./version":43}],41:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -1977,17 +1982,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":42}],41:[function(require,module,exports){
+},{"./version":43}],42:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 module.exports = "2"
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -2061,7 +2066,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":37,"./is-vhook":38,"./is-vnode":39,"./is-widget":41,"./version":42}],44:[function(require,module,exports){
+},{"./is-thunk":38,"./is-vhook":39,"./is-vnode":40,"./is-widget":42,"./version":43}],45:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -2085,7 +2090,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":42}],45:[function(require,module,exports){
+},{"./version":43}],46:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -2097,7 +2102,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":42}],46:[function(require,module,exports){
+},{"./version":43}],47:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -2157,7 +2162,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":38,"is-object":17}],47:[function(require,module,exports){
+},{"../vnode/is-vhook":39,"is-object":17}],48:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -2586,7 +2591,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":36,"../vnode/is-thunk":37,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vpatch":44,"./diff-props":46,"x-is-array":48}],48:[function(require,module,exports){
+},{"../vnode/handle-thunk":37,"../vnode/is-thunk":38,"../vnode/is-vnode":40,"../vnode/is-vtext":41,"../vnode/is-widget":42,"../vnode/vpatch":45,"./diff-props":47,"x-is-array":49}],49:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -2596,7 +2601,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2651,7 +2656,7 @@ var ActionDispatcher = function (_mix$with) {
 
 module.exports = ActionDispatcher;
 
-},{"./event-emitter-mixin":52,"mixwith-es5":19}],50:[function(require,module,exports){
+},{"./event-emitter-mixin":53,"mixwith-es5":19}],51:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2828,7 +2833,7 @@ var App = function (_mix$with) {
 
 module.exports = App;
 
-},{"./action-dispatcher":49,"./component":51,"./event-emitter-mixin":52,"./sig":54,"debounce":6,"document-ready-promise":10,"mixwith-es5":19,"object.defaults/immutable":21}],51:[function(require,module,exports){
+},{"./action-dispatcher":50,"./component":52,"./event-emitter-mixin":53,"./sig":55,"debounce":6,"document-ready-promise":10,"mixwith-es5":19,"object.defaults/immutable":21}],52:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3239,7 +3244,7 @@ var Component = function (_mix$with) {
 
 module.exports = Component;
 
-},{"../utils/includes":63,"../utils/make-hash":64,"./event-emitter-mixin":52,"./sig":54,"mixwith-es5":19,"object.defaults/immutable":21}],52:[function(require,module,exports){
+},{"../utils/includes":64,"../utils/make-hash":65,"./event-emitter-mixin":53,"./sig":55,"mixwith-es5":19,"object.defaults/immutable":21}],53:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3353,7 +3358,7 @@ var EventEmitterMixin = Mixin(function (superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":63,"mixwith-es5":19,"object.defaults/immutable":21}],53:[function(require,module,exports){
+},{"../utils/includes":64,"mixwith-es5":19,"object.defaults/immutable":21}],54:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3525,7 +3530,7 @@ var Pipeline = function (_mix$with) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":52,"mixwith-es5":19}],54:[function(require,module,exports){
+},{"./event-emitter-mixin":53,"mixwith-es5":19}],55:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -3686,7 +3691,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -3958,7 +3963,7 @@ var Store = function (_mix$with) {
 
 module.exports = Store;
 
-},{"../utils/difference":61,"../utils/includes":63,"../utils/make-hash":64,"./event-emitter-mixin":52,"deep-equal":7,"mixwith-es5":19,"object.defaults/immutable":21}],56:[function(require,module,exports){
+},{"../utils/difference":62,"../utils/includes":64,"../utils/make-hash":65,"./event-emitter-mixin":53,"deep-equal":7,"mixwith-es5":19,"object.defaults/immutable":21}],57:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4030,7 +4035,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4129,7 +4134,7 @@ Object.values(_Weddell.classes).forEach(function (commonClass) {
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":63,"./app":50,"./component":51,"./pipeline":53,"./sig":54,"./store":55,"./transform":56,"mixwith-es5":19}],58:[function(require,module,exports){
+},{"../utils/includes":64,"./app":51,"./component":52,"./pipeline":54,"./sig":55,"./store":56,"./transform":57,"mixwith-es5":19}],59:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4148,6 +4153,7 @@ var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var flatMap = require('../../utils/flatmap');
 var compact = require('array-compact');
+var createElement = require('virtual-dom/create-element');
 
 var defaultComponentOpts = {
     markupFormat: '(locals:Object,h:Function)=>VNode'
@@ -4188,8 +4194,8 @@ module.exports = function (Weddell, pluginOpts) {
 
                         var _this2 = _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).call(this, opts));
 
-                        _this2.vTree = new VNode('div');
-                        _this2.rootNode = document.createElement('div');
+                        _this2.vTree = h('div');
+                        _this2.rootNode = createElement(_this2.vTree);
                         var Transform = _this2.constructor.Weddell.classes.Transform;
 
                         _this2.markupTransforms.push(new Transform({
@@ -4334,18 +4340,18 @@ module.exports = function (Weddell, pluginOpts) {
     });
 };
 
-},{"../../utils/flatmap":62,"array-compact":1,"mixwith-es5":19,"object.defaults/immutable":21,"virtual-dom/diff":23,"virtual-dom/h":24,"virtual-dom/patch":25,"virtual-dom/vnode/vnode":43}],59:[function(require,module,exports){
+},{"../../utils/flatmap":63,"array-compact":1,"mixwith-es5":19,"object.defaults/immutable":21,"virtual-dom/create-element":23,"virtual-dom/diff":24,"virtual-dom/h":25,"virtual-dom/patch":26,"virtual-dom/vnode/vnode":44}],60:[function(require,module,exports){
 'use strict';
 
 require('native-promise-only');
 module.exports = require('../plugins/vdom')(require('./weddell'));
 
-},{"../plugins/vdom":58,"./weddell":60,"native-promise-only":20}],60:[function(require,module,exports){
+},{"../plugins/vdom":59,"./weddell":61,"native-promise-only":20}],61:[function(require,module,exports){
 'use strict';
 
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":57}],61:[function(require,module,exports){
+},{"../core/weddell":58}],62:[function(require,module,exports){
 "use strict";
 
 // var includes = require('./includes');
@@ -4355,7 +4361,7 @@ module.exports = function (arr1, arr2) {
     });
 };
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, func) {
@@ -4364,7 +4370,7 @@ module.exports = function (arr, func) {
     }, []);
 };
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, val) {
@@ -4373,7 +4379,7 @@ module.exports = function (arr, val) {
     });
 };
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 "use strict";
 
 module.exports = function makeid() {
@@ -4385,5 +4391,5 @@ module.exports = function makeid() {
   }return text;
 };
 
-},{}]},{},[59])(59)
+},{}]},{},[60])(60)
 });
