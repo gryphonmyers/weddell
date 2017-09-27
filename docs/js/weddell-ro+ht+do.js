@@ -3472,10 +3472,11 @@ module.exports = function(Weddell, pluginOpts) {
                             },
                             endTag: (tok) => {
                                 var outputArr = component ? component.contents : result;
-
-                                if (node.tagName.toUpperCase() in this._tagDirectives) {
-                                    return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
-                                } else if (component && tok.tagName === component.name && component.depth === tagDepth) {
+                                // TODO need to have HTML respond to router tag directive like vdom plugin does
+                                // if (node.tagName.toUpperCase() in this._tagDirectives) {
+                                //     return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+                                // } else
+                                if (component && tok.tagName === component.name && component.depth === tagDepth) {
                                     var currComp = component;
                                     result.push(this.interpolateHTMLComponents(component.contents.join(''), null, renderedComponents)
                                         .then(componentContent => {

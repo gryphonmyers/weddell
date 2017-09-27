@@ -5348,10 +5348,9 @@ module.exports = function (Weddell, pluginOpts) {
 
                             if (node.children) {
                                 return this.replaceVNodeComponents(node.children, content, renderedComponents).then(function (children) {
-                                    node.children = children.reduce(function (final, child) {
+                                    return h(node.tagName, node.properties, children.reduce(function (final, child) {
                                         return child ? final.concat(child) : final;
-                                    }, []);
-                                    return node;
+                                    }, []));
                                 });
                             }
 
