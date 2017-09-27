@@ -1492,7 +1492,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 if (evt.key in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.key = this.inputMappings[evt.key];
-                    this.trigger('change', evt);
+                    this.trigger('get', evt);
                 }
             }.bind(this));
         });
@@ -1507,14 +1507,11 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
 
             obj.on('change', evt => {
-                if (!(evt.changedKey in this._data) && !(evt.changedKey in this.inputMappings)) {
-                    this.trigger('change', Object.assign({}, evt));
-                }
+                this.trigger('change', Object.assign({}, evt));
             });
+
             obj.on('get', evt => {
-                if (!(evt.key in this._data) && !(evt.key in this.inputMappings)) {
-                    this.trigger('get', Object.assign({}, evt));
-                }
+                this.trigger('get', Object.assign({}, evt));
             });
         });
     }

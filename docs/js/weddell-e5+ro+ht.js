@@ -3513,7 +3513,7 @@ var Store = function (_mix$with) {
                 if (evt.key in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.key = this.inputMappings[evt.key];
-                    this.trigger('change', evt);
+                    this.trigger('get', evt);
                 }
             }.bind(_this));
         });
@@ -3528,14 +3528,11 @@ var Store = function (_mix$with) {
             });
 
             obj.on('change', function (evt) {
-                if (!(evt.changedKey in _this._data) && !(evt.changedKey in _this.inputMappings)) {
-                    _this.trigger('change', Object.assign({}, evt));
-                }
+                _this.trigger('change', Object.assign({}, evt));
             });
+
             obj.on('get', function (evt) {
-                if (!(evt.key in _this._data) && !(evt.key in _this.inputMappings)) {
-                    _this.trigger('get', Object.assign({}, evt));
-                }
+                _this.trigger('get', Object.assign({}, evt));
             });
         });
         return _this;
@@ -4014,7 +4011,10 @@ module.exports = function (Weddell, pluginOpts) {
                                 },
                                 endTag: function endTag(tok) {
                                     var outputArr = component ? component.contents : result;
-                                    if (component && tok.tagName === component.name && component.depth === tagDepth) {
+
+                                    if (node.tagName.toUpperCase() in _this4._tagDirectives) {
+                                        return _this4._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+                                    } else if (component && tok.tagName === component.name && component.depth === tagDepth) {
                                         var currComp = component;
                                         result.push(_this4.interpolateHTMLComponents(component.contents.join(''), null, renderedComponents).then(function (componentContent) {
                                             return _this4.getComponentInstance(tok.tagName, currComp.index).then(function (componentInstance) {

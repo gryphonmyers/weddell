@@ -4239,7 +4239,7 @@ var Store = function (_mix$with) {
                 if (evt.key in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.key = this.inputMappings[evt.key];
-                    this.trigger('change', evt);
+                    this.trigger('get', evt);
                 }
             }.bind(_this));
         });
@@ -4254,14 +4254,11 @@ var Store = function (_mix$with) {
             });
 
             obj.on('change', function (evt) {
-                if (!(evt.changedKey in _this._data) && !(evt.changedKey in _this.inputMappings)) {
-                    _this.trigger('change', Object.assign({}, evt));
-                }
+                _this.trigger('change', Object.assign({}, evt));
             });
+
             obj.on('get', function (evt) {
-                if (!(evt.key in _this._data) && !(evt.key in _this.inputMappings)) {
-                    _this.trigger('get', Object.assign({}, evt));
-                }
+                _this.trigger('get', Object.assign({}, evt));
             });
         });
         return _this;

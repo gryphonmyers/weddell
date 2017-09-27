@@ -325,6 +325,9 @@
                                         }, opts))
                                     }
                                     onInit() {
+                                        this.state.watch('myAppTitle', data => {
+                                            console.log("the app title changed");
+                                        })
                                         this.on('renderdommarkup', function(){
                                             console.log('rendered dom');
                                         })
@@ -452,6 +455,10 @@
                                 }
                             }
                         }, opts))
+                    }
+
+                    onInit() {
+                        setTimeout(() => { this.state.myAppTitle = 'donkey piss'}, 4000);
                     }
                 }
             });
