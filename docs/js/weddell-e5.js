@@ -1077,7 +1077,10 @@ var App = function (_mix$with) {
                 throw "No appropriate markup renderer found for format: " + evt.renderFormat;
             }
             this.renderers[evt.renderFormat].call(this, evt.output);
-            this.el.classList.remove('rendering');
+            this.el.classList.remove('rendering-markup');
+            if (!this.el.classList.contains('rendering-styles')) {
+                this.el.classList.remove('rendering');
+            }
             this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
         }
     }, {
@@ -1091,6 +1094,13 @@ var App = function (_mix$with) {
                 return _this2.childStylesFirst ? childStyles + styles : styles + childStyles;
             };
             this.renderCSS(flattenStyles(evt));
+
+            this.el.classList.remove('rendering-styles');
+
+            if (!this.el.classList.contains('rendering-markup')) {
+                this.el.classList.remove('rendering');
+            }
+
             this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
         }
     }, {
@@ -1149,6 +1159,7 @@ var App = function (_mix$with) {
 
                 _this3.component.on('markeddirty', function (evt) {
                     requestAnimationFrame(function () {
+                        _this3.el.classList.add('rendering-' + evt.pipelineName);
                         _this3.el.classList.add('rendering');
                         _this3.component.render(evt.pipelineName);
                     });

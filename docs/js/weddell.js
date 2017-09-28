@@ -657,7 +657,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
         this.renderers[evt.renderFormat].call(this, evt.output);
-        this.el.classList.remove('rendering');
+        this.el.classList.remove('rendering-markup');
+        if (!this.el.classList.contains('rendering-styles')) {
+            this.el.classList.remove('rendering');
+        }
         this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
     }
 
@@ -668,6 +671,13 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             return this.childStylesFirst ? childStyles + styles : styles + childStyles;
         };
         this.renderCSS(flattenStyles(evt));
+
+        this.el.classList.remove('rendering-styles');
+
+        if (!this.el.classList.contains('rendering-markup')) {
+            this.el.classList.remove('rendering');
+        }
+
         this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
     }
 
@@ -720,6 +730,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
                 this.component.on('markeddirty', evt => {
                     requestAnimationFrame(() => {
+                        this.el.classList.add('rendering-' + evt.pipelineName);
                         this.el.classList.add('rendering');
                         this.component.render(evt.pipelineName);
                     });
