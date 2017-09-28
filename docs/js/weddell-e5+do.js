@@ -1157,7 +1157,8 @@ var defaultOpts = {
     markupRenderFormat: null,
     stylesRenderFormat: 'CSSString',
     markupTransforms: [],
-    stylesTransforms: []
+    stylesTransforms: [],
+    childStylesFirst: true
 };
 
 var App = function (_mix$with) {
@@ -1180,6 +1181,7 @@ var App = function (_mix$with) {
         _this.markupRenderFormat = opts.markupRenderFormat;
         _this.markupTransforms = opts.markupTransforms;
         _this.stylesTransforms = opts.stylesTransforms;
+        _this.childStylesFirst = opts.childStylesFirst;
         _this.renderers = {};
         var Sig = _this.constructor.Weddell.classes.Sig;
 
@@ -1226,8 +1228,12 @@ var App = function (_mix$with) {
     }, {
         key: 'renderStyles',
         value: function renderStyles(evt) {
+            var _this2 = this;
+
             var flattenStyles = function flattenStyles(obj) {
-                return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
+                var childStyles = obj.components ? obj.components.map(flattenStyles).join('') : '';
+                var styles = obj.output ? obj.output : '';
+                return _this2.childStylesFirst ? childStyles + styles : styles + childStyles;
             };
             this.renderCSS(flattenStyles(evt));
             this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
@@ -1262,40 +1268,40 @@ var App = function (_mix$with) {
     }, {
         key: 'init',
         value: function init() {
-            var _this2 = this;
+            var _this3 = this;
 
             Object.seal(this);
             return DOMReady.then(function () {
-                if (typeof _this2.el == 'string') {
-                    _this2.el = document.querySelector(_this2.el);
+                if (typeof _this3.el == 'string') {
+                    _this3.el = document.querySelector(_this3.el);
                 }
 
-                if (typeof _this2.styleEl == 'string') {
-                    _this2.styleEl = document.querySelector(_this2.styleEl);
-                } else if (!_this2.styleEl) {
-                    _this2.styleEl = document.createElement('style');
-                    _this2.styleEl.setAttribute('type', 'text/css');
-                    document.head.appendChild(_this2.styleEl);
+                if (typeof _this3.styleEl == 'string') {
+                    _this3.styleEl = document.querySelector(_this3.styleEl);
+                } else if (!_this3.styleEl) {
+                    _this3.styleEl = document.createElement('style');
+                    _this3.styleEl.setAttribute('type', 'text/css');
+                    document.head.appendChild(_this3.styleEl);
                 }
 
-                _this2.component = _this2.makeComponent(_this2.Component);
+                _this3.component = _this3.makeComponent(_this3.Component);
 
-                _this2.trigger('createcomponent', { component: _this2.component });
-                _this2.trigger('createrootcomponent', { component: _this2.component });
-                _this2.component.on('createcomponent', function (evt) {
-                    return _this2.trigger('createcomponent', Object.assign({}, evt));
+                _this3.trigger('createcomponent', { component: _this3.component });
+                _this3.trigger('createrootcomponent', { component: _this3.component });
+                _this3.component.on('createcomponent', function (evt) {
+                    return _this3.trigger('createcomponent', Object.assign({}, evt));
                 });
 
-                _this2.component.on('markeddirty', function (evt) {
+                _this3.component.on('markeddirty', function (evt) {
                     requestAnimationFrame(function () {
-                        _this2.component.render(evt.pipelineName);
+                        _this3.component.render(evt.pipelineName);
                     });
                 });
 
-                return _this2.component.init(_this2.componentInitOpts).then(function () {
-                    _this2.component.on('rendermarkup', debounce(_this2.renderMarkup.bind(_this2), _this2.renderInterval));
-                    _this2.component.on('renderstyles', debounce(_this2.renderStyles.bind(_this2), _this2.renderInterval));
-                    _this2.component.render();
+                return _this3.component.init(_this3.componentInitOpts).then(function () {
+                    _this3.component.on('rendermarkup', debounce(_this3.renderMarkup.bind(_this3), _this3.renderInterval));
+                    _this3.component.on('renderstyles', debounce(_this3.renderStyles.bind(_this3), _this3.renderInterval));
+                    _this3.component.render();
                 });
             });
         }

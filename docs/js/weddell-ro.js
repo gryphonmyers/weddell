@@ -1099,7 +1099,8 @@ var defaultOpts = {
     markupRenderFormat: null,
     stylesRenderFormat: 'CSSString',
     markupTransforms: [],
-    stylesTransforms: []
+    stylesTransforms: [],
+    childStylesFirst: true
 };
 
 var App = class extends mix(App).with(EventEmitterMixin) {
@@ -1116,6 +1117,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
         this.stylesTransforms = opts.stylesTransforms;
+        this.childStylesFirst = opts.childStylesFirst;
         this.renderers = {};
         var Sig = this.constructor.Weddell.classes.Sig;
 
@@ -1157,9 +1159,11 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     renderStyles(evt) {
-        var flattenStyles = function(obj) {
-            return (obj.output ? obj.output : '') + (obj.components ? obj.components.map(flattenStyles).join('') : '');
-        }
+        var flattenStyles = (obj) => {
+            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('') : '');
+            var styles = (obj.output ? obj.output : '');
+            return this.childStylesFirst ? childStyles + styles : styles + childStyles;
+        };
         this.renderCSS(flattenStyles(evt));
         this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
     }

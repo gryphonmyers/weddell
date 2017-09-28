@@ -307,7 +307,7 @@
                                 },
                                 MyHeader: [Component => class Header extends Component {
                                     constructor(opts) {
-                                        super(Object.assign({
+                                        super(Object.assign(opts, {
                                             // markupFormat: '(locals:Object,h:Function)=>HTMLString',
                                             markupTemplate: (locals, h) =>
                                                 h("header", {
@@ -321,8 +321,11 @@
                                                 myAppTitle: 'ningus',
                                                 numba: 1,
                                                 headerText: 'Who doesn\'t love frogs?'
-                                            }
-                                        }, opts))
+                                            },
+                                            store: Object.assign(opts.store, {
+                                                dingus: 'bingus'
+                                            })
+                                        }))
                                     }
                                     onInit() {
                                         this.state.watch('myAppTitle', data => {
@@ -331,6 +334,7 @@
                                         this.on('renderdommarkup', function(){
                                             console.log('rendered dom');
                                         })
+                                        console.log(this.store);
                                         console.log(this.state, this.props);
                                     }
                                 }, {
@@ -338,7 +342,7 @@
                                 }],
                                 MyBodyA: Component => class Body extends Component {
                                     constructor(opts) {
-                                        super(Object.assign({
+                                        super(Object.assign(opts, {
                                             markupTemplate: (locals, h) =>
                                                 h('div', [
                                                     h('div.mooboody', {
@@ -403,7 +407,7 @@
                                                     }
                                                 }
                                             }
-                                        }, opts))
+                                        }))
                                     }
 
                                     onEnterState(evt) {
