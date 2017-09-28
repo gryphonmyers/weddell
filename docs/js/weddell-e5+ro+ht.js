@@ -4200,7 +4200,7 @@ module.exports = function (_Weddell) {
                             Object.entries(_this3.components).forEach(function (entry) {
                                 var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce(function (finalObj, methods) {
                                     finalObj[methods[0]] = function (evt) {
-                                        return _this3.getComponentInstance(entry[0]).then(function (componentInstance) {
+                                        return _this3.getComponentInstance(entry[0], 'router').then(function (componentInstance) {
                                             return Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null);
                                         });
                                     };

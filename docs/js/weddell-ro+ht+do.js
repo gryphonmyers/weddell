@@ -3629,7 +3629,7 @@ module.exports = function(_Weddell){
                             Object.entries(this.components)
                                 .forEach(entry => {
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
-                                        finalObj[methods[0]] = evt => this.getComponentInstance(entry[0]).then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
+                                        finalObj[methods[0]] = evt => this.getComponentInstance(entry[0], 'router').then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
                                         return finalObj;
                                     }, {
                                         Component: entry[1],
