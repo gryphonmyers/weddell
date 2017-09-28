@@ -1,5 +1,6 @@
 var Mixin = require('mixwith-es5').Mixin;
-var htmltovdomparser = require('./html-to-vdom-parser');
+var parse = require('html-to-vdom-parser/parse');
+
 module.exports = function(_Weddell){
     return _Weddell.plugin({
         id: 'html-to-vdom',
@@ -16,7 +17,7 @@ module.exports = function(_Weddell){
                             from: 'HTMLString',
                             to: 'VNode',
                             func: function(input) {
-                                return htmltovdomparser.parse(input, h);
+                                return parse(h, input);
                             }
                         }));
                     }
