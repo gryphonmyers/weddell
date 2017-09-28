@@ -557,20 +557,20 @@ module.exports = doccy;
 },{"min-document":4}],16:[function(require,module,exports){
 var Parser = require('prescribe');
 
-module.exports = function(h, html) {
+module.exports = function (h, html) {
     var parser = new Parser(html.trim());
     var nodes = [];
     var current;
 
     parser.readTokens({
-        chars: function(tok) {
+        chars: function (tok) {
             if (current) {
                 current.children.push(tok.text);
             } else {
                 nodes.push(tok.text);
             }
         },
-        startTag: function(tok){
+        startTag: function (tok){
             if (tok.unary || tok.html5Unary || tok.tagName === 'input') {
                 //NOTE this is how we will handle unary elements. Prescribe's unary element detection isn't perfect, so in the case of input elements, for example, we need to check for those explicity.
                 var node = h(tok.tagName, {attributes: Object.assign({}, tok.attrs, tok.booleanAttrs)});
@@ -580,10 +580,10 @@ module.exports = function(h, html) {
                     nodes.push(node);
                 }
             } else {
-                current = {tok, parent: current, children:[]};
+                current = {tok: tok, parent: current, children:[]};
             }
         },
-        endTag: function(tok){
+        endTag: function (tok){
             //TODO add support for SVG
             var node = h(current.tok.tagName, {attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs)}, current.children);
             current = current.parent;
