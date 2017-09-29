@@ -13,9 +13,9 @@
                     {
                         name: 'jonboy',
                         pattern: '/jonboy/',
-                        redirect: function(obj) {
-                            return obj.fullPath;// + 'wrong/boy/';
-                        },
+                        // redirect: function(obj) {
+                        //     return obj.fullPath;// + 'wrong/boy/';
+                        // },
                         handler: function(obj){
                             return 'MyBodyA'
                         },
@@ -35,6 +35,12 @@
                                 }
                             }
                         ]
+                    },
+                    {
+                        pattern: '/',
+                        handler: function() {
+                            return 'MyFooter'
+                        }
                     }
                 ],
                 el: '#app',
@@ -350,6 +356,7 @@
                                                             onclick: locals.$bind("this.store.$act('disablethings')")
                                                         }
                                                     }, "Don't fuck me on this."),
+                                                    h('a', {attributes: {href:'wrong/dude'}}, "Click this"),
                                                     h('RouterView')
                                                 ]),
                                             components: {
@@ -436,7 +443,8 @@
                                             markupTemplate: (locals, h) =>
                                                 h("footer", [
                                                     `${!locals.disabled ? locals.coolContent : ''}`,
-                                                    h("div", `${locals.footerText}`)
+                                                    h("div", `${locals.footerText}`),
+                                                    h('a', {attributes: {href: 'jonboy/'}}, "Go to jonboy")
                                                 ]),
                                             state: {
                                                 disabled: false,

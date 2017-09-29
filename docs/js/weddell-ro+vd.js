@@ -4151,14 +4151,13 @@ class Router {
         var promise = Promise.resolve(null);
 
         if (typeof pathName === 'string') {
-            var matches = Router.matchRoute(pathName, this.routes);
+            var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
         } else if (pathName) {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathname);
         }
-
         if (matches) {
             promise = Promise.all(matches.map((currMatch, key) => {
                 if (key === matches.length - 1 && currMatch.route.redirect) {
@@ -4186,7 +4185,7 @@ class Router {
                 } else {
                     history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
                 }
-                this.currentRoute = matches.fullPath;
+                this.currentRoute = matches;
             });
         }
 
@@ -4217,13 +4216,15 @@ class Router {
         return matchedRoute || null;
     }
 
-    static matchRoute(pathName, routes, routePath) {
+    matchRoute(pathName, routes, routePath) {
         if (!routePath) routePath = [];
         var result = null;
 
-        var Router = this;
+        if (pathName.charAt(0) !== '/' && this.currentRoute) {
+            pathName = this.currentRoute.fullPath + pathName;
+        }
 
-        routes.every(function(currRoute) {
+        routes.every((currRoute) => {
             var params = [];
 
             var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(pathObj => pathObj.route).concat(currRoute).reduce((finalPattern, pathObj) => {
@@ -4237,7 +4238,7 @@ class Router {
                 result = newPath;
             }
             if (currRoute.children) {
-                var childResult = Router.matchRoute(pathName, currRoute.children, newPath);
+                var childResult = this.matchRoute(pathName, currRoute.children, newPath);
                 result = childResult || result;
             }
             if (result) {
@@ -4293,7 +4294,7 @@ class Router {
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
-                    var href = Router.matchRoute(clickedATag.getAttribute('href'), this.routes);
+                    var href = this.matchRoute(clickedATag.getAttribute('href'), this.routes);
                     if (href) {
                         evt.preventDefault();
                         this.route(href);

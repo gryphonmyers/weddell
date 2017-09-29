@@ -3453,14 +3453,13 @@ var Router = function () {
             var promise = Promise.resolve(null);
 
             if (typeof pathName === 'string') {
-                var matches = Router.matchRoute(pathName, this.routes);
+                var matches = this.matchRoute(pathName, this.routes);
             } else if (Array.isArray(pathName)) {
                 matches = pathName;
             } else if (pathName) {
                 //assuming an object was passed to route by named route.
                 var matches = this.compileRouterLink(pathname);
             }
-
             if (matches) {
                 promise = Promise.all(matches.map(function (currMatch, key) {
                     if (key === matches.length - 1 && currMatch.route.redirect) {
@@ -3487,11 +3486,51 @@ var Router = function () {
                     } else {
                         history.pushState({ fullPath: matches.fullPath }, document.title, matches.fullPath);
                     }
-                    _this.currentRoute = matches.fullPath;
+                    _this.currentRoute = matches;
                 });
             }
 
             return promise;
+        }
+    }, {
+        key: 'matchRoute',
+        value: function matchRoute(pathName, routes, routePath) {
+            var _this2 = this;
+
+            if (!routePath) routePath = [];
+            var result = null;
+
+            if (pathName.charAt(0) !== '/' && this.currentRoute) {
+                pathName = this.currentRoute.fullPath + pathName;
+            }
+
+            routes.every(function (currRoute) {
+                var params = [];
+
+                var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(function (pathObj) {
+                    return pathObj.route;
+                }).concat(currRoute).reduce(function (finalPattern, pathObj) {
+                    return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
+                }, '');
+
+                var match = pathToRegexp(currPattern, params, {}).exec(pathName);
+                var newPath = routePath.concat({ route: currRoute, match: match, params: params });
+
+                if (match) {
+                    result = newPath;
+                }
+                if (currRoute.children) {
+                    var childResult = _this2.matchRoute(pathName, currRoute.children, newPath);
+                    result = childResult || result;
+                }
+                if (result) {
+                    result.route = result[result.length - 1].route;
+                    result.fullPath = result[result.length - 1].match[0];
+                }
+                return !result;
+            });
+
+            return result;
         }
     }, {
         key: 'addRoutes',
@@ -3533,7 +3572,7 @@ var Router = function () {
     }, {
         key: 'init',
         value: function init() {
-            var _this2 = this;
+            var _this3 = this;
 
             if (!this._isInit && this.routes) {
                 this._isInit = true;
@@ -3544,10 +3583,10 @@ var Router = function () {
                         return el.tagName === 'A';
                     });
                     if (clickedATag) {
-                        var href = Router.matchRoute(clickedATag.getAttribute('href'), _this2.routes);
+                        var href = _this3.matchRoute(clickedATag.getAttribute('href'), _this3.routes);
                         if (href) {
                             evt.preventDefault();
-                            _this2.route(href);
+                            _this3.route(href);
                         }
                     }
                 });
@@ -3566,7 +3605,7 @@ var Router = function () {
     }], [{
         key: 'getNamedRoute',
         value: function getNamedRoute(name, routes, currPath) {
-            var _this3 = this;
+            var _this4 = this;
 
             if (!name) return null;
             if (!currPath) currPath = [];
@@ -3577,7 +3616,7 @@ var Router = function () {
                 matchedRoute = route.name === name ? route : matchedRoute;
 
                 if (!matchedRoute && route.children) {
-                    matchedRoute = _this3.getNamedRoute(name, route.children, currPath.concat(route));
+                    matchedRoute = _this4.getNamedRoute(name, route.children, currPath.concat(route));
                 }
 
                 return !matchedRoute;
@@ -3589,42 +3628,6 @@ var Router = function () {
             }
 
             return matchedRoute || null;
-        }
-    }, {
-        key: 'matchRoute',
-        value: function matchRoute(pathName, routes, routePath) {
-            if (!routePath) routePath = [];
-            var result = null;
-
-            var Router = this;
-
-            routes.every(function (currRoute) {
-                var params = [];
-
-                var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(function (pathObj) {
-                    return pathObj.route;
-                }).concat(currRoute).reduce(function (finalPattern, pathObj) {
-                    return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
-                }, '');
-
-                var match = pathToRegexp(currPattern, params, {}).exec(pathName);
-                var newPath = routePath.concat({ route: currRoute, match: match, params: params });
-
-                if (match) {
-                    result = newPath;
-                }
-                if (currRoute.children) {
-                    var childResult = Router.matchRoute(pathName, currRoute.children, newPath);
-                    result = childResult || result;
-                }
-                if (result) {
-                    result.route = result[result.length - 1].route;
-                    result.fullPath = result[result.length - 1].match[0];
-                }
-                return !result;
-            });
-
-            return result;
         }
     }]);
 
