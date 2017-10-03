@@ -178,8 +178,8 @@ class Router {
     }
 
     onPopState(evt) {
-        if (evt && evt.fullPath) {
-            this.route(evt.fullPath);
+        if (evt && evt.state) {
+            this.route(evt.state.fullPath);
         }
     }
 }
