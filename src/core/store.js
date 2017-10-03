@@ -21,8 +21,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
-            _dependencyKeys: {configurable: false,value: {}},
-            _dependentKeys: {configurable: false,value: {}},
+            _funcProps: {configurable: false,value: {}},
+            _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
             _proxyProps: {configurable: false,value: {}},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
@@ -86,15 +86,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                             oldValue = Object.assign({}, oldValue);
                         }
                     }
-                    this._data[key] = newValue;
+                    if (this.shouldEvalFunctions && typeof newValue === 'function') {
+                        this._funcProps[key] = newValue;
+                    } else {
+                        this._data[key] = newValue;
+                    }
+
                     if (this.shouldMonitorChanges) {
                         if (!deepEqual(newValue, oldValue)) {
                             this.trigger('change', {changedKey: key, newValue, oldValue});
-                            if (key in this._dependentKeys) {
-                                this._dependentKeys[key].forEach((dependentKey) => {
-                                    this.trigger('change', {changedKey: dependentKey, changedDependencyKey: key, newDependencyValue: newValue, oldDependencyValue: oldValue});
-                                });
-                            }
                         }
                     }
                 }.bind(this);
@@ -106,9 +106,6 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 get: function() {
                     var value = this.getValue(key);
                     this.trigger('get', {key, value});
-                    if (this.shouldEvalFunctions && typeof this._data[key] === 'function') {
-                        return this.evaluateFunctionProperty(key);
-                    }
                     return value;
                 }.bind(this),
                 set: setter
@@ -133,7 +130,11 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
         i = 0;
         if (!val) {
-            val = this._data[key];
+            if (key in this._funcProps && !(key in this._data)) {
+                val = this._data[key] = this.evaluateFunctionProperty(key);
+            } else {
+                val = this._data[key];
+            }
         }
 
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
@@ -164,54 +165,26 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
     evaluateFunctionProperty(key) {
         var dependencyKeys = [];
+        if (key in this._funcPropHandlerRemovers) {
+            this._funcPropHandlerRemovers[key]();
+        }
         var off = this.on('get', function(evt){
             dependencyKeys.push(evt.key);
         });
-        this.trigger('evaluate.before', {key: key});
-        var result = this._data[key].call(this);
-        this.trigger('evaluate', {key: key});
+        var result = this._funcProps[key].call(this);
+        this._funcPropHandlerRemovers[key] = this.watch.call(this, dependencyKeys, function(){
+            this[key] = this.evaluateFunctionProperty(key);
+        }.bind(this), false);
         off();
-
-        this.setDependencyKeys(key, dependencyKeys);
 
         return result;
     }
-
-    setDependencyKeys(key, dependencyKeys) {
-        if (key in this._dependencyKeys) {
-            var unusedKeys = difference(this._dependencyKeys[key], dependencyKeys);
-            var newKeys = difference(dependencyKeys, this._dependencyKeys[key]);
-        } else {
-            unusedKeys = [];
-            newKeys = dependencyKeys;
-        }
-
-        newKeys.forEach(function(newKey){
-            if (!(newKey in this._dependentKeys)) {
-                this._dependentKeys[newKey] = [key];
-            } else if (!includes(this._dependentKeys[newKey], key)) {
-                this._dependentKeys[newKey] = this._dependentKeys[newKey].concat(key);
-            }
-        }.bind(this));
-
-        unusedKeys.forEach(function(unusedKey){
-            if (unusedKey in this._dependentKeys) {
-                var i = this._dependentKeys[unusedKey].indexOf(key);
-                if (i > -1) {
-                    this._dependentKeys[unusedKey].splice(i,1);
-                }
-            }
-        }.bind(this));
-
-        return this._dependencyKeys[key] = dependencyKeys;
-    }
-
     watch(key, func, shouldWaitForDefined) {
         if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
         if (!Array.isArray(key)) {
             key = [key];
         }
-        this.on('change', function(evt){
+        return this.on('change', function(evt){
             if (includes(key, evt.changedKey)) {
                 var vals = key.map(currKey=>this[currKey]);
                 if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
