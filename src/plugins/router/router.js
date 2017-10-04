@@ -112,6 +112,11 @@ class Router {
                 result = childResult || result;
             }
             if (result) {
+                var currMatch = result[result.length - 1];
+                result.paramVals = currMatch.params.reduce((finalVal, param, key) => {
+                    finalVal[param.name] = currMatch.match[key + 1];
+                    return finalVal;
+                }, {});
                 result.route = result[result.length - 1].route;
                 result.fullPath = result[result.length - 1].match[0];
             }
@@ -126,7 +131,15 @@ class Router {
     }
 
     compileRouterLink(obj) {
-
+        var paramDefaults = {};
+        if (this.currentRoute) {
+            var matchedRoute = this.currentRoute[this.currentRoute.length - 1]
+            var matches = matchedRoute.match.slice(1);
+            matchedRoute.params.forEach((param, key)=> {
+                paramDefaults[param.name] = matches[key];
+            });
+        }
+        obj.params = Object.assign(paramDefaults, obj.params);
         /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
