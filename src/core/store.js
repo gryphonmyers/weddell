@@ -5,6 +5,7 @@ var includes = require('../utils/includes');
 var difference = require('../utils/difference');
 var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
+var uniq = require('array-uniq');
 
 var defaultOpts = {
     shouldMonitorChanges: true,
@@ -24,6 +25,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _funcProps: {configurable: false,value: {}},
             _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
+            _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
@@ -72,6 +74,16 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
             obj.on('get', evt => {
                 this.trigger('get', Object.assign({}, evt));
+            });
+        });
+
+        Object.keys(this._funcProps).forEach(key => {
+            this[key] = this.evaluateFunctionProperty(key);
+
+            this.on('change', evt => {
+                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                    this[key] = this.evaluateFunctionProperty(key);
+                }
             });
         });
     }
@@ -126,8 +138,6 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         var i = 0;
         var val;
 
-
-
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];
             i++;
@@ -135,11 +145,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
         i = 0;
         if (!val) {
-            if (key in this._funcProps && !this._data[key]) {
-                val = this._data[key] = this.evaluateFunctionProperty(key);
-            } else {
-                val = this._data[key];
-            }
+            val = this._data[key];
         }
 
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
@@ -170,22 +176,16 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
     evaluateFunctionProperty(key) {
         var dependencyKeys = [];
-        if (key in this._funcPropHandlerRemovers) {
-            this._funcPropHandlerRemovers[key]();
-        }
         var off = this.on('get', function(evt){
             dependencyKeys.push(evt.key);
         });
         var result = this._funcProps[key].call(this);
-
-        this._funcPropHandlerRemovers[key] = this.watch.call(this, dependencyKeys, function(){
-            this[key] = this.evaluateFunctionProperty(key);
-        }.bind(this), false);
         off();
-
+        this._dependencyKeys[key] = uniq(dependencyKeys);
         return result;
     }
-    watch(key, func, shouldWaitForDefined) {
+
+    watch(key, func, shouldWaitForDefined, tempkey) {
         if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
         if (!Array.isArray(key)) {
             key = [key];
