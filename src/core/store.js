@@ -86,17 +86,20 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                             oldValue = Object.assign({}, oldValue);
                         }
                     }
+
                     if (this.shouldEvalFunctions && typeof newValue === 'function') {
                         this._funcProps[key] = newValue;
                     } else {
                         this._data[key] = newValue;
-                    }
 
-                    if (this.shouldMonitorChanges) {
-                        if (!deepEqual(newValue, oldValue)) {
-                            this.trigger('change', {changedKey: key, newValue, oldValue});
+                        if (this.shouldMonitorChanges) {
+
+                            if (!deepEqual(newValue, oldValue)) {
+                                this.trigger('change', {changedKey: key, newValue, oldValue});
+                            }
                         }
                     }
+
                 }.bind(this);
             }
 
@@ -123,6 +126,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         var i = 0;
         var val;
 
+
+
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];
             i++;
@@ -130,7 +135,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
         i = 0;
         if (!val) {
-            if (key in this._funcProps && !(key in this._data)) {
+            if (key in this._funcProps && !this._data[key]) {
                 val = this._data[key] = this.evaluateFunctionProperty(key);
             } else {
                 val = this._data[key];
@@ -172,6 +177,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             dependencyKeys.push(evt.key);
         });
         var result = this._funcProps[key].call(this);
+
         this._funcPropHandlerRemovers[key] = this.watch.call(this, dependencyKeys, function(){
             this[key] = this.evaluateFunctionProperty(key);
         }.bind(this), false);
