@@ -89,6 +89,9 @@ class Router {
     matchRoute(pathName, routes, routePath) {
         if (!routePath) routePath = [];
         var result = null;
+        if (typeof pathName !== 'string') {
+            return null;
+        }
 
         if (pathName.charAt(0) !== '/' && this.currentRoute) {
             pathName = this.currentRoute.fullPath + pathName;
