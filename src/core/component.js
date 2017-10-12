@@ -60,6 +60,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
+                $attributes: null,
                 $id: () => this._id
             }, opts.state), {
                 overrides: [this.props]
@@ -298,15 +299,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         if (props) {
             Object.assign(this.props, Object.entries(props)
-                .filter(entry => {
-                    var result = includes(this.inputs, entry[0]);
-                    if (!result) throw "Unsupported prop: '" + entry[0] + "' (hint: is this key in your inputs?)";
-                    return result;
-                })
+                .filter(entry => includes(this.inputs, entry[0]))
                 .reduce((finalObj, entry) => {
-                    finalObj[entry[0]] = entry[1];
-                    return finalObj;
+                    finalObj[entry[0]] = entry[1]
+                    return finalObj
                 }, {}));
+
+            this.state.$attributes = Object.entries(props)
+                .filter(entry => !includes(this.inputs, entry[0]))
+                .reduce((finalObj, entry) => {
+                    finalObj[entry[0]] = entry[1]
+                    return finalObj
+                }, {});
         }
 
         var components = {};

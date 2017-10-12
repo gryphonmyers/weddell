@@ -141,7 +141,7 @@ class Router {
             var matchedRoute = this.currentRoute[this.currentRoute.length - 1]
             var matches = matchedRoute.match.slice(1);
             matchedRoute.params.forEach((param, key)=> {
-                paramDefaults[param.name] = matches[key];
+                if (typeof matches[key] !== 'undefined') paramDefaults[param.name] = matches[key];
             });
         }
         routeName = obj.name ? obj.name : routeName;
@@ -154,10 +154,10 @@ class Router {
 
         if (route) {
             try {
-                var fullPath = route.reduce((finalPath, pathRoute) => {
-                    var segment = pathToRegexp.compile(pathRoute.pattern)(obj.params);
+                var fullPath = pathToRegexp.compile(route.reduce((finalPath, pathRoute) => {
+                    var segment = pathRoute.pattern;
                     return pathRoute.pattern.charAt(0) === '/' ? segment : finalPath + segment;
-                }, '');
+                }, ''))(obj.params);
             } catch (err) {
                 throw "Encountered error trying to build router link: " + err.toString();
             }
