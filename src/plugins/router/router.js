@@ -135,19 +135,22 @@ class Router {
 
     compileRouterLink(obj) {
         var paramDefaults = {};
+        var routeName;
         if (this.currentRoute) {
+            routeName = this.currentRoute.route.name;
             var matchedRoute = this.currentRoute[this.currentRoute.length - 1]
             var matches = matchedRoute.match.slice(1);
             matchedRoute.params.forEach((param, key)=> {
                 paramDefaults[param.name] = matches[key];
             });
         }
+        routeName = obj.name ? obj.name : routeName;
         obj.params = Object.assign(paramDefaults, obj.params);
         /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
 
-        var route = Router.getNamedRoute(obj.name, this.routes);
+        var route = Router.getNamedRoute(routeName, this.routes);
 
         if (route) {
             try {
@@ -167,7 +170,7 @@ class Router {
             matches.fullPath = fullPath;
             return matches;
         } else {
-            console.warn('could not find route with name', obj.name);
+            console.warn('could not find route with name', routeName);
         }
         return null;
     }
