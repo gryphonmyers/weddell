@@ -198,6 +198,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }
         }
         this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
+
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -357,7 +358,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var instances = this._componentInstances[componentName]
         if (instances && !(index in instances)) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
-            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
+
+            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.components[componentName]._initOpts);
         }
         return Promise.resolve(instances ? instances[index] : null);
     }
