@@ -132,7 +132,11 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.children) {
                             return this.replaceVNodeComponents(node.children, content, renderedComponents)
                                 .then(children => {
-                                    return h(node.tagName, node.properties, children.reduce((final, child) => {
+                                    var properties = Object.assign({}, node.properties, {
+                                        key: node.key
+                                    });
+
+                                    return h(node.tagName, properties, children.reduce((final, child) => {
                                         return child ? final.concat(child) : final;
                                     }, []));
                                 });
