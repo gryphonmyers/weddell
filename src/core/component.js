@@ -37,7 +37,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _tagDirectives: { value: {} }
         });
 
-        var inputMappings = this.constructor._inputMappings;
+        var inputMappings = this.constructor._inputMappings && Object.entries(this.constructor._inputMappings)
+            .filter(entry => this.inputs.find(input => input === entry[1]))
+            .reduce((final, entry) => {
+                final[entry[0]] = entry[1];
+                return final;
+            }, {});
 
         Object.defineProperties(this, {
             props: {
