@@ -46,7 +46,10 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches})));
+                                        return jobs.reduce((promise, obj) => {
+                                            return promise
+                                                .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                        }, Promise.resolve());
                                     }, console.warn);
 
                             }.bind(this)
@@ -82,14 +85,20 @@ module.exports = function(_Weddell){
                         this.on('init', () => {
                             Object.entries(this.components)
                                 .forEach(entry => {
+                                    var componentName = entry[0]
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
-                                        finalObj[methods[0]] = evt => this.getComponentInstance(entry[0], 'router').then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
+                                        var machineStateMethod = methods[0];
+                                        finalObj[machineStateMethod] = (evt) => {
+                                            // debugger;
+                                            return this.getComponentInstance(componentName, 'router')
+                                                .then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
+                                        }
                                         return finalObj;
                                     }, {
                                         Component: entry[1],
-                                        componentName: entry[0]
+                                        componentName
                                     }));
-                                    this.addState(entry[0], routerState);
+                                    this.addState(componentName, routerState);
                                     routerState.on(['exit', 'enter'], evt => {
                                         this.markDirty();
                                     });
