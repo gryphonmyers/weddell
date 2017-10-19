@@ -89,7 +89,6 @@ module.exports = function(_Weddell){
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
                                         var machineStateMethod = methods[0];
                                         finalObj[machineStateMethod] = (evt) => {
-                                            // debugger;
                                             return this.getComponentInstance(componentName, 'router')
                                                 .then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
                                         }

@@ -29,6 +29,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             isRoot: { value: opts.isRoot },
+            _isMounted: {writable:true, value: false},
             _isInit: { writable: true, value: false},
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
@@ -326,7 +327,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }
             components[componentResult.componentName].push(componentResult);
         });
-        return pipeline.render(targetFormat)
+        return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
+            .then(() => {
+                if (!this._isMounted) this._isMounted = true;
+                return pipeline.render(targetFormat);
+            })
             .then(output => {
                 var renderFormat = targetFormat.val;
                 if (!(renderFormat in this.renderers)) {
