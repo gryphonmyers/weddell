@@ -17,8 +17,10 @@ class Router {
         }
     }
 
-    route(pathName) {
+    route(pathName, hash) {
         var promise = Promise.resolve(null);
+
+        if (this.currentRoute && pathName === this.currentRoute.fullPath) return null;
 
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
@@ -28,6 +30,9 @@ class Router {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathname);
         }
+        if (typeof hash === 'undefined') hash = location.hash;
+        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+
         if (matches) {
             promise = Promise.all(matches.map((currMatch, key) => {
                 if (key === matches.length - 1 && currMatch.route.redirect) {
@@ -51,9 +56,9 @@ class Router {
             .then(this.onRoute.bind(this, matches), ()=>{})
             .then(() => {
                 if (matches.route.replaceState) {
-                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
+                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath + (hash || ''));
                 } else {
-                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
+                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath + (hash || ''));
                 }
                 this.currentRoute = matches;
             });
@@ -183,15 +188,18 @@ class Router {
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
-                    var href = this.matchRoute(clickedATag.getAttribute('href'), this.routes);
-                    if (href) {
+                    var split = clickedATag.getAttribute('href').split('#');
+                    var aPath = split[0];
+                    var hash = split[1];
+                    var href = this.matchRoute(aPath, this.routes);
+                    if (aPath && href) {
                         evt.preventDefault();
-                        this.route(href);
+                        this.route(href, hash);
                     }
                 }
             });
 
-            return this.route(location.pathname + location.hash);
+            return this.route(location.pathname);
         }
         return Promise.resolve();
     }
