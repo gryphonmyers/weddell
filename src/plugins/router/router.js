@@ -60,8 +60,9 @@ class Router {
                 } else {
                     history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath + (hash || ''));
                 }
-                this.currentRoute = matches;
             });
+
+            this.currentRoute = matches;
         }
 
         return promise;

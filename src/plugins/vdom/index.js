@@ -81,10 +81,11 @@ module.exports = function(Weddell, pluginOpts) {
 
                     }
 
-                    replaceVNodeComponents(node, content, renderedComponents) {
+                    replaceVNodeComponents(node, content, renderedComponents, isContent) {
+                        isContent = !!isContent;
                         if (Array.isArray(node)) {
                             return Promise.all(node.reduce((final, childNode) => {
-                                var result = this.replaceVNodeComponents(childNode, content, renderedComponents);
+                                var result = this.replaceVNodeComponents(childNode, content, renderedComponents, isContent);
                                 return result ? final.concat(result) : final;
                             }, []));
                         }
@@ -100,7 +101,7 @@ module.exports = function(Weddell, pluginOpts) {
                                 return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
 
                             } else if (node.tagName === 'CONTENT') {
-                                return this.replaceVNodeComponents(content, null, renderedComponents);
+                                return this.replaceVNodeComponents(content, null, renderedComponents, true);
                             } else {
                                 var componentEntry = Object.entries(this.components)
                                     .find(entry => {
@@ -113,7 +114,7 @@ module.exports = function(Weddell, pluginOpts) {
                                     var index = (node.properties.attributes && node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentEntry[0]].length;
                                     renderedComponents[componentEntry[0]].push(null);
 
-                                    return this.replaceVNodeComponents(node.children, content, renderedComponents)
+                                    return this.replaceVNodeComponents(node.children, content, renderedComponents, false)
                                         .then(componentContent => {
                                             return this.getComponentInstance(componentEntry[0], index)
                                                 .then(componentInstance => {
@@ -122,7 +123,7 @@ module.exports = function(Weddell, pluginOpts) {
                                                 });
                                         })
                                         .then(componentOutput => {
-                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes});
+                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes, isContent});
                                             return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
                                         });
                                 }
@@ -130,7 +131,7 @@ module.exports = function(Weddell, pluginOpts) {
                         }
 
                         if (node.children) {
-                            return this.replaceVNodeComponents(node.children, content, renderedComponents)
+                            return this.replaceVNodeComponents(node.children, content, renderedComponents, false)
                                 .then(children => {
                                     var properties = Object.assign({}, node.properties, {
                                         key: node.key

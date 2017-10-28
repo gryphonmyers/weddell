@@ -69,7 +69,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 $attributes: null,
                 $id: () => this._id
             }, opts.state), {
-                overrides: [this.props]
+                overrides: [this.props],
+                proxies: [this.store]
             })
         })
 
@@ -320,12 +321,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 }, {});
         }
 
-        var components = {};
+        var components = [];
         var off = this.on('rendercomponent', componentResult => {
             if (!(componentResult.componentName in components)) {
                 components[componentResult.componentName] = [];
             }
-            components[componentResult.componentName].push(componentResult);
+            components[componentResult.componentName].push(componentResult)
+            components.push(componentResult);
         });
         return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
             .then(() => {
