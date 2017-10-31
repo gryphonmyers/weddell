@@ -19,6 +19,8 @@ var defaultOpts = {
 
 var defaultInitOpts = {};
 
+var _generatedComponentClasses = [];
+
 var Component = class extends mix(Component).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
@@ -154,13 +156,30 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this._tagDirectives[name.toUpperCase()] = directive;
     }
 
+    static get generatedComponentClasses() {
+        return _generatedComponentClasses;
+    }
+
+    static set generatedComponentClasses(val) {
+        return _generatedComponentClasses = val;
+    }
 
     makeComponentClass(ComponentClass) {
         if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
             return ComponentClass;
         } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assuming it is a component factory function
-            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+            // We got a non-Component class function, so we assume it is a component factory function
+            var match = this.constructor.generatedComponentClasses.find(compClass => compClass.func === ComponentClass);
+            if (match) {
+                return match.class;
+            } else {
+                var newClass = ComponentClass.call(this, this.constructor.Weddell.classes.Component)
+                this.constructor.generatedComponentClasses.push({
+                    func: ComponentClass,
+                    class: newClass
+                });
+                return newClass;
+            }
         } else {
             //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
             throw "Unsupported component input";
@@ -182,7 +201,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var markupTransforms = this._pipelines.markup.transforms;
         var stylesTransforms = this._pipelines.styles.transforms;;
 
-        var obj = {}
+        var obj = {};
+
         obj[componentName] = class extends ChildComponent {
             constructor(opts) {
                 super(defaults({
@@ -204,8 +224,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 });
             }
         }
-        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
 
+        this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
+        obj[componentName]._BaseClass = ChildComponent;
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -240,7 +261,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
     }
 
-    renderStyles() {
+    renderStyles(staticStyles) {
+        if (typeof staticStyles === 'undefined') staticStyles = [];
         this.trigger('beforerenderstyles');
 
         return this._pipelines.styles.render()
@@ -248,15 +270,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 return Promise.all(Object.entries(this.components).map(entry => {
                         var keys = Object.keys(this._componentInstances[entry[0]]);
                         if (keys.length) {
-                            //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
-                            //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
+                            if (entry[1].styles && !staticStyles.some(styleObj => entry[1] === styleObj.class || entry[1].prototype instanceof styleObj.class._BaseClass)) {
+                                staticStyles.push({
+                                    class: entry[1],
+                                    componentName: entry[0],
+                                    styles: entry[1].styles
+                                })
+                            }
+                            return Promise.all(Object.values(this._componentInstances[entry[0]]).map(instance => instance.renderStyles(staticStyles)));
                         }
-                        return {component: this, output: '', wasRenderered: false};
+                        return [];
                     }))
                     .then(components => {
                         var evtObj = {
                             output,
+                            staticStyles,
                             component: this,
                             components,
                             wasRendered: true,

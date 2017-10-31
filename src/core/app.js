@@ -80,11 +80,12 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
     renderStyles(evt) {
         var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('') : '');
-            var styles = (obj.output ? obj.output : '');
+            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
+            var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
             return this.childStylesFirst ? childStyles + styles : styles + childStyles;
         };
-        this.renderCSS(flattenStyles(evt));
+        var styles = [evt.staticStyles.map(stylesObj => stylesObj.styles).join('\r\n'), flattenStyles(evt)].join('\r\n');
+        this.renderCSS(styles);
 
         this.el.classList.remove('rendering-styles');
 
