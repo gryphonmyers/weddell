@@ -41,9 +41,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
 
         var inputMappings = this.constructor._inputMappings && Object.entries(this.constructor._inputMappings)
-            .filter(entry => this.inputs.find(input => input === entry[1]))
+            .filter(entry => this.inputs.find(input => input === entry[0]))
             .reduce((final, entry) => {
-                final[entry[0]] = entry[1];
+                final[entry[1]] = entry[0];
                 return final;
             }, {});
 
