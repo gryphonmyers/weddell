@@ -106,7 +106,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     inputFormat: new Sig(opts.stylesFormat),
                     transforms: opts.stylesTransforms,
                     targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || null
+                    input: opts.stylesTemplate || opts.styles || true
                 })
             }
         });
