@@ -79,12 +79,34 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     renderStyles(evt) {
+        var staticStyles = [];
         var flattenStyles = (obj) => {
             var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
             var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
-            return this.childStylesFirst ? childStyles + styles : styles + childStyles;
+
+            if (obj.staticStyles) {
+                var staticObj = {
+                    class: obj.component.constructor,
+                    styles: obj.staticStyles
+                };
+                if (this.childStylesFirst) {
+                    staticStyles.unshift(staticObj)
+                } else {
+                    staticStyles.push(staticObj)
+                }
+            }
+
+            return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
         };
-        var styles = [evt.staticStyles.map(stylesObj => stylesObj.styles).join('\r\n'), flattenStyles(evt)].join('\r\n');
+        var instanceStyles = flattenStyles(evt);
+        staticStyles = staticStyles.reduce((finalArr, styleObj) => {
+            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
+                return finalArr.concat(styleObj)
+            }
+            return finalArr;
+        }, []).map(styleObj => styleObj.styles).join('\n\r');
+
+        var styles = [staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
 
         this.el.classList.remove('rendering-styles');

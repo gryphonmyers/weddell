@@ -106,7 +106,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     inputFormat: new Sig(opts.stylesFormat),
                     transforms: opts.stylesTransforms,
                     targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || true
+                    input: opts.stylesTemplate || opts.styles || ' '
                 })
             }
         });
@@ -261,8 +261,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
     }
 
-    renderStyles(staticStyles) {
-        if (typeof staticStyles === 'undefined') staticStyles = [];
+    renderStyles() {
         this.trigger('beforerenderstyles');
 
         return this._pipelines.styles.render()
@@ -270,21 +269,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 return Promise.all(Object.entries(this.components).map(entry => {
                         var keys = Object.keys(this._componentInstances[entry[0]]);
                         if (keys.length) {
-                            if (entry[1].styles && !staticStyles.some(styleObj => entry[1] === styleObj.class || entry[1].prototype instanceof styleObj.class._BaseClass)) {
-                                staticStyles.push({
-                                    class: entry[1],
-                                    componentName: entry[0],
-                                    styles: entry[1].styles
-                                })
-                            }
-                            return Promise.all(Object.values(this._componentInstances[entry[0]]).map(instance => instance.renderStyles(staticStyles)));
+                            return Promise.all(Object.values(this._componentInstances[entry[0]]).map(instance => instance.renderStyles()));
                         }
                         return [];
                     }))
                     .then(components => {
                         var evtObj = {
                             output,
-                            staticStyles,
+                            staticStyles: this.constructor.styles || null,
                             component: this,
                             components,
                             wasRendered: true,
