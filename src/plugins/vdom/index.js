@@ -51,7 +51,9 @@ module.exports = function(Weddell, pluginOpts) {
                             this.el.appendChild(this.rootNode);
                         }
                         if (Array.isArray(newTree)) {
-                            console.warn('Your markup must have one root node. Only using the first one for now.');
+                            if (newTree.length > 1) {
+                                console.warn('Your markup was truncated, as your component had more than one root node.');
+                            }
                             newTree = newTree[0];
                         }
                         var patches = VDOMDiff(this.vTree, newTree);
