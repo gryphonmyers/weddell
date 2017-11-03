@@ -30,7 +30,6 @@ class Router {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathname);
         }
-        if (typeof hash === 'undefined') hash = location.hash;
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
 
         if (matches) {
@@ -200,7 +199,7 @@ class Router {
                 }
             });
 
-            return this.route(location.pathname);
+            return this.route(location.pathname, location.hash);
         }
         return Promise.resolve();
     }
