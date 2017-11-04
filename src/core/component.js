@@ -136,6 +136,27 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
     }
 
+    queryDOM(query) {
+        return this.nextRender(function(){
+            return document.querySelector(query);
+        });
+    }
+
+    queryDOMAll(query) {
+        return this.nextRender(function(){
+            return document.querySelectorAll(query);
+        });
+    }
+
+    nextRender(func) {
+        return new Promise((resolve) => {
+            this.once('renderdommarkup', evt => {
+                Promise.resolve(func.call(this, evt))
+                    .then(val => resolve(val));
+            })
+        });
+    }
+
     createAction(actionName, actionData) {
         this.trigger('createaction', {actionName, actionData});
     }
