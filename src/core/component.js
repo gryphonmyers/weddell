@@ -58,6 +58,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             store: {
                 value: new Store(Object.assign({
                     $bind: this.bindEvent.bind(this),
+                    $bindValue: this.bindEventValue.bind(this),
                     $act: this.createAction.bind(this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
@@ -274,6 +275,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
             (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
             funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+    }
+
+    bindEventValue(propName, opts) {
+        return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
     markDirty(changedKey) {
