@@ -8,7 +8,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
         constructor(opts) {
             super(opts);
             Object.defineProperties(this, {
-                _callbacks: {value: {}}
+                _callbacks: {value: {'*':[]}}
             });
         }
 
@@ -52,12 +52,12 @@ var EventEmitterMixin = Mixin(function(superClass) {
         }
 
         trigger(eventName, eventObj, thisArg) {
+            eventObj = Object.assign({eventName}, eventObj);
             if (Array.isArray(eventName)) {
                 return eventName.map(evtName => this.trigger(evtName, eventObj, thisArg));
             } else {
-                if (eventName in this._callbacks) {
-                    return this._callbacks[eventName].map(cb => cb.call(thisArg || this, eventObj));
-                }
+                var cbs = eventName in this._callbacks ? this._callbacks[eventName] : [];
+                return cbs.concat(this._callbacks['*']).map(cb => cb.call(thisArg || this, eventObj));
             }
         }
     }

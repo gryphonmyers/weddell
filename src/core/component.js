@@ -397,6 +397,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
+    receiveComponentEvent(component, componentName, evt) {
+        this.trigger('componentevent', Object.assign({component, componentName}, evt));
+        this.trigger('componentevent.' + evt.eventName, Object.assign({component, componentName}, evt));
+        this.trigger('componentevent.' + componentName + '.' + evt.eventName, Object.assign({component, componentName}, evt));
+    }
+
     makeComponentInstance(componentName, index, opts) {
         var instance = new (this.components[componentName])({
             store: defaults({
@@ -404,6 +410,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 $instanceKey: index
             })
         });
+        instance.on('*', this.receiveComponentEvent.bind(this, instance, componentName))
         return instance;
     }
 
