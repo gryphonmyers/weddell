@@ -194,19 +194,27 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return result;
     }
 
-    watch(key, func, shouldWaitForDefined, tempkey) {
+    watch(key, func, shouldWaitForDefined, invokeImmediately) {
         if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
         if (!Array.isArray(key)) {
             key = [key];
         }
-        return this.on('change', function(evt){
+        var checkKeys = function(){
+            var vals = key.map(currKey=>this[currKey]);
+            if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
+                func.apply(this, vals);
+            }
+        };
+
+        var off = this.on('change', function(evt){
             if (includes(key, evt.changedKey)) {
-                var vals = key.map(currKey=>this[currKey]);
-                if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
-                    func.apply(this, vals);
-                }
+                checkKeys.call(this);
             }
         });
+        if (invokeImmediately) {
+            checkKeys.call(this);
+        }
+        return off;
     }
 }
 
