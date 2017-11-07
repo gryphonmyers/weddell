@@ -174,6 +174,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         }
     }
 
+    await(key) {
+        return Promise.resolve(this.getValue(key) || new Promise(resolve => {
+            var off = this.watch(key, vals => {
+                off();
+                resolve(vals);
+            });
+        }));
+    }
+
     evaluateFunctionProperty(key) {
         var dependencyKeys = [];
         var off = this.on('get', function(evt){
