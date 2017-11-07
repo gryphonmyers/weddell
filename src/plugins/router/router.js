@@ -188,13 +188,16 @@ class Router {
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
-                    var split = clickedATag.getAttribute('href').split('#');
-                    var aPath = split[0];
-                    var hash = split[1];
-                    var href = this.matchRoute(aPath, this.routes);
-                    if (aPath && href) {
-                        evt.preventDefault();
-                        this.route(href, hash);
+                    var href = clickedATag.getAttribute('href');
+                    if (href) {
+                        var split = href.split('#');
+                        var aPath = split[0];
+                        var hash = split[1];
+                        href = this.matchRoute(aPath, this.routes);
+                        if (aPath && href) {
+                            evt.preventDefault();
+                            this.route(href, hash);
+                        }
                     }
                 }
             });
