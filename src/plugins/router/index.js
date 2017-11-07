@@ -52,6 +52,9 @@ module.exports = function(_Weddell){
                                         }, Promise.resolve());
                                     }, console.warn);
 
+                            }.bind(this),
+                            onHashChange: function(hash) {
+                                return this.component.nextRender(hash);
                             }.bind(this)
                         });
 

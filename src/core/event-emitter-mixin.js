@@ -52,7 +52,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
         }
 
         trigger(eventName, eventObj, thisArg) {
-            eventObj = Object.assign({eventName}, eventObj);
+            eventObj = Object.assign({}, eventObj, {eventName});
             if (Array.isArray(eventName)) {
                 return eventName.map(evtName => this.trigger(evtName, eventObj, thisArg));
             } else {

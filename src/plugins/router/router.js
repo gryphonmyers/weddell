@@ -11,6 +11,7 @@ class Router {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
+        this.onHashChange = opts.onHashChange;
         this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
@@ -52,14 +53,20 @@ class Router {
                 }
             }))
             .then(results => compact(results))
-            .then(this.onRoute.bind(this, matches), ()=>{})
+            .then(results => this.onRoute ? this.onRoute.call(this, matches, results) : null)
             .then(() => {
                 if (matches.route.replaceState) {
-                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath + (hash || ''));
+                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
                 } else {
-                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath + (hash || ''));
+                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
                 }
-            });
+            })
+            .then(() => hash && this.onHashChange ? this.onHashChange.call(this, hash) : null)
+            .then(hash => {
+                if (hash) {
+                    location.hash = hash
+                }
+            })
 
             this.currentRoute = matches;
         }

@@ -137,24 +137,28 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     queryDOM(query) {
-        return this.nextRender(function(){
-            return document.querySelector(query);
-        });
+        return this.awaitRender()
+            .then(() => document.querySelector(query));
     }
 
     queryDOMAll(query) {
-        return this.nextRender(function(){
-            return document.querySelectorAll(query);
+        return this.awaitRender()
+            .then(() => document.querySelectorAll(query));
+    }
+
+    awaitEvent(eventName, evtObjValidator) {
+        return new Promise((resolve) => {
+            this.once(eventName, evt => {
+                if (!evtObjValidator || evtObjValidator(evt)) {
+                    resolve(evt);
+                }
+            })
         });
     }
 
-    nextRender(func) {
-        return new Promise((resolve) => {
-            this.once('renderdommarkup', evt => {
-                Promise.resolve(func.call(this, evt))
-                    .then(val => resolve(val));
-            })
-        });
+    awaitRender(val) {
+        return this.awaitEvent('renderdommarkup')
+            .then(() => val);
     }
 
     createAction(actionName, actionData) {
@@ -398,9 +402,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     receiveComponentEvent(component, componentName, evt) {
-        this.trigger('componentevent', Object.assign({component, componentName}, evt));
-        this.trigger('componentevent.' + evt.eventName, Object.assign({component, componentName}, evt));
-        this.trigger('componentevent.' + componentName + '.' + evt.eventName, Object.assign({component, componentName}, evt));
+        this.trigger('componentevent', Object.assign({}, evt, {component, componentName}));
+        this.trigger('componentevent.' + evt.eventName, Object.assign({}, evt, {component, componentName}));
+        this.trigger('componentevent.' + componentName + '.' + evt.eventName, Object.assign({}, evt, {component, componentName}));
     }
 
     makeComponentInstance(componentName, index, opts) {
