@@ -54,7 +54,7 @@ module.exports = function(_Weddell){
 
                             }.bind(this),
                             onHashChange: function(hash) {
-                                return this.component.nextRender(hash);
+                                return this.component.awaitRender(hash);
                             }.bind(this)
                         });
 
