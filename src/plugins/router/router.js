@@ -20,8 +20,14 @@ class Router {
 
     route(pathName, hash) {
         var promise = Promise.resolve(null);
+        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
 
-        if (this.currentRoute && pathName === this.currentRoute.fullPath) return null;
+        if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
+            if (hash) {
+                location.hash = hash
+            }
+            return null;
+        }
 
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
@@ -29,9 +35,8 @@ class Router {
             matches = pathName;
         } else if (pathName) {
              //assuming an object was passed to route by named route.
-            var matches = this.compileRouterLink(pathname);
+            var matches = this.compileRouterLink(pathName);
         }
-        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
 
         if (matches) {
             promise = Promise.all(matches.map((currMatch, key) => {
@@ -201,9 +206,8 @@ class Router {
                         var aPath = split[0];
                         var hash = split[1];
                         href = this.matchRoute(aPath, this.routes);
-                        if (aPath && href) {
+                        if (aPath && href && this.route(href, hash)) {
                             evt.preventDefault();
-                            this.route(href, hash);
                         }
                     }
                 }
