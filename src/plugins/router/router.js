@@ -2,10 +2,10 @@ var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var compact = require('array-compact');
-
 var defaultOpts = {};
 
 class Router {
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         this.currentRoute = null;
@@ -18,17 +18,10 @@ class Router {
         }
     }
 
-    route(pathName, hash) {
-        var promise = Promise.resolve(null);
-        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-
+    route(pathName) {
         if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-            if (hash) {
-                location.hash = hash
-            }
-            return null;
+            return Promise.resolve(null);
         }
-
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
@@ -39,7 +32,10 @@ class Router {
         }
 
         if (matches) {
-            promise = Promise.all(matches.map((currMatch, key) => {
+            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
+                return Promise.resolve(null);
+            }
+            var promise = Promise.all(matches.map((currMatch, key) => {
                 if (key === matches.length - 1 && currMatch.route.redirect) {
                     if (typeof currMatch.route.redirect === 'function') {
                         var redirectPath = currMatch.route.redirect.call(this, matches);
@@ -50,7 +46,6 @@ class Router {
                     if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
                     return Promise.reject();
                 }
-
                 if (typeof currMatch.route.handler == 'function') {
                     return Promise.resolve(currMatch.route.handler.call(this, matches));
                 } else {
@@ -59,47 +54,30 @@ class Router {
             }))
             .then(results => compact(results))
             .then(results => this.onRoute ? this.onRoute.call(this, matches, results) : null)
-            .then(() => {
-                if (matches.route.replaceState) {
-                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                } else {
-                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                }
-            })
-            .then(() => hash && this.onHashChange ? this.onHashChange.call(this, hash) : null)
-            .then(hash => {
-                if (hash) {
-                    location.hash = hash
-                }
-            })
+            .then(() => matches);
 
             this.currentRoute = matches;
-        }
 
-        return promise;
+            return promise;
+        }
+        return null;
     }
 
     static getNamedRoute(name, routes, currPath) {
         if (!name) return null;
         if (!currPath) currPath = [];
-
         var matchedRoute = null;
-
         routes.every(route => {
             matchedRoute = route.name === name ? route : matchedRoute;
-
             if (!matchedRoute && route.children) {
                 matchedRoute = this.getNamedRoute(name, route.children, currPath.concat(route));
             }
-
             return !matchedRoute;
         });
-
         if (matchedRoute) {
             matchedRoute = Object.assign({route: matchedRoute}, matchedRoute);
             matchedRoute = Object.assign(currPath.concat(matchedRoute.route), matchedRoute);
         }
-
         return matchedRoute || null;
     }
 
@@ -109,21 +87,16 @@ class Router {
         if (typeof pathName !== 'string') {
             return null;
         }
-
         if (pathName.charAt(0) !== '/' && this.currentRoute) {
             pathName = this.currentRoute.fullPath + pathName;
         }
-
         routes.every((currRoute) => {
             var params = [];
-
             var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(pathObj => pathObj.route).concat(currRoute).reduce((finalPattern, pathObj) => {
                 return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
             }, '');
-
             var match = pathToRegexp(currPattern, params, {}).exec(pathName);
             var newPath = routePath.concat({route: currRoute, match, params})
-
             if (match) {
                 result = newPath;
             }
@@ -142,7 +115,6 @@ class Router {
             }
             return !result;
         });
-
         return result;
     }
 
@@ -166,9 +138,7 @@ class Router {
         /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
-
         var route = Router.getNamedRoute(routeName, this.routes);
-
         if (route) {
             try {
                 var fullPath = pathToRegexp.compile(route.reduce((finalPath, pathRoute) => {
@@ -194,8 +164,11 @@ class Router {
 
     init() {
         if (!this._isInit && this.routes) {
+            // if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             this._isInit = true;
+
             addEventListener('popstate', this.onPopState.bind(this));
+            addEventListener('hashchange', this.hashChange.bind(this));
 
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
@@ -205,22 +178,86 @@ class Router {
                         var split = href.split('#');
                         var aPath = split[0];
                         var hash = split[1];
-                        href = this.matchRoute(aPath, this.routes);
-                        if (aPath && href && this.route(href, hash)) {
+                        var result = this.route(aPath);
+                        if (result) {
                             evt.preventDefault();
+                            result
+                                .then(matches => {
+                                    if (matches) {
+                                        this.pushState(matches.fullPath, hash, {x:0, y:0})
+                                    } else if (hash !== location.hash) {
+                                        this.pushState(location.pathname, hash);
+                                    }
+                                });
                         }
                     }
                 }
             });
-
-            return this.route(location.pathname, location.hash);
+            var result = this.route(location.pathname);
+            return result && result.then(matches => {
+                    if (matches) {
+                        this.replaceState(matches.fullPath, location.hash)
+                    }
+                })
         }
         return Promise.resolve();
     }
 
+    setScrollPosFromHash() {
+
+    }
+
+    pushState(pathName, hash, scrollPos) {
+        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+        if (history.state) {
+            var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
+            //first set our scroll position into previous state so that we can restore it when we navigate back
+            history.replaceState(Object.assign({}, history.state, {scrollPos: currentScrollPos}), document.title, location.pathname + location.hash);
+        }
+        history.pushState({fullPath: pathName, hash, scrollPos}, document.title, pathName + (hash  || ''));
+
+        this.setScrollPos(scrollPos, hash);
+    }
+
+    replaceState(pathName, hash, scrollPos) {
+        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+        var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
+        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos}, document.title, pathName + (hash  || ''));
+
+        this.setScrollPos(scrollPos, hash);
+    }
+
+    hashChange(evt) {
+        if (!history.state) {
+            this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
+        }
+    }
+
+    setScrollPos(scrollPos, hash) {
+        if (hash) {
+            var el = document.querySelector(hash);
+            if (el) {
+                window.scrollTo(el.offsetLeft, el.offsetTop);
+            }
+        } else if (scrollPos) {
+            window.scrollTo(scrollPos.x, scrollPos.y);
+        }
+
+    }
+
     onPopState(evt) {
+        var state = history.state;
+
         if (evt && evt.state) {
-            this.route(evt.state.fullPath);
+            var result = this.route(evt.state.fullPath);
+            if (result) {
+                if (result.then) {
+                    result
+                        .then(matches => window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y))
+                } else {
+                     window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
+                }
+            }
         }
     }
 }

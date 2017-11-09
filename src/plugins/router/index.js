@@ -50,11 +50,12 @@ module.exports = function(_Weddell){
                                             return promise
                                                 .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                         }, Promise.resolve());
-                                    }, console.warn);
+                                    }, console.warn)
+                                    .then(result => this.component.awaitRender(result));
 
                             }.bind(this),
                             onHashChange: function(hash) {
-                                return this.component.awaitRender(hash);
+                                return hash;
                             }.bind(this)
                         });
 
