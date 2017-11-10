@@ -40,19 +40,20 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _tagDirectives: { value: {} }
         });
 
-        var inputMappings = this.constructor._inputMappings && Object.entries(this.constructor._inputMappings)
-            .filter(entry => this.inputs.find(input => input === entry[0]))
-            .reduce((final, entry) => {
-                final[entry[1]] = entry[0];
-                return final;
-            }, {});
+        var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
+                .filter(entry => this.inputs.find(input => input === entry[0]))
+                .reduce((final, entry) => {
+                    final[entry[1]] = entry[0];
+                    return final;
+                }, {}) : {};
 
         Object.defineProperties(this, {
             props: {
                 value: new Store(this.inputs, {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
-                    inputMappings
+                    inputMappings,
+                    shouldEvalFunctions: false
                 })
             },
             store: {
