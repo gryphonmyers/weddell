@@ -40,20 +40,19 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _tagDirectives: { value: {} }
         });
 
-        var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
-                .filter(entry => this.inputs.find(input => input === entry[0]))
-                .reduce((final, entry) => {
-                    final[entry[1]] = entry[0];
-                    return final;
-                }, {}) : {};
+        var inputMappings = this.constructor._inputMappings && Object.entries(this.constructor._inputMappings)
+            .filter(entry => this.inputs.find(input => input === entry[0]))
+            .reduce((final, entry) => {
+                final[entry[1]] = entry[0];
+                return final;
+            }, {});
 
         Object.defineProperties(this, {
             props: {
                 value: new Store(this.inputs, {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
-                    inputMappings,
-                    shouldEvalFunctions: false
+                    inputMappings
                 })
             },
             store: {
@@ -342,6 +341,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
+    assignProps(props) {
+        Object.assign(this.props, Object.entries(props)
+            .filter(entry => includes(this.inputs, entry[0]))
+            .reduce((finalObj, entry) => {
+                finalObj[entry[0]] = entry[1]
+                return finalObj
+            }, {}));
+
+        this.state.$attributes = Object.entries(props)
+            .filter(entry => !includes(this.inputs, entry[0]))
+            .reduce((finalObj, entry) => {
+                finalObj[entry[0]] = entry[1]
+                return finalObj
+            }, {});
+    }
+
     renderMarkup(content, props, targetFormat) {
         this.trigger('beforerendermarkup');
 
@@ -352,21 +367,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
         if (props) {
-            var newProps = Object.entries(props)
-                .filter(entry => includes(this.inputs, entry[0]))
-                .reduce((finalObj, entry) => {
-                    finalObj[entry[0]] = entry[1]
-                    return finalObj
-                }, {});
-
-            Object.assign(this.props, newProps);
-
-            this.state.$attributes = Object.entries(props)
-                .filter(entry => !includes(this.inputs, entry[0]))
-                .reduce((finalObj, entry) => {
-                    finalObj[entry[0]] = entry[1]
-                    return finalObj
-                }, {});
+            this.assignProps(props)
         }
 
         var components = [];

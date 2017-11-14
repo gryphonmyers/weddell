@@ -36,6 +36,7 @@ class Router {
                 return Promise.resolve(null);
             }
             var promise = Promise.all(matches.map((currMatch, key) => {
+
                 if (key === matches.length - 1 && currMatch.route.redirect) {
                     if (typeof currMatch.route.redirect === 'function') {
                         var redirectPath = currMatch.route.redirect.call(this, matches);
@@ -44,17 +45,17 @@ class Router {
                         redirectPath = currMatch.route.redirect;
                     }
                     if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
-                    return Promise.reject();
+                    return Promise.reject(redirectPath);
                 }
-                if (typeof currMatch.route.handler == 'function') {
-                    return Promise.resolve(currMatch.route.handler.call(this, matches));
-                } else {
-                    return currMatch.route.handler;
-                }
+
+                return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
             }))
-            .then(results => compact(results))
-            .then(results => this.onRoute ? this.onRoute.call(this, matches, results) : null)
-            .then(() => matches);
+            .then(results => {
+                return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
+                    .then(() => matches);
+            }, redirectPath => {
+                return this.route(redirectPath)
+            });
 
             this.currentRoute = matches;
 

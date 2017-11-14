@@ -133,14 +133,21 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
     }
 
-    makeComponent(componentInput) {
-        return new (this.Component)({
+    makeComponent() {
+        var component = new (this.Component)({
             isRoot: true,
             targetStylesRenderFormat: this.stylesRenderFormat,
             targetMarkupRenderFormat: this.markupRenderFormat,
             markupTransforms: this.markupTransforms,
             stylesTransforms: this.stylesTransforms
         });
+
+        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
+            finalObj[attr.name] = attr.value;
+            return finalObj;
+        }, {}))
+
+        return component
     }
 
     init() {
@@ -159,7 +166,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     document.head.appendChild(this.styleEl);
                 }
 
-                this.component = this.makeComponent(this.Component);
+                this.component = this.makeComponent();
 
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
