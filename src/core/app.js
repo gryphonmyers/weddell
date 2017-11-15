@@ -104,7 +104,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 return finalArr.concat(styleObj)
             }
             return finalArr;
-        }, []).map(styleObj => styleObj.styles).join('\n\r');
+        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
 
         var styles = [staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
