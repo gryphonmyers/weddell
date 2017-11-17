@@ -398,28 +398,43 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             renderFormat
                         };
 
-                        return Promise.all(Object.entries(this._componentInstances).reduce((finalArr, entry) => {
-                            var componentInstances = Object.values(entry[1]);
-                            var componentName = entry[0];
-                            var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
-                            return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
-                                return renderedComponent.componentOutput.component !== instance
-                            })));
-                        }, []).map(unrenderedComponent => {
-                            if (unrenderedComponent._isMounted) {
-                                unrenderedComponent._isMounted = false;
-                                unrenderedComponent.trigger('unmount');
-                                if (unrenderedComponent.onUnmount) {
-                                   return Promise.resolve(unrenderedComponent.onUnmount.call(unrenderedComponent));
-                                }
-                            }
-                        }))
-                        .then(() => {
-                            this.trigger('rendermarkup', Object.assign({}, evObj));
-                            return evObj;
-                        });
+                        return Promise.all(
+                                Object.entries(this._componentInstances)
+                                    .reduce((finalArr, entry) => {
+                                        var componentInstances = Object.values(entry[1]);
+                                        var componentName = entry[0];
+                                        var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
+                                        return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+                                            return renderedComponent.componentOutput.component !== instance
+                                        })));
+                                    }, [])
+                                    .map(unrenderedComponent => unrenderedComponent.unmount())
+                            )
+                            .then(() => {
+                                this.trigger('rendermarkup', Object.assign({}, evObj));
+                                return evObj;
+                            });
                     });
             });
+    }
+
+    unmount() {
+        return Promise.all(
+                Object.values(this._componentInstances)
+                    .reduce((finalArr, components) => {
+                        return finalArr.concat(Object.values(components));
+                    }, [])
+                    .map(component => component.unmount())
+            )
+            .then(() => {
+                if (this._isMounted) {
+                    this._isMounted = false;
+                    this.trigger('unmount');
+                    if (this.onUnmount) {
+                        return this.onUnmount.call(this);
+                    }
+                }
+            })
     }
 
     receiveComponentEvent(component, componentName, evt) {
