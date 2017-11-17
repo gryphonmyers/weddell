@@ -204,10 +204,6 @@ class Router {
         return Promise.resolve();
     }
 
-    setScrollPosFromHash() {
-
-    }
-
     pushState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         if (history.state) {
@@ -215,6 +211,7 @@ class Router {
             //first set our scroll position into previous state so that we can restore it when we navigate back
             history.replaceState(Object.assign({}, history.state, {scrollPos: currentScrollPos}), document.title, location.pathname + location.hash);
         }
+        location.hash = hash;
         history.pushState({fullPath: pathName, hash, scrollPos}, document.title, pathName + (hash  || ''));
 
         this.setScrollPos(scrollPos, hash);
