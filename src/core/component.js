@@ -293,11 +293,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        var keys = Object.keys(this._componentInstances[entry[0]]);
-                        if (keys.length) {
-                            return Promise.all(Object.values(this._componentInstances[entry[0]]).map(instance => instance.renderStyles()));
-                        }
-                        return [];
+                        var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
+
+                        return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
                     }))
                     .then(components => {
                         var evtObj = {
@@ -400,8 +398,26 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             renderFormat
                         };
 
-                        this.trigger('rendermarkup', Object.assign({}, evObj));
-                        return evObj;
+                        return Promise.all(Object.entries(this._componentInstances).reduce((finalArr, entry) => {
+                            var componentInstances = Object.values(entry[1]);
+                            var componentName = entry[0];
+                            var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
+                            return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+                                return renderedComponent.componentOutput.component !== instance
+                            })));
+                        }, []).map(unrenderedComponent => {
+                            if (unrenderedComponent._isMounted) {
+                                unrenderedComponent._isMounted = false;
+                                unrenderedComponent.trigger('unmount');
+                                if (unrenderedComponent.onUnmount) {
+                                   return Promise.resolve(unrenderedComponent.onUnmount.call(unrenderedComponent));
+                                }
+                            }
+                        }))
+                        .then(() => {
+                            this.trigger('rendermarkup', Object.assign({}, evObj));
+                            return evObj;
+                        });
                     });
             });
     }

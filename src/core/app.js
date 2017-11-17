@@ -99,13 +99,13 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
         };
         var instanceStyles = flattenStyles(evt);
+        
         staticStyles = staticStyles.reduce((finalArr, styleObj) => {
             if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
                 return finalArr.concat(styleObj)
             }
             return finalArr;
         }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
-
         var styles = [staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
 

@@ -100,7 +100,7 @@ module.exports = function(Weddell, pluginOpts) {
 
                         if (node.tagName) {
                             if (node.tagName.toUpperCase() in this._tagDirectives) {
-                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes, isContent);
 
                             } else if (node.tagName === 'CONTENT') {
                                 return this.replaceVNodeComponents(content, null, renderedComponents, true);

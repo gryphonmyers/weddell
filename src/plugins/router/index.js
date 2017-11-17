@@ -109,11 +109,12 @@ module.exports = function(_Weddell){
                         })
                     }
 
-                    compileRouterView(content, props) {
+                    compileRouterView(content, props, isContent) {
                         if (this.currentState) {
                             return this.getComponentInstance(this.currentState.componentName, 'router')
                                 .then(component => component.render('markup', content, props))
                                 .then(routerOutput => {
+                                    this.trigger('rendercomponent', {componentOutput: routerOutput, componentName: this.currentState.componentName, props, isContent});
                                     return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
                                 });
                         }
