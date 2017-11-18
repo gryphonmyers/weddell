@@ -211,7 +211,9 @@ class Router {
             //first set our scroll position into previous state so that we can restore it when we navigate back
             history.replaceState(Object.assign({}, history.state, {scrollPos: currentScrollPos}), document.title, location.pathname + location.hash);
         }
-        location.hash = hash;
+        if (typeof hash === 'string') {
+            location.hash = hash;
+        }
         history.pushState({fullPath: pathName, hash, scrollPos}, document.title, pathName + (hash  || ''));
 
         this.setScrollPos(scrollPos, hash);
