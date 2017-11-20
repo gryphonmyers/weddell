@@ -23,6 +23,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
+        this.styles = opts.styles;
         this.el = opts.el;
         this.styleEl = opts.styleEl;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
@@ -106,7 +107,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             }
             return finalArr;
         }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
-        var styles = [staticStyles, instanceStyles].join('\r\n').trim();
+        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
 
         this.el.classList.remove('rendering-styles');
@@ -150,6 +151,22 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return component
     }
 
+    initRenderLifecycleStyleHooks(rootComponent) {
+        this.component.once('renderdomstyles', evt => {
+            this.el.classList.add('first-styles-render-complete');
+            if (this.el.classList.contains('first-markup-render-complete')) {
+                this.el.classList.add('first-render-complete');
+            }
+        });
+
+        this.component.once('renderdommarkup', evt => {
+            this.el.classList.add('first-markup-render-complete');
+            if (this.el.classList.contains('first-styles-render-complete')) {
+                this.el.classList.add('first-render-complete');
+            }
+        });
+    }
+
     init() {
         Object.seal(this);
         return DOMReady
@@ -164,6 +181,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     this.styleEl = document.createElement('style');
                     this.styleEl.setAttribute('type', 'text/css');
                     document.head.appendChild(this.styleEl);
+                }
+                var appStyles = this.styles;
+                if (appStyles) {
+                    this.renderCSS(appStyles);
                 }
 
                 this.component = this.makeComponent();
@@ -180,19 +201,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     });
                 });
 
-                this.component.once('renderdomstyles', evt => {
-                    this.el.classList.add('first-styles-render-complete');
-                    if (this.el.classList.contains('first-markup-render-complete')) {
-                        this.el.classList.add('first-render-complete');
-                    }
-                });
-
-                this.component.once('renderdommarkup', evt => {
-                    this.el.classList.add('first-markup-render-complete');
-                    if (this.el.classList.contains('first-styles-render-complete')) {
-                        this.el.classList.add('first-render-complete');
-                    }
-                });
+                this.initRenderLifecycleStyleHooks(this.component);
 
                 return this.component.init(this.componentInitOpts)
                     .then(() => {
