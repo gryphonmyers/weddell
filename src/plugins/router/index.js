@@ -25,10 +25,6 @@ module.exports = function(_Weddell){
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
-                                var didRender = false;
-                                var off = this.component.on('markeddirty', evt => {
-                                    didRender = true;
-                                });
                                 return componentNames.reduce((promise, componentName) => {
                                         return promise
                                             .then(currentComponent => {
@@ -50,16 +46,17 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return jobs.reduce((promise, obj) => {
-                                            return promise
-                                                .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
-                                        }, Promise.resolve());
+                                        return Promise.all([
+                                            this.component.awaitRender(),
+                                            jobs.reduce((promise, obj) => {
+                                                return promise
+                                                    .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                            }, Promise.resolve())
+                                        ]);
                                     }, console.warn)
-                                    .then(result => didRender ? this.component.awaitRender(result) : result)
-                                    .then(result => {
-                                        off();
+                                    .then(results => {
                                         this.el.classList.remove('routing');
-                                        return result;
+                                        return results[1];
                                     })
                             }.bind(this),
                             onHashChange: function(hash) {

@@ -30,7 +30,6 @@ class Router {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
         }
-
         if (matches) {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 return Promise.resolve(null);

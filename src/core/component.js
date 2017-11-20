@@ -149,13 +149,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     awaitEvent(eventName, evtObjValidator) {
-        return new Promise((resolve) => {
-            this.once(eventName, evt => {
-                if (!evtObjValidator || evtObjValidator(evt)) {
-                    resolve(evt);
-                }
-            })
+        var resolveProm;
+        var promise = new Promise(function(resolve){
+            resolveProm = resolve;
         });
+        this.once(eventName, function(evt){
+            resolveProm(evt);
+        });
+        return promise;
     }
 
     awaitRender(val) {
