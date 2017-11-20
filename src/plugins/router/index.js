@@ -25,6 +25,10 @@ module.exports = function(_Weddell){
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
+                                var didRender = false;
+                                var off = this.component.on('markeddirty', evt => {
+                                    didRender = true;
+                                });
                                 return componentNames.reduce((promise, componentName) => {
                                         return promise
                                             .then(currentComponent => {
@@ -51,10 +55,12 @@ module.exports = function(_Weddell){
                                                 .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                         }, Promise.resolve());
                                     }, console.warn)
+                                    .then(result => didRender ? this.component.awaitRender(result) : result)
                                     .then(result => {
+                                        off();
                                         this.el.classList.remove('routing');
-                                        return this.component.awaitRender(result);
-                                    });
+                                        return result;
+                                    })
                             }.bind(this),
                             onHashChange: function(hash) {
                                 return hash;
