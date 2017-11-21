@@ -3,6 +3,7 @@ var mix = require('mixwith-es5').mix;
 var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
+var defaults = require('defaults-es6/deep-merge');
 
 var RouterState = mix(class {
     constructor(opts) {
@@ -103,15 +104,17 @@ module.exports = function(_Weddell){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     constructor(opts) {
                         opts.stateClass = RouterState;
-                        super(opts);
+                        var self;
+                        super(defaults(opts, {
+                            store: {
+                                $routerLink: function(){
+                                    return self.compileRouterLink.apply(self, arguments);
+                                }
+                            }
+                        }));
+                        self = this;
 
                         this.addTagDirective('RouterView', this.compileRouterView.bind(this));
-
-                        var routerLocals = {
-                            $routerLink: this.compileRouterLink.bind(this)
-                        };
-                        this.store.assign(routerLocals);
-                        this._locals.assign(routerLocals);
 
                         this.on('init', () => {
                             Object.entries(this.components)

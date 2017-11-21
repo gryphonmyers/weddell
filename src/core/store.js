@@ -19,9 +19,11 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         super();
 
         Object.defineProperties(this, {
+            _initialCalled: {value:{}, writable:true},
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
+            _cache: {value: {}, writable: true},
             _funcProps: {configurable: false,value: {}},
             _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
@@ -77,14 +79,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
         });
 
-        Object.keys(this._funcProps).forEach(key => {
-            this[key] = this.evaluateFunctionProperty(key);
-
-            this.on('change', evt => {
-                if (includes(this._dependencyKeys[key], evt.changedKey)) {
-                    this[key] = this.evaluateFunctionProperty(key);
-                }
-            });
+        this.on('change', evt => {
+            delete this._cache[evt.changedKey];
         });
     }
 
@@ -137,6 +133,20 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     getValue(key) {
         var i = 0;
         var val;
+
+        if (this._cache[key]) {
+            return this._cache[key];
+        }
+
+        if (key in this._funcProps && !this._initialCalled[key]) {
+            this._initialCalled[key] = true;
+            val = this[key] = this.evaluateFunctionProperty(key);
+            this.on('change', evt => {
+                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                    this[key] = this.evaluateFunctionProperty(key);
+                }
+            });
+        }
         
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];

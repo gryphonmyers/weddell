@@ -16,6 +16,7 @@
     "browserify": "^14.4.0",
     "debounce": "^1.0.2",
     "deep-equal": "^1.0.1",
+    "defaults-es6": "^1.1.0",
     "document-ready-promise": "^3.0.1",
     "dot": "^1.1.2",
     "fetch": "^1.1.0",
