@@ -84,6 +84,72 @@ function idx(arr, pos, end) {
 }
 
 },{}],3:[function(require,module,exports){
+(function (global){
+'use strict';
+
+// there's 3 implementations written in increasing order of efficiency
+
+// 1 - no Set type is defined
+function uniqNoSet(arr) {
+	var ret = [];
+
+	for (var i = 0; i < arr.length; i++) {
+		if (ret.indexOf(arr[i]) === -1) {
+			ret.push(arr[i]);
+		}
+	}
+
+	return ret;
+}
+
+// 2 - a simple Set type is defined
+function uniqSet(arr) {
+	var seen = new Set();
+	return arr.filter(function (el) {
+		if (!seen.has(el)) {
+			seen.add(el);
+			return true;
+		}
+
+		return false;
+	});
+}
+
+// 3 - a standard Set type is defined and it has a forEach method
+function uniqSetWithForEach(arr) {
+	var ret = [];
+
+	(new Set(arr)).forEach(function (el) {
+		ret.push(el);
+	});
+
+	return ret;
+}
+
+// V8 currently has a broken implementation
+// https://github.com/joyent/node/issues/8449
+function doesForEachActuallyWork() {
+	var ret = false;
+
+	(new Set([true])).forEach(function (el) {
+		ret = el;
+	});
+
+	return ret === true;
+}
+
+if ('Set' in global) {
+	if (typeof Set.prototype.forEach === 'function' && doesForEachActuallyWork()) {
+		module.exports = uniqSetWithForEach;
+	} else {
+		module.exports = uniqSet;
+	}
+} else {
+	module.exports = uniqNoSet;
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],4:[function(require,module,exports){
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -141,7 +207,7 @@ module.exports = function debounce(func, wait, immediate){
   return debounced;
 };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -237,7 +303,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":5,"./lib/keys.js":6}],5:[function(require,module,exports){
+},{"./lib/is_arguments.js":6,"./lib/keys.js":7}],6:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -259,7 +325,7 @@ function unsupported(object){
     false;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -270,7 +336,7 @@ function shim (obj) {
   return keys;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (document, promise) {
   if (typeof module !== 'undefined') module.exports = promise
   else document.ready = promise
@@ -297,7 +363,7 @@ function shim (obj) {
   })
 })
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // doT.js
 // 2011-2014, Laura Doktorova, https://github.com/olado/doT
 // Licensed under the MIT license.
@@ -443,7 +509,7 @@ function shim (obj) {
 	};
 }());
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*!
  * for-in <https://github.com/jonschlinkert/for-in>
  *
@@ -461,7 +527,7 @@ module.exports = function forIn(obj, fn, thisArg) {
   }
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*!
  * for-own <https://github.com/jonschlinkert/for-own>
  *
@@ -482,7 +548,7 @@ module.exports = function forOwn(obj, fn, thisArg) {
   });
 };
 
-},{"for-in":9}],11:[function(require,module,exports){
+},{"for-in":10}],12:[function(require,module,exports){
 /*!
  * isobject <https://github.com/jonschlinkert/isobject>
  *
@@ -496,7 +562,7 @@ module.exports = function isObject(val) {
   return val != null && typeof val === 'object' && Array.isArray(val) === false;
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -638,7 +704,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }();
 });
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1015,7 +1081,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -1037,7 +1103,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":15,"array-slice":2}],15:[function(require,module,exports){
+},{"./mutable":16,"array-slice":2}],16:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -1074,7 +1140,7 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":1,"array-slice":2,"for-own":10,"isobject":11}],16:[function(require,module,exports){
+},{"array-each":1,"array-slice":2,"for-own":11,"isobject":12}],17:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1129,7 +1195,7 @@ var ActionDispatcher = function (_mix$with) {
 
 module.exports = ActionDispatcher;
 
-},{"./event-emitter-mixin":19,"mixwith-es5":12}],17:[function(require,module,exports){
+},{"./event-emitter-mixin":20,"mixwith-es5":13}],18:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1171,6 +1237,7 @@ var App = function (_mix$with) {
 
         var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, opts));
 
+        _this.styles = opts.styles;
         _this.el = opts.el;
         _this.styleEl = opts.styleEl;
         _this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
@@ -1234,12 +1301,39 @@ var App = function (_mix$with) {
         value: function renderStyles(evt) {
             var _this2 = this;
 
+            var staticStyles = [];
             var flattenStyles = function flattenStyles(obj) {
-                var childStyles = obj.components ? obj.components.map(flattenStyles).join('') : '';
-                var styles = obj.output ? obj.output : '';
-                return _this2.childStylesFirst ? childStyles + styles : styles + childStyles;
+                var childStyles = obj.components ? obj.components.map(flattenStyles).join('\r\n') : '';
+                var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : obj.output ? obj.output : '';
+
+                if (obj.staticStyles) {
+                    var staticObj = {
+                        class: obj.component.constructor,
+                        styles: obj.staticStyles
+                    };
+                    if (_this2.childStylesFirst) {
+                        staticStyles.unshift(staticObj);
+                    } else {
+                        staticStyles.push(staticObj);
+                    }
+                }
+
+                return (_this2.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
             };
-            this.renderCSS(flattenStyles(evt));
+            var instanceStyles = flattenStyles(evt);
+
+            staticStyles = staticStyles.reduce(function (finalArr, styleObj) {
+                if (!styleObj.class._BaseClass || !finalArr.some(function (otherStyleObj) {
+                    return otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass;
+                })) {
+                    return finalArr.concat(styleObj);
+                }
+                return finalArr;
+            }, []).map(function (styleObj) {
+                return typeof styleObj.styles === 'string' ? styleObj.styles : '';
+            }).join('\n\r');
+            var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
+            this.renderCSS(styles);
 
             this.el.classList.remove('rendering-styles');
 
@@ -1267,68 +1361,86 @@ var App = function (_mix$with) {
         }
     }, {
         key: 'makeComponent',
-        value: function makeComponent(componentInput) {
-            return new this.Component({
+        value: function makeComponent() {
+            var component = new this.Component({
                 isRoot: true,
                 targetStylesRenderFormat: this.stylesRenderFormat,
                 targetMarkupRenderFormat: this.markupRenderFormat,
                 markupTransforms: this.markupTransforms,
                 stylesTransforms: this.stylesTransforms
             });
+
+            component.assignProps(Object.values(this.el.attributes).reduce(function (finalObj, attr) {
+                finalObj[attr.name] = attr.value;
+                return finalObj;
+            }, {}));
+
+            return component;
+        }
+    }, {
+        key: 'initRenderLifecycleStyleHooks',
+        value: function initRenderLifecycleStyleHooks(rootComponent) {
+            var _this3 = this;
+
+            this.component.once('renderdomstyles', function (evt) {
+                _this3.el.classList.add('first-styles-render-complete');
+                if (_this3.el.classList.contains('first-markup-render-complete')) {
+                    _this3.el.classList.add('first-render-complete');
+                }
+            });
+
+            this.component.once('renderdommarkup', function (evt) {
+                _this3.el.classList.add('first-markup-render-complete');
+                if (_this3.el.classList.contains('first-styles-render-complete')) {
+                    _this3.el.classList.add('first-render-complete');
+                }
+            });
         }
     }, {
         key: 'init',
         value: function init() {
-            var _this3 = this;
+            var _this4 = this;
 
             Object.seal(this);
             return DOMReady.then(function () {
-                if (typeof _this3.el == 'string') {
-                    _this3.el = document.querySelector(_this3.el);
+                if (typeof _this4.el == 'string') {
+                    _this4.el = document.querySelector(_this4.el);
                 }
 
-                if (typeof _this3.styleEl == 'string') {
-                    _this3.styleEl = document.querySelector(_this3.styleEl);
-                } else if (!_this3.styleEl) {
-                    _this3.styleEl = document.createElement('style');
-                    _this3.styleEl.setAttribute('type', 'text/css');
-                    document.head.appendChild(_this3.styleEl);
+                if (typeof _this4.styleEl == 'string') {
+                    _this4.styleEl = document.querySelector(_this4.styleEl);
+                } else if (!_this4.styleEl) {
+                    _this4.styleEl = document.createElement('style');
+                    _this4.styleEl.setAttribute('type', 'text/css');
+                    document.head.appendChild(_this4.styleEl);
+                }
+                var appStyles = _this4.styles;
+                if (appStyles) {
+                    _this4.renderCSS(appStyles);
                 }
 
-                _this3.component = _this3.makeComponent(_this3.Component);
+                _this4.component = _this4.makeComponent();
 
-                _this3.trigger('createcomponent', { component: _this3.component });
-                _this3.trigger('createrootcomponent', { component: _this3.component });
-                _this3.component.on('createcomponent', function (evt) {
-                    return _this3.trigger('createcomponent', Object.assign({}, evt));
+                _this4.trigger('createcomponent', { component: _this4.component });
+                _this4.trigger('createrootcomponent', { component: _this4.component });
+                _this4.component.on('createcomponent', function (evt) {
+                    return _this4.trigger('createcomponent', Object.assign({}, evt));
                 });
 
-                _this3.component.on('markeddirty', function (evt) {
+                _this4.component.on('markeddirty', function (evt) {
                     requestAnimationFrame(function () {
-                        _this3.el.classList.add('rendering-' + evt.pipelineName);
-                        _this3.el.classList.add('rendering');
-                        _this3.component.render(evt.pipelineName);
+                        _this4.el.classList.add('rendering-' + evt.pipelineName);
+                        _this4.el.classList.add('rendering');
+                        _this4.component.render(evt.pipelineName);
                     });
                 });
 
-                _this3.component.once('renderdomstyles', function (evt) {
-                    _this3.el.classList.add('first-styles-render-complete');
-                    if (_this3.el.classList.contains('first-markup-render-complete')) {
-                        _this3.el.classList.add('first-render-complete');
-                    }
-                });
+                _this4.initRenderLifecycleStyleHooks(_this4.component);
 
-                _this3.component.once('renderdommarkup', function (evt) {
-                    _this3.el.classList.add('first-markup-render-complete');
-                    if (_this3.el.classList.contains('first-styles-render-complete')) {
-                        _this3.el.classList.add('first-render-complete');
-                    }
-                });
-
-                return _this3.component.init(_this3.componentInitOpts).then(function () {
-                    _this3.component.on('rendermarkup', debounce(_this3.renderMarkup.bind(_this3), _this3.renderInterval));
-                    _this3.component.on('renderstyles', debounce(_this3.renderStyles.bind(_this3), _this3.renderInterval));
-                    _this3.component.render();
+                return _this4.component.init(_this4.componentInitOpts).then(function () {
+                    _this4.component.on('rendermarkup', debounce(_this4.renderMarkup.bind(_this4), _this4.renderInterval));
+                    _this4.component.on('renderstyles', debounce(_this4.renderStyles.bind(_this4), _this4.renderInterval));
+                    _this4.component.render();
                 });
             });
         }
@@ -1339,7 +1451,7 @@ var App = function (_mix$with) {
 
 module.exports = App;
 
-},{"./action-dispatcher":16,"./component":18,"./event-emitter-mixin":19,"./sig":21,"debounce":3,"document-ready-promise":7,"mixwith-es5":12,"object.defaults/immutable":14}],18:[function(require,module,exports){
+},{"./action-dispatcher":17,"./component":19,"./event-emitter-mixin":20,"./sig":22,"debounce":4,"document-ready-promise":8,"mixwith-es5":13,"object.defaults/immutable":15}],19:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1371,6 +1483,8 @@ var defaultOpts = {
 
 var defaultInitOpts = {};
 
+var _generatedComponentClasses = [];
+
 var Component = function (_mix$with) {
     _inherits(Component, _mix$with);
 
@@ -1387,22 +1501,32 @@ var Component = function (_mix$with) {
 
         Object.defineProperties(_this, {
             isRoot: { value: opts.isRoot },
+            _isMounted: { writable: true, value: false },
             _isInit: { writable: true, value: false },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id: { value: generateHash() },
             inputs: { value: opts.inputs },
             renderers: { value: {} },
-            _tagDirectives: { value: {} }
+            _tagDirectives: { value: {} },
+            _componentListenerCallbacks: { value: {}, writable: true }
         });
 
-        var inputMappings = _this.constructor._inputMappings;
+        var inputMappings = _this.constructor._inputMappings ? Object.entries(_this.constructor._inputMappings).filter(function (entry) {
+            return _this.inputs.find(function (input) {
+                return input === entry[0];
+            });
+        }).reduce(function (final, entry) {
+            final[entry[1]] = entry[0];
+            return final;
+        }, {}) : {};
 
         Object.defineProperties(_this, {
             props: {
                 value: new Store(_this.inputs, {
                     shouldMonitorChanges: true,
                     extends: opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null,
-                    inputMappings: inputMappings
+                    inputMappings: inputMappings,
+                    shouldEvalFunctions: false
                 })
             },
             store: {
@@ -1418,11 +1542,13 @@ var Component = function (_mix$with) {
 
         Object.defineProperty(_this, 'state', {
             value: new Store(defaults({
+                $attributes: null,
                 $id: function $id() {
                     return _this._id;
                 }
             }, opts.state), {
-                overrides: [_this.props]
+                overrides: [_this.props],
+                proxies: [_this.store]
             })
         });
 
@@ -1455,7 +1581,7 @@ var Component = function (_mix$with) {
                     inputFormat: new Sig(opts.stylesFormat),
                     transforms: opts.stylesTransforms,
                     targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || null
+                    input: opts.stylesTemplate || opts.styles || ' '
                 })
             }
         });
@@ -1487,6 +1613,39 @@ var Component = function (_mix$with) {
     }
 
     _createClass(Component, [{
+        key: 'queryDOM',
+        value: function queryDOM(query) {
+            return this.awaitRender().then(function () {
+                return document.querySelector(query);
+            });
+        }
+    }, {
+        key: 'queryDOMAll',
+        value: function queryDOMAll(query) {
+            return this.awaitRender().then(function () {
+                return document.querySelectorAll(query);
+            });
+        }
+    }, {
+        key: 'awaitEvent',
+        value: function awaitEvent(eventName, evtObjValidator) {
+            var resolveProm;
+            var promise = new Promise(function (resolve) {
+                resolveProm = resolve;
+            });
+            this.once(eventName, function (evt) {
+                resolveProm(evt);
+            });
+            return promise;
+        }
+    }, {
+        key: 'awaitRender',
+        value: function awaitRender(val) {
+            return this.awaitEvent('renderdommarkup').then(function () {
+                return val;
+            });
+        }
+    }, {
         key: 'createAction',
         value: function createAction(actionName, actionData) {
             this.trigger('createaction', { actionName: actionName, actionData: actionData });
@@ -1517,8 +1676,20 @@ var Component = function (_mix$with) {
             if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
                 return ComponentClass;
             } else if (typeof ComponentClass === 'function') {
-                // We got a non-Component class function, so we assuming it is a component factory function
-                return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+                // We got a non-Component class function, so we assume it is a component factory function
+                var match = this.constructor.generatedComponentClasses.find(function (compClass) {
+                    return compClass.func === ComponentClass;
+                });
+                if (match) {
+                    return match.class;
+                } else {
+                    var newClass = ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+                    this.constructor.generatedComponentClasses.push({
+                        func: ComponentClass,
+                        class: newClass
+                    });
+                    return newClass;
+                }
             } else {
                 //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
                 throw "Unsupported component input";
@@ -1542,6 +1713,7 @@ var Component = function (_mix$with) {
             var stylesTransforms = this._pipelines.styles.transforms;;
 
             var obj = {};
+
             obj[componentName] = function (_ChildComponent) {
                 _inherits(_class, _ChildComponent);
 
@@ -1570,7 +1742,9 @@ var Component = function (_mix$with) {
 
                 return _class;
             }(ChildComponent);
+
             this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
+            obj[componentName]._BaseClass = ChildComponent;
             obj[componentName]._initOpts = initOpts;
             obj[componentName]._inputMappings = inputMappings;
             obj[componentName]._id = generateHash();
@@ -1614,16 +1788,17 @@ var Component = function (_mix$with) {
 
             return this._pipelines.styles.render().then(function (output) {
                 return Promise.all(Object.entries(_this4.components).map(function (entry) {
-                    var keys = Object.keys(_this4._componentInstances[entry[0]]);
-                    if (keys.length) {
-                        //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
-                        //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                        return _this4._componentInstances[entry[0]][keys[0]].renderStyles(); //entry[1].renderStyles();
-                    }
-                    return { component: _this4, output: '', wasRenderered: false };
+                    var mountedComponents = Object.values(_this4._componentInstances[entry[0]]).filter(function (instance) {
+                        return instance._isMounted;
+                    });
+
+                    return Promise.all(mountedComponents.map(function (instance) {
+                        return instance.renderStyles();
+                    }));
                 })).then(function (components) {
                     var evtObj = {
                         output: output,
+                        staticStyles: _this4.constructor.styles || null,
                         component: _this4,
                         components: components,
                         wasRendered: true,
@@ -1667,9 +1842,28 @@ var Component = function (_mix$with) {
             });
         }
     }, {
+        key: 'assignProps',
+        value: function assignProps(props) {
+            var _this6 = this;
+
+            Object.assign(this.props, Object.entries(props).filter(function (entry) {
+                return includes(_this6.inputs, entry[0]);
+            }).reduce(function (finalObj, entry) {
+                finalObj[entry[0]] = entry[1];
+                return finalObj;
+            }, {}));
+
+            this.state.$attributes = Object.entries(props).filter(function (entry) {
+                return !includes(_this6.inputs, entry[0]);
+            }).reduce(function (finalObj, entry) {
+                finalObj[entry[0]] = entry[1];
+                return finalObj;
+            }, {});
+        }
+    }, {
         key: 'renderMarkup',
         value: function renderMarkup(content, props, targetFormat) {
-            var _this6 = this;
+            var _this7 = this;
 
             this.trigger('beforerendermarkup');
 
@@ -1680,41 +1874,88 @@ var Component = function (_mix$with) {
             }
 
             if (props) {
-                Object.assign(this.props, Object.entries(props).filter(function (entry) {
-                    var result = includes(_this6.inputs, entry[0]);
-                    if (!result) throw "Unsupported prop: '" + entry[0] + "' (hint: is this key in your inputs?)";
-                    return result;
-                }).reduce(function (finalObj, entry) {
-                    finalObj[entry[0]] = entry[1];
-                    return finalObj;
-                }, {}));
+                this.assignProps(props);
             }
 
-            var components = {};
+            var components = [];
             var off = this.on('rendercomponent', function (componentResult) {
                 if (!(componentResult.componentName in components)) {
                     components[componentResult.componentName] = [];
                 }
                 components[componentResult.componentName].push(componentResult);
+                components.push(componentResult);
             });
-            return pipeline.render(targetFormat).then(function (output) {
+            return Promise.resolve(!this._isMounted && this.onMount ? this.onMount.call(this) : null).then(function () {
+                if (!_this7._isMounted) _this7._isMounted = true;
+                return pipeline.render(targetFormat);
+            }).then(function (output) {
                 var renderFormat = targetFormat.val;
-                if (!(renderFormat in _this6.renderers)) {
+                if (!(renderFormat in _this7.renderers)) {
                     throw "No appropriate component markup renderer found for format: " + renderFormat;
                 }
-                return _this6.renderers[renderFormat].call(_this6, output, content).then(function (output) {
+                return _this7.renderers[renderFormat].call(_this7, output, content).then(function (output) {
                     off();
                     var evObj = {
                         output: output,
-                        component: _this6,
-                        id: _this6._id,
+                        component: _this7,
+                        id: _this7._id,
                         components: components,
                         renderFormat: renderFormat
                     };
 
-                    _this6.trigger('rendermarkup', Object.assign({}, evObj));
-                    return evObj;
+                    return Promise.all(Object.entries(_this7._componentInstances).reduce(function (finalArr, entry) {
+                        var componentInstances = Object.values(entry[1]);
+                        var componentName = entry[0];
+                        var renderedComponents = components[componentName] || components[componentName.toUpperCase()] || [];
+                        return finalArr.concat(componentInstances.filter(function (instance) {
+                            return renderedComponents.every(function (renderedComponent) {
+                                return renderedComponent.componentOutput.component !== instance;
+                            });
+                        }));
+                    }, []).map(function (unrenderedComponent) {
+                        return unrenderedComponent.unmount();
+                    })).then(function () {
+                        _this7.trigger('rendermarkup', Object.assign({}, evObj));
+                        return evObj;
+                    });
                 });
+            });
+        }
+    }, {
+        key: 'addComponentEvents',
+        value: function addComponentEvents(componentName, childComponent, index) {
+            var _this8 = this;
+
+            if (this.constructor.componentEventListeners && this.constructor.componentEventListeners[componentName]) {
+                if (!(componentName in this._componentListenerCallbacks)) {
+                    this._componentListenerCallbacks[componentName] = {};
+                }
+                this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[componentName]).map(function (entry) {
+                    return childComponent.on(entry[0], function () {
+                        if (childComponent._isMounted) {
+                            entry[1].apply(this, arguments);
+                        }
+                    }.bind(_this8));
+                });
+            }
+        }
+    }, {
+        key: 'unmount',
+        value: function unmount() {
+            var _this9 = this;
+
+            return Promise.all(Object.values(this._componentInstances).reduce(function (finalArr, components) {
+                return finalArr.concat(Object.values(components));
+            }, []).map(function (component) {
+                return component.unmount();
+            })).then(function () {
+                if (_this9._isMounted) {
+                    _this9._isMounted = false;
+                    _this9.trigger('unmount');
+                    if (_this9.onUnmount) {
+                        return _this9.onUnmount.call(_this9);
+                    }
+                }
             });
         }
     }, {
@@ -1726,6 +1967,7 @@ var Component = function (_mix$with) {
                     $instanceKey: index
                 })
             });
+            this.addComponentEvents(componentName, instance, index);
             return instance;
         }
     }, {
@@ -1734,7 +1976,8 @@ var Component = function (_mix$with) {
             var instances = this._componentInstances[componentName];
             if (instances && !(index in instances)) {
                 this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
-                return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
+
+                return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.components[componentName]._initOpts);
             }
             return Promise.resolve(instances ? instances[index] : null);
         }
@@ -1743,6 +1986,14 @@ var Component = function (_mix$with) {
         value: function cleanupComponentInstances() {
             //TODO right now, if a component becomes unused, it will continue to sit in memory and possibly generate events. We should probably clean them up.
         }
+    }], [{
+        key: 'generatedComponentClasses',
+        get: function get() {
+            return _generatedComponentClasses;
+        },
+        set: function set(val) {
+            return _generatedComponentClasses = val;
+        }
     }]);
 
     return Component;
@@ -1750,7 +2001,7 @@ var Component = function (_mix$with) {
 
 module.exports = Component;
 
-},{"../utils/includes":29,"../utils/make-hash":30,"./event-emitter-mixin":19,"./sig":21,"mixwith-es5":12,"object.defaults/immutable":14}],19:[function(require,module,exports){
+},{"../utils/includes":30,"../utils/make-hash":31,"./event-emitter-mixin":20,"./sig":22,"mixwith-es5":13,"object.defaults/immutable":15}],20:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1762,8 +2013,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var Mixin = require('mixwith-es5').Mixin;
-var hasMixin = require('mixwith-es5').hasMixin;
-var defaults = require('object.defaults/immutable');
 var includes = require('../utils/includes');
 
 var EventEmitterMixin = Mixin(function (superClass) {
@@ -1844,16 +2093,16 @@ var EventEmitterMixin = Mixin(function (superClass) {
             value: function trigger(eventName, eventObj, thisArg) {
                 var _this3 = this;
 
+                eventObj = Object.assign({}, eventObj, { eventName: eventName });
                 if (Array.isArray(eventName)) {
                     return eventName.map(function (evtName) {
                         return _this3.trigger(evtName, eventObj, thisArg);
                     });
                 } else {
-                    if (eventName in this._callbacks) {
-                        return this._callbacks[eventName].map(function (cb) {
-                            return cb.call(thisArg || _this3, eventObj);
-                        });
-                    }
+                    var cbs = eventName in this._callbacks ? this._callbacks[eventName] : [];
+                    return cbs.map(function (cb) {
+                        return cb.call(thisArg || _this3, eventObj);
+                    });
                 }
             }
         }]);
@@ -1864,7 +2113,7 @@ var EventEmitterMixin = Mixin(function (superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":29,"mixwith-es5":12,"object.defaults/immutable":14}],20:[function(require,module,exports){
+},{"../utils/includes":30,"mixwith-es5":13}],21:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2036,7 +2285,7 @@ var Pipeline = function (_mix$with) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":19,"mixwith-es5":12}],21:[function(require,module,exports){
+},{"./event-emitter-mixin":20,"mixwith-es5":13}],22:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -2197,7 +2446,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -2217,6 +2466,7 @@ var includes = require('../utils/includes');
 var difference = require('../utils/difference');
 var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
+var uniq = require('array-uniq');
 
 var defaultOpts = {
     shouldMonitorChanges: true,
@@ -2235,12 +2485,15 @@ var Store = function (_mix$with) {
         var _this = _possibleConstructorReturn(this, (Store.__proto__ || Object.getPrototypeOf(Store)).call(this));
 
         Object.defineProperties(_this, {
+            _initialCalled: { value: {}, writable: true },
             shouldMonitorChanges: { value: opts.shouldMonitorChanges },
             shouldEvalFunctions: { value: opts.shouldEvalFunctions },
             _data: { configurable: false, value: {} },
-            _dependencyKeys: { configurable: false, value: {} },
-            _dependentKeys: { configurable: false, value: {} },
+            _cache: { value: {}, writable: true },
+            _funcProps: { configurable: false, value: {} },
+            _funcPropHandlerRemovers: { configurable: false, value: {} },
             _proxyObjs: { configurable: false, value: {} },
+            _dependencyKeys: { configurable: false, value: [] },
             _proxyProps: { configurable: false, value: {} },
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
@@ -2291,6 +2544,10 @@ var Store = function (_mix$with) {
                 _this.trigger('get', Object.assign({}, evt));
             });
         });
+
+        _this.on('change', function (evt) {
+            delete _this._cache[evt.changedKey];
+        });
         return _this;
     }
 
@@ -2300,22 +2557,22 @@ var Store = function (_mix$with) {
             if (!(key in this)) {
                 if (!isReadOnly) {
                     var setter = function (newValue) {
-                        var _this2 = this;
-
                         if (this.shouldMonitorChanges) {
                             var oldValue = this._data[key];
                             if (oldValue && (typeof oldValue === 'undefined' ? 'undefined' : _typeof(oldValue)) === "object") {
                                 oldValue = Object.assign({}, oldValue);
                             }
                         }
-                        this._data[key] = newValue;
-                        if (this.shouldMonitorChanges) {
-                            if (!deepEqual(newValue, oldValue)) {
-                                this.trigger('change', { changedKey: key, newValue: newValue, oldValue: oldValue });
-                                if (key in this._dependentKeys) {
-                                    this._dependentKeys[key].forEach(function (dependentKey) {
-                                        _this2.trigger('change', { changedKey: dependentKey, changedDependencyKey: key, newDependencyValue: newValue, oldDependencyValue: oldValue });
-                                    });
+
+                        if (this.shouldEvalFunctions && typeof newValue === 'function') {
+                            this._funcProps[key] = newValue;
+                        } else {
+                            this._data[key] = newValue;
+
+                            if (this.shouldMonitorChanges) {
+
+                                if (!deepEqual(newValue, oldValue)) {
+                                    this.trigger('change', { changedKey: key, newValue: newValue, oldValue: oldValue });
                                 }
                             }
                         }
@@ -2328,9 +2585,6 @@ var Store = function (_mix$with) {
                     get: function () {
                         var value = this.getValue(key);
                         this.trigger('get', { key: key, value: value });
-                        if (this.shouldEvalFunctions && typeof this._data[key] === 'function') {
-                            return this.evaluateFunctionProperty(key);
-                        }
                         return value;
                     }.bind(this),
                     set: setter
@@ -2346,8 +2600,24 @@ var Store = function (_mix$with) {
     }, {
         key: 'getValue',
         value: function getValue(key) {
+            var _this2 = this;
+
             var i = 0;
             var val;
+
+            if (this._cache[key]) {
+                return this._cache[key];
+            }
+
+            if (key in this._funcProps && !this._initialCalled[key]) {
+                this._initialCalled[key] = true;
+                val = this[key] = this.evaluateFunctionProperty(key);
+                this.on('change', function (evt) {
+                    if (includes(_this2._dependencyKeys[key], evt.changedKey)) {
+                        _this2[key] = _this2.evaluateFunctionProperty(key);
+                    }
+                });
+            }
 
             while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
                 val = this.overrides[i][key];
@@ -2355,7 +2625,7 @@ var Store = function (_mix$with) {
             }
 
             i = 0;
-            if (!val) {
+            if (typeof val === 'undefined' || val === null) {
                 val = this._data[key];
             }
 
@@ -2392,72 +2662,58 @@ var Store = function (_mix$with) {
             }
         }
     }, {
+        key: 'await',
+        value: function _await(key) {
+            var _this4 = this;
+
+            return Promise.resolve(this.getValue(key) || new Promise(function (resolve) {
+                var off = _this4.watch(key, function (vals) {
+                    off();
+                    resolve(vals);
+                });
+            }));
+        }
+    }, {
         key: 'evaluateFunctionProperty',
         value: function evaluateFunctionProperty(key) {
             var dependencyKeys = [];
             var off = this.on('get', function (evt) {
                 dependencyKeys.push(evt.key);
             });
-            this.trigger('evaluate.before', { key: key });
-            var result = this._data[key].call(this);
-            this.trigger('evaluate', { key: key });
+            var result = this._funcProps[key].call(this);
             off();
-
-            this.setDependencyKeys(key, dependencyKeys);
-
+            this._dependencyKeys[key] = uniq(dependencyKeys);
             return result;
         }
     }, {
-        key: 'setDependencyKeys',
-        value: function setDependencyKeys(key, dependencyKeys) {
-            if (key in this._dependencyKeys) {
-                var unusedKeys = difference(this._dependencyKeys[key], dependencyKeys);
-                var newKeys = difference(dependencyKeys, this._dependencyKeys[key]);
-            } else {
-                unusedKeys = [];
-                newKeys = dependencyKeys;
-            }
-
-            newKeys.forEach(function (newKey) {
-                if (!(newKey in this._dependentKeys)) {
-                    this._dependentKeys[newKey] = [key];
-                } else if (!includes(this._dependentKeys[newKey], key)) {
-                    this._dependentKeys[newKey] = this._dependentKeys[newKey].concat(key);
-                }
-            }.bind(this));
-
-            unusedKeys.forEach(function (unusedKey) {
-                if (unusedKey in this._dependentKeys) {
-                    var i = this._dependentKeys[unusedKey].indexOf(key);
-                    if (i > -1) {
-                        this._dependentKeys[unusedKey].splice(i, 1);
-                    }
-                }
-            }.bind(this));
-
-            return this._dependencyKeys[key] = dependencyKeys;
-        }
-    }, {
         key: 'watch',
-        value: function watch(key, func, shouldWaitForDefined) {
+        value: function watch(key, func, shouldWaitForDefined, invokeImmediately) {
             if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
             if (!Array.isArray(key)) {
                 key = [key];
             }
-            this.on('change', function (evt) {
-                var _this4 = this;
+            var checkKeys = function checkKeys() {
+                var _this5 = this;
 
+                var vals = key.map(function (currKey) {
+                    return _this5[currKey];
+                });
+                if (!shouldWaitForDefined || vals.every(function (val) {
+                    return typeof val !== 'undefined';
+                })) {
+                    func.apply(this, vals);
+                }
+            };
+
+            var off = this.on('change', function (evt) {
                 if (includes(key, evt.changedKey)) {
-                    var vals = key.map(function (currKey) {
-                        return _this4[currKey];
-                    });
-                    if (!shouldWaitForDefined || vals.every(function (val) {
-                        return typeof val !== 'undefined';
-                    })) {
-                        func.apply(this, vals);
-                    }
+                    checkKeys.call(this);
                 }
             });
+            if (invokeImmediately) {
+                checkKeys.call(this);
+            }
+            return off;
         }
     }]);
 
@@ -2466,7 +2722,7 @@ var Store = function (_mix$with) {
 
 module.exports = Store;
 
-},{"../utils/difference":28,"../utils/includes":29,"../utils/make-hash":30,"./event-emitter-mixin":19,"deep-equal":4,"mixwith-es5":12,"object.defaults/immutable":14}],23:[function(require,module,exports){
+},{"../utils/difference":29,"../utils/includes":30,"../utils/make-hash":31,"./event-emitter-mixin":20,"array-uniq":3,"deep-equal":5,"mixwith-es5":13,"object.defaults/immutable":15}],24:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2538,7 +2794,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2637,7 +2893,7 @@ Object.values(_Weddell.classes).forEach(function (commonClass) {
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":29,"./app":17,"./component":18,"./pipeline":20,"./sig":21,"./store":22,"./transform":23,"mixwith-es5":12}],25:[function(require,module,exports){
+},{"../utils/includes":30,"./app":18,"./component":19,"./pipeline":21,"./sig":22,"./store":23,"./transform":24,"mixwith-es5":13}],26:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2686,18 +2942,18 @@ module.exports = function (Weddell, doTOpts) {
     });
 };
 
-},{"dot":8,"mixwith-es5":12}],26:[function(require,module,exports){
+},{"dot":9,"mixwith-es5":13}],27:[function(require,module,exports){
 'use strict';
 
 require('native-promise-only');
 module.exports = require('../plugins/doT')(require('./weddell'));
 
-},{"../plugins/doT":25,"./weddell":27,"native-promise-only":13}],27:[function(require,module,exports){
+},{"../plugins/doT":26,"./weddell":28,"native-promise-only":14}],28:[function(require,module,exports){
 'use strict';
 
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":24}],28:[function(require,module,exports){
+},{"../core/weddell":25}],29:[function(require,module,exports){
 "use strict";
 
 // var includes = require('./includes');
@@ -2707,7 +2963,7 @@ module.exports = function (arr1, arr2) {
     });
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 module.exports = function (arr, val) {
@@ -2716,7 +2972,7 @@ module.exports = function (arr, val) {
     });
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
 
 module.exports = function makeid() {
@@ -2728,5 +2984,5 @@ module.exports = function makeid() {
   }return text;
 };
 
-},{}]},{},[26])(26)
+},{}]},{},[27])(27)
 });
