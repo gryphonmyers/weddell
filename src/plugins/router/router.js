@@ -11,7 +11,6 @@ class Router {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
-        this.onHashChange = opts.onHashChange;
         this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
@@ -32,7 +31,7 @@ class Router {
         }
         if (matches) {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                return Promise.resolve(null);
+                return true;
             }
             var promise = Promise.all(matches.map((currMatch, key) => {
 
@@ -164,11 +163,11 @@ class Router {
 
     init() {
         if (!this._isInit && this.routes) {
-            // if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+            if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             this._isInit = true;
 
             addEventListener('popstate', this.onPopState.bind(this));
-            addEventListener('hashchange', this.hashChange.bind(this));
+            addEventListener('hashchange', this.onHashChange.bind(this));
 
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
@@ -181,14 +180,13 @@ class Router {
                         var result = this.route(aPath);
                         if (result) {
                             evt.preventDefault();
-                            result
-                                .then(matches => {
-                                    if (matches) {
-                                        this.pushState(matches.fullPath, hash, {x:0, y:0})
-                                    } else if (hash !== location.hash) {
-                                        this.pushState(location.pathname, hash);
-                                    }
-                                });
+                            this.replaceState(location.pathname, location.hash)
+                            if (result.then) {
+                                result
+                                    .then(matches => {
+                                        this.pushState(matches.fullPath, hash, {x:0,y:0});
+                                    });
+                            }
                         }
                     }
                 }
@@ -205,11 +203,6 @@ class Router {
 
     pushState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-        if (history.state) {
-            var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
-            //first set our scroll position into previous state so that we can restore it when we navigate back
-            history.replaceState(Object.assign({}, history.state, {scrollPos: currentScrollPos}), document.title, location.pathname + location.hash);
-        }
         if (typeof hash === 'string') {
             location.hash = hash;
         }
@@ -226,7 +219,7 @@ class Router {
         this.setScrollPos(scrollPos, hash);
     }
 
-    hashChange(evt) {
+    onHashChange(evt) {
         if (!history.state) {
             this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
         }
@@ -241,18 +234,20 @@ class Router {
         } else if (scrollPos) {
             window.scrollTo(scrollPos.x, scrollPos.y);
         }
-
     }
 
     onPopState(evt) {
+        //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
 
         if (evt && evt.state) {
             var result = this.route(evt.state.fullPath);
-            if (result) {
+            if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result
-                        .then(matches => window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y))
+                        .then(matches => {
+                            window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y)
+                        })
                 } else {
                      window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
                 }

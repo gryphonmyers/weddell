@@ -47,17 +47,17 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all([
-                                            this.component.awaitRender(),
-                                            jobs.reduce((promise, obj) => {
+                                        return jobs.reduce((promise, obj) => {
                                                 return promise
                                                     .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                             }, Promise.resolve())
-                                        ]);
+                                            .then(results => {
+                                                return this.renderPromises.markup ? this.renderPromises.markup.then(() => results) : results;
+                                            });
                                     }, console.warn)
                                     .then(results => {
                                         this.el.classList.remove('routing');
-                                        return results[1];
+                                        return results;
                                     })
                             }.bind(this),
                             onHashChange: function(hash) {

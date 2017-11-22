@@ -30,6 +30,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         this.component = null;
         this.renderInterval = opts.renderInterval;
+        this.renderPromises = {};
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
@@ -194,11 +195,17 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('markeddirty', evt => {
-                    requestAnimationFrame(() => {
-                        this.el.classList.add('rendering-' + evt.pipelineName);
-                        this.el.classList.add('rendering');
-                        this.component.render(evt.pipelineName);
-                    });
+                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
+                        requestAnimationFrame(() => {
+                            this.el.classList.add('rendering-' + evt.pipelineName);
+                            this.el.classList.add('rendering');
+                            this.component.render(evt.pipelineName)
+                                .then(results => {
+                                    this.renderPromises[evt.pipelineName] = null;
+                                    resolve(results);
+                                });
+                        });
+                    })
                 });
 
                 this.initRenderLifecycleStyleHooks(this.component);
