@@ -3,6 +3,7 @@ var mix = require('mixwith-es5').mix;
 var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
+var defaults = require('defaults-es6/deep-merge');
 
 var RouterState = mix(class {
     constructor(opts) {
@@ -24,7 +25,7 @@ module.exports = function(_Weddell){
                             routes: opts.routes,
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
-
+                                this.el.classList.add('routing');
                                 return componentNames.reduce((promise, componentName) => {
                                         return promise
                                             .then(currentComponent => {
@@ -47,16 +48,47 @@ module.exports = function(_Weddell){
                                             componentName: null
                                         });
                                         return jobs.reduce((promise, obj) => {
-                                            return promise
-                                                .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
-                                        }, Promise.resolve());
-                                    }, console.warn);
-
+                                                return promise
+                                                    .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                            }, Promise.resolve())
+                                            .then(results => {
+                                                return this.renderPromises.markup ? this.renderPromises.markup.then(() => results) : results;
+                                            });
+                                    }, console.warn)
+                                    .then(results => {
+                                        this.el.classList.remove('routing');
+                                        return results;
+                                    })
+                            }.bind(this),
+                            onHashChange: function(hash) {
+                                return hash;
                             }.bind(this)
                         });
 
                         this.on('createcomponent', evt => {
                             evt.component.router = this.router;
+                        });
+                    }
+
+                    initRenderLifecycleStyleHooks(rootComponent) {
+                        var off = rootComponent.on('renderdomstyles', evt => {
+                            if (evt.component.currentState) {
+                                this.el.classList.add('first-styles-render-complete');
+                                if (this.el.classList.contains('first-markup-render-complete')) {
+                                    this.el.classList.add('first-render-complete');
+                                }
+                                off();
+                            }
+                        });
+                
+                       var off2 = rootComponent.on('renderdommarkup', evt => {
+                            this.el.classList.add('first-markup-render-complete');
+                            if (evt.component.currentState) {
+                                if (this.el.classList.contains('first-styles-render-complete')) {
+                                    this.el.classList.add('first-render-complete');
+                                    off2();
+                                }
+                            }
                         });
                     }
 
@@ -72,15 +104,17 @@ module.exports = function(_Weddell){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     constructor(opts) {
                         opts.stateClass = RouterState;
-                        super(opts);
+                        var self;
+                        super(defaults(opts, {
+                            store: {
+                                $routerLink: function(){
+                                    return self.compileRouterLink.apply(self, arguments);
+                                }
+                            }
+                        }));
+                        self = this;
 
                         this.addTagDirective('RouterView', this.compileRouterView.bind(this));
-
-                        var routerLocals = {
-                            $routerLink: this.compileRouterLink.bind(this)
-                        };
-                        this.store.assign(routerLocals);
-                        this._locals.assign(routerLocals);
 
                         this.on('init', () => {
                             Object.entries(this.components)
@@ -105,11 +139,12 @@ module.exports = function(_Weddell){
                         })
                     }
 
-                    compileRouterView(content, props) {
+                    compileRouterView(content, props, isContent) {
                         if (this.currentState) {
                             return this.getComponentInstance(this.currentState.componentName, 'router')
                                 .then(component => component.render('markup', content, props))
                                 .then(routerOutput => {
+                                    this.trigger('rendercomponent', {componentOutput: routerOutput, componentName: this.currentState.componentName, props, isContent});
                                     return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
                                 });
                         }

@@ -23,12 +23,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
+        this.styles = opts.styles;
         this.el = opts.el;
         this.styleEl = opts.styleEl;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         this.component = null;
         this.renderInterval = opts.renderInterval;
+        this.renderPromises = {};
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
@@ -99,14 +101,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
         };
         var instanceStyles = flattenStyles(evt);
+        
         staticStyles = staticStyles.reduce((finalArr, styleObj) => {
             if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
                 return finalArr.concat(styleObj)
             }
             return finalArr;
-        }, []).map(styleObj => styleObj.styles).join('\n\r');
-
-        var styles = [staticStyles, instanceStyles].join('\r\n').trim();
+        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
+        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
 
         this.el.classList.remove('rendering-styles');
@@ -133,13 +135,36 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
     }
 
-    makeComponent(componentInput) {
-        return new (this.Component)({
+    makeComponent() {
+        var component = new (this.Component)({
             isRoot: true,
             targetStylesRenderFormat: this.stylesRenderFormat,
             targetMarkupRenderFormat: this.markupRenderFormat,
             markupTransforms: this.markupTransforms,
             stylesTransforms: this.stylesTransforms
+        });
+
+        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
+            finalObj[attr.name] = attr.value;
+            return finalObj;
+        }, {}))
+
+        return component
+    }
+
+    initRenderLifecycleStyleHooks(rootComponent) {
+        this.component.once('renderdomstyles', evt => {
+            this.el.classList.add('first-styles-render-complete');
+            if (this.el.classList.contains('first-markup-render-complete')) {
+                this.el.classList.add('first-render-complete');
+            }
+        });
+
+        this.component.once('renderdommarkup', evt => {
+            this.el.classList.add('first-markup-render-complete');
+            if (this.el.classList.contains('first-styles-render-complete')) {
+                this.el.classList.add('first-render-complete');
+            }
         });
     }
 
@@ -158,34 +183,32 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     this.styleEl.setAttribute('type', 'text/css');
                     document.head.appendChild(this.styleEl);
                 }
+                var appStyles = this.styles;
+                if (appStyles) {
+                    this.renderCSS(appStyles);
+                }
 
-                this.component = this.makeComponent(this.Component);
+                this.component = this.makeComponent();
 
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('markeddirty', evt => {
-                    requestAnimationFrame(() => {
-                        this.el.classList.add('rendering-' + evt.pipelineName);
-                        this.el.classList.add('rendering');
-                        this.component.render(evt.pipelineName);
-                    });
+                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
+                        requestAnimationFrame(() => {
+                            this.el.classList.add('rendering-' + evt.pipelineName);
+                            this.el.classList.add('rendering');
+                            this.component.render(evt.pipelineName)
+                                .then(results => {
+                                    this.renderPromises[evt.pipelineName] = null;
+                                    resolve(results);
+                                });
+                        });
+                    })
                 });
 
-                this.component.once('renderdomstyles', evt => {
-                    this.el.classList.add('first-styles-render-complete');
-                    if (this.el.classList.contains('first-markup-render-complete')) {
-                        this.el.classList.add('first-render-complete');
-                    }
-                });
-
-                this.component.once('renderdommarkup', evt => {
-                    this.el.classList.add('first-markup-render-complete');
-                    if (this.el.classList.contains('first-styles-render-complete')) {
-                        this.el.classList.add('first-render-complete');
-                    }
-                });
+                this.initRenderLifecycleStyleHooks(this.component);
 
                 return this.component.init(this.componentInitOpts)
                     .then(() => {

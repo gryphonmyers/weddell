@@ -37,22 +37,24 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _id : { value: generateHash() },
             inputs : { value: opts.inputs },
             renderers: { value: {} },
-            _tagDirectives: { value: {} }
+            _tagDirectives: { value: {} },
+            _componentListenerCallbacks: {value:{}, writable:true}
         });
 
-        var inputMappings = this.constructor._inputMappings && Object.entries(this.constructor._inputMappings)
-            .filter(entry => this.inputs.find(input => input === entry[0]))
-            .reduce((final, entry) => {
-                final[entry[1]] = entry[0];
-                return final;
-            }, {});
+        var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
+                .filter(entry => this.inputs.find(input => input === entry[0]))
+                .reduce((final, entry) => {
+                    final[entry[1]] = entry[0];
+                    return final;
+                }, {}) : {};
 
         Object.defineProperties(this, {
             props: {
                 value: new Store(this.inputs, {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
-                    inputMappings
+                    inputMappings,
+                    shouldEvalFunctions: false
                 })
             },
             store: {
@@ -66,7 +68,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 })
             }
         });
-
+        
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
                 $attributes: null,
@@ -138,24 +140,29 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     queryDOM(query) {
-        return this.nextRender(function(){
-            return document.querySelector(query);
-        });
+        return this.awaitRender()
+            .then(() => document.querySelector(query));
     }
 
     queryDOMAll(query) {
-        return this.nextRender(function(){
-            return document.querySelectorAll(query);
-        });
+        return this.awaitRender()
+            .then(() => document.querySelectorAll(query));
     }
 
-    nextRender(func) {
-        return new Promise((resolve) => {
-            this.once('renderdommarkup', evt => {
-                Promise.resolve(func.call(this, evt))
-                    .then(val => resolve(val));
-            })
+    awaitEvent(eventName, evtObjValidator) {
+        var resolveProm;
+        var promise = new Promise(function(resolve){
+            resolveProm = resolve;
         });
+        this.once(eventName, function(evt){
+            resolveProm(evt);
+        });
+        return promise;
+    }
+
+    awaitRender(val) {
+        return this.awaitEvent('renderdommarkup')
+            .then(() => val);
     }
 
     createAction(actionName, actionData) {
@@ -293,11 +300,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        var keys = Object.keys(this._componentInstances[entry[0]]);
-                        if (keys.length) {
-                            return Promise.all(Object.values(this._componentInstances[entry[0]]).map(instance => instance.renderStyles()));
-                        }
-                        return [];
+                        var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
+
+                        return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
                     }))
                     .then(components => {
                         var evtObj = {
@@ -342,6 +347,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
+    assignProps(props) {
+        Object.assign(this.props, Object.entries(props)
+            .filter(entry => includes(this.inputs, entry[0]))
+            .reduce((finalObj, entry) => {
+                finalObj[entry[0]] = entry[1]
+                return finalObj
+            }, {}));
+
+        this.state.$attributes = Object.entries(props)
+            .filter(entry => !includes(this.inputs, entry[0]))
+            .reduce((finalObj, entry) => {
+                finalObj[entry[0]] = entry[1]
+                return finalObj
+            }, {});
+    }
+
     renderMarkup(content, props, targetFormat) {
         this.trigger('beforerendermarkup');
 
@@ -352,19 +373,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
         if (props) {
-            Object.assign(this.props, Object.entries(props)
-                .filter(entry => includes(this.inputs, entry[0]))
-                .reduce((finalObj, entry) => {
-                    finalObj[entry[0]] = entry[1]
-                    return finalObj
-                }, {}));
-
-            this.state.$attributes = Object.entries(props)
-                .filter(entry => !includes(this.inputs, entry[0]))
-                .reduce((finalObj, entry) => {
-                    finalObj[entry[0]] = entry[1]
-                    return finalObj
-                }, {});
+            this.assignProps(props)
         }
 
         var components = [];
@@ -396,10 +405,59 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             renderFormat
                         };
 
-                        this.trigger('rendermarkup', Object.assign({}, evObj));
-                        return evObj;
+                        return Promise.all(
+                                Object.entries(this._componentInstances)
+                                    .reduce((finalArr, entry) => {
+                                        var componentInstances = Object.values(entry[1]);
+                                        var componentName = entry[0];
+                                        var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
+                                        return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+                                            return renderedComponent.componentOutput.component !== instance
+                                        })));
+                                    }, [])
+                                    .map(unrenderedComponent => unrenderedComponent.unmount())
+                            )
+                            .then(() => {
+                                this.trigger('rendermarkup', Object.assign({}, evObj));
+                                return evObj;
+                            });
                     });
             });
+    }
+
+    addComponentEvents(componentName, childComponent, index) {
+        if (this.constructor.componentEventListeners && this.constructor.componentEventListeners[componentName]) {
+            if (!(componentName in this._componentListenerCallbacks)) {
+                this._componentListenerCallbacks[componentName] = {}
+            }
+            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[componentName])
+                .map(entry => {
+                    return childComponent.on(entry[0], function() {
+                        if (childComponent._isMounted) {
+                            entry[1].apply(this, arguments);
+                        }
+                    }.bind(this))
+                })
+        }
+    }
+
+    unmount() {
+        return Promise.all(
+                Object.values(this._componentInstances)
+                    .reduce((finalArr, components) => {
+                        return finalArr.concat(Object.values(components));
+                    }, [])
+                    .map(component => component.unmount())
+            )
+            .then(() => {
+                if (this._isMounted) {
+                    this._isMounted = false;
+                    this.trigger('unmount');
+                    if (this.onUnmount) {
+                        return this.onUnmount.call(this);
+                    }
+                }
+            })
     }
 
     makeComponentInstance(componentName, index, opts) {
@@ -409,6 +467,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 $instanceKey: index
             })
         });
+        this.addComponentEvents(componentName, instance, index);
         return instance;
     }
 

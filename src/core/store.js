@@ -19,9 +19,11 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         super();
 
         Object.defineProperties(this, {
+            _initialCalled: {value:{}, writable:true},
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
+            _cache: {value: {}, writable: true},
             _funcProps: {configurable: false,value: {}},
             _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
@@ -77,14 +79,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
         });
 
-        Object.keys(this._funcProps).forEach(key => {
-            this[key] = this.evaluateFunctionProperty(key);
-
-            this.on('change', evt => {
-                if (includes(this._dependencyKeys[key], evt.changedKey)) {
-                    this[key] = this.evaluateFunctionProperty(key);
-                }
-            });
+        this.on('change', evt => {
+            delete this._cache[evt.changedKey];
         });
     }
 
@@ -138,16 +134,30 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         var i = 0;
         var val;
 
+        if (this._cache[key]) {
+            return this._cache[key];
+        }
+
+        if (key in this._funcProps && !this._initialCalled[key]) {
+            this._initialCalled[key] = true;
+            val = this[key] = this.evaluateFunctionProperty(key);
+            this.on('change', evt => {
+                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                    this[key] = this.evaluateFunctionProperty(key);
+                }
+            });
+        }
+        
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];
             i++;
         }
 
         i = 0;
-        if (!val) {
+        if (typeof val === 'undefined' || val === null) {
             val = this._data[key];
         }
-
+        
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
         while(mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
@@ -174,6 +184,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         }
     }
 
+    await(key) {
+        return Promise.resolve(this.getValue(key) || new Promise(resolve => {
+            var off = this.watch(key, vals => {
+                off();
+                resolve(vals);
+            });
+        }));
+    }
+
     evaluateFunctionProperty(key) {
         var dependencyKeys = [];
         var off = this.on('get', function(evt){
@@ -185,19 +204,27 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return result;
     }
 
-    watch(key, func, shouldWaitForDefined, tempkey) {
+    watch(key, func, shouldWaitForDefined, invokeImmediately) {
         if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
         if (!Array.isArray(key)) {
             key = [key];
         }
-        return this.on('change', function(evt){
+        var checkKeys = function(){
+            var vals = key.map(currKey=>this[currKey]);
+            if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
+                func.apply(this, vals);
+            }
+        };
+
+        var off = this.on('change', function(evt){
             if (includes(key, evt.changedKey)) {
-                var vals = key.map(currKey=>this[currKey]);
-                if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
-                    func.apply(this, vals);
-                }
+                checkKeys.call(this);
             }
         });
+        if (invokeImmediately) {
+            checkKeys.call(this);
+        }
+        return off;
     }
 }
 

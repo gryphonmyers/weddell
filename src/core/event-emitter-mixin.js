@@ -1,6 +1,4 @@
 var Mixin = require('mixwith-es5').Mixin;
-var hasMixin = require('mixwith-es5').hasMixin;
-var defaults = require('object.defaults/immutable');
 var includes = require('../utils/includes');
 
 var EventEmitterMixin = Mixin(function(superClass) {
@@ -52,12 +50,12 @@ var EventEmitterMixin = Mixin(function(superClass) {
         }
 
         trigger(eventName, eventObj, thisArg) {
+            eventObj = Object.assign({}, eventObj, {eventName});
             if (Array.isArray(eventName)) {
                 return eventName.map(evtName => this.trigger(evtName, eventObj, thisArg));
             } else {
-                if (eventName in this._callbacks) {
-                    return this._callbacks[eventName].map(cb => cb.call(thisArg || this, eventObj));
-                }
+                var cbs = eventName in this._callbacks ? this._callbacks[eventName] : [];
+                return cbs.map(cb => cb.call(thisArg || this, eventObj));
             }
         }
     }

@@ -106,8 +106,74 @@ function idx(arr, pos, end) {
 }
 
 },{}],4:[function(require,module,exports){
+(function (global){
+'use strict';
 
+// there's 3 implementations written in increasing order of efficiency
+
+// 1 - no Set type is defined
+function uniqNoSet(arr) {
+	var ret = [];
+
+	for (var i = 0; i < arr.length; i++) {
+		if (ret.indexOf(arr[i]) === -1) {
+			ret.push(arr[i]);
+		}
+	}
+
+	return ret;
+}
+
+// 2 - a simple Set type is defined
+function uniqSet(arr) {
+	var seen = new Set();
+	return arr.filter(function (el) {
+		if (!seen.has(el)) {
+			seen.add(el);
+			return true;
+		}
+
+		return false;
+	});
+}
+
+// 3 - a standard Set type is defined and it has a forEach method
+function uniqSetWithForEach(arr) {
+	var ret = [];
+
+	(new Set(arr)).forEach(function (el) {
+		ret.push(el);
+	});
+
+	return ret;
+}
+
+// V8 currently has a broken implementation
+// https://github.com/joyent/node/issues/8449
+function doesForEachActuallyWork() {
+	var ret = false;
+
+	(new Set([true])).forEach(function (el) {
+		ret = el;
+	});
+
+	return ret === true;
+}
+
+if ('Set' in global) {
+	if (typeof Set.prototype.forEach === 'function' && doesForEachActuallyWork()) {
+		module.exports = uniqSetWithForEach;
+	} else {
+		module.exports = uniqSet;
+	}
+} else {
+	module.exports = uniqNoSet;
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],5:[function(require,module,exports){
+
+},{}],6:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -215,7 +281,7 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -273,7 +339,7 @@ module.exports = function debounce(func, wait, immediate){
   return debounced;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -369,7 +435,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":8,"./lib/keys.js":9}],8:[function(require,module,exports){
+},{"./lib/is_arguments.js":9,"./lib/keys.js":10}],9:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -391,7 +457,7 @@ function unsupported(object){
     false;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -402,7 +468,35 @@ function shim (obj) {
   return keys;
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+var makeDefaultsFunc = require('./src/make-defaults-func');
+module.exports = makeDefaultsFunc(true, require('./src/array-merge'));
+
+},{"./src/array-merge":12,"./src/make-defaults-func":13}],12:[function(require,module,exports){
+module.exports = function() {
+    return Array.from(arguments).slice(1).reduce((finalArr, arr) => {
+        return finalArr.concat(arr.filter(item => finalArr.indexOf(item) < 0));
+    }, arguments[0]);
+};
+},{}],13:[function(require,module,exports){
+module.exports = function(deep, merge) {
+    return function defaults() {
+        return Array.from(arguments).slice(1).reduce((sourceObj, obj) => {
+            Object.entries(obj).forEach((entry) => {
+                if (typeof sourceObj[entry[0]] === 'undefined') {
+                    sourceObj[entry[0]] = entry[1];
+                } else if (deep && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && !Array.isArray(val))) {
+                    sourceObj[entry[0]] = defaults(sourceObj[entry[0]], entry[1]);
+                } else if (merge && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && Array.isArray(val))) {
+                    sourceObj[entry[0]] = merge(sourceObj[entry[0]], entry[1]);
+                }
+            });
+            return sourceObj;
+        }, Object.assign({}, arguments[0]));
+    }
+};
+
+},{}],14:[function(require,module,exports){
 (function (document, promise) {
   if (typeof module !== 'undefined') module.exports = promise
   else document.ready = promise
@@ -429,7 +523,7 @@ function shim (obj) {
   })
 })
 
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // doT.js
 // 2011-2014, Laura Doktorova, https://github.com/olado/doT
 // Licensed under the MIT license.
@@ -575,7 +669,7 @@ function shim (obj) {
 	};
 }());
 
-},{}],12:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -597,7 +691,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":19}],13:[function(require,module,exports){
+},{"individual/one-version":23}],17:[function(require,module,exports){
 'use strict';
 
 var FindParent = {
@@ -640,7 +734,7 @@ var FindParent = {
 
 module.exports = FindParent;
 
-},{}],14:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*!
  * for-in <https://github.com/jonschlinkert/for-in>
  *
@@ -658,7 +752,7 @@ module.exports = function forIn(obj, fn, thisArg) {
   }
 };
 
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*!
  * for-own <https://github.com/jonschlinkert/for-own>
  *
@@ -679,7 +773,7 @@ module.exports = function forOwn(obj, fn, thisArg) {
   });
 };
 
-},{"for-in":14}],16:[function(require,module,exports){
+},{"for-in":18}],20:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -700,7 +794,7 @@ if (typeof document !== 'undefined') {
 module.exports = doccy;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":4}],17:[function(require,module,exports){
+},{"min-document":5}],21:[function(require,module,exports){
 var Parser = require('prescribe');
 
 module.exports = function (h, html) {
@@ -743,7 +837,7 @@ module.exports = function (h, html) {
     return nodes;
 }
 
-},{"prescribe":28}],18:[function(require,module,exports){
+},{"prescribe":32}],22:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -766,7 +860,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -790,14 +884,14 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":18}],20:[function(require,module,exports){
+},{"./index.js":22}],24:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /*!
  * isobject <https://github.com/jonschlinkert/isobject>
  *
@@ -811,7 +905,7 @@ module.exports = function isObject(val) {
   return val != null && typeof val === 'object' && Array.isArray(val) === false;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -953,7 +1047,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }();
 });
 
-},{}],23:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1330,7 +1424,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],24:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -1352,7 +1446,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":25,"array-slice":3}],25:[function(require,module,exports){
+},{"./mutable":29,"array-slice":3}],29:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -1389,7 +1483,7 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":2,"array-slice":3,"for-own":15,"isobject":21}],26:[function(require,module,exports){
+},{"array-each":2,"array-slice":3,"for-own":19,"isobject":25}],30:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -1817,12 +1911,12 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":27}],27:[function(require,module,exports){
+},{"isarray":31}],31:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],28:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * @file prescribe
  * @description Tiny, forgiving HTML parser
@@ -2747,27 +2841,27 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],29:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":34}],30:[function(require,module,exports){
+},{"./vdom/create-element.js":38}],34:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":54}],31:[function(require,module,exports){
+},{"./vtree/diff.js":58}],35:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":41}],32:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":45}],36:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":37}],33:[function(require,module,exports){
+},{"./vdom/patch.js":41}],37:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -2866,7 +2960,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":45,"is-object":20}],34:[function(require,module,exports){
+},{"../vnode/is-vhook.js":49,"is-object":24}],38:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -2914,7 +3008,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":43,"../vnode/is-vnode.js":46,"../vnode/is-vtext.js":47,"../vnode/is-widget.js":48,"./apply-properties":33,"global/document":16}],35:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":47,"../vnode/is-vnode.js":50,"../vnode/is-vtext.js":51,"../vnode/is-widget.js":52,"./apply-properties":37,"global/document":20}],39:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -3001,7 +3095,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],36:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -3154,7 +3248,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":48,"../vnode/vpatch.js":51,"./apply-properties":33,"./update-widget":38}],37:[function(require,module,exports){
+},{"../vnode/is-widget.js":52,"../vnode/vpatch.js":55,"./apply-properties":37,"./update-widget":42}],41:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3236,7 +3330,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":34,"./dom-index":35,"./patch-op":36,"global/document":16,"x-is-array":55}],38:[function(require,module,exports){
+},{"./create-element":38,"./dom-index":39,"./patch-op":40,"global/document":20,"x-is-array":59}],42:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3253,7 +3347,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":48}],39:[function(require,module,exports){
+},{"../vnode/is-widget.js":52}],43:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -3282,7 +3376,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":12}],40:[function(require,module,exports){
+},{"ev-store":16}],44:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -3301,7 +3395,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],41:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -3440,7 +3534,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":44,"../vnode/is-vhook":45,"../vnode/is-vnode":46,"../vnode/is-vtext":47,"../vnode/is-widget":48,"../vnode/vnode.js":50,"../vnode/vtext.js":52,"./hooks/ev-hook.js":39,"./hooks/soft-set-hook.js":40,"./parse-tag.js":42,"x-is-array":55}],42:[function(require,module,exports){
+},{"../vnode/is-thunk":48,"../vnode/is-vhook":49,"../vnode/is-vnode":50,"../vnode/is-vtext":51,"../vnode/is-widget":52,"../vnode/vnode.js":54,"../vnode/vtext.js":56,"./hooks/ev-hook.js":43,"./hooks/soft-set-hook.js":44,"./parse-tag.js":46,"x-is-array":59}],46:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -3496,7 +3590,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":5}],43:[function(require,module,exports){
+},{"browser-split":6}],47:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -3538,14 +3632,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":44,"./is-vnode":46,"./is-vtext":47,"./is-widget":48}],44:[function(require,module,exports){
+},{"./is-thunk":48,"./is-vnode":50,"./is-vtext":51,"./is-widget":52}],48:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],45:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -3554,7 +3648,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],46:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -3563,7 +3657,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":49}],47:[function(require,module,exports){
+},{"./version":53}],51:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -3572,17 +3666,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":49}],48:[function(require,module,exports){
+},{"./version":53}],52:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],49:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports = "2"
 
-},{}],50:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -3656,7 +3750,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":44,"./is-vhook":45,"./is-vnode":46,"./is-widget":48,"./version":49}],51:[function(require,module,exports){
+},{"./is-thunk":48,"./is-vhook":49,"./is-vnode":50,"./is-widget":52,"./version":53}],55:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -3680,7 +3774,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":49}],52:[function(require,module,exports){
+},{"./version":53}],56:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -3692,7 +3786,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":49}],53:[function(require,module,exports){
+},{"./version":53}],57:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -3752,7 +3846,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":45,"is-object":20}],54:[function(require,module,exports){
+},{"../vnode/is-vhook":49,"is-object":24}],58:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -4181,7 +4275,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":43,"../vnode/is-thunk":44,"../vnode/is-vnode":46,"../vnode/is-vtext":47,"../vnode/is-widget":48,"../vnode/vpatch":51,"./diff-props":53,"x-is-array":55}],55:[function(require,module,exports){
+},{"../vnode/handle-thunk":47,"../vnode/is-thunk":48,"../vnode/is-vnode":50,"../vnode/is-vtext":51,"../vnode/is-widget":52,"../vnode/vpatch":55,"./diff-props":57,"x-is-array":59}],59:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -4191,7 +4285,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],56:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('./event-emitter-mixin');
 var hasMixin = require('mixwith-es5').hasMixin;
@@ -4223,7 +4317,7 @@ var ActionDispatcher = class extends mix(ActionDispatcher).with(EventEmitterMixi
 
 module.exports = ActionDispatcher;
 
-},{"./event-emitter-mixin":59,"mixwith-es5":22}],57:[function(require,module,exports){
+},{"./event-emitter-mixin":63,"mixwith-es5":26}],61:[function(require,module,exports){
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
@@ -4249,6 +4343,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
+        this.styles = opts.styles;
         this.el = opts.el;
         this.styleEl = opts.styleEl;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
@@ -4305,12 +4400,35 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     renderStyles(evt) {
+        var staticStyles = [];
         var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('') : '');
-            var styles = (obj.output ? obj.output : '');
-            return this.childStylesFirst ? childStyles + styles : styles + childStyles;
+            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
+            var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
+
+            if (obj.staticStyles) {
+                var staticObj = {
+                    class: obj.component.constructor,
+                    styles: obj.staticStyles
+                };
+                if (this.childStylesFirst) {
+                    staticStyles.unshift(staticObj)
+                } else {
+                    staticStyles.push(staticObj)
+                }
+            }
+
+            return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
         };
-        this.renderCSS(flattenStyles(evt));
+        var instanceStyles = flattenStyles(evt);
+        
+        staticStyles = staticStyles.reduce((finalArr, styleObj) => {
+            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
+                return finalArr.concat(styleObj)
+            }
+            return finalArr;
+        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
+        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
+        this.renderCSS(styles);
 
         this.el.classList.remove('rendering-styles');
 
@@ -4336,13 +4454,36 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
     }
 
-    makeComponent(componentInput) {
-        return new (this.Component)({
+    makeComponent() {
+        var component = new (this.Component)({
             isRoot: true,
             targetStylesRenderFormat: this.stylesRenderFormat,
             targetMarkupRenderFormat: this.markupRenderFormat,
             markupTransforms: this.markupTransforms,
             stylesTransforms: this.stylesTransforms
+        });
+
+        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
+            finalObj[attr.name] = attr.value;
+            return finalObj;
+        }, {}))
+
+        return component
+    }
+
+    initRenderLifecycleStyleHooks(rootComponent) {
+        this.component.once('renderdomstyles', evt => {
+            this.el.classList.add('first-styles-render-complete');
+            if (this.el.classList.contains('first-markup-render-complete')) {
+                this.el.classList.add('first-render-complete');
+            }
+        });
+
+        this.component.once('renderdommarkup', evt => {
+            this.el.classList.add('first-markup-render-complete');
+            if (this.el.classList.contains('first-styles-render-complete')) {
+                this.el.classList.add('first-render-complete');
+            }
         });
     }
 
@@ -4361,8 +4502,12 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     this.styleEl.setAttribute('type', 'text/css');
                     document.head.appendChild(this.styleEl);
                 }
+                var appStyles = this.styles;
+                if (appStyles) {
+                    this.renderCSS(appStyles);
+                }
 
-                this.component = this.makeComponent(this.Component);
+                this.component = this.makeComponent();
 
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
@@ -4376,19 +4521,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     });
                 });
 
-                this.component.once('renderdomstyles', evt => {
-                    this.el.classList.add('first-styles-render-complete');
-                    if (this.el.classList.contains('first-markup-render-complete')) {
-                        this.el.classList.add('first-render-complete');
-                    }
-                });
-
-                this.component.once('renderdommarkup', evt => {
-                    this.el.classList.add('first-markup-render-complete');
-                    if (this.el.classList.contains('first-styles-render-complete')) {
-                        this.el.classList.add('first-render-complete');
-                    }
-                });
+                this.initRenderLifecycleStyleHooks(this.component);
 
                 return this.component.init(this.componentInitOpts)
                     .then(() => {
@@ -4402,7 +4535,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
 module.exports = App;
 
-},{"./action-dispatcher":56,"./component":58,"./event-emitter-mixin":59,"./sig":61,"debounce":6,"document-ready-promise":10,"mixwith-es5":22,"object.defaults/immutable":24}],58:[function(require,module,exports){
+},{"./action-dispatcher":60,"./component":62,"./event-emitter-mixin":63,"./sig":65,"debounce":7,"document-ready-promise":14,"mixwith-es5":26,"object.defaults/immutable":28}],62:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
@@ -4424,6 +4557,8 @@ var defaultOpts = {
 
 var defaultInitOpts = {};
 
+var _generatedComponentClasses = [];
+
 var Component = class extends mix(Component).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
@@ -4434,22 +4569,30 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             isRoot: { value: opts.isRoot },
+            _isMounted: {writable:true, value: false},
             _isInit: { writable: true, value: false},
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
             inputs : { value: opts.inputs },
             renderers: { value: {} },
-            _tagDirectives: { value: {} }
+            _tagDirectives: { value: {} },
+            _componentListenerCallbacks: {value:{}, writable:true}
         });
 
-        var inputMappings = this.constructor._inputMappings;
+        var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
+                .filter(entry => this.inputs.find(input => input === entry[0]))
+                .reduce((final, entry) => {
+                    final[entry[1]] = entry[0];
+                    return final;
+                }, {}) : {};
 
         Object.defineProperties(this, {
             props: {
                 value: new Store(this.inputs, {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
-                    inputMappings
+                    inputMappings,
+                    shouldEvalFunctions: false
                 })
             },
             store: {
@@ -4462,12 +4605,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 })
             }
         });
-
+        
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
+                $attributes: null,
                 $id: () => this._id
             }, opts.state), {
-                overrides: [this.props]
+                overrides: [this.props],
+                proxies: [this.store]
             })
         })
 
@@ -4501,7 +4646,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     inputFormat: new Sig(opts.stylesFormat),
                     transforms: opts.stylesTransforms,
                     targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || null
+                    input: opts.stylesTemplate || opts.styles || ' '
                 })
             }
         });
@@ -4531,6 +4676,32 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
     }
 
+    queryDOM(query) {
+        return this.awaitRender()
+            .then(() => document.querySelector(query));
+    }
+
+    queryDOMAll(query) {
+        return this.awaitRender()
+            .then(() => document.querySelectorAll(query));
+    }
+
+    awaitEvent(eventName, evtObjValidator) {
+        var resolveProm;
+        var promise = new Promise(function(resolve){
+            resolveProm = resolve;
+        });
+        this.once(eventName, function(evt){
+            resolveProm(evt);
+        });
+        return promise;
+    }
+
+    awaitRender(val) {
+        return this.awaitEvent('renderdommarkup')
+            .then(() => val);
+    }
+
     createAction(actionName, actionData) {
         this.trigger('createaction', {actionName, actionData});
     }
@@ -4551,13 +4722,30 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this._tagDirectives[name.toUpperCase()] = directive;
     }
 
+    static get generatedComponentClasses() {
+        return _generatedComponentClasses;
+    }
+
+    static set generatedComponentClasses(val) {
+        return _generatedComponentClasses = val;
+    }
 
     makeComponentClass(ComponentClass) {
         if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
             return ComponentClass;
         } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assuming it is a component factory function
-            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
+            // We got a non-Component class function, so we assume it is a component factory function
+            var match = this.constructor.generatedComponentClasses.find(compClass => compClass.func === ComponentClass);
+            if (match) {
+                return match.class;
+            } else {
+                var newClass = ComponentClass.call(this, this.constructor.Weddell.classes.Component)
+                this.constructor.generatedComponentClasses.push({
+                    func: ComponentClass,
+                    class: newClass
+                });
+                return newClass;
+            }
         } else {
             //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
             throw "Unsupported component input";
@@ -4579,7 +4767,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var markupTransforms = this._pipelines.markup.transforms;
         var stylesTransforms = this._pipelines.styles.transforms;;
 
-        var obj = {}
+        var obj = {};
+
         obj[componentName] = class extends ChildComponent {
             constructor(opts) {
                 super(defaults({
@@ -4601,7 +4790,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 });
             }
         }
+
         this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
+        obj[componentName]._BaseClass = ChildComponent;
         obj[componentName]._initOpts = initOpts;
         obj[componentName]._inputMappings = inputMappings;
         obj[componentName]._id = generateHash();
@@ -4642,17 +4833,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this._pipelines.styles.render()
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
-                        var keys = Object.keys(this._componentInstances[entry[0]]);
-                        if (keys.length) {
-                            //TODO here we should probably just iterate over all component instances and render styles for each one, but we need some sort of mechanism for not repeating "static" styles
-                            //TODO For now we just take the first instance and render that, assuming that all static styles are static styles, so no one instance's stles should be different from another
-                            return this._componentInstances[entry[0]][keys[0]].renderStyles();//entry[1].renderStyles();
-                        }
-                        return {component: this, output: '', wasRenderered: false};
+                        var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
+
+                        return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
                     }))
                     .then(components => {
                         var evtObj = {
                             output,
+                            staticStyles: this.constructor.styles || null,
                             component: this,
                             components,
                             wasRendered: true,
@@ -4692,6 +4880,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
+    assignProps(props) {
+        Object.assign(this.props, Object.entries(props)
+            .filter(entry => includes(this.inputs, entry[0]))
+            .reduce((finalObj, entry) => {
+                finalObj[entry[0]] = entry[1]
+                return finalObj
+            }, {}));
+
+        this.state.$attributes = Object.entries(props)
+            .filter(entry => !includes(this.inputs, entry[0]))
+            .reduce((finalObj, entry) => {
+                finalObj[entry[0]] = entry[1]
+                return finalObj
+            }, {});
+    }
+
     renderMarkup(content, props, targetFormat) {
         this.trigger('beforerendermarkup');
 
@@ -4702,26 +4906,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
         if (props) {
-            Object.assign(this.props, Object.entries(props)
-                .filter(entry => {
-                    var result = includes(this.inputs, entry[0]);
-                    if (!result) throw "Unsupported prop: '" + entry[0] + "' (hint: is this key in your inputs?)";
-                    return result;
-                })
-                .reduce((finalObj, entry) => {
-                    finalObj[entry[0]] = entry[1];
-                    return finalObj;
-                }, {}));
+            this.assignProps(props)
         }
 
-        var components = {};
+        var components = [];
         var off = this.on('rendercomponent', componentResult => {
             if (!(componentResult.componentName in components)) {
                 components[componentResult.componentName] = [];
             }
-            components[componentResult.componentName].push(componentResult);
+            components[componentResult.componentName].push(componentResult)
+            components.push(componentResult);
         });
-        return pipeline.render(targetFormat)
+        return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
+            .then(() => {
+                if (!this._isMounted) this._isMounted = true;
+                return pipeline.render(targetFormat);
+            })
             .then(output => {
                 var renderFormat = targetFormat.val;
                 if (!(renderFormat in this.renderers)) {
@@ -4738,10 +4938,59 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             renderFormat
                         };
 
-                        this.trigger('rendermarkup', Object.assign({}, evObj));
-                        return evObj;
+                        return Promise.all(
+                                Object.entries(this._componentInstances)
+                                    .reduce((finalArr, entry) => {
+                                        var componentInstances = Object.values(entry[1]);
+                                        var componentName = entry[0];
+                                        var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
+                                        return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+                                            return renderedComponent.componentOutput.component !== instance
+                                        })));
+                                    }, [])
+                                    .map(unrenderedComponent => unrenderedComponent.unmount())
+                            )
+                            .then(() => {
+                                this.trigger('rendermarkup', Object.assign({}, evObj));
+                                return evObj;
+                            });
                     });
             });
+    }
+
+    addComponentEvents(componentName, childComponent, index) {
+        if (this.constructor.componentEventListeners && this.constructor.componentEventListeners[componentName]) {
+            if (!(componentName in this._componentListenerCallbacks)) {
+                this._componentListenerCallbacks[componentName] = {}
+            }
+            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[componentName])
+                .map(entry => {
+                    return childComponent.on(entry[0], function() {
+                        if (childComponent._isMounted) {
+                            entry[1].apply(this, arguments);
+                        }
+                    }.bind(this))
+                })
+        }
+    }
+
+    unmount() {
+        return Promise.all(
+                Object.values(this._componentInstances)
+                    .reduce((finalArr, components) => {
+                        return finalArr.concat(Object.values(components));
+                    }, [])
+                    .map(component => component.unmount())
+            )
+            .then(() => {
+                if (this._isMounted) {
+                    this._isMounted = false;
+                    this.trigger('unmount');
+                    if (this.onUnmount) {
+                        return this.onUnmount.call(this);
+                    }
+                }
+            })
     }
 
     makeComponentInstance(componentName, index, opts) {
@@ -4751,6 +5000,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 $instanceKey: index
             })
         });
+        this.addComponentEvents(componentName, instance, index);
         return instance;
     }
 
@@ -4758,7 +5008,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var instances = this._componentInstances[componentName]
         if (instances && !(index in instances)) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
-            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.constructor._initOpts);
+
+            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.components[componentName]._initOpts);
         }
         return Promise.resolve(instances ? instances[index] : null);
     }
@@ -4770,10 +5021,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":79,"../utils/make-hash":80,"./event-emitter-mixin":59,"./sig":61,"mixwith-es5":22,"object.defaults/immutable":24}],59:[function(require,module,exports){
+},{"../utils/includes":83,"../utils/make-hash":84,"./event-emitter-mixin":63,"./sig":65,"mixwith-es5":26,"object.defaults/immutable":28}],63:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
-var hasMixin = require('mixwith-es5').hasMixin;
-var defaults = require('object.defaults/immutable');
 var includes = require('../utils/includes');
 
 var EventEmitterMixin = Mixin(function(superClass) {
@@ -4825,12 +5074,12 @@ var EventEmitterMixin = Mixin(function(superClass) {
         }
 
         trigger(eventName, eventObj, thisArg) {
+            eventObj = Object.assign({}, eventObj, {eventName});
             if (Array.isArray(eventName)) {
                 return eventName.map(evtName => this.trigger(evtName, eventObj, thisArg));
             } else {
-                if (eventName in this._callbacks) {
-                    return this._callbacks[eventName].map(cb => cb.call(thisArg || this, eventObj));
-                }
+                var cbs = eventName in this._callbacks ? this._callbacks[eventName] : [];
+                return cbs.map(cb => cb.call(thisArg || this, eventObj));
             }
         }
     }
@@ -4838,7 +5087,7 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":79,"mixwith-es5":22,"object.defaults/immutable":24}],60:[function(require,module,exports){
+},{"../utils/includes":83,"mixwith-es5":26}],64:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
@@ -4982,7 +5231,7 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
 
 module.exports = Pipeline;
 
-},{"./event-emitter-mixin":59,"mixwith-es5":22}],61:[function(require,module,exports){
+},{"./event-emitter-mixin":63,"mixwith-es5":26}],65:[function(require,module,exports){
 class Sig {
     constructor(str) {
         if (typeof str === 'object' && str.constructor === this.constructor) {
@@ -5108,7 +5357,7 @@ Sig.customTypes = [];
 
 module.exports = Sig;
 
-},{}],62:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
@@ -5116,6 +5365,7 @@ var includes = require('../utils/includes');
 var difference = require('../utils/difference');
 var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
+var uniq = require('array-uniq');
 
 var defaultOpts = {
     shouldMonitorChanges: true,
@@ -5129,12 +5379,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         super();
 
         Object.defineProperties(this, {
+            _initialCalled: {value:{}, writable:true},
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
-            _dependencyKeys: {configurable: false,value: {}},
-            _dependentKeys: {configurable: false,value: {}},
+            _cache: {value: {}, writable: true},
+            _funcProps: {configurable: false,value: {}},
+            _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
+            _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
@@ -5185,6 +5438,10 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 this.trigger('get', Object.assign({}, evt));
             });
         });
+
+        this.on('change', evt => {
+            delete this._cache[evt.changedKey];
+        });
     }
 
     set(key, val, isReadOnly) {
@@ -5197,17 +5454,20 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                             oldValue = Object.assign({}, oldValue);
                         }
                     }
-                    this._data[key] = newValue;
-                    if (this.shouldMonitorChanges) {
-                        if (!deepEqual(newValue, oldValue)) {
-                            this.trigger('change', {changedKey: key, newValue, oldValue});
-                            if (key in this._dependentKeys) {
-                                this._dependentKeys[key].forEach((dependentKey) => {
-                                    this.trigger('change', {changedKey: dependentKey, changedDependencyKey: key, newDependencyValue: newValue, oldDependencyValue: oldValue});
-                                });
+
+                    if (this.shouldEvalFunctions && typeof newValue === 'function') {
+                        this._funcProps[key] = newValue;
+                    } else {
+                        this._data[key] = newValue;
+
+                        if (this.shouldMonitorChanges) {
+
+                            if (!deepEqual(newValue, oldValue)) {
+                                this.trigger('change', {changedKey: key, newValue, oldValue});
                             }
                         }
                     }
+
                 }.bind(this);
             }
 
@@ -5217,9 +5477,6 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 get: function() {
                     var value = this.getValue(key);
                     this.trigger('get', {key, value});
-                    if (this.shouldEvalFunctions && typeof this._data[key] === 'function') {
-                        return this.evaluateFunctionProperty(key);
-                    }
                     return value;
                 }.bind(this),
                 set: setter
@@ -5237,16 +5494,30 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         var i = 0;
         var val;
 
+        if (this._cache[key]) {
+            return this._cache[key];
+        }
+
+        if (key in this._funcProps && !this._initialCalled[key]) {
+            this._initialCalled[key] = true;
+            val = this[key] = this.evaluateFunctionProperty(key);
+            this.on('change', evt => {
+                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                    this[key] = this.evaluateFunctionProperty(key);
+                }
+            });
+        }
+        
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];
             i++;
         }
 
         i = 0;
-        if (!val) {
+        if (typeof val === 'undefined' || val === null) {
             val = this._data[key];
         }
-
+        
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
         while(mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
@@ -5273,69 +5544,53 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         }
     }
 
+    await(key) {
+        return Promise.resolve(this.getValue(key) || new Promise(resolve => {
+            var off = this.watch(key, vals => {
+                off();
+                resolve(vals);
+            });
+        }));
+    }
+
     evaluateFunctionProperty(key) {
         var dependencyKeys = [];
         var off = this.on('get', function(evt){
             dependencyKeys.push(evt.key);
         });
-        this.trigger('evaluate.before', {key: key});
-        var result = this._data[key].call(this);
-        this.trigger('evaluate', {key: key});
+        var result = this._funcProps[key].call(this);
         off();
-
-        this.setDependencyKeys(key, dependencyKeys);
-
+        this._dependencyKeys[key] = uniq(dependencyKeys);
         return result;
     }
 
-    setDependencyKeys(key, dependencyKeys) {
-        if (key in this._dependencyKeys) {
-            var unusedKeys = difference(this._dependencyKeys[key], dependencyKeys);
-            var newKeys = difference(dependencyKeys, this._dependencyKeys[key]);
-        } else {
-            unusedKeys = [];
-            newKeys = dependencyKeys;
-        }
-
-        newKeys.forEach(function(newKey){
-            if (!(newKey in this._dependentKeys)) {
-                this._dependentKeys[newKey] = [key];
-            } else if (!includes(this._dependentKeys[newKey], key)) {
-                this._dependentKeys[newKey] = this._dependentKeys[newKey].concat(key);
-            }
-        }.bind(this));
-
-        unusedKeys.forEach(function(unusedKey){
-            if (unusedKey in this._dependentKeys) {
-                var i = this._dependentKeys[unusedKey].indexOf(key);
-                if (i > -1) {
-                    this._dependentKeys[unusedKey].splice(i,1);
-                }
-            }
-        }.bind(this));
-
-        return this._dependencyKeys[key] = dependencyKeys;
-    }
-
-    watch(key, func, shouldWaitForDefined) {
+    watch(key, func, shouldWaitForDefined, invokeImmediately) {
         if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
         if (!Array.isArray(key)) {
             key = [key];
         }
-        this.on('change', function(evt){
+        var checkKeys = function(){
+            var vals = key.map(currKey=>this[currKey]);
+            if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
+                func.apply(this, vals);
+            }
+        };
+
+        var off = this.on('change', function(evt){
             if (includes(key, evt.changedKey)) {
-                var vals = key.map(currKey=>this[currKey]);
-                if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
-                    func.apply(this, vals);
-                }
+                checkKeys.call(this);
             }
         });
+        if (invokeImmediately) {
+            checkKeys.call(this);
+        }
+        return off;
     }
 }
 
 module.exports = Store;
 
-},{"../utils/difference":77,"../utils/includes":79,"../utils/make-hash":80,"./event-emitter-mixin":59,"deep-equal":7,"mixwith-es5":22,"object.defaults/immutable":24}],63:[function(require,module,exports){
+},{"../utils/difference":81,"../utils/includes":83,"../utils/make-hash":84,"./event-emitter-mixin":63,"array-uniq":4,"deep-equal":8,"mixwith-es5":26,"object.defaults/immutable":28}],67:[function(require,module,exports){
 class Transform {
     constructor(opts) {
         var Sig = this.constructor.Weddell.classes.Sig;
@@ -5386,7 +5641,7 @@ Transform.heuristics = {};
 
 module.exports = Transform;
 
-},{}],64:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
@@ -5453,7 +5708,7 @@ Object.values(_Weddell.classes).forEach(function(commonClass){
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":79,"./app":57,"./component":58,"./pipeline":60,"./sig":61,"./store":62,"./transform":63,"mixwith-es5":22}],65:[function(require,module,exports){
+},{"../utils/includes":83,"./app":61,"./component":62,"./pipeline":64,"./sig":65,"./store":66,"./transform":67,"mixwith-es5":26}],69:[function(require,module,exports){
 module.exports = {
     template : function(CSSText){
         //TODO make this more efficient after compile time
@@ -5484,7 +5739,7 @@ module.exports = {
     }
 }
 
-},{}],66:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var CSSVars = require('./css-vars');
 
@@ -5512,7 +5767,7 @@ module.exports = function(Weddell, pluginOpts){
     });
 };
 
-},{"./css-vars":65,"mixwith-es5":22}],67:[function(require,module,exports){
+},{"./css-vars":69,"mixwith-es5":26}],71:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var doT = require('dot');
 module.exports = function(Weddell, doTOpts){
@@ -5545,7 +5800,7 @@ module.exports = function(Weddell, doTOpts){
     });
 }
 
-},{"dot":11,"mixwith-es5":22}],68:[function(require,module,exports){
+},{"dot":15,"mixwith-es5":26}],72:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var defaults = require('object.defaults/immutable');
 var defaultOpts = {};
@@ -5611,7 +5866,7 @@ module.exports = function(_Weddell, opts){
     });
 }
 
-},{"mixwith-es5":22,"object.defaults/immutable":24}],69:[function(require,module,exports){
+},{"mixwith-es5":26,"object.defaults/immutable":28}],73:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var parse = require('html-to-vdom-parser/parse');
 
@@ -5642,12 +5897,13 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"html-to-vdom-parser/parse":17,"mixwith-es5":22}],70:[function(require,module,exports){
+},{"html-to-vdom-parser/parse":21,"mixwith-es5":26}],74:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');
+var defaults = require('defaults-es6/deep-merge');
 
 var RouterState = mix(class {
     constructor(opts) {
@@ -5669,7 +5925,7 @@ module.exports = function(_Weddell){
                             routes: opts.routes,
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
-
+                                this.el.classList.add('routing');
                                 return componentNames.reduce((promise, componentName) => {
                                         return promise
                                             .then(currentComponent => {
@@ -5691,14 +5947,48 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all(jobs.map(obj => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches})));
-                                    }, console.warn);
-
+                                        return Promise.all([
+                                            this.component.awaitRender(),
+                                            jobs.reduce((promise, obj) => {
+                                                return promise
+                                                    .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                            }, Promise.resolve())
+                                        ]);
+                                    }, console.warn)
+                                    .then(results => {
+                                        this.el.classList.remove('routing');
+                                        return results[1];
+                                    })
+                            }.bind(this),
+                            onHashChange: function(hash) {
+                                return hash;
                             }.bind(this)
                         });
 
                         this.on('createcomponent', evt => {
                             evt.component.router = this.router;
+                        });
+                    }
+
+                    initRenderLifecycleStyleHooks(rootComponent) {
+                        var off = rootComponent.on('renderdomstyles', evt => {
+                            if (evt.component.currentState) {
+                                this.el.classList.add('first-styles-render-complete');
+                                if (this.el.classList.contains('first-markup-render-complete')) {
+                                    this.el.classList.add('first-render-complete');
+                                }
+                                off();
+                            }
+                        });
+                
+                       var off2 = rootComponent.on('renderdommarkup', evt => {
+                            this.el.classList.add('first-markup-render-complete');
+                            if (evt.component.currentState) {
+                                if (this.el.classList.contains('first-styles-render-complete')) {
+                                    this.el.classList.add('first-render-complete');
+                                    off2();
+                                }
+                            }
                         });
                     }
 
@@ -5714,27 +6004,34 @@ module.exports = function(_Weddell){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     constructor(opts) {
                         opts.stateClass = RouterState;
-                        super(opts);
+                        var self;
+                        super(defaults(opts, {
+                            store: {
+                                $routerLink: function(){
+                                    return self.compileRouterLink.apply(self, arguments);
+                                }
+                            }
+                        }));
+                        self = this;
 
                         this.addTagDirective('RouterView', this.compileRouterView.bind(this));
-
-                        var routerLocals = {
-                            $routerLink: this.compileRouterLink.bind(this)
-                        };
-                        this.store.assign(routerLocals);
-                        this._locals.assign(routerLocals);
 
                         this.on('init', () => {
                             Object.entries(this.components)
                                 .forEach(entry => {
+                                    var componentName = entry[0]
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
-                                        finalObj[methods[0]] = evt => this.getComponentInstance(entry[0], 'router').then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
+                                        var machineStateMethod = methods[0];
+                                        finalObj[machineStateMethod] = (evt) => {
+                                            return this.getComponentInstance(componentName, 'router')
+                                                .then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
+                                        }
                                         return finalObj;
                                     }, {
                                         Component: entry[1],
-                                        componentName: entry[0]
+                                        componentName
                                     }));
-                                    this.addState(entry[0], routerState);
+                                    this.addState(componentName, routerState);
                                     routerState.on(['exit', 'enter'], evt => {
                                         this.markDirty();
                                     });
@@ -5742,11 +6039,12 @@ module.exports = function(_Weddell){
                         })
                     }
 
-                    compileRouterView(content, props) {
+                    compileRouterView(content, props, isContent) {
                         if (this.currentState) {
                             return this.getComponentInstance(this.currentState.componentName, 'router')
                                 .then(component => component.render('markup', content, props))
                                 .then(routerOutput => {
+                                    this.trigger('rendercomponent', {componentOutput: routerOutput, componentName: this.currentState.componentName, props, isContent});
                                     return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
                                 });
                         }
@@ -5772,7 +6070,7 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./machine-state-mixin":71,"./router":72,"./state-machine-mixin":73,"mixwith-es5":22}],71:[function(require,module,exports){
+},{"./machine-state-mixin":75,"./router":76,"./state-machine-mixin":77,"defaults-es6/deep-merge":11,"mixwith-es5":26}],75:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -5807,20 +6105,21 @@ var MachineState = Mixin(function(superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":59,"mixwith-es5":22}],72:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":63,"mixwith-es5":26}],76:[function(require,module,exports){
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var compact = require('array-compact');
-
 var defaultOpts = {};
 
 class Router {
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
+        this.onHashChange = opts.onHashChange;
         this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
@@ -5828,18 +6127,23 @@ class Router {
     }
 
     route(pathName) {
-        var promise = Promise.resolve(null);
-
+        if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
+            return Promise.resolve(null);
+        }
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
         } else if (pathName) {
              //assuming an object was passed to route by named route.
-            var matches = this.compileRouterLink(pathname);
+            var matches = this.compileRouterLink(pathName);
         }
         if (matches) {
-            promise = Promise.all(matches.map((currMatch, key) => {
+            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
+                return Promise.resolve(null);
+            }
+            var promise = Promise.all(matches.map((currMatch, key) => {
+
                 if (key === matches.length - 1 && currMatch.route.redirect) {
                     if (typeof currMatch.route.redirect === 'function') {
                         var redirectPath = currMatch.route.redirect.call(this, matches);
@@ -5848,72 +6152,59 @@ class Router {
                         redirectPath = currMatch.route.redirect;
                     }
                     if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
-                    return Promise.reject();
+                    return Promise.reject(redirectPath);
                 }
 
-                if (typeof currMatch.route.handler == 'function') {
-                    return Promise.resolve(currMatch.route.handler.call(this, matches));
-                } else {
-                    return currMatch.route.handler;
-                }
+                return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
             }))
-            .then(results => compact(results))
-            .then(this.onRoute.bind(this, matches), ()=>{})
-            .then(() => {
-                if (matches.route.replaceState) {
-                    history.replaceState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                } else {
-                    history.pushState({fullPath: matches.fullPath}, document.title, matches.fullPath);
-                }
-                this.currentRoute = matches;
+            .then(results => {
+                return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
+                    .then(() => matches);
+            }, redirectPath => {
+                return this.route(redirectPath)
             });
-        }
 
-        return promise;
+            this.currentRoute = matches;
+
+            return promise;
+        }
+        return null;
     }
 
     static getNamedRoute(name, routes, currPath) {
         if (!name) return null;
         if (!currPath) currPath = [];
-
         var matchedRoute = null;
-
         routes.every(route => {
             matchedRoute = route.name === name ? route : matchedRoute;
-
             if (!matchedRoute && route.children) {
                 matchedRoute = this.getNamedRoute(name, route.children, currPath.concat(route));
             }
-
             return !matchedRoute;
         });
-
         if (matchedRoute) {
             matchedRoute = Object.assign({route: matchedRoute}, matchedRoute);
             matchedRoute = Object.assign(currPath.concat(matchedRoute.route), matchedRoute);
         }
-
         return matchedRoute || null;
     }
 
     matchRoute(pathName, routes, routePath) {
         if (!routePath) routePath = [];
         var result = null;
-
+        if (typeof pathName !== 'string') {
+            return null;
+        }
         if (pathName.charAt(0) !== '/' && this.currentRoute) {
             pathName = this.currentRoute.fullPath + pathName;
         }
-
         routes.every((currRoute) => {
             var params = [];
-
             var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(pathObj => pathObj.route).concat(currRoute).reduce((finalPattern, pathObj) => {
                 return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
             }, '');
-
             var match = pathToRegexp(currPattern, params, {}).exec(pathName);
             var newPath = routePath.concat({route: currRoute, match, params})
-
             if (match) {
                 result = newPath;
             }
@@ -5922,12 +6213,16 @@ class Router {
                 result = childResult || result;
             }
             if (result) {
+                var currMatch = result[result.length - 1];
+                result.paramVals = currMatch.params.reduce((finalVal, param, key) => {
+                    finalVal[param.name] = currMatch.match[key + 1];
+                    return finalVal;
+                }, {});
                 result.route = result[result.length - 1].route;
                 result.fullPath = result[result.length - 1].match[0];
             }
             return !result;
         });
-
         return result;
     }
 
@@ -5936,19 +6231,28 @@ class Router {
     }
 
     compileRouterLink(obj) {
-
+        var paramDefaults = {};
+        var routeName;
+        if (this.currentRoute) {
+            routeName = this.currentRoute.route.name;
+            var matchedRoute = this.currentRoute[this.currentRoute.length - 1]
+            var matches = matchedRoute.match.slice(1);
+            matchedRoute.params.forEach((param, key)=> {
+                if (typeof matches[key] !== 'undefined') paramDefaults[param.name] = matches[key];
+            });
+        }
+        routeName = obj.name ? obj.name : routeName;
+        obj.params = Object.assign(paramDefaults, obj.params);
         /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
-
-        var route = Router.getNamedRoute(obj.name, this.routes);
-
+        var route = Router.getNamedRoute(routeName, this.routes);
         if (route) {
             try {
-                var fullPath = route.reduce((finalPath, pathRoute) => {
-                    var segment = pathToRegexp.compile(pathRoute.pattern)(obj.params);
+                var fullPath = pathToRegexp.compile(route.reduce((finalPath, pathRoute) => {
+                    var segment = pathRoute.pattern;
                     return pathRoute.pattern.charAt(0) === '/' ? segment : finalPath + segment;
-                }, '');
+                }, ''))(obj.params);
             } catch (err) {
                 throw "Encountered error trying to build router link: " + err.toString();
             }
@@ -5961,41 +6265,112 @@ class Router {
             matches.fullPath = fullPath;
             return matches;
         } else {
-            console.warn('could not find route with name', obj.name);
+            console.warn('could not find route with name', routeName);
         }
         return null;
     }
 
     init() {
         if (!this._isInit && this.routes) {
+            // if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             this._isInit = true;
+
             addEventListener('popstate', this.onPopState.bind(this));
+            addEventListener('hashchange', this.hashChange.bind(this));
 
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
-                    var href = this.matchRoute(clickedATag.getAttribute('href'), this.routes);
+                    var href = clickedATag.getAttribute('href');
                     if (href) {
-                        evt.preventDefault();
-                        this.route(href);
+                        var split = href.split('#');
+                        var aPath = split[0];
+                        var hash = split[1];
+                        var result = this.route(aPath);
+                        if (result) {
+                            evt.preventDefault();
+                            result
+                                .then(matches => {
+                                    if (matches) {
+                                        this.pushState(matches.fullPath, hash, {x:0, y:0})
+                                    } else if (hash !== location.hash) {
+                                        this.pushState(location.pathname, hash);
+                                    }
+                                });
+                        }
                     }
                 }
             });
-
-            return this.route(location.pathname + location.hash);
+            var result = this.route(location.pathname);
+            return result && result.then(matches => {
+                    if (matches) {
+                        this.replaceState(matches.fullPath, location.hash)
+                    }
+                })
         }
         return Promise.resolve();
     }
 
+    pushState(pathName, hash, scrollPos) {
+        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+        if (history.state) {
+            var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
+            //first set our scroll position into previous state so that we can restore it when we navigate back
+            history.replaceState(Object.assign({}, history.state, {scrollPos: currentScrollPos}), document.title, location.pathname + location.hash);
+        }
+        if (typeof hash === 'string') {
+            location.hash = hash;
+        }
+        history.pushState({fullPath: pathName, hash, scrollPos}, document.title, pathName + (hash  || ''));
+
+        this.setScrollPos(scrollPos, hash);
+    }
+
+    replaceState(pathName, hash, scrollPos) {
+        if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+        var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
+        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos}, document.title, pathName + (hash  || ''));
+
+        this.setScrollPos(scrollPos, hash);
+    }
+
+    hashChange(evt) {
+        if (!history.state) {
+            this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
+        }
+    }
+
+    setScrollPos(scrollPos, hash) {
+        if (hash) {
+            var el = document.querySelector(hash);
+            if (el) {
+                window.scrollTo(el.offsetLeft, el.offsetTop);
+            }
+        } else if (scrollPos) {
+            window.scrollTo(scrollPos.x, scrollPos.y);
+        }
+
+    }
+
     onPopState(evt) {
-        if (evt && evt.fullPath) {
-            this.route(evt.fullPath);
+        var state = history.state;
+
+        if (evt && evt.state) {
+            var result = this.route(evt.state.fullPath);
+            if (result) {
+                if (result.then) {
+                    result
+                        .then(matches => window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y))
+                } else {
+                     window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
+                }
+            }
         }
     }
 }
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":13,"object.defaults/immutable":24,"path-to-regexp":26}],73:[function(require,module,exports){
+},{"array-compact":1,"find-parent":17,"object.defaults/immutable":28,"path-to-regexp":30}],77:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -6079,7 +6454,7 @@ var StateMachine = Mixin(function(superClass) {
 })
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":59,"./machine-state-mixin":71,"mixwith-es5":22}],74:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":63,"./machine-state-mixin":75,"mixwith-es5":26}],78:[function(require,module,exports){
 var h = require('virtual-dom/h');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
@@ -6133,7 +6508,9 @@ module.exports = function(Weddell, pluginOpts) {
                             this.el.appendChild(this.rootNode);
                         }
                         if (Array.isArray(newTree)) {
-                            console.warn('Your markup must have one root node. Only using the first one for now.');
+                            if (newTree.length > 1) {
+                                console.warn('Your markup was truncated, as your component had more than one root node.');
+                            }
                             newTree = newTree[0];
                         }
                         var patches = VDOMDiff(this.vTree, newTree);
@@ -6163,10 +6540,11 @@ module.exports = function(Weddell, pluginOpts) {
 
                     }
 
-                    replaceVNodeComponents(node, content, renderedComponents) {
+                    replaceVNodeComponents(node, content, renderedComponents, isContent) {
+                        isContent = !!isContent;
                         if (Array.isArray(node)) {
                             return Promise.all(node.reduce((final, childNode) => {
-                                var result = this.replaceVNodeComponents(childNode, content, renderedComponents);
+                                var result = this.replaceVNodeComponents(childNode, content, renderedComponents, isContent);
                                 return result ? final.concat(result) : final;
                             }, []));
                         }
@@ -6179,10 +6557,10 @@ module.exports = function(Weddell, pluginOpts) {
 
                         if (node.tagName) {
                             if (node.tagName.toUpperCase() in this._tagDirectives) {
-                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes);
+                                return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes, isContent);
 
                             } else if (node.tagName === 'CONTENT') {
-                                return this.replaceVNodeComponents(content, null, renderedComponents);
+                                return this.replaceVNodeComponents(content, null, renderedComponents, true);
                             } else {
                                 var componentEntry = Object.entries(this.components)
                                     .find(entry => {
@@ -6195,7 +6573,7 @@ module.exports = function(Weddell, pluginOpts) {
                                     var index = (node.properties.attributes && node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentEntry[0]].length;
                                     renderedComponents[componentEntry[0]].push(null);
 
-                                    return this.replaceVNodeComponents(node.children, content, renderedComponents)
+                                    return this.replaceVNodeComponents(node.children, content, renderedComponents, false)
                                         .then(componentContent => {
                                             return this.getComponentInstance(componentEntry[0], index)
                                                 .then(componentInstance => {
@@ -6204,7 +6582,7 @@ module.exports = function(Weddell, pluginOpts) {
                                                 });
                                         })
                                         .then(componentOutput => {
-                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes});
+                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes, isContent});
                                             return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
                                         });
                                 }
@@ -6212,9 +6590,13 @@ module.exports = function(Weddell, pluginOpts) {
                         }
 
                         if (node.children) {
-                            return this.replaceVNodeComponents(node.children, content, renderedComponents)
+                            return this.replaceVNodeComponents(node.children, content, renderedComponents, false)
                                 .then(children => {
-                                    return h(node.tagName, node.properties, children.reduce((final, child) => {
+                                    var properties = Object.assign({}, node.properties, {
+                                        key: node.key
+                                    });
+
+                                    return h(node.tagName, properties, children.reduce((final, child) => {
                                         return child ? final.concat(child) : final;
                                     }, []));
                                 });
@@ -6233,7 +6615,7 @@ module.exports = function(Weddell, pluginOpts) {
     });
 }
 
-},{"../../utils/flatmap":78,"array-compact":1,"mixwith-es5":22,"object.defaults/immutable":24,"virtual-dom/create-element":29,"virtual-dom/diff":30,"virtual-dom/h":31,"virtual-dom/patch":32,"virtual-dom/vnode/vnode":50}],75:[function(require,module,exports){
+},{"../../utils/flatmap":82,"array-compact":1,"mixwith-es5":26,"object.defaults/immutable":28,"virtual-dom/create-element":33,"virtual-dom/diff":34,"virtual-dom/h":35,"virtual-dom/patch":36,"virtual-dom/vnode/vnode":54}],79:[function(require,module,exports){
 require('native-promise-only');
 module.exports = require('../plugins/css-vars')(
     require('../plugins/html-to-vdom')(
@@ -6249,26 +6631,26 @@ module.exports = require('../plugins/css-vars')(
     )
 );
 
-},{"../plugins/css-vars":66,"../plugins/doT":67,"../plugins/fetcher":68,"../plugins/html-to-vdom":69,"../plugins/router":70,"../plugins/vdom":74,"./weddell":76,"native-promise-only":23}],76:[function(require,module,exports){
+},{"../plugins/css-vars":70,"../plugins/doT":71,"../plugins/fetcher":72,"../plugins/html-to-vdom":73,"../plugins/router":74,"../plugins/vdom":78,"./weddell":80,"native-promise-only":27}],80:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":64}],77:[function(require,module,exports){
+},{"../core/weddell":68}],81:[function(require,module,exports){
 // var includes = require('./includes');
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],78:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = (arr, func) =>
     arr.reduce((final,val) =>
         final.concat(func(val)), [])
 
-},{}],79:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = function(arr, val){
     return arr.some(currKey=>currKey === val);
 }
 
-},{}],80:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -6279,5 +6661,5 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[75])(75)
+},{}]},{},[79])(79)
 });

@@ -136,7 +136,10 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
     }
 
     if (!opts.es6) {
-        bundler.transform('babelify', {presets:['es2015']});
+        bundler.transform('babelify', {
+            presets:['es2015'],
+            global: true
+        });
     }
 
     if (!opts.dev && !opts.es6) { //right now we skip uglify on es6 because newer uglifyify versions supporting es6 are broken

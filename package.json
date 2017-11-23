@@ -1,6 +1,7 @@
 {
   "name": "weddell",
   "version": "0.24.0",
+  "version": "1.2.0",
   "description": "A tiny, modular, nonopinionated front-end web framework.",
   "main": "index.js",
   "scripts": {
@@ -16,6 +17,7 @@
     "browserify": "^14.4.0",
     "debounce": "^1.0.2",
     "deep-equal": "^1.0.1",
+    "defaults-es6": "^1.1.0",
     "document-ready-promise": "^3.0.1",
     "dot": "^1.1.2",
     "fetch": "^1.1.0",
@@ -30,7 +32,12 @@
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
+    "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
+    "babel-plugin-transform-object-assign": "^6.22.0",
     "babel-preset-es2015": "^6.24.1",
+    "babel-preset-es2015-loose": "^8.0.0",
+    "babel-runtime": "^6.26.0",
     "babelify": "^7.3.0",
     "colors": "^1.1.2",
     "del": "^3.0.0",
