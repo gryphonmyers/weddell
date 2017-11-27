@@ -186,6 +186,8 @@ class Router {
                                     .then(matches => {
                                         this.pushState(matches.fullPath, hash, {x:0,y:0});
                                     });
+                            } else if (hash !== location.hash) {
+                                this.pushState(location.pathname, hash);
                             }
                         }
                     }
