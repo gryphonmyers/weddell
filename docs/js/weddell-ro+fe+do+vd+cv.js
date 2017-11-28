@@ -797,7 +797,8 @@ module.exports = doccy;
 },{"min-document":5}],21:[function(require,module,exports){
 var Parser = require('prescribe');
 
-module.exports = function (h, html) {
+module.exports = function (h, html, wrap) {
+    if (typeof wrap === 'undefined') wrap = true;
     var parser = new Parser(html.trim());
     var nodes = [];
     var current;
@@ -807,7 +808,7 @@ module.exports = function (h, html) {
             if (current) {
                 current.children.push(tok.text);
             } else {
-                nodes.push(tok.text);
+                nodes.children.push(tok.text);
             }
         },
         startTag: function (tok){
@@ -825,7 +826,14 @@ module.exports = function (h, html) {
         },
         endTag: function (tok){
             //TODO add support for SVG
-            var node = h(current.tok.tagName, {attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs)}, current.children);
+            var props = {attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs)};
+
+            if (current.children.every(child => typeof child === 'string')) {
+                props.innerHTML = current.children.reduce((final,child) => final + child, '');
+                current.children = [];
+            }
+
+            var node = h(current.tok.tagName, props, current.children);
             current = current.parent;
             if (!current) {
                 nodes.push(node);
@@ -834,7 +842,8 @@ module.exports = function (h, html) {
             }
         }
     });
-    return nodes;
+    // debugger;
+    return nodes.length > 1 ? wrap ? h('div', nodes) : nodes : wrap ? nodes[0] : nodes;
 }
 
 },{"prescribe":32}],22:[function(require,module,exports){
@@ -4350,6 +4359,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         this.component = null;
         this.renderInterval = opts.renderInterval;
+        this.renderPromises = {};
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
@@ -4514,11 +4524,17 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('markeddirty', evt => {
-                    requestAnimationFrame(() => {
-                        this.el.classList.add('rendering-' + evt.pipelineName);
-                        this.el.classList.add('rendering');
-                        this.component.render(evt.pipelineName);
-                    });
+                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
+                        requestAnimationFrame(() => {
+                            this.el.classList.add('rendering-' + evt.pipelineName);
+                            this.el.classList.add('rendering');
+                            this.component.render(evt.pipelineName)
+                                .then(results => {
+                                    this.renderPromises[evt.pipelineName] = null;
+                                    resolve(results);
+                                });
+                        });
+                    })
                 });
 
                 this.initRenderLifecycleStyleHooks(this.component);
@@ -4598,6 +4614,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             store: {
                 value: new Store(Object.assign({
                     $bind: this.bindEvent.bind(this),
+                    $bindValue: this.bindEventValue.bind(this),
                     $act: this.createAction.bind(this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
@@ -4819,6 +4836,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
             (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
             funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+    }
+
+    bindEventValue(propName, opts) {
+        return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
     markDirty(changedKey) {
@@ -5947,17 +5968,17 @@ module.exports = function(_Weddell){
                                             component: null,
                                             componentName: null
                                         });
-                                        return Promise.all([
-                                            this.component.awaitRender(),
-                                            jobs.reduce((promise, obj) => {
+                                        return jobs.reduce((promise, obj) => {
                                                 return promise
                                                     .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                             }, Promise.resolve())
-                                        ]);
+                                            .then(results => {
+                                                return this.renderPromises.markup ? this.renderPromises.markup.then(() => results) : results;
+                                            });
                                     }, console.warn)
                                     .then(results => {
                                         this.el.classList.remove('routing');
-                                        return results[1];
+                                        return results;
                                     })
                             }.bind(this),
                             onHashChange: function(hash) {
@@ -6119,7 +6140,6 @@ class Router {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
-        this.onHashChange = opts.onHashChange;
         this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
@@ -6128,7 +6148,7 @@ class Router {
 
     route(pathName) {
         if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-            return Promise.resolve(null);
+            return true;
         }
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
@@ -6140,7 +6160,7 @@ class Router {
         }
         if (matches) {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                return Promise.resolve(null);
+                return true;
             }
             var promise = Promise.all(matches.map((currMatch, key) => {
 
@@ -6272,11 +6292,11 @@ class Router {
 
     init() {
         if (!this._isInit && this.routes) {
-            // if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+            if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             this._isInit = true;
 
             addEventListener('popstate', this.onPopState.bind(this));
-            addEventListener('hashchange', this.hashChange.bind(this));
+            addEventListener('hashchange', this.onHashChange.bind(this));
 
             document.body.addEventListener('click', (evt) => {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
@@ -6289,14 +6309,15 @@ class Router {
                         var result = this.route(aPath);
                         if (result) {
                             evt.preventDefault();
-                            result
-                                .then(matches => {
-                                    if (matches) {
-                                        this.pushState(matches.fullPath, hash, {x:0, y:0})
-                                    } else if (hash !== location.hash) {
-                                        this.pushState(location.pathname, hash);
-                                    }
-                                });
+                            this.replaceState(location.pathname, location.hash)
+                            if (result.then) {
+                                result
+                                    .then(matches => {
+                                        this.pushState(matches.fullPath, hash, {x:0,y:0});
+                                    });
+                            } else if (hash !== location.hash) {
+                                this.pushState(location.pathname, hash);
+                            }
                         }
                     }
                 }
@@ -6313,11 +6334,6 @@ class Router {
 
     pushState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-        if (history.state) {
-            var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
-            //first set our scroll position into previous state so that we can restore it when we navigate back
-            history.replaceState(Object.assign({}, history.state, {scrollPos: currentScrollPos}), document.title, location.pathname + location.hash);
-        }
         if (typeof hash === 'string') {
             location.hash = hash;
         }
@@ -6334,7 +6350,7 @@ class Router {
         this.setScrollPos(scrollPos, hash);
     }
 
-    hashChange(evt) {
+    onHashChange(evt) {
         if (!history.state) {
             this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
         }
@@ -6349,18 +6365,20 @@ class Router {
         } else if (scrollPos) {
             window.scrollTo(scrollPos.x, scrollPos.y);
         }
-
     }
 
     onPopState(evt) {
+        //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
 
         if (evt && evt.state) {
             var result = this.route(evt.state.fullPath);
-            if (result) {
+            if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result
-                        .then(matches => window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y))
+                        .then(matches => {
+                            window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y)
+                        })
                 } else {
                      window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
                 }

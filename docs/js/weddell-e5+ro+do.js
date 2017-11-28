@@ -7,16 +7,15 @@
 
 module.exports = compact;
 
-
 /**
  * Return an array copy without falsy values
  */
 
-function compact (arr) {
+function compact(arr) {
   return arr.filter(validate);
 }
 
-function validate (item) {
+function validate(item) {
   return !!item;
 }
 
@@ -112,6 +111,7 @@ function idx(arr, pos, end) {
 // there's 3 implementations written in increasing order of efficiency
 
 // 1 - no Set type is defined
+
 function uniqNoSet(arr) {
 	var ret = [];
 
@@ -141,7 +141,7 @@ function uniqSet(arr) {
 function uniqSetWithForEach(arr) {
 	var ret = [];
 
-	(new Set(arr)).forEach(function (el) {
+	new Set(arr).forEach(function (el) {
 		ret.push(el);
 	});
 
@@ -153,7 +153,7 @@ function uniqSetWithForEach(arr) {
 function doesForEachActuallyWork() {
 	var ret = false;
 
-	(new Set([true])).forEach(function (el) {
+	new Set([true]).forEach(function (el) {
 		ret = el;
 	});
 
@@ -172,6 +172,8 @@ if ('Set' in global) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],5:[function(require,module,exports){
+"use strict";
+
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -187,7 +189,7 @@ if ('Set' in global) {
  * @api public
  */
 
-module.exports = function debounce(func, wait, immediate){
+module.exports = function debounce(func, wait, immediate) {
   var timeout, args, context, timestamp, result;
   if (null == wait) wait = 100;
 
@@ -205,7 +207,7 @@ module.exports = function debounce(func, wait, immediate){
     }
   };
 
-  var debounced = function(){
+  var debounced = function debounced() {
     context = this;
     args = arguments;
     timestamp = Date.now();
@@ -219,7 +221,7 @@ module.exports = function debounce(func, wait, immediate){
     return result;
   };
 
-  debounced.clear = function() {
+  debounced.clear = function () {
     if (timeout) {
       clearTimeout(timeout);
       timeout = null;
@@ -230,6 +232,10 @@ module.exports = function debounce(func, wait, immediate){
 };
 
 },{}],6:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -239,32 +245,31 @@ var deepEqual = module.exports = function (actual, expected, opts) {
   // 7.1. All identical values are equivalent, as determined by ===.
   if (actual === expected) {
     return true;
-
   } else if (actual instanceof Date && expected instanceof Date) {
     return actual.getTime() === expected.getTime();
 
-  // 7.3. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
+    // 7.3. Other pairs that do not both pass typeof value == 'object',
+    // equivalence is determined by ==.
+  } else if (!actual || !expected || (typeof actual === 'undefined' ? 'undefined' : _typeof(actual)) != 'object' && (typeof expected === 'undefined' ? 'undefined' : _typeof(expected)) != 'object') {
     return opts.strict ? actual === expected : actual == expected;
 
-  // 7.4. For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
+    // 7.4. For all other Object pairs, including Array objects, equivalence is
+    // determined by having the same number of owned properties (as verified
+    // with Object.prototype.hasOwnProperty.call), the same set of keys
+    // (although not necessarily the same order), equivalent values for every
+    // corresponding key, and an identical 'prototype' property. Note: this
+    // accounts for both named and indexed properties on Arrays.
   } else {
     return objEquiv(actual, expected, opts);
   }
-}
+};
 
 function isUndefinedOrNull(value) {
   return value === null || value === undefined;
 }
 
-function isBuffer (x) {
-  if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
+function isBuffer(x) {
+  if (!x || (typeof x === 'undefined' ? 'undefined' : _typeof(x)) !== 'object' || typeof x.length !== 'number') return false;
   if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
     return false;
   }
@@ -274,8 +279,7 @@ function isBuffer (x) {
 
 function objEquiv(a, b, opts) {
   var i, key;
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-    return false;
+  if (isUndefinedOrNull(a) || isUndefinedOrNull(b)) return false;
   // an identical 'prototype' property.
   if (a.prototype !== b.prototype) return false;
   //~~~I've managed to break Object.keys through screwy arguments passing.
@@ -301,20 +305,19 @@ function objEquiv(a, b, opts) {
   try {
     var ka = objectKeys(a),
         kb = objectKeys(b);
-  } catch (e) {//happens when one is a string literal and the other isn't
+  } catch (e) {
+    //happens when one is a string literal and the other isn't
     return false;
   }
   // having the same number of owned properties (keys incorporates
   // hasOwnProperty)
-  if (ka.length != kb.length)
-    return false;
+  if (ka.length != kb.length) return false;
   //the same set of keys (although not necessarily the same order),
   ka.sort();
   kb.sort();
   //~~~cheap key test
   for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] != kb[i])
-      return false;
+    if (ka[i] != kb[i]) return false;
   }
   //equivalent values for every corresponding key, and
   //~~~possibly expensive deep test
@@ -322,13 +325,17 @@ function objEquiv(a, b, opts) {
     key = ka[i];
     if (!deepEqual(a[key], b[key], opts)) return false;
   }
-  return typeof a === typeof b;
+  return (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === (typeof b === 'undefined' ? 'undefined' : _typeof(b));
 }
 
 },{"./lib/is_arguments.js":7,"./lib/keys.js":8}],7:[function(require,module,exports){
-var supportsArgumentsClass = (function(){
-  return Object.prototype.toString.call(arguments)
-})() == '[object Arguments]';
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var supportsArgumentsClass = function () {
+  return Object.prototype.toString.call(arguments);
+}() == '[object Arguments]';
 
 exports = module.exports = supportsArgumentsClass ? supported : unsupported;
 
@@ -338,82 +345,97 @@ function supported(object) {
 };
 
 exports.unsupported = unsupported;
-function unsupported(object){
-  return object &&
-    typeof object == 'object' &&
-    typeof object.length == 'number' &&
-    Object.prototype.hasOwnProperty.call(object, 'callee') &&
-    !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
-    false;
+function unsupported(object) {
+  return object && (typeof object === 'undefined' ? 'undefined' : _typeof(object)) == 'object' && typeof object.length == 'number' && Object.prototype.hasOwnProperty.call(object, 'callee') && !Object.prototype.propertyIsEnumerable.call(object, 'callee') || false;
 };
 
 },{}],8:[function(require,module,exports){
-exports = module.exports = typeof Object.keys === 'function'
-  ? Object.keys : shim;
+'use strict';
+
+exports = module.exports = typeof Object.keys === 'function' ? Object.keys : shim;
 
 exports.shim = shim;
-function shim (obj) {
+function shim(obj) {
   var keys = [];
-  for (var key in obj) keys.push(key);
-  return keys;
+  for (var key in obj) {
+    keys.push(key);
+  }return keys;
 }
 
 },{}],9:[function(require,module,exports){
+'use strict';
+
 var makeDefaultsFunc = require('./src/make-defaults-func');
 module.exports = makeDefaultsFunc(true, require('./src/array-merge'));
 
 },{"./src/array-merge":10,"./src/make-defaults-func":11}],10:[function(require,module,exports){
-module.exports = function() {
-    return Array.from(arguments).slice(1).reduce((finalArr, arr) => {
-        return finalArr.concat(arr.filter(item => finalArr.indexOf(item) < 0));
+"use strict";
+
+module.exports = function () {
+    return Array.from(arguments).slice(1).reduce(function (finalArr, arr) {
+        return finalArr.concat(arr.filter(function (item) {
+            return finalArr.indexOf(item) < 0;
+        }));
     }, arguments[0]);
 };
+
 },{}],11:[function(require,module,exports){
-module.exports = function(deep, merge) {
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+module.exports = function (deep, merge) {
     return function defaults() {
-        return Array.from(arguments).slice(1).reduce((sourceObj, obj) => {
-            Object.entries(obj).forEach((entry) => {
+        return Array.from(arguments).slice(1).reduce(function (sourceObj, obj) {
+            Object.entries(obj).forEach(function (entry) {
                 if (typeof sourceObj[entry[0]] === 'undefined') {
                     sourceObj[entry[0]] = entry[1];
-                } else if (deep && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && !Array.isArray(val))) {
+                } else if (deep && [entry[1], sourceObj[entry[0]]].every(function (val) {
+                    return val && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && !Array.isArray(val);
+                })) {
                     sourceObj[entry[0]] = defaults(sourceObj[entry[0]], entry[1]);
-                } else if (merge && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && Array.isArray(val))) {
+                } else if (merge && [entry[1], sourceObj[entry[0]]].every(function (val) {
+                    return val && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && Array.isArray(val);
+                })) {
                     sourceObj[entry[0]] = merge(sourceObj[entry[0]], entry[1]);
                 }
             });
             return sourceObj;
         }, Object.assign({}, arguments[0]));
-    }
+    };
 };
 
 },{}],12:[function(require,module,exports){
+'use strict';
+
 (function (document, promise) {
-  if (typeof module !== 'undefined') module.exports = promise
-  else document.ready = promise
+  if (typeof module !== 'undefined') module.exports = promise;else document.ready = promise;
 })(window.document, function (chainVal) {
-  'use strict'
+  'use strict';
 
   var d = document,
       w = window,
       loaded = /^loaded|^i|^c/.test(d.readyState),
       DOMContentLoaded = 'DOMContentLoaded',
-      load = 'load'
+      load = 'load';
 
   return new Promise(function (resolve) {
-    if (loaded) return resolve(chainVal)
+    if (loaded) return resolve(chainVal);
 
-    function onReady () {
-      resolve(chainVal)
-      d.removeEventListener(DOMContentLoaded, onReady)
-      w.removeEventListener(load, onReady)
+    function onReady() {
+      resolve(chainVal);
+      d.removeEventListener(DOMContentLoaded, onReady);
+      w.removeEventListener(load, onReady);
     }
 
-    d.addEventListener(DOMContentLoaded, onReady)
-    w.addEventListener(load, onReady)
-  })
-})
+    d.addEventListener(DOMContentLoaded, onReady);
+    w.addEventListener(load, onReady);
+  });
+});
 
 },{}],13:[function(require,module,exports){
+"use strict";
+
 // doT.js
 // 2011-2014, Laura Doktorova, https://github.com/olado/doT
 // Licensed under the MIT license.
@@ -425,75 +447,81 @@ module.exports = function(deep, merge) {
 		name: "doT",
 		version: "1.1.1",
 		templateSettings: {
-			evaluate:    /\{\{([\s\S]+?(\}?)+)\}\}/g,
+			evaluate: /\{\{([\s\S]+?(\}?)+)\}\}/g,
 			interpolate: /\{\{=([\s\S]+?)\}\}/g,
-			encode:      /\{\{!([\s\S]+?)\}\}/g,
-			use:         /\{\{#([\s\S]+?)\}\}/g,
-			useParams:   /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
-			define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
-			defineParams:/^\s*([\w$]+):([\s\S]+)/,
+			encode: /\{\{!([\s\S]+?)\}\}/g,
+			use: /\{\{#([\s\S]+?)\}\}/g,
+			useParams: /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
+			define: /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
+			defineParams: /^\s*([\w$]+):([\s\S]+)/,
 			conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
-			iterate:     /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
-			varname:	"it",
-			strip:		true,
-			append:		true,
+			iterate: /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
+			varname: "it",
+			strip: true,
+			append: true,
 			selfcontained: false,
 			doNotSkipEncoded: false
 		},
 		template: undefined, //fn, compile template
-		compile:  undefined, //fn, for express
+		compile: undefined, //fn, for express
 		log: true
-	}, _globals;
+	},
+	    _globals;
 
-	doT.encodeHTMLSource = function(doNotSkipEncoded) {
+	doT.encodeHTMLSource = function (doNotSkipEncoded) {
 		var encodeHTMLRules = { "&": "&#38;", "<": "&#60;", ">": "&#62;", '"': "&#34;", "'": "&#39;", "/": "&#47;" },
-			matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
-		return function(code) {
-			return code ? code.toString().replace(matchHTML, function(m) {return encodeHTMLRules[m] || m;}) : "";
+		    matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
+		return function (code) {
+			return code ? code.toString().replace(matchHTML, function (m) {
+				return encodeHTMLRules[m] || m;
+			}) : "";
 		};
 	};
 
-	_globals = (function(){ return this || (0,eval)("this"); }());
+	_globals = function () {
+		return this || (0, eval)("this");
+	}();
 
 	/* istanbul ignore else */
 	if (typeof module !== "undefined" && module.exports) {
 		module.exports = doT;
 	} else if (typeof define === "function" && define.amd) {
-		define(function(){return doT;});
+		define(function () {
+			return doT;
+		});
 	} else {
 		_globals.doT = doT;
 	}
 
 	var startend = {
-		append: { start: "'+(",      end: ")+'",      startencode: "'+encodeHTML(" },
-		split:  { start: "';out+=(", end: ");out+='", startencode: "';out+=encodeHTML(" }
-	}, skip = /$^/;
+		append: { start: "'+(", end: ")+'", startencode: "'+encodeHTML(" },
+		split: { start: "';out+=(", end: ");out+='", startencode: "';out+=encodeHTML(" }
+	},
+	    skip = /$^/;
 
 	function resolveDefs(c, block, def) {
-		return ((typeof block === "string") ? block : block.toString())
-		.replace(c.define || skip, function(m, code, assign, value) {
+		return (typeof block === "string" ? block : block.toString()).replace(c.define || skip, function (m, code, assign, value) {
 			if (code.indexOf("def.") === 0) {
 				code = code.substring(4);
 			}
 			if (!(code in def)) {
 				if (assign === ":") {
-					if (c.defineParams) value.replace(c.defineParams, function(m, param, v) {
-						def[code] = {arg: param, text: v};
+					if (c.defineParams) value.replace(c.defineParams, function (m, param, v) {
+						def[code] = { arg: param, text: v };
 					});
-					if (!(code in def)) def[code]= value;
+					if (!(code in def)) def[code] = value;
 				} else {
-					new Function("def", "def['"+code+"']=" + value)(def);
+					new Function("def", "def['" + code + "']=" + value)(def);
 				}
 			}
 			return "";
-		})
-		.replace(c.use || skip, function(m, code) {
-			if (c.useParams) code = code.replace(c.useParams, function(m, s, d, param) {
+		}).replace(c.use || skip, function (m, code) {
+			if (c.useParams) code = code.replace(c.useParams, function (m, s, d, param) {
 				if (def[d] && def[d].arg && param) {
-					var rw = (d+":"+param).replace(/'|\\/g, "_");
+					var rw = (d + ":" + param).replace(/'|\\/g, "_");
 					def.__exp = def.__exp || {};
 					def.__exp[rw] = def[d].text.replace(new RegExp("(^|[^\\w$])" + def[d].arg + "([^\\w$])", "g"), "$1" + param + "$2");
-					return s + "def.__exp['"+rw+"']";
+					return s + "def.__exp['" + rw + "']";
 				}
 			});
 			var v = new Function("def", "return " + code)(def);
@@ -505,45 +533,33 @@ module.exports = function(deep, merge) {
 		return code.replace(/\\('|\\)/g, "$1").replace(/[\r\t\n]/g, " ");
 	}
 
-	doT.template = function(tmpl, c, def) {
+	doT.template = function (tmpl, c, def) {
 		c = c || doT.templateSettings;
-		var cse = c.append ? startend.append : startend.split, needhtmlencode, sid = 0, indv,
-			str  = (c.use || c.define) ? resolveDefs(c, tmpl, def || {}) : tmpl;
+		var cse = c.append ? startend.append : startend.split,
+		    needhtmlencode,
+		    sid = 0,
+		    indv,
+		    str = c.use || c.define ? resolveDefs(c, tmpl, def || {}) : tmpl;
 
-		str = ("var out='" + (c.strip ? str.replace(/(^|\r|\n)\t* +| +\t*(\r|\n|$)/g," ")
-					.replace(/\r|\n|\t|\/\*[\s\S]*?\*\//g,""): str)
-			.replace(/'|\\/g, "\\$&")
-			.replace(c.interpolate || skip, function(m, code) {
-				return cse.start + unescape(code) + cse.end;
-			})
-			.replace(c.encode || skip, function(m, code) {
-				needhtmlencode = true;
-				return cse.startencode + unescape(code) + cse.end;
-			})
-			.replace(c.conditional || skip, function(m, elsecase, code) {
-				return elsecase ?
-					(code ? "';}else if(" + unescape(code) + "){out+='" : "';}else{out+='") :
-					(code ? "';if(" + unescape(code) + "){out+='" : "';}out+='");
-			})
-			.replace(c.iterate || skip, function(m, iterate, vname, iname) {
-				if (!iterate) return "';} } out+='";
-				sid+=1; indv=iname || "i"+sid; iterate=unescape(iterate);
-				return "';var arr"+sid+"="+iterate+";if(arr"+sid+"){var "+vname+","+indv+"=-1,l"+sid+"=arr"+sid+".length-1;while("+indv+"<l"+sid+"){"
-					+vname+"=arr"+sid+"["+indv+"+=1];out+='";
-			})
-			.replace(c.evaluate || skip, function(m, code) {
-				return "';" + unescape(code) + "out+='";
-			})
-			+ "';return out;")
-			.replace(/\n/g, "\\n").replace(/\t/g, '\\t').replace(/\r/g, "\\r")
-			.replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, "");
-			//.replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
+		str = ("var out='" + (c.strip ? str.replace(/(^|\r|\n)\t* +| +\t*(\r|\n|$)/g, " ").replace(/\r|\n|\t|\/\*[\s\S]*?\*\//g, "") : str).replace(/'|\\/g, "\\$&").replace(c.interpolate || skip, function (m, code) {
+			return cse.start + unescape(code) + cse.end;
+		}).replace(c.encode || skip, function (m, code) {
+			needhtmlencode = true;
+			return cse.startencode + unescape(code) + cse.end;
+		}).replace(c.conditional || skip, function (m, elsecase, code) {
+			return elsecase ? code ? "';}else if(" + unescape(code) + "){out+='" : "';}else{out+='" : code ? "';if(" + unescape(code) + "){out+='" : "';}out+='";
+		}).replace(c.iterate || skip, function (m, iterate, vname, iname) {
+			if (!iterate) return "';} } out+='";
+			sid += 1;indv = iname || "i" + sid;iterate = unescape(iterate);
+			return "';var arr" + sid + "=" + iterate + ";if(arr" + sid + "){var " + vname + "," + indv + "=-1,l" + sid + "=arr" + sid + ".length-1;while(" + indv + "<l" + sid + "){" + vname + "=arr" + sid + "[" + indv + "+=1];out+='";
+		}).replace(c.evaluate || skip, function (m, code) {
+			return "';" + unescape(code) + "out+='";
+		}) + "';return out;").replace(/\n/g, "\\n").replace(/\t/g, '\\t').replace(/\r/g, "\\r").replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, "");
+		//.replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
 
 		if (needhtmlencode) {
 			if (!c.selfcontained && _globals && !_globals._encodeHTML) _globals._encodeHTML = doT.encodeHTMLSource(c.doNotSkipEncoded);
-			str = "var encodeHTML = typeof _encodeHTML !== 'undefined' ? _encodeHTML : ("
-				+ doT.encodeHTMLSource.toString() + "(" + (c.doNotSkipEncoded || '') + "));"
-				+ str;
+			str = "var encodeHTML = typeof _encodeHTML !== 'undefined' ? _encodeHTML : (" + doT.encodeHTMLSource.toString() + "(" + (c.doNotSkipEncoded || '') + "));" + str;
 		}
 		try {
 			return new Function(c.varname, str);
@@ -554,21 +570,23 @@ module.exports = function(deep, merge) {
 		}
 	};
 
-	doT.compile = function(tmpl, def) {
+	doT.compile = function (tmpl, def) {
 		return doT.template(tmpl, null, def);
 	};
-}());
+})();
 
 },{}],14:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var FindParent = {
-  byMatcher: function(element, func, opts) {
+  byMatcher: function byMatcher(element, func, opts) {
     if (opts === undefined) {
       opts = {};
     }
 
-    if (opts === null || Array.isArray(opts) || typeof opts !== 'object') {
+    if (opts === null || Array.isArray(opts) || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
       throw new Error('Expected opts to be an object.');
     }
 
@@ -587,14 +605,14 @@ var FindParent = {
     return this.byMatcher(element.parentNode, func, opts);
   },
 
-  byClassName: function(element, className, opts) {
-    return this.byMatcher(element, function(el) {
+  byClassName: function byClassName(element, className, opts) {
+    return this.byMatcher(element, function (el) {
       return el.classList.contains(className);
     }, opts);
   },
 
-  withDataAttribute: function(element, attName, opts) {
-    return this.byMatcher(element, function(el) {
+  withDataAttribute: function withDataAttribute(element, attName, opts) {
+    return this.byMatcher(element, function (el) {
       return el.dataset.hasOwnProperty(attName);
     }, opts);
   }
@@ -634,7 +652,7 @@ var forIn = require('for-in');
 var hasOwn = Object.prototype.hasOwnProperty;
 
 module.exports = function forOwn(obj, fn, thisArg) {
-  forIn(obj, function(val, key) {
+  forIn(obj, function (val, key) {
     if (hasOwn.call(obj, key)) {
       return fn.call(thisArg, obj[key], key, obj);
     }
@@ -651,16 +669,30 @@ module.exports = function forOwn(obj, fn, thisArg) {
 
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 module.exports = function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
+  return val != null && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && Array.isArray(val) === false;
 };
 
 },{}],18:[function(require,module,exports){
 'use strict';
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
@@ -799,62 +831,70 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 },{}],19:[function(require,module,exports){
 (function (global){
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
     MIT License: http://getify.mit-license.org
 */
 
-(function UMD(name,context,definition){
+(function UMD(name, context, definition) {
 	// special form of UMD for polyfilling across evironments
 	context[name] = context[name] || definition();
-	if (typeof module != "undefined" && module.exports) { module.exports = context[name]; }
-	else if (typeof define == "function" && define.amd) { define(function $AMD$(){ return context[name]; }); }
-})("Promise",typeof global != "undefined" ? global : this,function DEF(){
+	if (typeof module != "undefined" && module.exports) {
+		module.exports = context[name];
+	} else if (typeof define == "function" && define.amd) {
+		define(function $AMD$() {
+			return context[name];
+		});
+	}
+})("Promise", typeof global != "undefined" ? global : undefined, function DEF() {
 	/*jshint validthis:true */
 	"use strict";
 
-	var builtInProp, cycle, scheduling_queue,
-		ToString = Object.prototype.toString,
-		timer = (typeof setImmediate != "undefined") ?
-			function timer(fn) { return setImmediate(fn); } :
-			setTimeout
-	;
+	var builtInProp,
+	    cycle,
+	    scheduling_queue,
+	    ToString = Object.prototype.toString,
+	    timer = typeof setImmediate != "undefined" ? function timer(fn) {
+		return setImmediate(fn);
+	} : setTimeout;
 
 	// dammit, IE8.
 	try {
-		Object.defineProperty({},"x",{});
-		builtInProp = function builtInProp(obj,name,val,config) {
-			return Object.defineProperty(obj,name,{
+		Object.defineProperty({}, "x", {});
+		builtInProp = function builtInProp(obj, name, val, config) {
+			return Object.defineProperty(obj, name, {
 				value: val,
 				writable: true,
 				configurable: config !== false
 			});
 		};
-	}
-	catch (err) {
-		builtInProp = function builtInProp(obj,name,val) {
+	} catch (err) {
+		builtInProp = function builtInProp(obj, name, val) {
 			obj[name] = val;
 			return obj;
 		};
 	}
 
 	// Note: using a queue instead of array for efficiency
-	scheduling_queue = (function Queue() {
+	scheduling_queue = function Queue() {
 		var first, last, item;
 
-		function Item(fn,self) {
+		function Item(fn, self) {
 			this.fn = fn;
 			this.self = self;
 			this.next = void 0;
 		}
 
 		return {
-			add: function add(fn,self) {
-				item = new Item(fn,self);
+			add: function add(fn, self) {
+				item = new Item(fn, self);
 				if (last) {
 					last.next = item;
-				}
-				else {
+				} else {
 					first = item;
 				}
 				last = item;
@@ -870,10 +910,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				}
 			}
 		};
-	})();
+	}();
 
-	function schedule(fn,self) {
-		scheduling_queue.add(fn,self);
+	function schedule(fn, self) {
+		scheduling_queue.add(fn, self);
 		if (!cycle) {
 			cycle = timer(scheduling_queue.drain);
 		}
@@ -881,25 +921,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 	// promise duck typing
 	function isThenable(o) {
-		var _then, o_type = typeof o;
+		var _then,
+		    o_type = typeof o === "undefined" ? "undefined" : _typeof(o);
 
-		if (o != null &&
-			(
-				o_type == "object" || o_type == "function"
-			)
-		) {
+		if (o != null && (o_type == "object" || o_type == "function")) {
 			_then = o.then;
 		}
 		return typeof _then == "function" ? _then : false;
 	}
 
 	function notify() {
-		for (var i=0; i<this.chain.length; i++) {
-			notifyIsolated(
-				this,
-				(this.state === 1) ? this.chain[i].success : this.chain[i].failure,
-				this.chain[i]
-			);
+		for (var i = 0; i < this.chain.length; i++) {
+			notifyIsolated(this, this.state === 1 ? this.chain[i].success : this.chain[i].failure, this.chain[i]);
 		}
 		this.chain.length = 0;
 	}
@@ -907,41 +940,39 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 	// NOTE: This is a separate function to isolate
 	// the `try..catch` so that other code can be
 	// optimized better
-	function notifyIsolated(self,cb,chain) {
+	function notifyIsolated(self, cb, chain) {
 		var ret, _then;
 		try {
 			if (cb === false) {
 				chain.reject(self.msg);
-			}
-			else {
+			} else {
 				if (cb === true) {
 					ret = self.msg;
-				}
-				else {
-					ret = cb.call(void 0,self.msg);
+				} else {
+					ret = cb.call(void 0, self.msg);
 				}
 
 				if (ret === chain.promise) {
 					chain.reject(TypeError("Promise-chain cycle"));
-				}
-				else if (_then = isThenable(ret)) {
-					_then.call(ret,chain.resolve,chain.reject);
-				}
-				else {
+				} else if (_then = isThenable(ret)) {
+					_then.call(ret, chain.resolve, chain.reject);
+				} else {
 					chain.resolve(ret);
 				}
 			}
-		}
-		catch (err) {
+		} catch (err) {
 			chain.reject(err);
 		}
 	}
 
 	function resolve(msg) {
-		var _then, self = this;
+		var _then,
+		    self = this;
 
 		// already triggered?
-		if (self.triggered) { return; }
+		if (self.triggered) {
+			return;
+		}
 
 		self.triggered = true;
 
@@ -952,29 +983,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 		try {
 			if (_then = isThenable(msg)) {
-				schedule(function(){
+				schedule(function () {
 					var def_wrapper = new MakeDefWrapper(self);
 					try {
-						_then.call(msg,
-							function $resolve$(){ resolve.apply(def_wrapper,arguments); },
-							function $reject$(){ reject.apply(def_wrapper,arguments); }
-						);
+						_then.call(msg, function $resolve$() {
+							resolve.apply(def_wrapper, arguments);
+						}, function $reject$() {
+							reject.apply(def_wrapper, arguments);
+						});
+					} catch (err) {
+						reject.call(def_wrapper, err);
 					}
-					catch (err) {
-						reject.call(def_wrapper,err);
-					}
-				})
-			}
-			else {
+				});
+			} else {
 				self.msg = msg;
 				self.state = 1;
 				if (self.chain.length > 0) {
-					schedule(notify,self);
+					schedule(notify, self);
 				}
 			}
-		}
-		catch (err) {
-			reject.call(new MakeDefWrapper(self),err);
+		} catch (err) {
+			reject.call(new MakeDefWrapper(self), err);
 		}
 	}
 
@@ -982,7 +1011,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		var self = this;
 
 		// already triggered?
-		if (self.triggered) { return; }
+		if (self.triggered) {
+			return;
+		}
 
 		self.triggered = true;
 
@@ -994,20 +1025,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		self.msg = msg;
 		self.state = 2;
 		if (self.chain.length > 0) {
-			schedule(notify,self);
+			schedule(notify, self);
 		}
 	}
 
-	function iteratePromises(Constructor,arr,resolver,rejecter) {
-		for (var idx=0; idx<arr.length; idx++) {
-			(function IIFE(idx){
-				Constructor.resolve(arr[idx])
-				.then(
-					function $resolver$(msg){
-						resolver(idx,msg);
-					},
-					rejecter
-				);
+	function iteratePromises(Constructor, arr, resolver, rejecter) {
+		for (var idx = 0; idx < arr.length; idx++) {
+			(function IIFE(idx) {
+				Constructor.resolve(arr[idx]).then(function $resolver$(msg) {
+					resolver(idx, msg);
+				}, rejecter);
 			})(idx);
 		}
 	}
@@ -1040,7 +1067,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 		var def = new MakeDef(this);
 
-		this["then"] = function then(success,failure) {
+		this["then"] = function then(success, failure) {
 			var o = {
 				success: typeof success == "function" ? success : true,
 				failure: typeof failure == "function" ? failure : false
@@ -1048,7 +1075,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			// Note: `then(..)` itself can be borrowed to be used against
 			// a different promise constructor for making the chained promise,
 			// by substituting a different `this` binding.
-			o.promise = new this.constructor(function extractChain(resolve,reject) {
+			o.promise = new this.constructor(function extractChain(resolve, reject) {
 				if (typeof resolve != "function" || typeof reject != "function") {
 					throw TypeError("Not a function");
 				}
@@ -1059,53 +1086,46 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			def.chain.push(o);
 
 			if (def.state !== 0) {
-				schedule(notify,def);
+				schedule(notify, def);
 			}
 
 			return o.promise;
 		};
 		this["catch"] = function $catch$(failure) {
-			return this.then(void 0,failure);
+			return this.then(void 0, failure);
 		};
 
 		try {
-			executor.call(
-				void 0,
-				function publicResolve(msg){
-					resolve.call(def,msg);
-				},
-				function publicReject(msg) {
-					reject.call(def,msg);
-				}
-			);
-		}
-		catch (err) {
-			reject.call(def,err);
+			executor.call(void 0, function publicResolve(msg) {
+				resolve.call(def, msg);
+			}, function publicReject(msg) {
+				reject.call(def, msg);
+			});
+		} catch (err) {
+			reject.call(def, err);
 		}
 	}
 
-	var PromisePrototype = builtInProp({},"constructor",Promise,
-		/*configurable=*/false
-	);
+	var PromisePrototype = builtInProp({}, "constructor", Promise,
+	/*configurable=*/false);
 
 	// Note: Android 4 cannot use `Object.defineProperty(..)` here
 	Promise.prototype = PromisePrototype;
 
 	// built-in "brand" to signal an "uninitialized" promise
-	builtInProp(PromisePrototype,"__NPO__",0,
-		/*configurable=*/false
-	);
+	builtInProp(PromisePrototype, "__NPO__", 0,
+	/*configurable=*/false);
 
-	builtInProp(Promise,"resolve",function Promise$resolve(msg) {
+	builtInProp(Promise, "resolve", function Promise$resolve(msg) {
 		var Constructor = this;
 
 		// spec mandated checks
 		// note: best "isPromise" check that's practical for now
-		if (msg && typeof msg == "object" && msg.__NPO__ === 1) {
+		if (msg && (typeof msg === "undefined" ? "undefined" : _typeof(msg)) == "object" && msg.__NPO__ === 1) {
 			return msg;
 		}
 
-		return new Constructor(function executor(resolve,reject){
+		return new Constructor(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
@@ -1114,8 +1134,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		});
 	});
 
-	builtInProp(Promise,"reject",function Promise$reject(msg) {
-		return new this(function executor(resolve,reject){
+	builtInProp(Promise, "reject", function Promise$reject(msg) {
+		return new this(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
@@ -1124,7 +1144,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		});
 	});
 
-	builtInProp(Promise,"all",function Promise$all(arr) {
+	builtInProp(Promise, "all", function Promise$all(arr) {
 		var Constructor = this;
 
 		// spec mandated checks
@@ -1135,23 +1155,25 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			return Constructor.resolve([]);
 		}
 
-		return new Constructor(function executor(resolve,reject){
+		return new Constructor(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
 
-			var len = arr.length, msgs = Array(len), count = 0;
+			var len = arr.length,
+			    msgs = Array(len),
+			    count = 0;
 
-			iteratePromises(Constructor,arr,function resolver(idx,msg) {
+			iteratePromises(Constructor, arr, function resolver(idx, msg) {
 				msgs[idx] = msg;
 				if (++count === len) {
 					resolve(msgs);
 				}
-			},reject);
+			}, reject);
 		});
 	});
 
-	builtInProp(Promise,"race",function Promise$race(arr) {
+	builtInProp(Promise, "race", function Promise$race(arr) {
 		var Constructor = this;
 
 		// spec mandated checks
@@ -1159,14 +1181,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			return Constructor.reject(TypeError("Not an array"));
 		}
 
-		return new Constructor(function executor(resolve,reject){
+		return new Constructor(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
 
-			iteratePromises(Constructor,arr,function resolver(idx,msg){
+			iteratePromises(Constructor, arr, function resolver(idx, msg) {
 				resolve(msg);
-			},reject);
+			}, reject);
 		});
 	});
 
@@ -1220,9 +1242,9 @@ module.exports = function defaults(target, objects) {
     return {};
   }
 
-  each(slice(arguments, 1), function(obj) {
+  each(slice(arguments, 1), function (obj) {
     if (isObject(obj)) {
-      forOwn(obj, function(val, key) {
+      forOwn(obj, function (val, key) {
         if (target[key] == null) {
           target[key] = val;
         }
@@ -1234,16 +1256,20 @@ module.exports = function defaults(target, objects) {
 };
 
 },{"array-each":2,"array-slice":3,"for-own":16,"isobject":17}],22:[function(require,module,exports){
-var isarray = require('isarray')
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var isarray = require('isarray');
 
 /**
  * Expose `pathToRegexp`.
  */
-module.exports = pathToRegexp
-module.exports.parse = parse
-module.exports.compile = compile
-module.exports.tokensToFunction = tokensToFunction
-module.exports.tokensToRegExp = tokensToRegExp
+module.exports = pathToRegexp;
+module.exports.parse = parse;
+module.exports.compile = compile;
+module.exports.tokensToFunction = tokensToFunction;
+module.exports.tokensToRegExp = tokensToRegExp;
 
 /**
  * The main path matching regexp utility.
@@ -1251,17 +1277,16 @@ module.exports.tokensToRegExp = tokensToRegExp
  * @type {RegExp}
  */
 var PATH_REGEXP = new RegExp([
-  // Match escaped characters that would otherwise appear in future matches.
-  // This allows the user to escape special characters that won't transform.
-  '(\\\\.)',
-  // Match Express-style parameters and un-named parameters with a prefix
-  // and optional suffixes. Matches appear as:
-  //
-  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
-  // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
-  // "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
-  '([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))'
-].join('|'), 'g')
+// Match escaped characters that would otherwise appear in future matches.
+// This allows the user to escape special characters that won't transform.
+'(\\\\.)',
+// Match Express-style parameters and un-named parameters with a prefix
+// and optional suffixes. Matches appear as:
+//
+// "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
+// "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
+// "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
+'([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))'].join('|'), 'g');
 
 /**
  * Parse a string for the raw tokens.
@@ -1270,46 +1295,46 @@ var PATH_REGEXP = new RegExp([
  * @param  {Object=} options
  * @return {!Array}
  */
-function parse (str, options) {
-  var tokens = []
-  var key = 0
-  var index = 0
-  var path = ''
-  var defaultDelimiter = options && options.delimiter || '/'
-  var res
+function parse(str, options) {
+  var tokens = [];
+  var key = 0;
+  var index = 0;
+  var path = '';
+  var defaultDelimiter = options && options.delimiter || '/';
+  var res;
 
   while ((res = PATH_REGEXP.exec(str)) != null) {
-    var m = res[0]
-    var escaped = res[1]
-    var offset = res.index
-    path += str.slice(index, offset)
-    index = offset + m.length
+    var m = res[0];
+    var escaped = res[1];
+    var offset = res.index;
+    path += str.slice(index, offset);
+    index = offset + m.length;
 
     // Ignore already escaped sequences.
     if (escaped) {
-      path += escaped[1]
-      continue
+      path += escaped[1];
+      continue;
     }
 
-    var next = str[index]
-    var prefix = res[2]
-    var name = res[3]
-    var capture = res[4]
-    var group = res[5]
-    var modifier = res[6]
-    var asterisk = res[7]
+    var next = str[index];
+    var prefix = res[2];
+    var name = res[3];
+    var capture = res[4];
+    var group = res[5];
+    var modifier = res[6];
+    var asterisk = res[7];
 
     // Push the current path onto the tokens.
     if (path) {
-      tokens.push(path)
-      path = ''
+      tokens.push(path);
+      path = '';
     }
 
-    var partial = prefix != null && next != null && next !== prefix
-    var repeat = modifier === '+' || modifier === '*'
-    var optional = modifier === '?' || modifier === '*'
-    var delimiter = res[2] || defaultDelimiter
-    var pattern = capture || group
+    var partial = prefix != null && next != null && next !== prefix;
+    var repeat = modifier === '+' || modifier === '*';
+    var optional = modifier === '?' || modifier === '*';
+    var delimiter = res[2] || defaultDelimiter;
+    var pattern = capture || group;
 
     tokens.push({
       name: name || key++,
@@ -1319,21 +1344,21 @@ function parse (str, options) {
       repeat: repeat,
       partial: partial,
       asterisk: !!asterisk,
-      pattern: pattern ? escapeGroup(pattern) : (asterisk ? '.*' : '[^' + escapeString(delimiter) + ']+?')
-    })
+      pattern: pattern ? escapeGroup(pattern) : asterisk ? '.*' : '[^' + escapeString(delimiter) + ']+?'
+    });
   }
 
   // Match any characters still remaining.
   if (index < str.length) {
-    path += str.substr(index)
+    path += str.substr(index);
   }
 
   // If the path exists, push it onto the end.
   if (path) {
-    tokens.push(path)
+    tokens.push(path);
   }
 
-  return tokens
+  return tokens;
 }
 
 /**
@@ -1343,8 +1368,8 @@ function parse (str, options) {
  * @param  {Object=}            options
  * @return {!function(Object=, Object=)}
  */
-function compile (str, options) {
-  return tokensToFunction(parse(str, options))
+function compile(str, options) {
+  return tokensToFunction(parse(str, options));
 }
 
 /**
@@ -1353,10 +1378,10 @@ function compile (str, options) {
  * @param  {string}
  * @return {string}
  */
-function encodeURIComponentPretty (str) {
+function encodeURIComponentPretty(str) {
   return encodeURI(str).replace(/[\/?#]/g, function (c) {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  })
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 }
 
 /**
@@ -1365,94 +1390,94 @@ function encodeURIComponentPretty (str) {
  * @param  {string}
  * @return {string}
  */
-function encodeAsterisk (str) {
+function encodeAsterisk(str) {
   return encodeURI(str).replace(/[?#]/g, function (c) {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  })
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 }
 
 /**
  * Expose a method for transforming tokens into the path function.
  */
-function tokensToFunction (tokens) {
+function tokensToFunction(tokens) {
   // Compile all the tokens into regexps.
-  var matches = new Array(tokens.length)
+  var matches = new Array(tokens.length);
 
   // Compile all the patterns before compilation.
   for (var i = 0; i < tokens.length; i++) {
-    if (typeof tokens[i] === 'object') {
-      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$')
+    if (_typeof(tokens[i]) === 'object') {
+      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$');
     }
   }
 
   return function (obj, opts) {
-    var path = ''
-    var data = obj || {}
-    var options = opts || {}
-    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent
+    var path = '';
+    var data = obj || {};
+    var options = opts || {};
+    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent;
 
     for (var i = 0; i < tokens.length; i++) {
-      var token = tokens[i]
+      var token = tokens[i];
 
       if (typeof token === 'string') {
-        path += token
+        path += token;
 
-        continue
+        continue;
       }
 
-      var value = data[token.name]
-      var segment
+      var value = data[token.name];
+      var segment;
 
       if (value == null) {
         if (token.optional) {
           // Prepend partial segment prefixes.
           if (token.partial) {
-            path += token.prefix
+            path += token.prefix;
           }
 
-          continue
+          continue;
         } else {
-          throw new TypeError('Expected "' + token.name + '" to be defined')
+          throw new TypeError('Expected "' + token.name + '" to be defined');
         }
       }
 
       if (isarray(value)) {
         if (!token.repeat) {
-          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`')
+          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`');
         }
 
         if (value.length === 0) {
           if (token.optional) {
-            continue
+            continue;
           } else {
-            throw new TypeError('Expected "' + token.name + '" to not be empty')
+            throw new TypeError('Expected "' + token.name + '" to not be empty');
           }
         }
 
         for (var j = 0; j < value.length; j++) {
-          segment = encode(value[j])
+          segment = encode(value[j]);
 
           if (!matches[i].test(segment)) {
-            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`')
+            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`');
           }
 
-          path += (j === 0 ? token.prefix : token.delimiter) + segment
+          path += (j === 0 ? token.prefix : token.delimiter) + segment;
         }
 
-        continue
+        continue;
       }
 
-      segment = token.asterisk ? encodeAsterisk(value) : encode(value)
+      segment = token.asterisk ? encodeAsterisk(value) : encode(value);
 
       if (!matches[i].test(segment)) {
-        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
+        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"');
       }
 
-      path += token.prefix + segment
+      path += token.prefix + segment;
     }
 
-    return path
-  }
+    return path;
+  };
 }
 
 /**
@@ -1461,8 +1486,8 @@ function tokensToFunction (tokens) {
  * @param  {string} str
  * @return {string}
  */
-function escapeString (str) {
-  return str.replace(/([.+*?=^!:${}()[\]|\/\\])/g, '\\$1')
+function escapeString(str) {
+  return str.replace(/([.+*?=^!:${}()[\]|\/\\])/g, '\\$1');
 }
 
 /**
@@ -1471,8 +1496,8 @@ function escapeString (str) {
  * @param  {string} group
  * @return {string}
  */
-function escapeGroup (group) {
-  return group.replace(/([=!:$\/()])/g, '\\$1')
+function escapeGroup(group) {
+  return group.replace(/([=!:$\/()])/g, '\\$1');
 }
 
 /**
@@ -1482,9 +1507,9 @@ function escapeGroup (group) {
  * @param  {Array}   keys
  * @return {!RegExp}
  */
-function attachKeys (re, keys) {
-  re.keys = keys
-  return re
+function attachKeys(re, keys) {
+  re.keys = keys;
+  return re;
 }
 
 /**
@@ -1493,8 +1518,8 @@ function attachKeys (re, keys) {
  * @param  {Object} options
  * @return {string}
  */
-function flags (options) {
-  return options.sensitive ? '' : 'i'
+function flags(options) {
+  return options.sensitive ? '' : 'i';
 }
 
 /**
@@ -1504,9 +1529,9 @@ function flags (options) {
  * @param  {!Array}  keys
  * @return {!RegExp}
  */
-function regexpToRegexp (path, keys) {
+function regexpToRegexp(path, keys) {
   // Use a negative lookahead to match only capturing groups.
-  var groups = path.source.match(/\((?!\?)/g)
+  var groups = path.source.match(/\((?!\?)/g);
 
   if (groups) {
     for (var i = 0; i < groups.length; i++) {
@@ -1519,11 +1544,11 @@ function regexpToRegexp (path, keys) {
         partial: false,
         asterisk: false,
         pattern: null
-      })
+      });
     }
   }
 
-  return attachKeys(path, keys)
+  return attachKeys(path, keys);
 }
 
 /**
@@ -1534,16 +1559,16 @@ function regexpToRegexp (path, keys) {
  * @param  {!Object} options
  * @return {!RegExp}
  */
-function arrayToRegexp (path, keys, options) {
-  var parts = []
+function arrayToRegexp(path, keys, options) {
+  var parts = [];
 
   for (var i = 0; i < path.length; i++) {
-    parts.push(pathToRegexp(path[i], keys, options).source)
+    parts.push(pathToRegexp(path[i], keys, options).source);
   }
 
-  var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options))
+  var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options));
 
-  return attachKeys(regexp, keys)
+  return attachKeys(regexp, keys);
 }
 
 /**
@@ -1554,8 +1579,8 @@ function arrayToRegexp (path, keys, options) {
  * @param  {!Object} options
  * @return {!RegExp}
  */
-function stringToRegexp (path, keys, options) {
-  return tokensToRegExp(parse(path, options), keys, options)
+function stringToRegexp(path, keys, options) {
+  return tokensToRegExp(parse(path, options), keys, options);
 }
 
 /**
@@ -1566,68 +1591,68 @@ function stringToRegexp (path, keys, options) {
  * @param  {Object=}         options
  * @return {!RegExp}
  */
-function tokensToRegExp (tokens, keys, options) {
+function tokensToRegExp(tokens, keys, options) {
   if (!isarray(keys)) {
-    options = /** @type {!Object} */ (keys || options)
-    keys = []
+    options = /** @type {!Object} */keys || options;
+    keys = [];
   }
 
-  options = options || {}
+  options = options || {};
 
-  var strict = options.strict
-  var end = options.end !== false
-  var route = ''
+  var strict = options.strict;
+  var end = options.end !== false;
+  var route = '';
 
   // Iterate over the tokens and create our regexp string.
   for (var i = 0; i < tokens.length; i++) {
-    var token = tokens[i]
+    var token = tokens[i];
 
     if (typeof token === 'string') {
-      route += escapeString(token)
+      route += escapeString(token);
     } else {
-      var prefix = escapeString(token.prefix)
-      var capture = '(?:' + token.pattern + ')'
+      var prefix = escapeString(token.prefix);
+      var capture = '(?:' + token.pattern + ')';
 
-      keys.push(token)
+      keys.push(token);
 
       if (token.repeat) {
-        capture += '(?:' + prefix + capture + ')*'
+        capture += '(?:' + prefix + capture + ')*';
       }
 
       if (token.optional) {
         if (!token.partial) {
-          capture = '(?:' + prefix + '(' + capture + '))?'
+          capture = '(?:' + prefix + '(' + capture + '))?';
         } else {
-          capture = prefix + '(' + capture + ')?'
+          capture = prefix + '(' + capture + ')?';
         }
       } else {
-        capture = prefix + '(' + capture + ')'
+        capture = prefix + '(' + capture + ')';
       }
 
-      route += capture
+      route += capture;
     }
   }
 
-  var delimiter = escapeString(options.delimiter || '/')
-  var endsWithDelimiter = route.slice(-delimiter.length) === delimiter
+  var delimiter = escapeString(options.delimiter || '/');
+  var endsWithDelimiter = route.slice(-delimiter.length) === delimiter;
 
   // In non-strict mode we allow a slash at the end of match. If the path to
   // match already ends with a slash, we remove it for consistency. The slash
   // is valid at the end of a path match, not in the middle. This is important
   // in non-ending mode, where "/test/" shouldn't match "/test//route".
   if (!strict) {
-    route = (endsWithDelimiter ? route.slice(0, -delimiter.length) : route) + '(?:' + delimiter + '(?=$))?'
+    route = (endsWithDelimiter ? route.slice(0, -delimiter.length) : route) + '(?:' + delimiter + '(?=$))?';
   }
 
   if (end) {
-    route += '$'
+    route += '$';
   } else {
     // In non-ending mode, we need the capturing groups to match as much as
     // possible by using a positive lookahead to the end or next path segment.
-    route += strict && endsWithDelimiter ? '' : '(?=' + delimiter + '|$)'
+    route += strict && endsWithDelimiter ? '' : '(?=' + delimiter + '|$)';
   }
 
-  return attachKeys(new RegExp('^' + route, flags(options)), keys)
+  return attachKeys(new RegExp('^' + route, flags(options)), keys);
 }
 
 /**
@@ -1642,26 +1667,28 @@ function tokensToRegExp (tokens, keys, options) {
  * @param  {Object=}               options
  * @return {!RegExp}
  */
-function pathToRegexp (path, keys, options) {
+function pathToRegexp(path, keys, options) {
   if (!isarray(keys)) {
-    options = /** @type {!Object} */ (keys || options)
-    keys = []
+    options = /** @type {!Object} */keys || options;
+    keys = [];
   }
 
-  options = options || {}
+  options = options || {};
 
   if (path instanceof RegExp) {
-    return regexpToRegexp(path, /** @type {!Array} */ (keys))
+    return regexpToRegexp(path, /** @type {!Array} */keys);
   }
 
   if (isarray(path)) {
-    return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
+    return arrayToRegexp( /** @type {!Array} */path, /** @type {!Array} */keys, options);
   }
 
-  return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
+  return stringToRegexp( /** @type {string} */path, /** @type {!Array} */keys, options);
 }
 
 },{"isarray":23}],23:[function(require,module,exports){
+'use strict';
+
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
@@ -1770,6 +1797,7 @@ var App = function (_mix$with) {
         _this.Component = _this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         _this.component = null;
         _this.renderInterval = opts.renderInterval;
+        _this.renderPromises = {};
         _this.stylesRenderFormat = opts.stylesRenderFormat;
         _this.markupRenderFormat = opts.markupRenderFormat;
         _this.markupTransforms = opts.markupTransforms;
@@ -1954,10 +1982,15 @@ var App = function (_mix$with) {
                 });
 
                 _this4.component.on('markeddirty', function (evt) {
-                    requestAnimationFrame(function () {
-                        _this4.el.classList.add('rendering-' + evt.pipelineName);
-                        _this4.el.classList.add('rendering');
-                        _this4.component.render(evt.pipelineName);
+                    _this4.renderPromises[evt.pipelineName] = new Promise(function (resolve) {
+                        requestAnimationFrame(function () {
+                            _this4.el.classList.add('rendering-' + evt.pipelineName);
+                            _this4.el.classList.add('rendering');
+                            _this4.component.render(evt.pipelineName).then(function (results) {
+                                _this4.renderPromises[evt.pipelineName] = null;
+                                resolve(results);
+                            });
+                        });
                     });
                 });
 
@@ -2058,6 +2091,7 @@ var Component = function (_mix$with) {
             store: {
                 value: new Store(Object.assign({
                     $bind: _this.bindEvent.bind(_this),
+                    $bindValue: _this.bindEventValue.bind(_this),
                     $act: _this.createAction.bind(_this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
@@ -2297,6 +2331,11 @@ var Component = function (_mix$with) {
         value: function bindEvent(funcText, opts) {
             var consts = this.constructor.Weddell.consts;
             return "(function(event){" + (opts && opts.preventDefault ? 'event.preventDefault();' : '') + (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') + funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+        }
+    }, {
+        key: 'bindEventValue',
+        value: function bindEventValue(propName, opts) {
+            return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
         }
     }, {
         key: 'markDirty',
@@ -3537,14 +3576,18 @@ module.exports = function (_Weddell) {
                                         component: null,
                                         componentName: null
                                     });
-                                    return Promise.all([_this2.component.awaitRender(), jobs.reduce(function (promise, obj) {
+                                    return jobs.reduce(function (promise, obj) {
                                         return promise.then(function () {
                                             return obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, { matches: matches });
                                         });
-                                    }, Promise.resolve())]);
+                                    }, Promise.resolve()).then(function (results) {
+                                        return _this2.renderPromises.markup ? _this2.renderPromises.markup.then(function () {
+                                            return results;
+                                        }) : results;
+                                    });
                                 }, console.warn).then(function (results) {
                                     _this2.el.classList.remove('routing');
-                                    return results[1];
+                                    return results;
                                 });
                             }.bind(_this),
                             onHashChange: function (hash) {
@@ -3766,7 +3809,6 @@ var Router = function () {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
-        this.onHashChange = opts.onHashChange;
         this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
@@ -3779,7 +3821,7 @@ var Router = function () {
             var _this = this;
 
             if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-                return Promise.resolve(null);
+                return true;
             }
             if (typeof pathName === 'string') {
                 var matches = this.matchRoute(pathName, this.routes);
@@ -3791,7 +3833,7 @@ var Router = function () {
             }
             if (matches) {
                 if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                    return Promise.resolve(null);
+                    return true;
                 }
                 var promise = Promise.all(matches.map(function (currMatch, key) {
 
@@ -3915,11 +3957,11 @@ var Router = function () {
             var _this3 = this;
 
             if (!this._isInit && this.routes) {
-                // if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+                if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
                 this._isInit = true;
 
                 addEventListener('popstate', this.onPopState.bind(this));
-                addEventListener('hashchange', this.hashChange.bind(this));
+                addEventListener('hashchange', this.onHashChange.bind(this));
 
                 document.body.addEventListener('click', function (evt) {
                     var clickedATag = findParent.byMatcher(evt.target, function (el) {
@@ -3934,13 +3976,14 @@ var Router = function () {
                             var result = _this3.route(aPath);
                             if (result) {
                                 evt.preventDefault();
-                                result.then(function (matches) {
-                                    if (matches) {
+                                _this3.replaceState(location.pathname, location.hash);
+                                if (result.then) {
+                                    result.then(function (matches) {
                                         _this3.pushState(matches.fullPath, hash, { x: 0, y: 0 });
-                                    } else if (hash !== location.hash) {
-                                        _this3.pushState(location.pathname, hash);
-                                    }
-                                });
+                                    });
+                                } else if (hash !== location.hash) {
+                                    _this3.pushState(location.pathname, hash);
+                                }
                             }
                         }
                     }
@@ -3958,11 +4001,6 @@ var Router = function () {
         key: 'pushState',
         value: function pushState(pathName, hash, scrollPos) {
             if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-            if (history.state) {
-                var currentScrollPos = { x: window.pageXOffset, y: window.pageYOffset };
-                //first set our scroll position into previous state so that we can restore it when we navigate back
-                history.replaceState(Object.assign({}, history.state, { scrollPos: currentScrollPos }), document.title, location.pathname + location.hash);
-            }
             if (typeof hash === 'string') {
                 location.hash = hash;
             }
@@ -3980,8 +4018,8 @@ var Router = function () {
             this.setScrollPos(scrollPos, hash);
         }
     }, {
-        key: 'hashChange',
-        value: function hashChange(evt) {
+        key: 'onHashChange',
+        value: function onHashChange(evt) {
             if (!history.state) {
                 this.replaceState(location.pathname, location.hash, { x: window.pageXOffset, y: window.pageYOffset });
             }
@@ -4001,14 +4039,15 @@ var Router = function () {
     }, {
         key: 'onPopState',
         value: function onPopState(evt) {
+            //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
             var state = history.state;
 
             if (evt && evt.state) {
                 var result = this.route(evt.state.fullPath);
-                if (result) {
+                if (result && evt.state.scrollPos) {
                     if (result.then) {
                         result.then(function (matches) {
-                            return window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
+                            window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
                         });
                     } else {
                         window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);

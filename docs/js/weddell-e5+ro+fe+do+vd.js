@@ -7,16 +7,15 @@
 
 module.exports = compact;
 
-
 /**
  * Return an array copy without falsy values
  */
 
-function compact (arr) {
+function compact(arr) {
   return arr.filter(validate);
 }
 
-function validate (item) {
+function validate(item) {
   return !!item;
 }
 
@@ -112,6 +111,7 @@ function idx(arr, pos, end) {
 // there's 3 implementations written in increasing order of efficiency
 
 // 1 - no Set type is defined
+
 function uniqNoSet(arr) {
 	var ret = [];
 
@@ -141,7 +141,7 @@ function uniqSet(arr) {
 function uniqSetWithForEach(arr) {
 	var ret = [];
 
-	(new Set(arr)).forEach(function (el) {
+	new Set(arr).forEach(function (el) {
 		ret.push(el);
 	});
 
@@ -153,7 +153,7 @@ function uniqSetWithForEach(arr) {
 function doesForEachActuallyWork() {
 	var ret = false;
 
-	(new Set([true])).forEach(function (el) {
+	new Set([true]).forEach(function (el) {
 		ret = el;
 	});
 
@@ -172,8 +172,11 @@ if ('Set' in global) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],5:[function(require,module,exports){
+"use strict";
 
 },{}],6:[function(require,module,exports){
+"use strict";
+
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -205,26 +208,32 @@ if ('Set' in global) {
  * split('..word1 word2..', /([a-z]+)(\d+)/i);
  * // -> ['..', 'word', '1', ' ', 'word', '2', '..']
  */
-module.exports = (function split(undef) {
+module.exports = function split(undef) {
 
   var nativeSplit = String.prototype.split,
-    compliantExecNpcg = /()??/.exec("")[1] === undef,
-    // NPCG: nonparticipating capturing group
-    self;
+      compliantExecNpcg = /()??/.exec("")[1] === undef,
 
-  self = function(str, separator, limit) {
+  // NPCG: nonparticipating capturing group
+  self;
+
+  self = function self(str, separator, limit) {
     // If `separator` is not a regex, use `nativeSplit`
     if (Object.prototype.toString.call(separator) !== "[object RegExp]") {
       return nativeSplit.call(str, separator, limit);
     }
     var output = [],
-      flags = (separator.ignoreCase ? "i" : "") + (separator.multiline ? "m" : "") + (separator.extended ? "x" : "") + // Proposed for ES6
-      (separator.sticky ? "y" : ""),
-      // Firefox 3+
-      lastLastIndex = 0,
-      // Make `global` and avoid `lastIndex` issues by working with a copy
-      separator = new RegExp(separator.source, flags + "g"),
-      separator2, match, lastIndex, lastLength;
+        flags = (separator.ignoreCase ? "i" : "") + (separator.multiline ? "m" : "") + (separator.extended ? "x" : "") + ( // Proposed for ES6
+    separator.sticky ? "y" : ""),
+
+    // Firefox 3+
+    lastLastIndex = 0,
+
+    // Make `global` and avoid `lastIndex` issues by working with a copy
+    separator = new RegExp(separator.source, flags + "g"),
+        separator2,
+        match,
+        lastIndex,
+        lastLength;
     str += ""; // Type-convert
     if (!compliantExecNpcg) {
       // Doesn't need flags gy, but they don't hurt
@@ -247,7 +256,7 @@ module.exports = (function split(undef) {
         // Fix browsers whose `exec` methods don't consistently return `undefined` for
         // nonparticipating capturing groups
         if (!compliantExecNpcg && match.length > 1) {
-          match[0].replace(separator2, function() {
+          match[0].replace(separator2, function () {
             for (var i = 1; i < arguments.length - 2; i++) {
               if (arguments[i] === undef) {
                 match[i] = undef;
@@ -279,9 +288,11 @@ module.exports = (function split(undef) {
   };
 
   return self;
-})();
+}();
 
 },{}],7:[function(require,module,exports){
+"use strict";
+
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -297,7 +308,7 @@ module.exports = (function split(undef) {
  * @api public
  */
 
-module.exports = function debounce(func, wait, immediate){
+module.exports = function debounce(func, wait, immediate) {
   var timeout, args, context, timestamp, result;
   if (null == wait) wait = 100;
 
@@ -315,7 +326,7 @@ module.exports = function debounce(func, wait, immediate){
     }
   };
 
-  var debounced = function(){
+  var debounced = function debounced() {
     context = this;
     args = arguments;
     timestamp = Date.now();
@@ -329,7 +340,7 @@ module.exports = function debounce(func, wait, immediate){
     return result;
   };
 
-  debounced.clear = function() {
+  debounced.clear = function () {
     if (timeout) {
       clearTimeout(timeout);
       timeout = null;
@@ -340,6 +351,10 @@ module.exports = function debounce(func, wait, immediate){
 };
 
 },{}],8:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -349,32 +364,31 @@ var deepEqual = module.exports = function (actual, expected, opts) {
   // 7.1. All identical values are equivalent, as determined by ===.
   if (actual === expected) {
     return true;
-
   } else if (actual instanceof Date && expected instanceof Date) {
     return actual.getTime() === expected.getTime();
 
-  // 7.3. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
+    // 7.3. Other pairs that do not both pass typeof value == 'object',
+    // equivalence is determined by ==.
+  } else if (!actual || !expected || (typeof actual === 'undefined' ? 'undefined' : _typeof(actual)) != 'object' && (typeof expected === 'undefined' ? 'undefined' : _typeof(expected)) != 'object') {
     return opts.strict ? actual === expected : actual == expected;
 
-  // 7.4. For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
+    // 7.4. For all other Object pairs, including Array objects, equivalence is
+    // determined by having the same number of owned properties (as verified
+    // with Object.prototype.hasOwnProperty.call), the same set of keys
+    // (although not necessarily the same order), equivalent values for every
+    // corresponding key, and an identical 'prototype' property. Note: this
+    // accounts for both named and indexed properties on Arrays.
   } else {
     return objEquiv(actual, expected, opts);
   }
-}
+};
 
 function isUndefinedOrNull(value) {
   return value === null || value === undefined;
 }
 
-function isBuffer (x) {
-  if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
+function isBuffer(x) {
+  if (!x || (typeof x === 'undefined' ? 'undefined' : _typeof(x)) !== 'object' || typeof x.length !== 'number') return false;
   if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
     return false;
   }
@@ -384,8 +398,7 @@ function isBuffer (x) {
 
 function objEquiv(a, b, opts) {
   var i, key;
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-    return false;
+  if (isUndefinedOrNull(a) || isUndefinedOrNull(b)) return false;
   // an identical 'prototype' property.
   if (a.prototype !== b.prototype) return false;
   //~~~I've managed to break Object.keys through screwy arguments passing.
@@ -411,20 +424,19 @@ function objEquiv(a, b, opts) {
   try {
     var ka = objectKeys(a),
         kb = objectKeys(b);
-  } catch (e) {//happens when one is a string literal and the other isn't
+  } catch (e) {
+    //happens when one is a string literal and the other isn't
     return false;
   }
   // having the same number of owned properties (keys incorporates
   // hasOwnProperty)
-  if (ka.length != kb.length)
-    return false;
+  if (ka.length != kb.length) return false;
   //the same set of keys (although not necessarily the same order),
   ka.sort();
   kb.sort();
   //~~~cheap key test
   for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] != kb[i])
-      return false;
+    if (ka[i] != kb[i]) return false;
   }
   //equivalent values for every corresponding key, and
   //~~~possibly expensive deep test
@@ -432,13 +444,17 @@ function objEquiv(a, b, opts) {
     key = ka[i];
     if (!deepEqual(a[key], b[key], opts)) return false;
   }
-  return typeof a === typeof b;
+  return (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === (typeof b === 'undefined' ? 'undefined' : _typeof(b));
 }
 
 },{"./lib/is_arguments.js":9,"./lib/keys.js":10}],9:[function(require,module,exports){
-var supportsArgumentsClass = (function(){
-  return Object.prototype.toString.call(arguments)
-})() == '[object Arguments]';
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var supportsArgumentsClass = function () {
+  return Object.prototype.toString.call(arguments);
+}() == '[object Arguments]';
 
 exports = module.exports = supportsArgumentsClass ? supported : unsupported;
 
@@ -448,82 +464,97 @@ function supported(object) {
 };
 
 exports.unsupported = unsupported;
-function unsupported(object){
-  return object &&
-    typeof object == 'object' &&
-    typeof object.length == 'number' &&
-    Object.prototype.hasOwnProperty.call(object, 'callee') &&
-    !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
-    false;
+function unsupported(object) {
+  return object && (typeof object === 'undefined' ? 'undefined' : _typeof(object)) == 'object' && typeof object.length == 'number' && Object.prototype.hasOwnProperty.call(object, 'callee') && !Object.prototype.propertyIsEnumerable.call(object, 'callee') || false;
 };
 
 },{}],10:[function(require,module,exports){
-exports = module.exports = typeof Object.keys === 'function'
-  ? Object.keys : shim;
+'use strict';
+
+exports = module.exports = typeof Object.keys === 'function' ? Object.keys : shim;
 
 exports.shim = shim;
-function shim (obj) {
+function shim(obj) {
   var keys = [];
-  for (var key in obj) keys.push(key);
-  return keys;
+  for (var key in obj) {
+    keys.push(key);
+  }return keys;
 }
 
 },{}],11:[function(require,module,exports){
+'use strict';
+
 var makeDefaultsFunc = require('./src/make-defaults-func');
 module.exports = makeDefaultsFunc(true, require('./src/array-merge'));
 
 },{"./src/array-merge":12,"./src/make-defaults-func":13}],12:[function(require,module,exports){
-module.exports = function() {
-    return Array.from(arguments).slice(1).reduce((finalArr, arr) => {
-        return finalArr.concat(arr.filter(item => finalArr.indexOf(item) < 0));
+"use strict";
+
+module.exports = function () {
+    return Array.from(arguments).slice(1).reduce(function (finalArr, arr) {
+        return finalArr.concat(arr.filter(function (item) {
+            return finalArr.indexOf(item) < 0;
+        }));
     }, arguments[0]);
 };
+
 },{}],13:[function(require,module,exports){
-module.exports = function(deep, merge) {
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+module.exports = function (deep, merge) {
     return function defaults() {
-        return Array.from(arguments).slice(1).reduce((sourceObj, obj) => {
-            Object.entries(obj).forEach((entry) => {
+        return Array.from(arguments).slice(1).reduce(function (sourceObj, obj) {
+            Object.entries(obj).forEach(function (entry) {
                 if (typeof sourceObj[entry[0]] === 'undefined') {
                     sourceObj[entry[0]] = entry[1];
-                } else if (deep && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && !Array.isArray(val))) {
+                } else if (deep && [entry[1], sourceObj[entry[0]]].every(function (val) {
+                    return val && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && !Array.isArray(val);
+                })) {
                     sourceObj[entry[0]] = defaults(sourceObj[entry[0]], entry[1]);
-                } else if (merge && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && Array.isArray(val))) {
+                } else if (merge && [entry[1], sourceObj[entry[0]]].every(function (val) {
+                    return val && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && Array.isArray(val);
+                })) {
                     sourceObj[entry[0]] = merge(sourceObj[entry[0]], entry[1]);
                 }
             });
             return sourceObj;
         }, Object.assign({}, arguments[0]));
-    }
+    };
 };
 
 },{}],14:[function(require,module,exports){
+'use strict';
+
 (function (document, promise) {
-  if (typeof module !== 'undefined') module.exports = promise
-  else document.ready = promise
+  if (typeof module !== 'undefined') module.exports = promise;else document.ready = promise;
 })(window.document, function (chainVal) {
-  'use strict'
+  'use strict';
 
   var d = document,
       w = window,
       loaded = /^loaded|^i|^c/.test(d.readyState),
       DOMContentLoaded = 'DOMContentLoaded',
-      load = 'load'
+      load = 'load';
 
   return new Promise(function (resolve) {
-    if (loaded) return resolve(chainVal)
+    if (loaded) return resolve(chainVal);
 
-    function onReady () {
-      resolve(chainVal)
-      d.removeEventListener(DOMContentLoaded, onReady)
-      w.removeEventListener(load, onReady)
+    function onReady() {
+      resolve(chainVal);
+      d.removeEventListener(DOMContentLoaded, onReady);
+      w.removeEventListener(load, onReady);
     }
 
-    d.addEventListener(DOMContentLoaded, onReady)
-    w.addEventListener(load, onReady)
-  })
-})
+    d.addEventListener(DOMContentLoaded, onReady);
+    w.addEventListener(load, onReady);
+  });
+});
 
 },{}],15:[function(require,module,exports){
+"use strict";
+
 // doT.js
 // 2011-2014, Laura Doktorova, https://github.com/olado/doT
 // Licensed under the MIT license.
@@ -535,75 +566,81 @@ module.exports = function(deep, merge) {
 		name: "doT",
 		version: "1.1.1",
 		templateSettings: {
-			evaluate:    /\{\{([\s\S]+?(\}?)+)\}\}/g,
+			evaluate: /\{\{([\s\S]+?(\}?)+)\}\}/g,
 			interpolate: /\{\{=([\s\S]+?)\}\}/g,
-			encode:      /\{\{!([\s\S]+?)\}\}/g,
-			use:         /\{\{#([\s\S]+?)\}\}/g,
-			useParams:   /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
-			define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
-			defineParams:/^\s*([\w$]+):([\s\S]+)/,
+			encode: /\{\{!([\s\S]+?)\}\}/g,
+			use: /\{\{#([\s\S]+?)\}\}/g,
+			useParams: /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
+			define: /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
+			defineParams: /^\s*([\w$]+):([\s\S]+)/,
 			conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
-			iterate:     /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
-			varname:	"it",
-			strip:		true,
-			append:		true,
+			iterate: /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
+			varname: "it",
+			strip: true,
+			append: true,
 			selfcontained: false,
 			doNotSkipEncoded: false
 		},
 		template: undefined, //fn, compile template
-		compile:  undefined, //fn, for express
+		compile: undefined, //fn, for express
 		log: true
-	}, _globals;
+	},
+	    _globals;
 
-	doT.encodeHTMLSource = function(doNotSkipEncoded) {
+	doT.encodeHTMLSource = function (doNotSkipEncoded) {
 		var encodeHTMLRules = { "&": "&#38;", "<": "&#60;", ">": "&#62;", '"': "&#34;", "'": "&#39;", "/": "&#47;" },
-			matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
-		return function(code) {
-			return code ? code.toString().replace(matchHTML, function(m) {return encodeHTMLRules[m] || m;}) : "";
+		    matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
+		return function (code) {
+			return code ? code.toString().replace(matchHTML, function (m) {
+				return encodeHTMLRules[m] || m;
+			}) : "";
 		};
 	};
 
-	_globals = (function(){ return this || (0,eval)("this"); }());
+	_globals = function () {
+		return this || (0, eval)("this");
+	}();
 
 	/* istanbul ignore else */
 	if (typeof module !== "undefined" && module.exports) {
 		module.exports = doT;
 	} else if (typeof define === "function" && define.amd) {
-		define(function(){return doT;});
+		define(function () {
+			return doT;
+		});
 	} else {
 		_globals.doT = doT;
 	}
 
 	var startend = {
-		append: { start: "'+(",      end: ")+'",      startencode: "'+encodeHTML(" },
-		split:  { start: "';out+=(", end: ");out+='", startencode: "';out+=encodeHTML(" }
-	}, skip = /$^/;
+		append: { start: "'+(", end: ")+'", startencode: "'+encodeHTML(" },
+		split: { start: "';out+=(", end: ");out+='", startencode: "';out+=encodeHTML(" }
+	},
+	    skip = /$^/;
 
 	function resolveDefs(c, block, def) {
-		return ((typeof block === "string") ? block : block.toString())
-		.replace(c.define || skip, function(m, code, assign, value) {
+		return (typeof block === "string" ? block : block.toString()).replace(c.define || skip, function (m, code, assign, value) {
 			if (code.indexOf("def.") === 0) {
 				code = code.substring(4);
 			}
 			if (!(code in def)) {
 				if (assign === ":") {
-					if (c.defineParams) value.replace(c.defineParams, function(m, param, v) {
-						def[code] = {arg: param, text: v};
+					if (c.defineParams) value.replace(c.defineParams, function (m, param, v) {
+						def[code] = { arg: param, text: v };
 					});
-					if (!(code in def)) def[code]= value;
+					if (!(code in def)) def[code] = value;
 				} else {
-					new Function("def", "def['"+code+"']=" + value)(def);
+					new Function("def", "def['" + code + "']=" + value)(def);
 				}
 			}
 			return "";
-		})
-		.replace(c.use || skip, function(m, code) {
-			if (c.useParams) code = code.replace(c.useParams, function(m, s, d, param) {
+		}).replace(c.use || skip, function (m, code) {
+			if (c.useParams) code = code.replace(c.useParams, function (m, s, d, param) {
 				if (def[d] && def[d].arg && param) {
-					var rw = (d+":"+param).replace(/'|\\/g, "_");
+					var rw = (d + ":" + param).replace(/'|\\/g, "_");
 					def.__exp = def.__exp || {};
 					def.__exp[rw] = def[d].text.replace(new RegExp("(^|[^\\w$])" + def[d].arg + "([^\\w$])", "g"), "$1" + param + "$2");
-					return s + "def.__exp['"+rw+"']";
+					return s + "def.__exp['" + rw + "']";
 				}
 			});
 			var v = new Function("def", "return " + code)(def);
@@ -615,45 +652,33 @@ module.exports = function(deep, merge) {
 		return code.replace(/\\('|\\)/g, "$1").replace(/[\r\t\n]/g, " ");
 	}
 
-	doT.template = function(tmpl, c, def) {
+	doT.template = function (tmpl, c, def) {
 		c = c || doT.templateSettings;
-		var cse = c.append ? startend.append : startend.split, needhtmlencode, sid = 0, indv,
-			str  = (c.use || c.define) ? resolveDefs(c, tmpl, def || {}) : tmpl;
+		var cse = c.append ? startend.append : startend.split,
+		    needhtmlencode,
+		    sid = 0,
+		    indv,
+		    str = c.use || c.define ? resolveDefs(c, tmpl, def || {}) : tmpl;
 
-		str = ("var out='" + (c.strip ? str.replace(/(^|\r|\n)\t* +| +\t*(\r|\n|$)/g," ")
-					.replace(/\r|\n|\t|\/\*[\s\S]*?\*\//g,""): str)
-			.replace(/'|\\/g, "\\$&")
-			.replace(c.interpolate || skip, function(m, code) {
-				return cse.start + unescape(code) + cse.end;
-			})
-			.replace(c.encode || skip, function(m, code) {
-				needhtmlencode = true;
-				return cse.startencode + unescape(code) + cse.end;
-			})
-			.replace(c.conditional || skip, function(m, elsecase, code) {
-				return elsecase ?
-					(code ? "';}else if(" + unescape(code) + "){out+='" : "';}else{out+='") :
-					(code ? "';if(" + unescape(code) + "){out+='" : "';}out+='");
-			})
-			.replace(c.iterate || skip, function(m, iterate, vname, iname) {
-				if (!iterate) return "';} } out+='";
-				sid+=1; indv=iname || "i"+sid; iterate=unescape(iterate);
-				return "';var arr"+sid+"="+iterate+";if(arr"+sid+"){var "+vname+","+indv+"=-1,l"+sid+"=arr"+sid+".length-1;while("+indv+"<l"+sid+"){"
-					+vname+"=arr"+sid+"["+indv+"+=1];out+='";
-			})
-			.replace(c.evaluate || skip, function(m, code) {
-				return "';" + unescape(code) + "out+='";
-			})
-			+ "';return out;")
-			.replace(/\n/g, "\\n").replace(/\t/g, '\\t').replace(/\r/g, "\\r")
-			.replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, "");
-			//.replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
+		str = ("var out='" + (c.strip ? str.replace(/(^|\r|\n)\t* +| +\t*(\r|\n|$)/g, " ").replace(/\r|\n|\t|\/\*[\s\S]*?\*\//g, "") : str).replace(/'|\\/g, "\\$&").replace(c.interpolate || skip, function (m, code) {
+			return cse.start + unescape(code) + cse.end;
+		}).replace(c.encode || skip, function (m, code) {
+			needhtmlencode = true;
+			return cse.startencode + unescape(code) + cse.end;
+		}).replace(c.conditional || skip, function (m, elsecase, code) {
+			return elsecase ? code ? "';}else if(" + unescape(code) + "){out+='" : "';}else{out+='" : code ? "';if(" + unescape(code) + "){out+='" : "';}out+='";
+		}).replace(c.iterate || skip, function (m, iterate, vname, iname) {
+			if (!iterate) return "';} } out+='";
+			sid += 1;indv = iname || "i" + sid;iterate = unescape(iterate);
+			return "';var arr" + sid + "=" + iterate + ";if(arr" + sid + "){var " + vname + "," + indv + "=-1,l" + sid + "=arr" + sid + ".length-1;while(" + indv + "<l" + sid + "){" + vname + "=arr" + sid + "[" + indv + "+=1];out+='";
+		}).replace(c.evaluate || skip, function (m, code) {
+			return "';" + unescape(code) + "out+='";
+		}) + "';return out;").replace(/\n/g, "\\n").replace(/\t/g, '\\t').replace(/\r/g, "\\r").replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, "");
+		//.replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
 
 		if (needhtmlencode) {
 			if (!c.selfcontained && _globals && !_globals._encodeHTML) _globals._encodeHTML = doT.encodeHTMLSource(c.doNotSkipEncoded);
-			str = "var encodeHTML = typeof _encodeHTML !== 'undefined' ? _encodeHTML : ("
-				+ doT.encodeHTMLSource.toString() + "(" + (c.doNotSkipEncoded || '') + "));"
-				+ str;
+			str = "var encodeHTML = typeof _encodeHTML !== 'undefined' ? _encodeHTML : (" + doT.encodeHTMLSource.toString() + "(" + (c.doNotSkipEncoded || '') + "));" + str;
 		}
 		try {
 			return new Function(c.varname, str);
@@ -664,10 +689,10 @@ module.exports = function(deep, merge) {
 		}
 	};
 
-	doT.compile = function(tmpl, def) {
+	doT.compile = function (tmpl, def) {
 		return doT.template(tmpl, null, def);
 	};
-}());
+})();
 
 },{}],16:[function(require,module,exports){
 'use strict';
@@ -694,13 +719,15 @@ function EvStore(elem) {
 },{"individual/one-version":23}],17:[function(require,module,exports){
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var FindParent = {
-  byMatcher: function(element, func, opts) {
+  byMatcher: function byMatcher(element, func, opts) {
     if (opts === undefined) {
       opts = {};
     }
 
-    if (opts === null || Array.isArray(opts) || typeof opts !== 'object') {
+    if (opts === null || Array.isArray(opts) || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
       throw new Error('Expected opts to be an object.');
     }
 
@@ -719,14 +746,14 @@ var FindParent = {
     return this.byMatcher(element.parentNode, func, opts);
   },
 
-  byClassName: function(element, className, opts) {
-    return this.byMatcher(element, function(el) {
+  byClassName: function byClassName(element, className, opts) {
+    return this.byMatcher(element, function (el) {
       return el.classList.contains(className);
     }, opts);
   },
 
-  withDataAttribute: function(element, attName, opts) {
-    return this.byMatcher(element, function(el) {
+  withDataAttribute: function withDataAttribute(element, attName, opts) {
+    return this.byMatcher(element, function (el) {
       return el.dataset.hasOwnProperty(attName);
     }, opts);
   }
@@ -766,7 +793,7 @@ var forIn = require('for-in');
 var hasOwn = Object.prototype.hasOwnProperty;
 
 module.exports = function forOwn(obj, fn, thisArg) {
-  forIn(obj, function(val, key) {
+  forIn(obj, function (val, key) {
     if (hasOwn.call(obj, key)) {
       return fn.call(thisArg, obj[key], key, obj);
     }
@@ -775,8 +802,9 @@ module.exports = function forOwn(obj, fn, thisArg) {
 
 },{"for-in":18}],20:[function(require,module,exports){
 (function (global){
-var topLevel = typeof global !== 'undefined' ? global :
-    typeof window !== 'undefined' ? window : {}
+'use strict';
+
+var topLevel = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : {};
 var minDoc = require('min-document');
 
 var doccy;
@@ -795,37 +823,51 @@ module.exports = doccy;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"min-document":5}],21:[function(require,module,exports){
+'use strict';
+
 var Parser = require('prescribe');
 
-module.exports = function (h, html) {
+module.exports = function (h, html, wrap) {
+    if (typeof wrap === 'undefined') wrap = true;
     var parser = new Parser(html.trim());
     var nodes = [];
     var current;
 
     parser.readTokens({
-        chars: function (tok) {
+        chars: function chars(tok) {
             if (current) {
                 current.children.push(tok.text);
             } else {
-                nodes.push(tok.text);
+                nodes.children.push(tok.text);
             }
         },
-        startTag: function (tok){
+        startTag: function startTag(tok) {
             if (tok.unary || tok.html5Unary || tok.tagName === 'input') {
                 //NOTE this is how we will handle unary elements. Prescribe's unary element detection isn't perfect, so in the case of input elements, for example, we need to check for those explicity.
-                var node = h(tok.tagName, {attributes: Object.assign({}, tok.attrs, tok.booleanAttrs)});
+                var node = h(tok.tagName, { attributes: Object.assign({}, tok.attrs, tok.booleanAttrs) });
                 if (current) {
                     current.children.push(node);
                 } else {
                     nodes.push(node);
                 }
             } else {
-                current = {tok: tok, parent: current, children:[]};
+                current = { tok: tok, parent: current, children: [] };
             }
         },
-        endTag: function (tok){
+        endTag: function endTag(tok) {
             //TODO add support for SVG
-            var node = h(current.tok.tagName, {attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs)}, current.children);
+            var props = { attributes: Object.assign({}, current.tok.attrs, current.tok.booleanAttrs) };
+
+            if (current.children.every(function (child) {
+                return typeof child === 'string';
+            })) {
+                props.innerHTML = current.children.reduce(function (final, child) {
+                    return final + child;
+                }, '');
+                current.children = [];
+            }
+
+            var node = h(current.tok.tagName, props, current.children);
             current = current.parent;
             if (!current) {
                 nodes.push(node);
@@ -834,8 +876,9 @@ module.exports = function (h, html) {
             }
         }
     });
-    return nodes;
-}
+    // debugger;
+    return nodes.length > 1 ? wrap ? h('div', nodes) : nodes : wrap ? nodes[0] : nodes;
+};
 
 },{"prescribe":32}],22:[function(require,module,exports){
 (function (global){
@@ -843,9 +886,7 @@ module.exports = function (h, html) {
 
 /*global window, global*/
 
-var root = typeof window !== 'undefined' ?
-    window : typeof global !== 'undefined' ?
-    global : {};
+var root = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : {};
 
 module.exports = Individual;
 
@@ -874,11 +915,7 @@ function OneVersion(moduleName, version, defaultValue) {
     var versionValue = Individual(enforceKey, version);
 
     if (versionValue !== version) {
-        throw new Error('Can only have one copy of ' +
-            moduleName + '.\n' +
-            'You already have version ' + versionValue +
-            ' installed.\n' +
-            'This means you cannot install version ' + version);
+        throw new Error('Can only have one copy of ' + moduleName + '.\n' + 'You already have version ' + versionValue + ' installed.\n' + 'This means you cannot install version ' + version);
     }
 
     return Individual(key, defaultValue);
@@ -887,8 +924,10 @@ function OneVersion(moduleName, version, defaultValue) {
 },{"./index.js":22}],24:[function(require,module,exports){
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 module.exports = function isObject(x) {
-	return typeof x === "object" && x !== null;
+	return (typeof x === "undefined" ? "undefined" : _typeof(x)) === "object" && x !== null;
 };
 
 },{}],25:[function(require,module,exports){
@@ -901,16 +940,30 @@ module.exports = function isObject(x) {
 
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 module.exports = function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
+  return val != null && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && Array.isArray(val) === false;
 };
 
 },{}],26:[function(require,module,exports){
 'use strict';
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
@@ -1049,62 +1102,70 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 },{}],27:[function(require,module,exports){
 (function (global){
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
     MIT License: http://getify.mit-license.org
 */
 
-(function UMD(name,context,definition){
+(function UMD(name, context, definition) {
 	// special form of UMD for polyfilling across evironments
 	context[name] = context[name] || definition();
-	if (typeof module != "undefined" && module.exports) { module.exports = context[name]; }
-	else if (typeof define == "function" && define.amd) { define(function $AMD$(){ return context[name]; }); }
-})("Promise",typeof global != "undefined" ? global : this,function DEF(){
+	if (typeof module != "undefined" && module.exports) {
+		module.exports = context[name];
+	} else if (typeof define == "function" && define.amd) {
+		define(function $AMD$() {
+			return context[name];
+		});
+	}
+})("Promise", typeof global != "undefined" ? global : undefined, function DEF() {
 	/*jshint validthis:true */
 	"use strict";
 
-	var builtInProp, cycle, scheduling_queue,
-		ToString = Object.prototype.toString,
-		timer = (typeof setImmediate != "undefined") ?
-			function timer(fn) { return setImmediate(fn); } :
-			setTimeout
-	;
+	var builtInProp,
+	    cycle,
+	    scheduling_queue,
+	    ToString = Object.prototype.toString,
+	    timer = typeof setImmediate != "undefined" ? function timer(fn) {
+		return setImmediate(fn);
+	} : setTimeout;
 
 	// dammit, IE8.
 	try {
-		Object.defineProperty({},"x",{});
-		builtInProp = function builtInProp(obj,name,val,config) {
-			return Object.defineProperty(obj,name,{
+		Object.defineProperty({}, "x", {});
+		builtInProp = function builtInProp(obj, name, val, config) {
+			return Object.defineProperty(obj, name, {
 				value: val,
 				writable: true,
 				configurable: config !== false
 			});
 		};
-	}
-	catch (err) {
-		builtInProp = function builtInProp(obj,name,val) {
+	} catch (err) {
+		builtInProp = function builtInProp(obj, name, val) {
 			obj[name] = val;
 			return obj;
 		};
 	}
 
 	// Note: using a queue instead of array for efficiency
-	scheduling_queue = (function Queue() {
+	scheduling_queue = function Queue() {
 		var first, last, item;
 
-		function Item(fn,self) {
+		function Item(fn, self) {
 			this.fn = fn;
 			this.self = self;
 			this.next = void 0;
 		}
 
 		return {
-			add: function add(fn,self) {
-				item = new Item(fn,self);
+			add: function add(fn, self) {
+				item = new Item(fn, self);
 				if (last) {
 					last.next = item;
-				}
-				else {
+				} else {
 					first = item;
 				}
 				last = item;
@@ -1120,10 +1181,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				}
 			}
 		};
-	})();
+	}();
 
-	function schedule(fn,self) {
-		scheduling_queue.add(fn,self);
+	function schedule(fn, self) {
+		scheduling_queue.add(fn, self);
 		if (!cycle) {
 			cycle = timer(scheduling_queue.drain);
 		}
@@ -1131,25 +1192,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 	// promise duck typing
 	function isThenable(o) {
-		var _then, o_type = typeof o;
+		var _then,
+		    o_type = typeof o === "undefined" ? "undefined" : _typeof(o);
 
-		if (o != null &&
-			(
-				o_type == "object" || o_type == "function"
-			)
-		) {
+		if (o != null && (o_type == "object" || o_type == "function")) {
 			_then = o.then;
 		}
 		return typeof _then == "function" ? _then : false;
 	}
 
 	function notify() {
-		for (var i=0; i<this.chain.length; i++) {
-			notifyIsolated(
-				this,
-				(this.state === 1) ? this.chain[i].success : this.chain[i].failure,
-				this.chain[i]
-			);
+		for (var i = 0; i < this.chain.length; i++) {
+			notifyIsolated(this, this.state === 1 ? this.chain[i].success : this.chain[i].failure, this.chain[i]);
 		}
 		this.chain.length = 0;
 	}
@@ -1157,41 +1211,39 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 	// NOTE: This is a separate function to isolate
 	// the `try..catch` so that other code can be
 	// optimized better
-	function notifyIsolated(self,cb,chain) {
+	function notifyIsolated(self, cb, chain) {
 		var ret, _then;
 		try {
 			if (cb === false) {
 				chain.reject(self.msg);
-			}
-			else {
+			} else {
 				if (cb === true) {
 					ret = self.msg;
-				}
-				else {
-					ret = cb.call(void 0,self.msg);
+				} else {
+					ret = cb.call(void 0, self.msg);
 				}
 
 				if (ret === chain.promise) {
 					chain.reject(TypeError("Promise-chain cycle"));
-				}
-				else if (_then = isThenable(ret)) {
-					_then.call(ret,chain.resolve,chain.reject);
-				}
-				else {
+				} else if (_then = isThenable(ret)) {
+					_then.call(ret, chain.resolve, chain.reject);
+				} else {
 					chain.resolve(ret);
 				}
 			}
-		}
-		catch (err) {
+		} catch (err) {
 			chain.reject(err);
 		}
 	}
 
 	function resolve(msg) {
-		var _then, self = this;
+		var _then,
+		    self = this;
 
 		// already triggered?
-		if (self.triggered) { return; }
+		if (self.triggered) {
+			return;
+		}
 
 		self.triggered = true;
 
@@ -1202,29 +1254,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 		try {
 			if (_then = isThenable(msg)) {
-				schedule(function(){
+				schedule(function () {
 					var def_wrapper = new MakeDefWrapper(self);
 					try {
-						_then.call(msg,
-							function $resolve$(){ resolve.apply(def_wrapper,arguments); },
-							function $reject$(){ reject.apply(def_wrapper,arguments); }
-						);
+						_then.call(msg, function $resolve$() {
+							resolve.apply(def_wrapper, arguments);
+						}, function $reject$() {
+							reject.apply(def_wrapper, arguments);
+						});
+					} catch (err) {
+						reject.call(def_wrapper, err);
 					}
-					catch (err) {
-						reject.call(def_wrapper,err);
-					}
-				})
-			}
-			else {
+				});
+			} else {
 				self.msg = msg;
 				self.state = 1;
 				if (self.chain.length > 0) {
-					schedule(notify,self);
+					schedule(notify, self);
 				}
 			}
-		}
-		catch (err) {
-			reject.call(new MakeDefWrapper(self),err);
+		} catch (err) {
+			reject.call(new MakeDefWrapper(self), err);
 		}
 	}
 
@@ -1232,7 +1282,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		var self = this;
 
 		// already triggered?
-		if (self.triggered) { return; }
+		if (self.triggered) {
+			return;
+		}
 
 		self.triggered = true;
 
@@ -1244,20 +1296,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		self.msg = msg;
 		self.state = 2;
 		if (self.chain.length > 0) {
-			schedule(notify,self);
+			schedule(notify, self);
 		}
 	}
 
-	function iteratePromises(Constructor,arr,resolver,rejecter) {
-		for (var idx=0; idx<arr.length; idx++) {
-			(function IIFE(idx){
-				Constructor.resolve(arr[idx])
-				.then(
-					function $resolver$(msg){
-						resolver(idx,msg);
-					},
-					rejecter
-				);
+	function iteratePromises(Constructor, arr, resolver, rejecter) {
+		for (var idx = 0; idx < arr.length; idx++) {
+			(function IIFE(idx) {
+				Constructor.resolve(arr[idx]).then(function $resolver$(msg) {
+					resolver(idx, msg);
+				}, rejecter);
 			})(idx);
 		}
 	}
@@ -1290,7 +1338,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 		var def = new MakeDef(this);
 
-		this["then"] = function then(success,failure) {
+		this["then"] = function then(success, failure) {
 			var o = {
 				success: typeof success == "function" ? success : true,
 				failure: typeof failure == "function" ? failure : false
@@ -1298,7 +1346,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			// Note: `then(..)` itself can be borrowed to be used against
 			// a different promise constructor for making the chained promise,
 			// by substituting a different `this` binding.
-			o.promise = new this.constructor(function extractChain(resolve,reject) {
+			o.promise = new this.constructor(function extractChain(resolve, reject) {
 				if (typeof resolve != "function" || typeof reject != "function") {
 					throw TypeError("Not a function");
 				}
@@ -1309,53 +1357,46 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			def.chain.push(o);
 
 			if (def.state !== 0) {
-				schedule(notify,def);
+				schedule(notify, def);
 			}
 
 			return o.promise;
 		};
 		this["catch"] = function $catch$(failure) {
-			return this.then(void 0,failure);
+			return this.then(void 0, failure);
 		};
 
 		try {
-			executor.call(
-				void 0,
-				function publicResolve(msg){
-					resolve.call(def,msg);
-				},
-				function publicReject(msg) {
-					reject.call(def,msg);
-				}
-			);
-		}
-		catch (err) {
-			reject.call(def,err);
+			executor.call(void 0, function publicResolve(msg) {
+				resolve.call(def, msg);
+			}, function publicReject(msg) {
+				reject.call(def, msg);
+			});
+		} catch (err) {
+			reject.call(def, err);
 		}
 	}
 
-	var PromisePrototype = builtInProp({},"constructor",Promise,
-		/*configurable=*/false
-	);
+	var PromisePrototype = builtInProp({}, "constructor", Promise,
+	/*configurable=*/false);
 
 	// Note: Android 4 cannot use `Object.defineProperty(..)` here
 	Promise.prototype = PromisePrototype;
 
 	// built-in "brand" to signal an "uninitialized" promise
-	builtInProp(PromisePrototype,"__NPO__",0,
-		/*configurable=*/false
-	);
+	builtInProp(PromisePrototype, "__NPO__", 0,
+	/*configurable=*/false);
 
-	builtInProp(Promise,"resolve",function Promise$resolve(msg) {
+	builtInProp(Promise, "resolve", function Promise$resolve(msg) {
 		var Constructor = this;
 
 		// spec mandated checks
 		// note: best "isPromise" check that's practical for now
-		if (msg && typeof msg == "object" && msg.__NPO__ === 1) {
+		if (msg && (typeof msg === "undefined" ? "undefined" : _typeof(msg)) == "object" && msg.__NPO__ === 1) {
 			return msg;
 		}
 
-		return new Constructor(function executor(resolve,reject){
+		return new Constructor(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
@@ -1364,8 +1405,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		});
 	});
 
-	builtInProp(Promise,"reject",function Promise$reject(msg) {
-		return new this(function executor(resolve,reject){
+	builtInProp(Promise, "reject", function Promise$reject(msg) {
+		return new this(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
@@ -1374,7 +1415,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		});
 	});
 
-	builtInProp(Promise,"all",function Promise$all(arr) {
+	builtInProp(Promise, "all", function Promise$all(arr) {
 		var Constructor = this;
 
 		// spec mandated checks
@@ -1385,23 +1426,25 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			return Constructor.resolve([]);
 		}
 
-		return new Constructor(function executor(resolve,reject){
+		return new Constructor(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
 
-			var len = arr.length, msgs = Array(len), count = 0;
+			var len = arr.length,
+			    msgs = Array(len),
+			    count = 0;
 
-			iteratePromises(Constructor,arr,function resolver(idx,msg) {
+			iteratePromises(Constructor, arr, function resolver(idx, msg) {
 				msgs[idx] = msg;
 				if (++count === len) {
 					resolve(msgs);
 				}
-			},reject);
+			}, reject);
 		});
 	});
 
-	builtInProp(Promise,"race",function Promise$race(arr) {
+	builtInProp(Promise, "race", function Promise$race(arr) {
 		var Constructor = this;
 
 		// spec mandated checks
@@ -1409,14 +1452,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			return Constructor.reject(TypeError("Not an array"));
 		}
 
-		return new Constructor(function executor(resolve,reject){
+		return new Constructor(function executor(resolve, reject) {
 			if (typeof resolve != "function" || typeof reject != "function") {
 				throw TypeError("Not a function");
 			}
 
-			iteratePromises(Constructor,arr,function resolver(idx,msg){
+			iteratePromises(Constructor, arr, function resolver(idx, msg) {
 				resolve(msg);
-			},reject);
+			}, reject);
 		});
 	});
 
@@ -1470,9 +1513,9 @@ module.exports = function defaults(target, objects) {
     return {};
   }
 
-  each(slice(arguments, 1), function(obj) {
+  each(slice(arguments, 1), function (obj) {
     if (isObject(obj)) {
-      forOwn(obj, function(val, key) {
+      forOwn(obj, function (val, key) {
         if (target[key] == null) {
           target[key] = val;
         }
@@ -1484,16 +1527,20 @@ module.exports = function defaults(target, objects) {
 };
 
 },{"array-each":2,"array-slice":3,"for-own":19,"isobject":25}],30:[function(require,module,exports){
-var isarray = require('isarray')
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var isarray = require('isarray');
 
 /**
  * Expose `pathToRegexp`.
  */
-module.exports = pathToRegexp
-module.exports.parse = parse
-module.exports.compile = compile
-module.exports.tokensToFunction = tokensToFunction
-module.exports.tokensToRegExp = tokensToRegExp
+module.exports = pathToRegexp;
+module.exports.parse = parse;
+module.exports.compile = compile;
+module.exports.tokensToFunction = tokensToFunction;
+module.exports.tokensToRegExp = tokensToRegExp;
 
 /**
  * The main path matching regexp utility.
@@ -1501,17 +1548,16 @@ module.exports.tokensToRegExp = tokensToRegExp
  * @type {RegExp}
  */
 var PATH_REGEXP = new RegExp([
-  // Match escaped characters that would otherwise appear in future matches.
-  // This allows the user to escape special characters that won't transform.
-  '(\\\\.)',
-  // Match Express-style parameters and un-named parameters with a prefix
-  // and optional suffixes. Matches appear as:
-  //
-  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
-  // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
-  // "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
-  '([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))'
-].join('|'), 'g')
+// Match escaped characters that would otherwise appear in future matches.
+// This allows the user to escape special characters that won't transform.
+'(\\\\.)',
+// Match Express-style parameters and un-named parameters with a prefix
+// and optional suffixes. Matches appear as:
+//
+// "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
+// "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
+// "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
+'([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))'].join('|'), 'g');
 
 /**
  * Parse a string for the raw tokens.
@@ -1520,46 +1566,46 @@ var PATH_REGEXP = new RegExp([
  * @param  {Object=} options
  * @return {!Array}
  */
-function parse (str, options) {
-  var tokens = []
-  var key = 0
-  var index = 0
-  var path = ''
-  var defaultDelimiter = options && options.delimiter || '/'
-  var res
+function parse(str, options) {
+  var tokens = [];
+  var key = 0;
+  var index = 0;
+  var path = '';
+  var defaultDelimiter = options && options.delimiter || '/';
+  var res;
 
   while ((res = PATH_REGEXP.exec(str)) != null) {
-    var m = res[0]
-    var escaped = res[1]
-    var offset = res.index
-    path += str.slice(index, offset)
-    index = offset + m.length
+    var m = res[0];
+    var escaped = res[1];
+    var offset = res.index;
+    path += str.slice(index, offset);
+    index = offset + m.length;
 
     // Ignore already escaped sequences.
     if (escaped) {
-      path += escaped[1]
-      continue
+      path += escaped[1];
+      continue;
     }
 
-    var next = str[index]
-    var prefix = res[2]
-    var name = res[3]
-    var capture = res[4]
-    var group = res[5]
-    var modifier = res[6]
-    var asterisk = res[7]
+    var next = str[index];
+    var prefix = res[2];
+    var name = res[3];
+    var capture = res[4];
+    var group = res[5];
+    var modifier = res[6];
+    var asterisk = res[7];
 
     // Push the current path onto the tokens.
     if (path) {
-      tokens.push(path)
-      path = ''
+      tokens.push(path);
+      path = '';
     }
 
-    var partial = prefix != null && next != null && next !== prefix
-    var repeat = modifier === '+' || modifier === '*'
-    var optional = modifier === '?' || modifier === '*'
-    var delimiter = res[2] || defaultDelimiter
-    var pattern = capture || group
+    var partial = prefix != null && next != null && next !== prefix;
+    var repeat = modifier === '+' || modifier === '*';
+    var optional = modifier === '?' || modifier === '*';
+    var delimiter = res[2] || defaultDelimiter;
+    var pattern = capture || group;
 
     tokens.push({
       name: name || key++,
@@ -1569,21 +1615,21 @@ function parse (str, options) {
       repeat: repeat,
       partial: partial,
       asterisk: !!asterisk,
-      pattern: pattern ? escapeGroup(pattern) : (asterisk ? '.*' : '[^' + escapeString(delimiter) + ']+?')
-    })
+      pattern: pattern ? escapeGroup(pattern) : asterisk ? '.*' : '[^' + escapeString(delimiter) + ']+?'
+    });
   }
 
   // Match any characters still remaining.
   if (index < str.length) {
-    path += str.substr(index)
+    path += str.substr(index);
   }
 
   // If the path exists, push it onto the end.
   if (path) {
-    tokens.push(path)
+    tokens.push(path);
   }
 
-  return tokens
+  return tokens;
 }
 
 /**
@@ -1593,8 +1639,8 @@ function parse (str, options) {
  * @param  {Object=}            options
  * @return {!function(Object=, Object=)}
  */
-function compile (str, options) {
-  return tokensToFunction(parse(str, options))
+function compile(str, options) {
+  return tokensToFunction(parse(str, options));
 }
 
 /**
@@ -1603,10 +1649,10 @@ function compile (str, options) {
  * @param  {string}
  * @return {string}
  */
-function encodeURIComponentPretty (str) {
+function encodeURIComponentPretty(str) {
   return encodeURI(str).replace(/[\/?#]/g, function (c) {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  })
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 }
 
 /**
@@ -1615,94 +1661,94 @@ function encodeURIComponentPretty (str) {
  * @param  {string}
  * @return {string}
  */
-function encodeAsterisk (str) {
+function encodeAsterisk(str) {
   return encodeURI(str).replace(/[?#]/g, function (c) {
-    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  })
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 }
 
 /**
  * Expose a method for transforming tokens into the path function.
  */
-function tokensToFunction (tokens) {
+function tokensToFunction(tokens) {
   // Compile all the tokens into regexps.
-  var matches = new Array(tokens.length)
+  var matches = new Array(tokens.length);
 
   // Compile all the patterns before compilation.
   for (var i = 0; i < tokens.length; i++) {
-    if (typeof tokens[i] === 'object') {
-      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$')
+    if (_typeof(tokens[i]) === 'object') {
+      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$');
     }
   }
 
   return function (obj, opts) {
-    var path = ''
-    var data = obj || {}
-    var options = opts || {}
-    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent
+    var path = '';
+    var data = obj || {};
+    var options = opts || {};
+    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent;
 
     for (var i = 0; i < tokens.length; i++) {
-      var token = tokens[i]
+      var token = tokens[i];
 
       if (typeof token === 'string') {
-        path += token
+        path += token;
 
-        continue
+        continue;
       }
 
-      var value = data[token.name]
-      var segment
+      var value = data[token.name];
+      var segment;
 
       if (value == null) {
         if (token.optional) {
           // Prepend partial segment prefixes.
           if (token.partial) {
-            path += token.prefix
+            path += token.prefix;
           }
 
-          continue
+          continue;
         } else {
-          throw new TypeError('Expected "' + token.name + '" to be defined')
+          throw new TypeError('Expected "' + token.name + '" to be defined');
         }
       }
 
       if (isarray(value)) {
         if (!token.repeat) {
-          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`')
+          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`');
         }
 
         if (value.length === 0) {
           if (token.optional) {
-            continue
+            continue;
           } else {
-            throw new TypeError('Expected "' + token.name + '" to not be empty')
+            throw new TypeError('Expected "' + token.name + '" to not be empty');
           }
         }
 
         for (var j = 0; j < value.length; j++) {
-          segment = encode(value[j])
+          segment = encode(value[j]);
 
           if (!matches[i].test(segment)) {
-            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`')
+            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`');
           }
 
-          path += (j === 0 ? token.prefix : token.delimiter) + segment
+          path += (j === 0 ? token.prefix : token.delimiter) + segment;
         }
 
-        continue
+        continue;
       }
 
-      segment = token.asterisk ? encodeAsterisk(value) : encode(value)
+      segment = token.asterisk ? encodeAsterisk(value) : encode(value);
 
       if (!matches[i].test(segment)) {
-        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
+        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"');
       }
 
-      path += token.prefix + segment
+      path += token.prefix + segment;
     }
 
-    return path
-  }
+    return path;
+  };
 }
 
 /**
@@ -1711,8 +1757,8 @@ function tokensToFunction (tokens) {
  * @param  {string} str
  * @return {string}
  */
-function escapeString (str) {
-  return str.replace(/([.+*?=^!:${}()[\]|\/\\])/g, '\\$1')
+function escapeString(str) {
+  return str.replace(/([.+*?=^!:${}()[\]|\/\\])/g, '\\$1');
 }
 
 /**
@@ -1721,8 +1767,8 @@ function escapeString (str) {
  * @param  {string} group
  * @return {string}
  */
-function escapeGroup (group) {
-  return group.replace(/([=!:$\/()])/g, '\\$1')
+function escapeGroup(group) {
+  return group.replace(/([=!:$\/()])/g, '\\$1');
 }
 
 /**
@@ -1732,9 +1778,9 @@ function escapeGroup (group) {
  * @param  {Array}   keys
  * @return {!RegExp}
  */
-function attachKeys (re, keys) {
-  re.keys = keys
-  return re
+function attachKeys(re, keys) {
+  re.keys = keys;
+  return re;
 }
 
 /**
@@ -1743,8 +1789,8 @@ function attachKeys (re, keys) {
  * @param  {Object} options
  * @return {string}
  */
-function flags (options) {
-  return options.sensitive ? '' : 'i'
+function flags(options) {
+  return options.sensitive ? '' : 'i';
 }
 
 /**
@@ -1754,9 +1800,9 @@ function flags (options) {
  * @param  {!Array}  keys
  * @return {!RegExp}
  */
-function regexpToRegexp (path, keys) {
+function regexpToRegexp(path, keys) {
   // Use a negative lookahead to match only capturing groups.
-  var groups = path.source.match(/\((?!\?)/g)
+  var groups = path.source.match(/\((?!\?)/g);
 
   if (groups) {
     for (var i = 0; i < groups.length; i++) {
@@ -1769,11 +1815,11 @@ function regexpToRegexp (path, keys) {
         partial: false,
         asterisk: false,
         pattern: null
-      })
+      });
     }
   }
 
-  return attachKeys(path, keys)
+  return attachKeys(path, keys);
 }
 
 /**
@@ -1784,16 +1830,16 @@ function regexpToRegexp (path, keys) {
  * @param  {!Object} options
  * @return {!RegExp}
  */
-function arrayToRegexp (path, keys, options) {
-  var parts = []
+function arrayToRegexp(path, keys, options) {
+  var parts = [];
 
   for (var i = 0; i < path.length; i++) {
-    parts.push(pathToRegexp(path[i], keys, options).source)
+    parts.push(pathToRegexp(path[i], keys, options).source);
   }
 
-  var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options))
+  var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options));
 
-  return attachKeys(regexp, keys)
+  return attachKeys(regexp, keys);
 }
 
 /**
@@ -1804,8 +1850,8 @@ function arrayToRegexp (path, keys, options) {
  * @param  {!Object} options
  * @return {!RegExp}
  */
-function stringToRegexp (path, keys, options) {
-  return tokensToRegExp(parse(path, options), keys, options)
+function stringToRegexp(path, keys, options) {
+  return tokensToRegExp(parse(path, options), keys, options);
 }
 
 /**
@@ -1816,68 +1862,68 @@ function stringToRegexp (path, keys, options) {
  * @param  {Object=}         options
  * @return {!RegExp}
  */
-function tokensToRegExp (tokens, keys, options) {
+function tokensToRegExp(tokens, keys, options) {
   if (!isarray(keys)) {
-    options = /** @type {!Object} */ (keys || options)
-    keys = []
+    options = /** @type {!Object} */keys || options;
+    keys = [];
   }
 
-  options = options || {}
+  options = options || {};
 
-  var strict = options.strict
-  var end = options.end !== false
-  var route = ''
+  var strict = options.strict;
+  var end = options.end !== false;
+  var route = '';
 
   // Iterate over the tokens and create our regexp string.
   for (var i = 0; i < tokens.length; i++) {
-    var token = tokens[i]
+    var token = tokens[i];
 
     if (typeof token === 'string') {
-      route += escapeString(token)
+      route += escapeString(token);
     } else {
-      var prefix = escapeString(token.prefix)
-      var capture = '(?:' + token.pattern + ')'
+      var prefix = escapeString(token.prefix);
+      var capture = '(?:' + token.pattern + ')';
 
-      keys.push(token)
+      keys.push(token);
 
       if (token.repeat) {
-        capture += '(?:' + prefix + capture + ')*'
+        capture += '(?:' + prefix + capture + ')*';
       }
 
       if (token.optional) {
         if (!token.partial) {
-          capture = '(?:' + prefix + '(' + capture + '))?'
+          capture = '(?:' + prefix + '(' + capture + '))?';
         } else {
-          capture = prefix + '(' + capture + ')?'
+          capture = prefix + '(' + capture + ')?';
         }
       } else {
-        capture = prefix + '(' + capture + ')'
+        capture = prefix + '(' + capture + ')';
       }
 
-      route += capture
+      route += capture;
     }
   }
 
-  var delimiter = escapeString(options.delimiter || '/')
-  var endsWithDelimiter = route.slice(-delimiter.length) === delimiter
+  var delimiter = escapeString(options.delimiter || '/');
+  var endsWithDelimiter = route.slice(-delimiter.length) === delimiter;
 
   // In non-strict mode we allow a slash at the end of match. If the path to
   // match already ends with a slash, we remove it for consistency. The slash
   // is valid at the end of a path match, not in the middle. This is important
   // in non-ending mode, where "/test/" shouldn't match "/test//route".
   if (!strict) {
-    route = (endsWithDelimiter ? route.slice(0, -delimiter.length) : route) + '(?:' + delimiter + '(?=$))?'
+    route = (endsWithDelimiter ? route.slice(0, -delimiter.length) : route) + '(?:' + delimiter + '(?=$))?';
   }
 
   if (end) {
-    route += '$'
+    route += '$';
   } else {
     // In non-ending mode, we need the capturing groups to match as much as
     // possible by using a positive lookahead to the end or next path segment.
-    route += strict && endsWithDelimiter ? '' : '(?=' + delimiter + '|$)'
+    route += strict && endsWithDelimiter ? '' : '(?=' + delimiter + '|$)';
   }
 
-  return attachKeys(new RegExp('^' + route, flags(options)), keys)
+  return attachKeys(new RegExp('^' + route, flags(options)), keys);
 }
 
 /**
@@ -1892,31 +1938,37 @@ function tokensToRegExp (tokens, keys, options) {
  * @param  {Object=}               options
  * @return {!RegExp}
  */
-function pathToRegexp (path, keys, options) {
+function pathToRegexp(path, keys, options) {
   if (!isarray(keys)) {
-    options = /** @type {!Object} */ (keys || options)
-    keys = []
+    options = /** @type {!Object} */keys || options;
+    keys = [];
   }
 
-  options = options || {}
+  options = options || {};
 
   if (path instanceof RegExp) {
-    return regexpToRegexp(path, /** @type {!Array} */ (keys))
+    return regexpToRegexp(path, /** @type {!Array} */keys);
   }
 
   if (isarray(path)) {
-    return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
+    return arrayToRegexp( /** @type {!Array} */path, /** @type {!Array} */keys, options);
   }
 
-  return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
+  return stringToRegexp( /** @type {string} */path, /** @type {!Array} */keys, options);
 }
 
 },{"isarray":31}],31:[function(require,module,exports){
+'use strict';
+
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
 },{}],32:[function(require,module,exports){
+'use strict';
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 /**
  * @file prescribe
  * @description Tiny, forgiving HTML parser
@@ -1927,964 +1979,980 @@ module.exports = Array.isArray || function (arr) {
  * @copyright 2017 Krux Digital, Inc
  */
 (function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else if(typeof exports === 'object')
-		exports["Prescribe"] = factory();
-	else
-		root["Prescribe"] = factory();
-})(this, function() {
-return /******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
+	if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && (typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object') module.exports = factory();else if (typeof define === 'function' && define.amd) define([], factory);else if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object') exports["Prescribe"] = factory();else root["Prescribe"] = factory();
+})(undefined, function () {
+	return (/******/function (modules) {
+			// webpackBootstrap
+			/******/ // The module cache
+			/******/var installedModules = {};
 
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
+			/******/ // The require function
+			/******/function __webpack_require__(moduleId) {
 
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
-/******/ 			return installedModules[moduleId].exports;
+				/******/ // Check if module is in cache
+				/******/if (installedModules[moduleId])
+					/******/return installedModules[moduleId].exports;
 
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			exports: {},
-/******/ 			id: moduleId,
-/******/ 			loaded: false
-/******/ 		};
-
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
-/******/ 		// Flag the module as loaded
-/******/ 		module.loaded = true;
-
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-
-
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(0);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _HtmlParser = __webpack_require__(1);
-
-	var _HtmlParser2 = _interopRequireDefault(_HtmlParser);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-	module.exports = _HtmlParser2['default'];
-
-/***/ },
-/* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-
-	var _supports = __webpack_require__(2);
-
-	var supports = _interopRequireWildcard(_supports);
-
-	var _streamReaders = __webpack_require__(3);
-
-	var streamReaders = _interopRequireWildcard(_streamReaders);
-
-	var _fixedReadTokenFactory = __webpack_require__(6);
-
-	var _fixedReadTokenFactory2 = _interopRequireDefault(_fixedReadTokenFactory);
-
-	var _utils = __webpack_require__(5);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/**
-	 * Detection regular expressions.
-	 *
-	 * Order of detection matters: detection of one can only
-	 * succeed if detection of previous didn't
-
-	 * @type {Object}
-	 */
-	var detect = {
-	  comment: /^<!--/,
-	  endTag: /^<\//,
-	  atomicTag: /^<\s*(script|style|noscript|iframe|textarea)[\s\/>]/i,
-	  startTag: /^</,
-	  chars: /^[^<]/
-	};
-
-	/**
-	 * HtmlParser provides the capability to parse HTML and return tokens
-	 * representing the tags and content.
-	 */
-
-	var HtmlParser = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} stream The initial parse stream contents.
-	   * @param {Object} options The options
-	   * @param {boolean} options.autoFix Set to true to automatically fix errors
-	   */
-	  function HtmlParser() {
-	    var _this = this;
-
-	    var stream = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-	    _classCallCheck(this, HtmlParser);
-
-	    this.stream = stream;
-
-	    var fix = false;
-	    var fixedTokenOptions = {};
-
-	    for (var key in supports) {
-	      if (supports.hasOwnProperty(key)) {
-	        if (options.autoFix) {
-	          fixedTokenOptions[key + 'Fix'] = true; // !supports[key];
-	        }
-	        fix = fix || fixedTokenOptions[key + 'Fix'];
-	      }
-	    }
-
-	    if (fix) {
-	      this._readToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
-	        return _this._readTokenImpl();
-	      });
-	      this._peekToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
-	        return _this._peekTokenImpl();
-	      });
-	    } else {
-	      this._readToken = this._readTokenImpl;
-	      this._peekToken = this._peekTokenImpl;
-	    }
-	  }
-
-	  /**
-	   * Appends the given string to the parse stream.
-	   *
-	   * @param {string} str The string to append
-	   */
-
-
-	  HtmlParser.prototype.append = function append(str) {
-	    this.stream += str;
-	  };
-
-	  /**
-	   * Prepends the given string to the parse stream.
-	   *
-	   * @param {string} str The string to prepend
-	   */
-
-
-	  HtmlParser.prototype.prepend = function prepend(str) {
-	    this.stream = str + this.stream;
-	  };
-
-	  /**
-	   * The implementation of the token reading.
-	   *
-	   * @private
-	   * @returns {?Token}
-	   */
-
-
-	  HtmlParser.prototype._readTokenImpl = function _readTokenImpl() {
-	    var token = this._peekTokenImpl();
-	    if (token) {
-	      this.stream = this.stream.slice(token.length);
-	      return token;
-	    }
-	  };
-
-	  /**
-	   * The implementation of token peeking.
-	   *
-	   * @returns {?Token}
-	   */
-
-
-	  HtmlParser.prototype._peekTokenImpl = function _peekTokenImpl() {
-	    for (var type in detect) {
-	      if (detect.hasOwnProperty(type)) {
-	        if (detect[type].test(this.stream)) {
-	          var token = streamReaders[type](this.stream);
-
-	          if (token) {
-	            if (token.type === 'startTag' && /script|style/i.test(token.tagName)) {
-	              return null;
-	            } else {
-	              token.text = this.stream.substr(0, token.length);
-	              return token;
-	            }
-	          }
-	        }
-	      }
-	    }
-	  };
-
-	  /**
-	   * The public token peeking interface.  Delegates to the basic token peeking
-	   * or a version that performs fixups depending on the `autoFix` setting in
-	   * options.
-	   *
-	   * @returns {object}
-	   */
-
-
-	  HtmlParser.prototype.peekToken = function peekToken() {
-	    return this._peekToken();
-	  };
-
-	  /**
-	   * The public token reading interface.  Delegates to the basic token reading
-	   * or a version that performs fixups depending on the `autoFix` setting in
-	   * options.
-	   *
-	   * @returns {object}
-	   */
-
-
-	  HtmlParser.prototype.readToken = function readToken() {
-	    return this._readToken();
-	  };
-
-	  /**
-	   * Read tokens and hand to the given handlers.
-	   *
-	   * @param {Object} handlers The handlers to use for the different tokens.
-	   */
-
-
-	  HtmlParser.prototype.readTokens = function readTokens(handlers) {
-	    var tok = void 0;
-	    while (tok = this.readToken()) {
-	      // continue until we get an explicit "false" return
-	      if (handlers[tok.type] && handlers[tok.type](tok) === false) {
-	        return;
-	      }
-	    }
-	  };
-
-	  /**
-	   * Clears the parse stream.
-	   *
-	   * @returns {string} The contents of the parse stream before clearing.
-	   */
-
-
-	  HtmlParser.prototype.clear = function clear() {
-	    var rest = this.stream;
-	    this.stream = '';
-	    return rest;
-	  };
-
-	  /**
-	   * Returns the rest of the parse stream.
-	   *
-	   * @returns {string} The contents of the parse stream.
-	   */
-
-
-	  HtmlParser.prototype.rest = function rest() {
-	    return this.stream;
-	  };
-
-	  return HtmlParser;
-	}();
-
-	exports['default'] = HtmlParser;
-
-
-	HtmlParser.tokenToString = function (tok) {
-	  return tok.toString();
-	};
-
-	HtmlParser.escapeAttributes = function (attrs) {
-	  var escapedAttrs = {};
-
-	  for (var name in attrs) {
-	    if (attrs.hasOwnProperty(name)) {
-	      escapedAttrs[name] = (0, _utils.escapeQuotes)(attrs[name], null);
-	    }
-	  }
-
-	  return escapedAttrs;
-	};
-
-	HtmlParser.supports = supports;
-
-	for (var key in supports) {
-	  if (supports.hasOwnProperty(key)) {
-	    HtmlParser.browserHasFlaw = HtmlParser.browserHasFlaw || !supports[key] && key;
-	  }
-	}
-
-/***/ },
-/* 2 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	var tagSoup = false;
-	var selfClose = false;
-
-	var work = window.document.createElement('div');
-
-	try {
-	  var html = '<P><I></P></I>';
-	  work.innerHTML = html;
-	  exports.tagSoup = tagSoup = work.innerHTML !== html;
-	} catch (e) {
-	  exports.tagSoup = tagSoup = false;
-	}
-
-	try {
-	  work.innerHTML = '<P><i><P></P></i></P>';
-	  exports.selfClose = selfClose = work.childNodes.length === 2;
-	} catch (e) {
-	  exports.selfClose = selfClose = false;
-	}
-
-	work = null;
-
-	exports.tagSoup = tagSoup;
-	exports.selfClose = selfClose;
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports.comment = comment;
-	exports.chars = chars;
-	exports.startTag = startTag;
-	exports.atomicTag = atomicTag;
-	exports.endTag = endTag;
-
-	var _tokens = __webpack_require__(4);
-
-	/**
-	 * Regular Expressions for parsing tags and attributes
-	 *
-	 * @type {Object}
-	 */
-	var REGEXES = {
-	  startTag: /^<([\-A-Za-z0-9_!:]+)((?:\s+[\w\-]+(?:\s*=?\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
-	  endTag: /^<\/([\-A-Za-z0-9_:]+)[^>]*>/,
-	  attr: /(?:([\-A-Za-z0-9_]+)\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))|(?:([\-A-Za-z0-9_]+)(\s|$)+)/g,
-	  fillAttr: /^(checked|compact|declare|defer|disabled|ismap|multiple|nohref|noresize|noshade|nowrap|readonly|selected)$/i
-	};
-
-	/**
-	 * Reads a comment token
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {CommentToken}
-	 */
-	function comment(stream) {
-	  var index = stream.indexOf('-->');
-	  if (index >= 0) {
-	    return new _tokens.CommentToken(stream.substr(4, index - 1), index + 3);
-	  }
-	}
-
-	/**
-	 * Reads non-tag characters.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {CharsToken}
-	 */
-	function chars(stream) {
-	  var index = stream.indexOf('<');
-	  return new _tokens.CharsToken(index >= 0 ? index : stream.length);
-	}
-
-	/**
-	 * Reads start tag token.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {StartTagToken}
-	 */
-	function startTag(stream) {
-	  var endTagIndex = stream.indexOf('>');
-	  if (endTagIndex !== -1) {
-	    var match = stream.match(REGEXES.startTag);
-	    if (match) {
-	      var attrs = {};
-	      var booleanAttrs = {};
-	      var rest = match[2];
-
-	      match[2].replace(REGEXES.attr, function (match, name) {
-	        if (!(arguments[2] || arguments[3] || arguments[4] || arguments[5])) {
-	          attrs[name] = '';
-	        } else if (arguments[5]) {
-	          attrs[arguments[5]] = '';
-	          booleanAttrs[arguments[5]] = true;
-	        } else {
-	          attrs[name] = arguments[2] || arguments[3] || arguments[4] || REGEXES.fillAttr.test(name) && name || '';
-	        }
-
-	        rest = rest.replace(match, '');
-	      });
-
-	      return new _tokens.StartTagToken(match[1], match[0].length, attrs, booleanAttrs, !!match[3], rest.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
-	    }
-	  }
-	}
-
-	/**
-	 * Reads atomic tag token.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {AtomicTagToken}
-	 */
-	function atomicTag(stream) {
-	  var start = startTag(stream);
-	  if (start) {
-	    var rest = stream.slice(start.length);
-	    // for optimization, we check first just for the end tag
-	    if (rest.match(new RegExp('<\/\\s*' + start.tagName + '\\s*>', 'i'))) {
-	      // capturing the content is inefficient, so we do it inside the if
-	      var match = rest.match(new RegExp('([\\s\\S]*?)<\/\\s*' + start.tagName + '\\s*>', 'i'));
-	      if (match) {
-	        return new _tokens.AtomicTagToken(start.tagName, match[0].length + start.length, start.attrs, start.booleanAttrs, match[1]);
-	      }
-	    }
-	  }
-	}
-
-	/**
-	 * Reads an end tag token.
-	 *
-	 * @param {string} stream The input stream
-	 * @returns {EndTagToken}
-	 */
-	function endTag(stream) {
-	  var match = stream.match(REGEXES.endTag);
-	  if (match) {
-	    return new _tokens.EndTagToken(match[1], match[0].length);
-	  }
-	}
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports.EndTagToken = exports.AtomicTagToken = exports.StartTagToken = exports.TagToken = exports.CharsToken = exports.CommentToken = exports.Token = undefined;
-
-	var _utils = __webpack_require__(5);
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/**
-	 * Token is a base class for all token types parsed.  Note we don't actually
-	 * use intheritance due to IE8's non-existent ES5 support.
-	 */
-	var Token =
-	/**
-	 * Constructor.
-	 *
-	 * @param {string} type The type of the Token.
-	 * @param {Number} length The length of the Token text.
-	 */
-	exports.Token = function Token(type, length) {
-	  _classCallCheck(this, Token);
-
-	  this.type = type;
-	  this.length = length;
-	  this.text = '';
-	};
-
-	/**
-	 * CommentToken represents comment tags.
-	 */
-
-
-	var CommentToken = exports.CommentToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} content The content of the comment
-	   * @param {Number} length The length of the Token text.
-	   */
-	  function CommentToken(content, length) {
-	    _classCallCheck(this, CommentToken);
-
-	    this.type = 'comment';
-	    this.length = length || (content ? content.length : 0);
-	    this.text = '';
-	    this.content = content;
-	  }
-
-	  CommentToken.prototype.toString = function toString() {
-	    return '<!--' + this.content;
-	  };
-
-	  return CommentToken;
-	}();
-
-	/**
-	 * CharsToken represents non-tag characters.
-	 */
-
-
-	var CharsToken = exports.CharsToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {Number} length The length of the Token text.
-	   */
-	  function CharsToken(length) {
-	    _classCallCheck(this, CharsToken);
-
-	    this.type = 'chars';
-	    this.length = length;
-	    this.text = '';
-	  }
-
-	  CharsToken.prototype.toString = function toString() {
-	    return this.text;
-	  };
-
-	  return CharsToken;
-	}();
-
-	/**
-	 * TagToken is a base class for all tag-based Tokens.
-	 */
-
-
-	var TagToken = exports.TagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} type The type of the token.
-	   * @param {string} tagName The tag name.
-	   * @param {Number} length The length of the Token text.
-	   * @param {Object} attrs The dictionary of attributes and values
-	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
-	   *                              is a boolean attribute
-	   */
-	  function TagToken(type, tagName, length, attrs, booleanAttrs) {
-	    _classCallCheck(this, TagToken);
-
-	    this.type = type;
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	    this.attrs = attrs;
-	    this.booleanAttrs = booleanAttrs;
-	    this.unary = false;
-	    this.html5Unary = false;
-	  }
-
-	  /**
-	   * Formats the given token tag.
-	   *
-	   * @param {TagToken} tok The TagToken to format.
-	   * @param {?string} [content=null] The content of the token.
-	   * @returns {string} The formatted tag.
-	   */
-
-
-	  TagToken.formatTag = function formatTag(tok) {
-	    var content = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-	    var str = '<' + tok.tagName;
-	    for (var key in tok.attrs) {
-	      if (tok.attrs.hasOwnProperty(key)) {
-	        str += ' ' + key;
-
-	        var val = tok.attrs[key];
-	        if (typeof tok.booleanAttrs === 'undefined' || typeof tok.booleanAttrs[key] === 'undefined') {
-	          str += '="' + (0, _utils.escapeQuotes)(val) + '"';
-	        }
-	      }
-	    }
-
-	    if (tok.rest) {
-	      str += ' ' + tok.rest;
-	    }
-
-	    if (tok.unary && !tok.html5Unary) {
-	      str += '/>';
-	    } else {
-	      str += '>';
-	    }
-
-	    if (content !== undefined && content !== null) {
-	      str += content + '</' + tok.tagName + '>';
-	    }
-
-	    return str;
-	  };
-
-	  return TagToken;
-	}();
-
-	/**
-	 * StartTagToken represents a start token.
-	 */
-
-
-	var StartTagToken = exports.StartTagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} tagName The tag name.
-	   * @param {Number} length The length of the Token text
-	   * @param {Object} attrs The dictionary of attributes and values
-	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
-	   *                              is a boolean attribute
-	   * @param {boolean} unary True if the tag is a unary tag
-	   * @param {string} rest The rest of the content.
-	   */
-	  function StartTagToken(tagName, length, attrs, booleanAttrs, unary, rest) {
-	    _classCallCheck(this, StartTagToken);
-
-	    this.type = 'startTag';
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	    this.attrs = attrs;
-	    this.booleanAttrs = booleanAttrs;
-	    this.html5Unary = false;
-	    this.unary = unary;
-	    this.rest = rest;
-	  }
-
-	  StartTagToken.prototype.toString = function toString() {
-	    return TagToken.formatTag(this);
-	  };
-
-	  return StartTagToken;
-	}();
-
-	/**
-	 * AtomicTagToken represents an atomic tag.
-	 */
-
-
-	var AtomicTagToken = exports.AtomicTagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} tagName The name of the tag.
-	   * @param {Number} length The length of the tag text.
-	   * @param {Object} attrs The attributes.
-	   * @param {Object} booleanAttrs If an entry has 'true' then the attribute
-	   *                              is a boolean attribute
-	   * @param {string} content The content of the tag.
-	   */
-	  function AtomicTagToken(tagName, length, attrs, booleanAttrs, content) {
-	    _classCallCheck(this, AtomicTagToken);
-
-	    this.type = 'atomicTag';
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	    this.attrs = attrs;
-	    this.booleanAttrs = booleanAttrs;
-	    this.unary = false;
-	    this.html5Unary = false;
-	    this.content = content;
-	  }
-
-	  AtomicTagToken.prototype.toString = function toString() {
-	    return TagToken.formatTag(this, this.content);
-	  };
-
-	  return AtomicTagToken;
-	}();
-
-	/**
-	 * EndTagToken represents an end tag.
-	 */
-
-
-	var EndTagToken = exports.EndTagToken = function () {
-	  /**
-	   * Constructor.
-	   *
-	   * @param {string} tagName The name of the tag.
-	   * @param {Number} length The length of the tag text.
-	   */
-	  function EndTagToken(tagName, length) {
-	    _classCallCheck(this, EndTagToken);
-
-	    this.type = 'endTag';
-	    this.length = length;
-	    this.text = '';
-	    this.tagName = tagName;
-	  }
-
-	  EndTagToken.prototype.toString = function toString() {
-	    return '</' + this.tagName + '>';
-	  };
-
-	  return EndTagToken;
-	}();
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports.escapeQuotes = escapeQuotes;
-
-	/**
-	 * Escape quotes in the given value.
-	 *
-	 * @param {string} value The value to escape.
-	 * @param {string} [defaultValue=''] The default value to return if value is falsy.
-	 * @returns {string}
-	 */
-	function escapeQuotes(value) {
-	  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
-	  // There's no lookback in JS, so /(^|[^\\])"/ only matches the first of two `"`s.
-	  // Instead, just match anything before a double-quote and escape if it's not already escaped.
-	  return !value ? defaultValue : value.replace(/([^"]*)"/g, function (_, prefix) {
-	    return (/\\/.test(prefix) ? prefix + '"' : prefix + '\\"'
-	    );
-	  });
-	}
-
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	exports.__esModule = true;
-	exports['default'] = fixedReadTokenFactory;
-	/**
-	 * Empty Elements - HTML 4.01
-	 *
-	 * @type {RegExp}
-	 */
-	var EMPTY = /^(AREA|BASE|BASEFONT|BR|COL|FRAME|HR|IMG|INPUT|ISINDEX|LINK|META|PARAM|EMBED)$/i;
-
-	/**
-	 * Elements that you can intentionally leave open (and which close themselves)
-	 *
-	 * @type {RegExp}
-	 */
-	var CLOSESELF = /^(COLGROUP|DD|DT|LI|OPTIONS|P|TD|TFOOT|TH|THEAD|TR)$/i;
-
-	/**
-	 * Corrects a token.
-	 *
-	 * @param {Token} tok The token to correct
-	 * @returns {Token} The corrected token
-	 */
-	function correct(tok) {
-	  if (tok && tok.type === 'startTag') {
-	    tok.unary = EMPTY.test(tok.tagName) || tok.unary;
-	    tok.html5Unary = !/\/>$/.test(tok.text);
-	  }
-	  return tok;
-	}
-
-	/**
-	 * Peeks at the next token in the parser.
-	 *
-	 * @param {HtmlParser} parser The parser
-	 * @param {Function} readTokenImpl The underlying readToken implementation
-	 * @returns {Token} The next token
-	 */
-	function peekToken(parser, readTokenImpl) {
-	  var tmp = parser.stream;
-	  var tok = correct(readTokenImpl());
-	  parser.stream = tmp;
-	  return tok;
-	}
-
-	/**
-	 * Closes the last token.
-	 *
-	 * @param {HtmlParser} parser The parser
-	 * @param {Array<Token>} stack The stack
-	 */
-	function closeLast(parser, stack) {
-	  var tok = stack.pop();
-
-	  // prepend close tag to stream.
-	  parser.prepend('</' + tok.tagName + '>');
-	}
-
-	/**
-	 * Create a new token stack.
-	 *
-	 * @returns {Array<Token>}
-	 */
-	function newStack() {
-	  var stack = [];
-
-	  stack.last = function () {
-	    return this[this.length - 1];
-	  };
-
-	  stack.lastTagNameEq = function (tagName) {
-	    var last = this.last();
-	    return last && last.tagName && last.tagName.toUpperCase() === tagName.toUpperCase();
-	  };
-
-	  stack.containsTagName = function (tagName) {
-	    for (var i = 0, tok; tok = this[i]; i++) {
-	      if (tok.tagName === tagName) {
-	        return true;
-	      }
-	    }
-	    return false;
-	  };
-
-	  return stack;
-	}
-
-	/**
-	 * Return a readToken implementation that fixes input.
-	 *
-	 * @param {HtmlParser} parser The parser
-	 * @param {Object} options Options for fixing
-	 * @param {boolean} options.tagSoupFix True to fix tag soup scenarios
-	 * @param {boolean} options.selfCloseFix True to fix self-closing tags
-	 * @param {Function} readTokenImpl The underlying readToken implementation
-	 * @returns {Function}
-	 */
-	function fixedReadTokenFactory(parser, options, readTokenImpl) {
-	  var stack = newStack();
-
-	  var handlers = {
-	    startTag: function startTag(tok) {
-	      var tagName = tok.tagName;
-
-	      if (tagName.toUpperCase() === 'TR' && stack.lastTagNameEq('TABLE')) {
-	        parser.prepend('<TBODY>');
-	        prepareNextToken();
-	      } else if (options.selfCloseFix && CLOSESELF.test(tagName) && stack.containsTagName(tagName)) {
-	        if (stack.lastTagNameEq(tagName)) {
-	          closeLast(parser, stack);
-	        } else {
-	          parser.prepend('</' + tok.tagName + '>');
-	          prepareNextToken();
-	        }
-	      } else if (!tok.unary) {
-	        stack.push(tok);
-	      }
-	    },
-	    endTag: function endTag(tok) {
-	      var last = stack.last();
-	      if (last) {
-	        if (options.tagSoupFix && !stack.lastTagNameEq(tok.tagName)) {
-	          // cleanup tag soup
-	          closeLast(parser, stack);
-	        } else {
-	          stack.pop();
-	        }
-	      } else if (options.tagSoupFix) {
-	        // cleanup tag soup part 2: skip this token
-	        readTokenImpl();
-	        prepareNextToken();
-	      }
-	    }
-	  };
-
-	  function prepareNextToken() {
-	    var tok = peekToken(parser, readTokenImpl);
-	    if (tok && handlers[tok.type]) {
-	      handlers[tok.type](tok);
-	    }
-	  }
-
-	  return function fixedReadToken() {
-	    prepareNextToken();
-	    return correct(readTokenImpl());
-	  };
-	}
-
-/***/ }
-/******/ ])
+				/******/ // Create a new module (and put it into the cache)
+				/******/var module = installedModules[moduleId] = {
+					/******/exports: {},
+					/******/id: moduleId,
+					/******/loaded: false
+					/******/ };
+
+				/******/ // Execute the module function
+				/******/modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+				/******/ // Flag the module as loaded
+				/******/module.loaded = true;
+
+				/******/ // Return the exports of the module
+				/******/return module.exports;
+				/******/
+			}
+
+			/******/ // expose the modules object (__webpack_modules__)
+			/******/__webpack_require__.m = modules;
+
+			/******/ // expose the module cache
+			/******/__webpack_require__.c = installedModules;
+
+			/******/ // __webpack_public_path__
+			/******/__webpack_require__.p = "";
+
+			/******/ // Load entry module and return exports
+			/******/return __webpack_require__(0);
+			/******/
+		}(
+		/************************************************************************/
+		/******/[
+		/* 0 */
+		/***/function (module, exports, __webpack_require__) {
+
+			'use strict';
+
+			var _HtmlParser = __webpack_require__(1);
+
+			var _HtmlParser2 = _interopRequireDefault(_HtmlParser);
+
+			function _interopRequireDefault(obj) {
+				return obj && obj.__esModule ? obj : { 'default': obj };
+			}
+
+			module.exports = _HtmlParser2['default'];
+
+			/***/
+		},
+		/* 1 */
+		/***/function (module, exports, __webpack_require__) {
+
+			'use strict';
+
+			exports.__esModule = true;
+
+			var _supports = __webpack_require__(2);
+
+			var supports = _interopRequireWildcard(_supports);
+
+			var _streamReaders = __webpack_require__(3);
+
+			var streamReaders = _interopRequireWildcard(_streamReaders);
+
+			var _fixedReadTokenFactory = __webpack_require__(6);
+
+			var _fixedReadTokenFactory2 = _interopRequireDefault(_fixedReadTokenFactory);
+
+			var _utils = __webpack_require__(5);
+
+			function _interopRequireDefault(obj) {
+				return obj && obj.__esModule ? obj : { 'default': obj };
+			}
+
+			function _interopRequireWildcard(obj) {
+				if (obj && obj.__esModule) {
+					return obj;
+				} else {
+					var newObj = {};if (obj != null) {
+						for (var key in obj) {
+							if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+						}
+					}newObj['default'] = obj;return newObj;
+				}
+			}
+
+			function _classCallCheck(instance, Constructor) {
+				if (!(instance instanceof Constructor)) {
+					throw new TypeError("Cannot call a class as a function");
+				}
+			}
+
+			/**
+    * Detection regular expressions.
+    *
+    * Order of detection matters: detection of one can only
+    * succeed if detection of previous didn't
+   	 * @type {Object}
+    */
+			var detect = {
+				comment: /^<!--/,
+				endTag: /^<\//,
+				atomicTag: /^<\s*(script|style|noscript|iframe|textarea)[\s\/>]/i,
+				startTag: /^</,
+				chars: /^[^<]/
+			};
+
+			/**
+    * HtmlParser provides the capability to parse HTML and return tokens
+    * representing the tags and content.
+    */
+
+			var HtmlParser = function () {
+				/**
+     * Constructor.
+     *
+     * @param {string} stream The initial parse stream contents.
+     * @param {Object} options The options
+     * @param {boolean} options.autoFix Set to true to automatically fix errors
+     */
+				function HtmlParser() {
+					var _this = this;
+
+					var stream = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+					var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+					_classCallCheck(this, HtmlParser);
+
+					this.stream = stream;
+
+					var fix = false;
+					var fixedTokenOptions = {};
+
+					for (var key in supports) {
+						if (supports.hasOwnProperty(key)) {
+							if (options.autoFix) {
+								fixedTokenOptions[key + 'Fix'] = true; // !supports[key];
+							}
+							fix = fix || fixedTokenOptions[key + 'Fix'];
+						}
+					}
+
+					if (fix) {
+						this._readToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
+							return _this._readTokenImpl();
+						});
+						this._peekToken = (0, _fixedReadTokenFactory2['default'])(this, fixedTokenOptions, function () {
+							return _this._peekTokenImpl();
+						});
+					} else {
+						this._readToken = this._readTokenImpl;
+						this._peekToken = this._peekTokenImpl;
+					}
+				}
+
+				/**
+     * Appends the given string to the parse stream.
+     *
+     * @param {string} str The string to append
+     */
+
+				HtmlParser.prototype.append = function append(str) {
+					this.stream += str;
+				};
+
+				/**
+     * Prepends the given string to the parse stream.
+     *
+     * @param {string} str The string to prepend
+     */
+
+				HtmlParser.prototype.prepend = function prepend(str) {
+					this.stream = str + this.stream;
+				};
+
+				/**
+     * The implementation of the token reading.
+     *
+     * @private
+     * @returns {?Token}
+     */
+
+				HtmlParser.prototype._readTokenImpl = function _readTokenImpl() {
+					var token = this._peekTokenImpl();
+					if (token) {
+						this.stream = this.stream.slice(token.length);
+						return token;
+					}
+				};
+
+				/**
+     * The implementation of token peeking.
+     *
+     * @returns {?Token}
+     */
+
+				HtmlParser.prototype._peekTokenImpl = function _peekTokenImpl() {
+					for (var type in detect) {
+						if (detect.hasOwnProperty(type)) {
+							if (detect[type].test(this.stream)) {
+								var token = streamReaders[type](this.stream);
+
+								if (token) {
+									if (token.type === 'startTag' && /script|style/i.test(token.tagName)) {
+										return null;
+									} else {
+										token.text = this.stream.substr(0, token.length);
+										return token;
+									}
+								}
+							}
+						}
+					}
+				};
+
+				/**
+     * The public token peeking interface.  Delegates to the basic token peeking
+     * or a version that performs fixups depending on the `autoFix` setting in
+     * options.
+     *
+     * @returns {object}
+     */
+
+				HtmlParser.prototype.peekToken = function peekToken() {
+					return this._peekToken();
+				};
+
+				/**
+     * The public token reading interface.  Delegates to the basic token reading
+     * or a version that performs fixups depending on the `autoFix` setting in
+     * options.
+     *
+     * @returns {object}
+     */
+
+				HtmlParser.prototype.readToken = function readToken() {
+					return this._readToken();
+				};
+
+				/**
+     * Read tokens and hand to the given handlers.
+     *
+     * @param {Object} handlers The handlers to use for the different tokens.
+     */
+
+				HtmlParser.prototype.readTokens = function readTokens(handlers) {
+					var tok = void 0;
+					while (tok = this.readToken()) {
+						// continue until we get an explicit "false" return
+						if (handlers[tok.type] && handlers[tok.type](tok) === false) {
+							return;
+						}
+					}
+				};
+
+				/**
+     * Clears the parse stream.
+     *
+     * @returns {string} The contents of the parse stream before clearing.
+     */
+
+				HtmlParser.prototype.clear = function clear() {
+					var rest = this.stream;
+					this.stream = '';
+					return rest;
+				};
+
+				/**
+     * Returns the rest of the parse stream.
+     *
+     * @returns {string} The contents of the parse stream.
+     */
+
+				HtmlParser.prototype.rest = function rest() {
+					return this.stream;
+				};
+
+				return HtmlParser;
+			}();
+
+			exports['default'] = HtmlParser;
+
+			HtmlParser.tokenToString = function (tok) {
+				return tok.toString();
+			};
+
+			HtmlParser.escapeAttributes = function (attrs) {
+				var escapedAttrs = {};
+
+				for (var name in attrs) {
+					if (attrs.hasOwnProperty(name)) {
+						escapedAttrs[name] = (0, _utils.escapeQuotes)(attrs[name], null);
+					}
+				}
+
+				return escapedAttrs;
+			};
+
+			HtmlParser.supports = supports;
+
+			for (var key in supports) {
+				if (supports.hasOwnProperty(key)) {
+					HtmlParser.browserHasFlaw = HtmlParser.browserHasFlaw || !supports[key] && key;
+				}
+			}
+
+			/***/
+		},
+		/* 2 */
+		/***/function (module, exports) {
+
+			'use strict';
+
+			exports.__esModule = true;
+			var tagSoup = false;
+			var selfClose = false;
+
+			var work = window.document.createElement('div');
+
+			try {
+				var html = '<P><I></P></I>';
+				work.innerHTML = html;
+				exports.tagSoup = tagSoup = work.innerHTML !== html;
+			} catch (e) {
+				exports.tagSoup = tagSoup = false;
+			}
+
+			try {
+				work.innerHTML = '<P><i><P></P></i></P>';
+				exports.selfClose = selfClose = work.childNodes.length === 2;
+			} catch (e) {
+				exports.selfClose = selfClose = false;
+			}
+
+			work = null;
+
+			exports.tagSoup = tagSoup;
+			exports.selfClose = selfClose;
+
+			/***/
+		},
+		/* 3 */
+		/***/function (module, exports, __webpack_require__) {
+
+			'use strict';
+
+			exports.__esModule = true;
+			exports.comment = comment;
+			exports.chars = chars;
+			exports.startTag = startTag;
+			exports.atomicTag = atomicTag;
+			exports.endTag = endTag;
+
+			var _tokens = __webpack_require__(4);
+
+			/**
+    * Regular Expressions for parsing tags and attributes
+    *
+    * @type {Object}
+    */
+			var REGEXES = {
+				startTag: /^<([\-A-Za-z0-9_!:]+)((?:\s+[\w\-]+(?:\s*=?\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
+				endTag: /^<\/([\-A-Za-z0-9_:]+)[^>]*>/,
+				attr: /(?:([\-A-Za-z0-9_]+)\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))|(?:([\-A-Za-z0-9_]+)(\s|$)+)/g,
+				fillAttr: /^(checked|compact|declare|defer|disabled|ismap|multiple|nohref|noresize|noshade|nowrap|readonly|selected)$/i
+			};
+
+			/**
+    * Reads a comment token
+    *
+    * @param {string} stream The input stream
+    * @returns {CommentToken}
+    */
+			function comment(stream) {
+				var index = stream.indexOf('-->');
+				if (index >= 0) {
+					return new _tokens.CommentToken(stream.substr(4, index - 1), index + 3);
+				}
+			}
+
+			/**
+    * Reads non-tag characters.
+    *
+    * @param {string} stream The input stream
+    * @returns {CharsToken}
+    */
+			function chars(stream) {
+				var index = stream.indexOf('<');
+				return new _tokens.CharsToken(index >= 0 ? index : stream.length);
+			}
+
+			/**
+    * Reads start tag token.
+    *
+    * @param {string} stream The input stream
+    * @returns {StartTagToken}
+    */
+			function startTag(stream) {
+				var endTagIndex = stream.indexOf('>');
+				if (endTagIndex !== -1) {
+					var match = stream.match(REGEXES.startTag);
+					if (match) {
+						var attrs = {};
+						var booleanAttrs = {};
+						var rest = match[2];
+
+						match[2].replace(REGEXES.attr, function (match, name) {
+							if (!(arguments[2] || arguments[3] || arguments[4] || arguments[5])) {
+								attrs[name] = '';
+							} else if (arguments[5]) {
+								attrs[arguments[5]] = '';
+								booleanAttrs[arguments[5]] = true;
+							} else {
+								attrs[name] = arguments[2] || arguments[3] || arguments[4] || REGEXES.fillAttr.test(name) && name || '';
+							}
+
+							rest = rest.replace(match, '');
+						});
+
+						return new _tokens.StartTagToken(match[1], match[0].length, attrs, booleanAttrs, !!match[3], rest.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
+					}
+				}
+			}
+
+			/**
+    * Reads atomic tag token.
+    *
+    * @param {string} stream The input stream
+    * @returns {AtomicTagToken}
+    */
+			function atomicTag(stream) {
+				var start = startTag(stream);
+				if (start) {
+					var rest = stream.slice(start.length);
+					// for optimization, we check first just for the end tag
+					if (rest.match(new RegExp('<\/\\s*' + start.tagName + '\\s*>', 'i'))) {
+						// capturing the content is inefficient, so we do it inside the if
+						var match = rest.match(new RegExp('([\\s\\S]*?)<\/\\s*' + start.tagName + '\\s*>', 'i'));
+						if (match) {
+							return new _tokens.AtomicTagToken(start.tagName, match[0].length + start.length, start.attrs, start.booleanAttrs, match[1]);
+						}
+					}
+				}
+			}
+
+			/**
+    * Reads an end tag token.
+    *
+    * @param {string} stream The input stream
+    * @returns {EndTagToken}
+    */
+			function endTag(stream) {
+				var match = stream.match(REGEXES.endTag);
+				if (match) {
+					return new _tokens.EndTagToken(match[1], match[0].length);
+				}
+			}
+
+			/***/
+		},
+		/* 4 */
+		/***/function (module, exports, __webpack_require__) {
+
+			'use strict';
+
+			exports.__esModule = true;
+			exports.EndTagToken = exports.AtomicTagToken = exports.StartTagToken = exports.TagToken = exports.CharsToken = exports.CommentToken = exports.Token = undefined;
+
+			var _utils = __webpack_require__(5);
+
+			function _classCallCheck(instance, Constructor) {
+				if (!(instance instanceof Constructor)) {
+					throw new TypeError("Cannot call a class as a function");
+				}
+			}
+
+			/**
+    * Token is a base class for all token types parsed.  Note we don't actually
+    * use intheritance due to IE8's non-existent ES5 support.
+    */
+			var Token =
+			/**
+    * Constructor.
+    *
+    * @param {string} type The type of the Token.
+    * @param {Number} length The length of the Token text.
+    */
+			exports.Token = function Token(type, length) {
+				_classCallCheck(this, Token);
+
+				this.type = type;
+				this.length = length;
+				this.text = '';
+			};
+
+			/**
+    * CommentToken represents comment tags.
+    */
+
+			var CommentToken = exports.CommentToken = function () {
+				/**
+     * Constructor.
+     *
+     * @param {string} content The content of the comment
+     * @param {Number} length The length of the Token text.
+     */
+				function CommentToken(content, length) {
+					_classCallCheck(this, CommentToken);
+
+					this.type = 'comment';
+					this.length = length || (content ? content.length : 0);
+					this.text = '';
+					this.content = content;
+				}
+
+				CommentToken.prototype.toString = function toString() {
+					return '<!--' + this.content;
+				};
+
+				return CommentToken;
+			}();
+
+			/**
+    * CharsToken represents non-tag characters.
+    */
+
+			var CharsToken = exports.CharsToken = function () {
+				/**
+     * Constructor.
+     *
+     * @param {Number} length The length of the Token text.
+     */
+				function CharsToken(length) {
+					_classCallCheck(this, CharsToken);
+
+					this.type = 'chars';
+					this.length = length;
+					this.text = '';
+				}
+
+				CharsToken.prototype.toString = function toString() {
+					return this.text;
+				};
+
+				return CharsToken;
+			}();
+
+			/**
+    * TagToken is a base class for all tag-based Tokens.
+    */
+
+			var TagToken = exports.TagToken = function () {
+				/**
+     * Constructor.
+     *
+     * @param {string} type The type of the token.
+     * @param {string} tagName The tag name.
+     * @param {Number} length The length of the Token text.
+     * @param {Object} attrs The dictionary of attributes and values
+     * @param {Object} booleanAttrs If an entry has 'true' then the attribute
+     *                              is a boolean attribute
+     */
+				function TagToken(type, tagName, length, attrs, booleanAttrs) {
+					_classCallCheck(this, TagToken);
+
+					this.type = type;
+					this.length = length;
+					this.text = '';
+					this.tagName = tagName;
+					this.attrs = attrs;
+					this.booleanAttrs = booleanAttrs;
+					this.unary = false;
+					this.html5Unary = false;
+				}
+
+				/**
+     * Formats the given token tag.
+     *
+     * @param {TagToken} tok The TagToken to format.
+     * @param {?string} [content=null] The content of the token.
+     * @returns {string} The formatted tag.
+     */
+
+				TagToken.formatTag = function formatTag(tok) {
+					var content = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+					var str = '<' + tok.tagName;
+					for (var key in tok.attrs) {
+						if (tok.attrs.hasOwnProperty(key)) {
+							str += ' ' + key;
+
+							var val = tok.attrs[key];
+							if (typeof tok.booleanAttrs === 'undefined' || typeof tok.booleanAttrs[key] === 'undefined') {
+								str += '="' + (0, _utils.escapeQuotes)(val) + '"';
+							}
+						}
+					}
+
+					if (tok.rest) {
+						str += ' ' + tok.rest;
+					}
+
+					if (tok.unary && !tok.html5Unary) {
+						str += '/>';
+					} else {
+						str += '>';
+					}
+
+					if (content !== undefined && content !== null) {
+						str += content + '</' + tok.tagName + '>';
+					}
+
+					return str;
+				};
+
+				return TagToken;
+			}();
+
+			/**
+    * StartTagToken represents a start token.
+    */
+
+			var StartTagToken = exports.StartTagToken = function () {
+				/**
+     * Constructor.
+     *
+     * @param {string} tagName The tag name.
+     * @param {Number} length The length of the Token text
+     * @param {Object} attrs The dictionary of attributes and values
+     * @param {Object} booleanAttrs If an entry has 'true' then the attribute
+     *                              is a boolean attribute
+     * @param {boolean} unary True if the tag is a unary tag
+     * @param {string} rest The rest of the content.
+     */
+				function StartTagToken(tagName, length, attrs, booleanAttrs, unary, rest) {
+					_classCallCheck(this, StartTagToken);
+
+					this.type = 'startTag';
+					this.length = length;
+					this.text = '';
+					this.tagName = tagName;
+					this.attrs = attrs;
+					this.booleanAttrs = booleanAttrs;
+					this.html5Unary = false;
+					this.unary = unary;
+					this.rest = rest;
+				}
+
+				StartTagToken.prototype.toString = function toString() {
+					return TagToken.formatTag(this);
+				};
+
+				return StartTagToken;
+			}();
+
+			/**
+    * AtomicTagToken represents an atomic tag.
+    */
+
+			var AtomicTagToken = exports.AtomicTagToken = function () {
+				/**
+     * Constructor.
+     *
+     * @param {string} tagName The name of the tag.
+     * @param {Number} length The length of the tag text.
+     * @param {Object} attrs The attributes.
+     * @param {Object} booleanAttrs If an entry has 'true' then the attribute
+     *                              is a boolean attribute
+     * @param {string} content The content of the tag.
+     */
+				function AtomicTagToken(tagName, length, attrs, booleanAttrs, content) {
+					_classCallCheck(this, AtomicTagToken);
+
+					this.type = 'atomicTag';
+					this.length = length;
+					this.text = '';
+					this.tagName = tagName;
+					this.attrs = attrs;
+					this.booleanAttrs = booleanAttrs;
+					this.unary = false;
+					this.html5Unary = false;
+					this.content = content;
+				}
+
+				AtomicTagToken.prototype.toString = function toString() {
+					return TagToken.formatTag(this, this.content);
+				};
+
+				return AtomicTagToken;
+			}();
+
+			/**
+    * EndTagToken represents an end tag.
+    */
+
+			var EndTagToken = exports.EndTagToken = function () {
+				/**
+     * Constructor.
+     *
+     * @param {string} tagName The name of the tag.
+     * @param {Number} length The length of the tag text.
+     */
+				function EndTagToken(tagName, length) {
+					_classCallCheck(this, EndTagToken);
+
+					this.type = 'endTag';
+					this.length = length;
+					this.text = '';
+					this.tagName = tagName;
+				}
+
+				EndTagToken.prototype.toString = function toString() {
+					return '</' + this.tagName + '>';
+				};
+
+				return EndTagToken;
+			}();
+
+			/***/
+		},
+		/* 5 */
+		/***/function (module, exports) {
+
+			'use strict';
+
+			exports.__esModule = true;
+			exports.escapeQuotes = escapeQuotes;
+
+			/**
+    * Escape quotes in the given value.
+    *
+    * @param {string} value The value to escape.
+    * @param {string} [defaultValue=''] The default value to return if value is falsy.
+    * @returns {string}
+    */
+			function escapeQuotes(value) {
+				var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+
+				// There's no lookback in JS, so /(^|[^\\])"/ only matches the first of two `"`s.
+				// Instead, just match anything before a double-quote and escape if it's not already escaped.
+				return !value ? defaultValue : value.replace(/([^"]*)"/g, function (_, prefix) {
+					return (/\\/.test(prefix) ? prefix + '"' : prefix + '\\"'
+					);
+				});
+			}
+
+			/***/
+		},
+		/* 6 */
+		/***/function (module, exports) {
+
+			'use strict';
+
+			exports.__esModule = true;
+			exports['default'] = fixedReadTokenFactory;
+			/**
+    * Empty Elements - HTML 4.01
+    *
+    * @type {RegExp}
+    */
+			var EMPTY = /^(AREA|BASE|BASEFONT|BR|COL|FRAME|HR|IMG|INPUT|ISINDEX|LINK|META|PARAM|EMBED)$/i;
+
+			/**
+    * Elements that you can intentionally leave open (and which close themselves)
+    *
+    * @type {RegExp}
+    */
+			var CLOSESELF = /^(COLGROUP|DD|DT|LI|OPTIONS|P|TD|TFOOT|TH|THEAD|TR)$/i;
+
+			/**
+    * Corrects a token.
+    *
+    * @param {Token} tok The token to correct
+    * @returns {Token} The corrected token
+    */
+			function correct(tok) {
+				if (tok && tok.type === 'startTag') {
+					tok.unary = EMPTY.test(tok.tagName) || tok.unary;
+					tok.html5Unary = !/\/>$/.test(tok.text);
+				}
+				return tok;
+			}
+
+			/**
+    * Peeks at the next token in the parser.
+    *
+    * @param {HtmlParser} parser The parser
+    * @param {Function} readTokenImpl The underlying readToken implementation
+    * @returns {Token} The next token
+    */
+			function peekToken(parser, readTokenImpl) {
+				var tmp = parser.stream;
+				var tok = correct(readTokenImpl());
+				parser.stream = tmp;
+				return tok;
+			}
+
+			/**
+    * Closes the last token.
+    *
+    * @param {HtmlParser} parser The parser
+    * @param {Array<Token>} stack The stack
+    */
+			function closeLast(parser, stack) {
+				var tok = stack.pop();
+
+				// prepend close tag to stream.
+				parser.prepend('</' + tok.tagName + '>');
+			}
+
+			/**
+    * Create a new token stack.
+    *
+    * @returns {Array<Token>}
+    */
+			function newStack() {
+				var stack = [];
+
+				stack.last = function () {
+					return this[this.length - 1];
+				};
+
+				stack.lastTagNameEq = function (tagName) {
+					var last = this.last();
+					return last && last.tagName && last.tagName.toUpperCase() === tagName.toUpperCase();
+				};
+
+				stack.containsTagName = function (tagName) {
+					for (var i = 0, tok; tok = this[i]; i++) {
+						if (tok.tagName === tagName) {
+							return true;
+						}
+					}
+					return false;
+				};
+
+				return stack;
+			}
+
+			/**
+    * Return a readToken implementation that fixes input.
+    *
+    * @param {HtmlParser} parser The parser
+    * @param {Object} options Options for fixing
+    * @param {boolean} options.tagSoupFix True to fix tag soup scenarios
+    * @param {boolean} options.selfCloseFix True to fix self-closing tags
+    * @param {Function} readTokenImpl The underlying readToken implementation
+    * @returns {Function}
+    */
+			function fixedReadTokenFactory(parser, options, readTokenImpl) {
+				var stack = newStack();
+
+				var handlers = {
+					startTag: function startTag(tok) {
+						var tagName = tok.tagName;
+
+						if (tagName.toUpperCase() === 'TR' && stack.lastTagNameEq('TABLE')) {
+							parser.prepend('<TBODY>');
+							prepareNextToken();
+						} else if (options.selfCloseFix && CLOSESELF.test(tagName) && stack.containsTagName(tagName)) {
+							if (stack.lastTagNameEq(tagName)) {
+								closeLast(parser, stack);
+							} else {
+								parser.prepend('</' + tok.tagName + '>');
+								prepareNextToken();
+							}
+						} else if (!tok.unary) {
+							stack.push(tok);
+						}
+					},
+					endTag: function endTag(tok) {
+						var last = stack.last();
+						if (last) {
+							if (options.tagSoupFix && !stack.lastTagNameEq(tok.tagName)) {
+								// cleanup tag soup
+								closeLast(parser, stack);
+							} else {
+								stack.pop();
+							}
+						} else if (options.tagSoupFix) {
+							// cleanup tag soup part 2: skip this token
+							readTokenImpl();
+							prepareNextToken();
+						}
+					}
+				};
+
+				function prepareNextToken() {
+					var tok = peekToken(parser, readTokenImpl);
+					if (tok && handlers[tok.type]) {
+						handlers[tok.type](tok);
+					}
+				}
+
+				return function fixedReadToken() {
+					prepareNextToken();
+					return correct(readTokenImpl());
+				};
+			}
+
+			/***/
+		}
+		/******/])
+	);
 });
 ;
-},{}],33:[function(require,module,exports){
-var createElement = require("./vdom/create-element.js")
 
-module.exports = createElement
+},{}],33:[function(require,module,exports){
+"use strict";
+
+var createElement = require("./vdom/create-element.js");
+
+module.exports = createElement;
 
 },{"./vdom/create-element.js":38}],34:[function(require,module,exports){
-var diff = require("./vtree/diff.js")
+"use strict";
 
-module.exports = diff
+var diff = require("./vtree/diff.js");
+
+module.exports = diff;
 
 },{"./vtree/diff.js":58}],35:[function(require,module,exports){
-var h = require("./virtual-hyperscript/index.js")
+"use strict";
 
-module.exports = h
+var h = require("./virtual-hyperscript/index.js");
+
+module.exports = h;
 
 },{"./virtual-hyperscript/index.js":45}],36:[function(require,module,exports){
-var patch = require("./vdom/patch.js")
+"use strict";
 
-module.exports = patch
+var patch = require("./vdom/patch.js");
+
+module.exports = patch;
 
 },{"./vdom/patch.js":41}],37:[function(require,module,exports){
-var isObject = require("is-object")
-var isHook = require("../vnode/is-vhook.js")
+"use strict";
 
-module.exports = applyProperties
+var isObject = require("is-object");
+var isHook = require("../vnode/is-vhook.js");
+
+module.exports = applyProperties;
 
 function applyProperties(node, props, previous) {
     for (var propName in props) {
-        var propValue = props[propName]
+        var propValue = props[propName];
 
         if (propValue === undefined) {
             removeProperty(node, propName, propValue, previous);
         } else if (isHook(propValue)) {
-            removeProperty(node, propName, propValue, previous)
+            removeProperty(node, propName, propValue, previous);
             if (propValue.hook) {
-                propValue.hook(node,
-                    propName,
-                    previous ? previous[propName] : undefined)
+                propValue.hook(node, propName, previous ? previous[propName] : undefined);
             }
         } else {
             if (isObject(propValue)) {
                 patchObject(node, props, previous, propName, propValue);
             } else {
-                node[propName] = propValue
+                node[propName] = propValue;
             }
         }
     }
@@ -2892,199 +2960,199 @@ function applyProperties(node, props, previous) {
 
 function removeProperty(node, propName, propValue, previous) {
     if (previous) {
-        var previousValue = previous[propName]
+        var previousValue = previous[propName];
 
         if (!isHook(previousValue)) {
             if (propName === "attributes") {
                 for (var attrName in previousValue) {
-                    node.removeAttribute(attrName)
+                    node.removeAttribute(attrName);
                 }
             } else if (propName === "style") {
                 for (var i in previousValue) {
-                    node.style[i] = ""
+                    node.style[i] = "";
                 }
             } else if (typeof previousValue === "string") {
-                node[propName] = ""
+                node[propName] = "";
             } else {
-                node[propName] = null
+                node[propName] = null;
             }
         } else if (previousValue.unhook) {
-            previousValue.unhook(node, propName, propValue)
+            previousValue.unhook(node, propName, propValue);
         }
     }
 }
 
 function patchObject(node, props, previous, propName, propValue) {
-    var previousValue = previous ? previous[propName] : undefined
+    var previousValue = previous ? previous[propName] : undefined;
 
     // Set attributes
     if (propName === "attributes") {
         for (var attrName in propValue) {
-            var attrValue = propValue[attrName]
+            var attrValue = propValue[attrName];
 
             if (attrValue === undefined) {
-                node.removeAttribute(attrName)
+                node.removeAttribute(attrName);
             } else {
-                node.setAttribute(attrName, attrValue)
+                node.setAttribute(attrName, attrValue);
             }
         }
 
-        return
+        return;
     }
 
-    if(previousValue && isObject(previousValue) &&
-        getPrototype(previousValue) !== getPrototype(propValue)) {
-        node[propName] = propValue
-        return
+    if (previousValue && isObject(previousValue) && getPrototype(previousValue) !== getPrototype(propValue)) {
+        node[propName] = propValue;
+        return;
     }
 
     if (!isObject(node[propName])) {
-        node[propName] = {}
+        node[propName] = {};
     }
 
-    var replacer = propName === "style" ? "" : undefined
+    var replacer = propName === "style" ? "" : undefined;
 
     for (var k in propValue) {
-        var value = propValue[k]
-        node[propName][k] = (value === undefined) ? replacer : value
+        var value = propValue[k];
+        node[propName][k] = value === undefined ? replacer : value;
     }
 }
 
 function getPrototype(value) {
     if (Object.getPrototypeOf) {
-        return Object.getPrototypeOf(value)
+        return Object.getPrototypeOf(value);
     } else if (value.__proto__) {
-        return value.__proto__
+        return value.__proto__;
     } else if (value.constructor) {
-        return value.constructor.prototype
+        return value.constructor.prototype;
     }
 }
 
 },{"../vnode/is-vhook.js":49,"is-object":24}],38:[function(require,module,exports){
-var document = require("global/document")
+"use strict";
 
-var applyProperties = require("./apply-properties")
+var document = require("global/document");
 
-var isVNode = require("../vnode/is-vnode.js")
-var isVText = require("../vnode/is-vtext.js")
-var isWidget = require("../vnode/is-widget.js")
-var handleThunk = require("../vnode/handle-thunk.js")
+var applyProperties = require("./apply-properties");
 
-module.exports = createElement
+var isVNode = require("../vnode/is-vnode.js");
+var isVText = require("../vnode/is-vtext.js");
+var isWidget = require("../vnode/is-widget.js");
+var handleThunk = require("../vnode/handle-thunk.js");
+
+module.exports = createElement;
 
 function createElement(vnode, opts) {
-    var doc = opts ? opts.document || document : document
-    var warn = opts ? opts.warn : null
+    var doc = opts ? opts.document || document : document;
+    var warn = opts ? opts.warn : null;
 
-    vnode = handleThunk(vnode).a
+    vnode = handleThunk(vnode).a;
 
     if (isWidget(vnode)) {
-        return vnode.init()
+        return vnode.init();
     } else if (isVText(vnode)) {
-        return doc.createTextNode(vnode.text)
+        return doc.createTextNode(vnode.text);
     } else if (!isVNode(vnode)) {
         if (warn) {
-            warn("Item is not a valid virtual dom node", vnode)
+            warn("Item is not a valid virtual dom node", vnode);
         }
-        return null
+        return null;
     }
 
-    var node = (vnode.namespace === null) ?
-        doc.createElement(vnode.tagName) :
-        doc.createElementNS(vnode.namespace, vnode.tagName)
+    var node = vnode.namespace === null ? doc.createElement(vnode.tagName) : doc.createElementNS(vnode.namespace, vnode.tagName);
 
-    var props = vnode.properties
-    applyProperties(node, props)
+    var props = vnode.properties;
+    applyProperties(node, props);
 
-    var children = vnode.children
+    var children = vnode.children;
 
     for (var i = 0; i < children.length; i++) {
-        var childNode = createElement(children[i], opts)
+        var childNode = createElement(children[i], opts);
         if (childNode) {
-            node.appendChild(childNode)
+            node.appendChild(childNode);
         }
     }
 
-    return node
+    return node;
 }
 
 },{"../vnode/handle-thunk.js":47,"../vnode/is-vnode.js":50,"../vnode/is-vtext.js":51,"../vnode/is-widget.js":52,"./apply-properties":37,"global/document":20}],39:[function(require,module,exports){
+"use strict";
+
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
 // We only recurse into a DOM node if we know that it contains a child of
 // interest.
 
-var noChild = {}
+var noChild = {};
 
-module.exports = domIndex
+module.exports = domIndex;
 
 function domIndex(rootNode, tree, indices, nodes) {
     if (!indices || indices.length === 0) {
-        return {}
+        return {};
     } else {
-        indices.sort(ascending)
-        return recurse(rootNode, tree, indices, nodes, 0)
+        indices.sort(ascending);
+        return recurse(rootNode, tree, indices, nodes, 0);
     }
 }
 
 function recurse(rootNode, tree, indices, nodes, rootIndex) {
-    nodes = nodes || {}
-
+    nodes = nodes || {};
 
     if (rootNode) {
         if (indexInRange(indices, rootIndex, rootIndex)) {
-            nodes[rootIndex] = rootNode
+            nodes[rootIndex] = rootNode;
         }
 
-        var vChildren = tree.children
+        var vChildren = tree.children;
 
         if (vChildren) {
 
-            var childNodes = rootNode.childNodes
+            var childNodes = rootNode.childNodes;
 
             for (var i = 0; i < tree.children.length; i++) {
-                rootIndex += 1
+                rootIndex += 1;
 
-                var vChild = vChildren[i] || noChild
-                var nextIndex = rootIndex + (vChild.count || 0)
+                var vChild = vChildren[i] || noChild;
+                var nextIndex = rootIndex + (vChild.count || 0);
 
                 // skip recursion down the tree if there are no nodes down here
                 if (indexInRange(indices, rootIndex, nextIndex)) {
-                    recurse(childNodes[i], vChild, indices, nodes, rootIndex)
+                    recurse(childNodes[i], vChild, indices, nodes, rootIndex);
                 }
 
-                rootIndex = nextIndex
+                rootIndex = nextIndex;
             }
         }
     }
 
-    return nodes
+    return nodes;
 }
 
 // Binary search for an index in the interval [left, right]
 function indexInRange(indices, left, right) {
     if (indices.length === 0) {
-        return false
+        return false;
     }
 
-    var minIndex = 0
-    var maxIndex = indices.length - 1
-    var currentIndex
-    var currentItem
+    var minIndex = 0;
+    var maxIndex = indices.length - 1;
+    var currentIndex;
+    var currentItem;
 
     while (minIndex <= maxIndex) {
-        currentIndex = ((maxIndex + minIndex) / 2) >> 0
-        currentItem = indices[currentIndex]
+        currentIndex = (maxIndex + minIndex) / 2 >> 0;
+        currentItem = indices[currentIndex];
 
         if (minIndex === maxIndex) {
-            return currentItem >= left && currentItem <= right
+            return currentItem >= left && currentItem <= right;
         } else if (currentItem < left) {
-            minIndex = currentIndex + 1
-        } else  if (currentItem > right) {
-            maxIndex = currentIndex - 1
+            minIndex = currentIndex + 1;
+        } else if (currentItem > right) {
+            maxIndex = currentIndex - 1;
         } else {
-            return true
+            return true;
         }
     }
 
@@ -3092,259 +3160,259 @@ function indexInRange(indices, left, right) {
 }
 
 function ascending(a, b) {
-    return a > b ? 1 : -1
+    return a > b ? 1 : -1;
 }
 
 },{}],40:[function(require,module,exports){
-var applyProperties = require("./apply-properties")
+"use strict";
 
-var isWidget = require("../vnode/is-widget.js")
-var VPatch = require("../vnode/vpatch.js")
+var applyProperties = require("./apply-properties");
 
-var updateWidget = require("./update-widget")
+var isWidget = require("../vnode/is-widget.js");
+var VPatch = require("../vnode/vpatch.js");
 
-module.exports = applyPatch
+var updateWidget = require("./update-widget");
+
+module.exports = applyPatch;
 
 function applyPatch(vpatch, domNode, renderOptions) {
-    var type = vpatch.type
-    var vNode = vpatch.vNode
-    var patch = vpatch.patch
+    var type = vpatch.type;
+    var vNode = vpatch.vNode;
+    var patch = vpatch.patch;
 
     switch (type) {
         case VPatch.REMOVE:
-            return removeNode(domNode, vNode)
+            return removeNode(domNode, vNode);
         case VPatch.INSERT:
-            return insertNode(domNode, patch, renderOptions)
+            return insertNode(domNode, patch, renderOptions);
         case VPatch.VTEXT:
-            return stringPatch(domNode, vNode, patch, renderOptions)
+            return stringPatch(domNode, vNode, patch, renderOptions);
         case VPatch.WIDGET:
-            return widgetPatch(domNode, vNode, patch, renderOptions)
+            return widgetPatch(domNode, vNode, patch, renderOptions);
         case VPatch.VNODE:
-            return vNodePatch(domNode, vNode, patch, renderOptions)
+            return vNodePatch(domNode, vNode, patch, renderOptions);
         case VPatch.ORDER:
-            reorderChildren(domNode, patch)
-            return domNode
+            reorderChildren(domNode, patch);
+            return domNode;
         case VPatch.PROPS:
-            applyProperties(domNode, patch, vNode.properties)
-            return domNode
+            applyProperties(domNode, patch, vNode.properties);
+            return domNode;
         case VPatch.THUNK:
-            return replaceRoot(domNode,
-                renderOptions.patch(domNode, patch, renderOptions))
+            return replaceRoot(domNode, renderOptions.patch(domNode, patch, renderOptions));
         default:
-            return domNode
+            return domNode;
     }
 }
 
 function removeNode(domNode, vNode) {
-    var parentNode = domNode.parentNode
+    var parentNode = domNode.parentNode;
 
     if (parentNode) {
-        parentNode.removeChild(domNode)
+        parentNode.removeChild(domNode);
     }
 
     destroyWidget(domNode, vNode);
 
-    return null
+    return null;
 }
 
 function insertNode(parentNode, vNode, renderOptions) {
-    var newNode = renderOptions.render(vNode, renderOptions)
+    var newNode = renderOptions.render(vNode, renderOptions);
 
     if (parentNode) {
-        parentNode.appendChild(newNode)
+        parentNode.appendChild(newNode);
     }
 
-    return parentNode
+    return parentNode;
 }
 
 function stringPatch(domNode, leftVNode, vText, renderOptions) {
-    var newNode
+    var newNode;
 
     if (domNode.nodeType === 3) {
-        domNode.replaceData(0, domNode.length, vText.text)
-        newNode = domNode
+        domNode.replaceData(0, domNode.length, vText.text);
+        newNode = domNode;
     } else {
-        var parentNode = domNode.parentNode
-        newNode = renderOptions.render(vText, renderOptions)
+        var parentNode = domNode.parentNode;
+        newNode = renderOptions.render(vText, renderOptions);
 
         if (parentNode && newNode !== domNode) {
-            parentNode.replaceChild(newNode, domNode)
+            parentNode.replaceChild(newNode, domNode);
         }
     }
 
-    return newNode
+    return newNode;
 }
 
 function widgetPatch(domNode, leftVNode, widget, renderOptions) {
-    var updating = updateWidget(leftVNode, widget)
-    var newNode
+    var updating = updateWidget(leftVNode, widget);
+    var newNode;
 
     if (updating) {
-        newNode = widget.update(leftVNode, domNode) || domNode
+        newNode = widget.update(leftVNode, domNode) || domNode;
     } else {
-        newNode = renderOptions.render(widget, renderOptions)
+        newNode = renderOptions.render(widget, renderOptions);
     }
 
-    var parentNode = domNode.parentNode
+    var parentNode = domNode.parentNode;
 
     if (parentNode && newNode !== domNode) {
-        parentNode.replaceChild(newNode, domNode)
+        parentNode.replaceChild(newNode, domNode);
     }
 
     if (!updating) {
-        destroyWidget(domNode, leftVNode)
+        destroyWidget(domNode, leftVNode);
     }
 
-    return newNode
+    return newNode;
 }
 
 function vNodePatch(domNode, leftVNode, vNode, renderOptions) {
-    var parentNode = domNode.parentNode
-    var newNode = renderOptions.render(vNode, renderOptions)
+    var parentNode = domNode.parentNode;
+    var newNode = renderOptions.render(vNode, renderOptions);
 
     if (parentNode && newNode !== domNode) {
-        parentNode.replaceChild(newNode, domNode)
+        parentNode.replaceChild(newNode, domNode);
     }
 
-    return newNode
+    return newNode;
 }
 
 function destroyWidget(domNode, w) {
     if (typeof w.destroy === "function" && isWidget(w)) {
-        w.destroy(domNode)
+        w.destroy(domNode);
     }
 }
 
 function reorderChildren(domNode, moves) {
-    var childNodes = domNode.childNodes
-    var keyMap = {}
-    var node
-    var remove
-    var insert
+    var childNodes = domNode.childNodes;
+    var keyMap = {};
+    var node;
+    var remove;
+    var insert;
 
     for (var i = 0; i < moves.removes.length; i++) {
-        remove = moves.removes[i]
-        node = childNodes[remove.from]
+        remove = moves.removes[i];
+        node = childNodes[remove.from];
         if (remove.key) {
-            keyMap[remove.key] = node
+            keyMap[remove.key] = node;
         }
-        domNode.removeChild(node)
+        domNode.removeChild(node);
     }
 
-    var length = childNodes.length
+    var length = childNodes.length;
     for (var j = 0; j < moves.inserts.length; j++) {
-        insert = moves.inserts[j]
-        node = keyMap[insert.key]
+        insert = moves.inserts[j];
+        node = keyMap[insert.key];
         // this is the weirdest bug i've ever seen in webkit
-        domNode.insertBefore(node, insert.to >= length++ ? null : childNodes[insert.to])
+        domNode.insertBefore(node, insert.to >= length++ ? null : childNodes[insert.to]);
     }
 }
 
 function replaceRoot(oldRoot, newRoot) {
     if (oldRoot && newRoot && oldRoot !== newRoot && oldRoot.parentNode) {
-        oldRoot.parentNode.replaceChild(newRoot, oldRoot)
+        oldRoot.parentNode.replaceChild(newRoot, oldRoot);
     }
 
     return newRoot;
 }
 
 },{"../vnode/is-widget.js":52,"../vnode/vpatch.js":55,"./apply-properties":37,"./update-widget":42}],41:[function(require,module,exports){
-var document = require("global/document")
-var isArray = require("x-is-array")
+"use strict";
 
-var render = require("./create-element")
-var domIndex = require("./dom-index")
-var patchOp = require("./patch-op")
-module.exports = patch
+var document = require("global/document");
+var isArray = require("x-is-array");
+
+var render = require("./create-element");
+var domIndex = require("./dom-index");
+var patchOp = require("./patch-op");
+module.exports = patch;
 
 function patch(rootNode, patches, renderOptions) {
-    renderOptions = renderOptions || {}
-    renderOptions.patch = renderOptions.patch && renderOptions.patch !== patch
-        ? renderOptions.patch
-        : patchRecursive
-    renderOptions.render = renderOptions.render || render
+    renderOptions = renderOptions || {};
+    renderOptions.patch = renderOptions.patch && renderOptions.patch !== patch ? renderOptions.patch : patchRecursive;
+    renderOptions.render = renderOptions.render || render;
 
-    return renderOptions.patch(rootNode, patches, renderOptions)
+    return renderOptions.patch(rootNode, patches, renderOptions);
 }
 
 function patchRecursive(rootNode, patches, renderOptions) {
-    var indices = patchIndices(patches)
+    var indices = patchIndices(patches);
 
     if (indices.length === 0) {
-        return rootNode
+        return rootNode;
     }
 
-    var index = domIndex(rootNode, patches.a, indices)
-    var ownerDocument = rootNode.ownerDocument
+    var index = domIndex(rootNode, patches.a, indices);
+    var ownerDocument = rootNode.ownerDocument;
 
     if (!renderOptions.document && ownerDocument !== document) {
-        renderOptions.document = ownerDocument
+        renderOptions.document = ownerDocument;
     }
 
     for (var i = 0; i < indices.length; i++) {
-        var nodeIndex = indices[i]
-        rootNode = applyPatch(rootNode,
-            index[nodeIndex],
-            patches[nodeIndex],
-            renderOptions)
+        var nodeIndex = indices[i];
+        rootNode = applyPatch(rootNode, index[nodeIndex], patches[nodeIndex], renderOptions);
     }
 
-    return rootNode
+    return rootNode;
 }
 
 function applyPatch(rootNode, domNode, patchList, renderOptions) {
     if (!domNode) {
-        return rootNode
+        return rootNode;
     }
 
-    var newNode
+    var newNode;
 
     if (isArray(patchList)) {
         for (var i = 0; i < patchList.length; i++) {
-            newNode = patchOp(patchList[i], domNode, renderOptions)
+            newNode = patchOp(patchList[i], domNode, renderOptions);
 
             if (domNode === rootNode) {
-                rootNode = newNode
+                rootNode = newNode;
             }
         }
     } else {
-        newNode = patchOp(patchList, domNode, renderOptions)
+        newNode = patchOp(patchList, domNode, renderOptions);
 
         if (domNode === rootNode) {
-            rootNode = newNode
+            rootNode = newNode;
         }
     }
 
-    return rootNode
+    return rootNode;
 }
 
 function patchIndices(patches) {
-    var indices = []
+    var indices = [];
 
     for (var key in patches) {
         if (key !== "a") {
-            indices.push(Number(key))
+            indices.push(Number(key));
         }
     }
 
-    return indices
+    return indices;
 }
 
 },{"./create-element":38,"./dom-index":39,"./patch-op":40,"global/document":20,"x-is-array":59}],42:[function(require,module,exports){
-var isWidget = require("../vnode/is-widget.js")
+"use strict";
 
-module.exports = updateWidget
+var isWidget = require("../vnode/is-widget.js");
+
+module.exports = updateWidget;
 
 function updateWidget(a, b) {
     if (isWidget(a) && isWidget(b)) {
         if ("name" in a && "name" in b) {
-            return a.id === b.id
+            return a.id === b.id;
         } else {
-            return a.init === b.init
+            return a.init === b.init;
         }
     }
 
-    return false
+    return false;
 }
 
 },{"../vnode/is-widget.js":52}],43:[function(require,module,exports){
@@ -3369,7 +3437,7 @@ EvHook.prototype.hook = function (node, propertyName) {
     es[propName] = this.value;
 };
 
-EvHook.prototype.unhook = function(node, propertyName) {
+EvHook.prototype.unhook = function (node, propertyName) {
     var es = EvStore(node);
     var propName = propertyName.substr(3);
 
@@ -3439,12 +3507,7 @@ function h(tagName, properties, children) {
     }
 
     // fix cursor bug
-    if (tag === 'INPUT' &&
-        !namespace &&
-        props.hasOwnProperty('value') &&
-        props.value !== undefined &&
-        !isHook(props.value)
-    ) {
+    if (tag === 'INPUT' && !namespace && props.hasOwnProperty('value') && props.value !== undefined && !isHook(props.value)) {
         props.value = softSetHook(props.value);
     }
 
@@ -3453,7 +3516,6 @@ function h(tagName, properties, children) {
     if (children !== undefined && children !== null) {
         addChild(children, childNodes, tag, props);
     }
-
 
     return new VNode(tag, props, childNodes, key, namespace);
 }
@@ -3511,15 +3573,8 @@ function UnexpectedVirtualElement(data) {
     var err = new Error();
 
     err.type = 'virtual-hyperscript.unexpected.virtual-element';
-    err.message = 'Unexpected virtual child passed to h().\n' +
-        'Expected a VNode / Vthunk / VWidget / string but:\n' +
-        'got:\n' +
-        errorString(data.foreignObject) +
-        '.\n' +
-        'The parent vnode is:\n' +
-        errorString(data.parentVnode)
-        '\n' +
-        'Suggested fix: change your `h(..., [ ... ])` callsite.';
+    err.message = 'Unexpected virtual child passed to h().\n' + 'Expected a VNode / Vthunk / VWidget / string but:\n' + 'got:\n' + errorString(data.foreignObject) + '.\n' + 'The parent vnode is:\n' + errorString(data.parentVnode);
+    '\n' + 'Suggested fix: change your `h(..., [ ... ])` callsite.';
     err.foreignObject = data.foreignObject;
     err.parentVnode = data.parentVnode;
 
@@ -3549,7 +3604,7 @@ function parseTag(tag, props) {
         return 'DIV';
     }
 
-    var noId = !(props.hasOwnProperty('id'));
+    var noId = !props.hasOwnProperty('id');
 
     var tagParts = split(tag, classIdSplit);
     var tagName = null;
@@ -3591,390 +3646,402 @@ function parseTag(tag, props) {
 }
 
 },{"browser-split":6}],47:[function(require,module,exports){
-var isVNode = require("./is-vnode")
-var isVText = require("./is-vtext")
-var isWidget = require("./is-widget")
-var isThunk = require("./is-thunk")
+"use strict";
 
-module.exports = handleThunk
+var isVNode = require("./is-vnode");
+var isVText = require("./is-vtext");
+var isWidget = require("./is-widget");
+var isThunk = require("./is-thunk");
+
+module.exports = handleThunk;
 
 function handleThunk(a, b) {
-    var renderedA = a
-    var renderedB = b
+    var renderedA = a;
+    var renderedB = b;
 
     if (isThunk(b)) {
-        renderedB = renderThunk(b, a)
+        renderedB = renderThunk(b, a);
     }
 
     if (isThunk(a)) {
-        renderedA = renderThunk(a, null)
+        renderedA = renderThunk(a, null);
     }
 
     return {
         a: renderedA,
         b: renderedB
-    }
+    };
 }
 
 function renderThunk(thunk, previous) {
-    var renderedThunk = thunk.vnode
+    var renderedThunk = thunk.vnode;
 
     if (!renderedThunk) {
-        renderedThunk = thunk.vnode = thunk.render(previous)
+        renderedThunk = thunk.vnode = thunk.render(previous);
     }
 
-    if (!(isVNode(renderedThunk) ||
-            isVText(renderedThunk) ||
-            isWidget(renderedThunk))) {
+    if (!(isVNode(renderedThunk) || isVText(renderedThunk) || isWidget(renderedThunk))) {
         throw new Error("thunk did not return a valid node");
     }
 
-    return renderedThunk
+    return renderedThunk;
 }
 
 },{"./is-thunk":48,"./is-vnode":50,"./is-vtext":51,"./is-widget":52}],48:[function(require,module,exports){
-module.exports = isThunk
+"use strict";
+
+module.exports = isThunk;
 
 function isThunk(t) {
-    return t && t.type === "Thunk"
+    return t && t.type === "Thunk";
 }
 
 },{}],49:[function(require,module,exports){
-module.exports = isHook
+"use strict";
+
+module.exports = isHook;
 
 function isHook(hook) {
-    return hook &&
-      (typeof hook.hook === "function" && !hook.hasOwnProperty("hook") ||
-       typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
+  return hook && (typeof hook.hook === "function" && !hook.hasOwnProperty("hook") || typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"));
 }
 
 },{}],50:[function(require,module,exports){
-var version = require("./version")
+"use strict";
 
-module.exports = isVirtualNode
+var version = require("./version");
+
+module.exports = isVirtualNode;
 
 function isVirtualNode(x) {
-    return x && x.type === "VirtualNode" && x.version === version
+    return x && x.type === "VirtualNode" && x.version === version;
 }
 
 },{"./version":53}],51:[function(require,module,exports){
-var version = require("./version")
+"use strict";
 
-module.exports = isVirtualText
+var version = require("./version");
+
+module.exports = isVirtualText;
 
 function isVirtualText(x) {
-    return x && x.type === "VirtualText" && x.version === version
+    return x && x.type === "VirtualText" && x.version === version;
 }
 
 },{"./version":53}],52:[function(require,module,exports){
-module.exports = isWidget
+"use strict";
+
+module.exports = isWidget;
 
 function isWidget(w) {
-    return w && w.type === "Widget"
+    return w && w.type === "Widget";
 }
 
 },{}],53:[function(require,module,exports){
-module.exports = "2"
+"use strict";
+
+module.exports = "2";
 
 },{}],54:[function(require,module,exports){
-var version = require("./version")
-var isVNode = require("./is-vnode")
-var isWidget = require("./is-widget")
-var isThunk = require("./is-thunk")
-var isVHook = require("./is-vhook")
+"use strict";
 
-module.exports = VirtualNode
+var version = require("./version");
+var isVNode = require("./is-vnode");
+var isWidget = require("./is-widget");
+var isThunk = require("./is-thunk");
+var isVHook = require("./is-vhook");
 
-var noProperties = {}
-var noChildren = []
+module.exports = VirtualNode;
+
+var noProperties = {};
+var noChildren = [];
 
 function VirtualNode(tagName, properties, children, key, namespace) {
-    this.tagName = tagName
-    this.properties = properties || noProperties
-    this.children = children || noChildren
-    this.key = key != null ? String(key) : undefined
-    this.namespace = (typeof namespace === "string") ? namespace : null
+    this.tagName = tagName;
+    this.properties = properties || noProperties;
+    this.children = children || noChildren;
+    this.key = key != null ? String(key) : undefined;
+    this.namespace = typeof namespace === "string" ? namespace : null;
 
-    var count = (children && children.length) || 0
-    var descendants = 0
-    var hasWidgets = false
-    var hasThunks = false
-    var descendantHooks = false
-    var hooks
+    var count = children && children.length || 0;
+    var descendants = 0;
+    var hasWidgets = false;
+    var hasThunks = false;
+    var descendantHooks = false;
+    var hooks;
 
     for (var propName in properties) {
         if (properties.hasOwnProperty(propName)) {
-            var property = properties[propName]
+            var property = properties[propName];
             if (isVHook(property) && property.unhook) {
                 if (!hooks) {
-                    hooks = {}
+                    hooks = {};
                 }
 
-                hooks[propName] = property
+                hooks[propName] = property;
             }
         }
     }
 
     for (var i = 0; i < count; i++) {
-        var child = children[i]
+        var child = children[i];
         if (isVNode(child)) {
-            descendants += child.count || 0
+            descendants += child.count || 0;
 
             if (!hasWidgets && child.hasWidgets) {
-                hasWidgets = true
+                hasWidgets = true;
             }
 
             if (!hasThunks && child.hasThunks) {
-                hasThunks = true
+                hasThunks = true;
             }
 
             if (!descendantHooks && (child.hooks || child.descendantHooks)) {
-                descendantHooks = true
+                descendantHooks = true;
             }
         } else if (!hasWidgets && isWidget(child)) {
             if (typeof child.destroy === "function") {
-                hasWidgets = true
+                hasWidgets = true;
             }
         } else if (!hasThunks && isThunk(child)) {
             hasThunks = true;
         }
     }
 
-    this.count = count + descendants
-    this.hasWidgets = hasWidgets
-    this.hasThunks = hasThunks
-    this.hooks = hooks
-    this.descendantHooks = descendantHooks
+    this.count = count + descendants;
+    this.hasWidgets = hasWidgets;
+    this.hasThunks = hasThunks;
+    this.hooks = hooks;
+    this.descendantHooks = descendantHooks;
 }
 
-VirtualNode.prototype.version = version
-VirtualNode.prototype.type = "VirtualNode"
+VirtualNode.prototype.version = version;
+VirtualNode.prototype.type = "VirtualNode";
 
 },{"./is-thunk":48,"./is-vhook":49,"./is-vnode":50,"./is-widget":52,"./version":53}],55:[function(require,module,exports){
-var version = require("./version")
+"use strict";
 
-VirtualPatch.NONE = 0
-VirtualPatch.VTEXT = 1
-VirtualPatch.VNODE = 2
-VirtualPatch.WIDGET = 3
-VirtualPatch.PROPS = 4
-VirtualPatch.ORDER = 5
-VirtualPatch.INSERT = 6
-VirtualPatch.REMOVE = 7
-VirtualPatch.THUNK = 8
+var version = require("./version");
 
-module.exports = VirtualPatch
+VirtualPatch.NONE = 0;
+VirtualPatch.VTEXT = 1;
+VirtualPatch.VNODE = 2;
+VirtualPatch.WIDGET = 3;
+VirtualPatch.PROPS = 4;
+VirtualPatch.ORDER = 5;
+VirtualPatch.INSERT = 6;
+VirtualPatch.REMOVE = 7;
+VirtualPatch.THUNK = 8;
+
+module.exports = VirtualPatch;
 
 function VirtualPatch(type, vNode, patch) {
-    this.type = Number(type)
-    this.vNode = vNode
-    this.patch = patch
+    this.type = Number(type);
+    this.vNode = vNode;
+    this.patch = patch;
 }
 
-VirtualPatch.prototype.version = version
-VirtualPatch.prototype.type = "VirtualPatch"
+VirtualPatch.prototype.version = version;
+VirtualPatch.prototype.type = "VirtualPatch";
 
 },{"./version":53}],56:[function(require,module,exports){
-var version = require("./version")
+"use strict";
 
-module.exports = VirtualText
+var version = require("./version");
+
+module.exports = VirtualText;
 
 function VirtualText(text) {
-    this.text = String(text)
+    this.text = String(text);
 }
 
-VirtualText.prototype.version = version
-VirtualText.prototype.type = "VirtualText"
+VirtualText.prototype.version = version;
+VirtualText.prototype.type = "VirtualText";
 
 },{"./version":53}],57:[function(require,module,exports){
-var isObject = require("is-object")
-var isHook = require("../vnode/is-vhook")
+"use strict";
 
-module.exports = diffProps
+var isObject = require("is-object");
+var isHook = require("../vnode/is-vhook");
+
+module.exports = diffProps;
 
 function diffProps(a, b) {
-    var diff
+    var diff;
 
     for (var aKey in a) {
         if (!(aKey in b)) {
-            diff = diff || {}
-            diff[aKey] = undefined
+            diff = diff || {};
+            diff[aKey] = undefined;
         }
 
-        var aValue = a[aKey]
-        var bValue = b[aKey]
+        var aValue = a[aKey];
+        var bValue = b[aKey];
 
         if (aValue === bValue) {
-            continue
+            continue;
         } else if (isObject(aValue) && isObject(bValue)) {
             if (getPrototype(bValue) !== getPrototype(aValue)) {
-                diff = diff || {}
-                diff[aKey] = bValue
+                diff = diff || {};
+                diff[aKey] = bValue;
             } else if (isHook(bValue)) {
-                 diff = diff || {}
-                 diff[aKey] = bValue
+                diff = diff || {};
+                diff[aKey] = bValue;
             } else {
-                var objectDiff = diffProps(aValue, bValue)
+                var objectDiff = diffProps(aValue, bValue);
                 if (objectDiff) {
-                    diff = diff || {}
-                    diff[aKey] = objectDiff
+                    diff = diff || {};
+                    diff[aKey] = objectDiff;
                 }
             }
         } else {
-            diff = diff || {}
-            diff[aKey] = bValue
+            diff = diff || {};
+            diff[aKey] = bValue;
         }
     }
 
     for (var bKey in b) {
         if (!(bKey in a)) {
-            diff = diff || {}
-            diff[bKey] = b[bKey]
+            diff = diff || {};
+            diff[bKey] = b[bKey];
         }
     }
 
-    return diff
+    return diff;
 }
 
 function getPrototype(value) {
-  if (Object.getPrototypeOf) {
-    return Object.getPrototypeOf(value)
-  } else if (value.__proto__) {
-    return value.__proto__
-  } else if (value.constructor) {
-    return value.constructor.prototype
-  }
+    if (Object.getPrototypeOf) {
+        return Object.getPrototypeOf(value);
+    } else if (value.__proto__) {
+        return value.__proto__;
+    } else if (value.constructor) {
+        return value.constructor.prototype;
+    }
 }
 
 },{"../vnode/is-vhook":49,"is-object":24}],58:[function(require,module,exports){
-var isArray = require("x-is-array")
+"use strict";
 
-var VPatch = require("../vnode/vpatch")
-var isVNode = require("../vnode/is-vnode")
-var isVText = require("../vnode/is-vtext")
-var isWidget = require("../vnode/is-widget")
-var isThunk = require("../vnode/is-thunk")
-var handleThunk = require("../vnode/handle-thunk")
+var isArray = require("x-is-array");
 
-var diffProps = require("./diff-props")
+var VPatch = require("../vnode/vpatch");
+var isVNode = require("../vnode/is-vnode");
+var isVText = require("../vnode/is-vtext");
+var isWidget = require("../vnode/is-widget");
+var isThunk = require("../vnode/is-thunk");
+var handleThunk = require("../vnode/handle-thunk");
 
-module.exports = diff
+var diffProps = require("./diff-props");
+
+module.exports = diff;
 
 function diff(a, b) {
-    var patch = { a: a }
-    walk(a, b, patch, 0)
-    return patch
+    var patch = { a: a };
+    walk(a, b, patch, 0);
+    return patch;
 }
 
 function walk(a, b, patch, index) {
     if (a === b) {
-        return
+        return;
     }
 
-    var apply = patch[index]
-    var applyClear = false
+    var apply = patch[index];
+    var applyClear = false;
 
     if (isThunk(a) || isThunk(b)) {
-        thunks(a, b, patch, index)
+        thunks(a, b, patch, index);
     } else if (b == null) {
 
         // If a is a widget we will add a remove patch for it
         // Otherwise any child widgets/hooks must be destroyed.
         // This prevents adding two remove patches for a widget.
         if (!isWidget(a)) {
-            clearState(a, patch, index)
-            apply = patch[index]
+            clearState(a, patch, index);
+            apply = patch[index];
         }
 
-        apply = appendPatch(apply, new VPatch(VPatch.REMOVE, a, b))
+        apply = appendPatch(apply, new VPatch(VPatch.REMOVE, a, b));
     } else if (isVNode(b)) {
         if (isVNode(a)) {
-            if (a.tagName === b.tagName &&
-                a.namespace === b.namespace &&
-                a.key === b.key) {
-                var propsPatch = diffProps(a.properties, b.properties)
+            if (a.tagName === b.tagName && a.namespace === b.namespace && a.key === b.key) {
+                var propsPatch = diffProps(a.properties, b.properties);
                 if (propsPatch) {
-                    apply = appendPatch(apply,
-                        new VPatch(VPatch.PROPS, a, propsPatch))
+                    apply = appendPatch(apply, new VPatch(VPatch.PROPS, a, propsPatch));
                 }
-                apply = diffChildren(a, b, patch, apply, index)
+                apply = diffChildren(a, b, patch, apply, index);
             } else {
-                apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
-                applyClear = true
+                apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b));
+                applyClear = true;
             }
         } else {
-            apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
-            applyClear = true
+            apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b));
+            applyClear = true;
         }
     } else if (isVText(b)) {
         if (!isVText(a)) {
-            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
-            applyClear = true
+            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b));
+            applyClear = true;
         } else if (a.text !== b.text) {
-            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
+            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b));
         }
     } else if (isWidget(b)) {
         if (!isWidget(a)) {
-            applyClear = true
+            applyClear = true;
         }
 
-        apply = appendPatch(apply, new VPatch(VPatch.WIDGET, a, b))
+        apply = appendPatch(apply, new VPatch(VPatch.WIDGET, a, b));
     }
 
     if (apply) {
-        patch[index] = apply
+        patch[index] = apply;
     }
 
     if (applyClear) {
-        clearState(a, patch, index)
+        clearState(a, patch, index);
     }
 }
 
 function diffChildren(a, b, patch, apply, index) {
-    var aChildren = a.children
-    var orderedSet = reorder(aChildren, b.children)
-    var bChildren = orderedSet.children
+    var aChildren = a.children;
+    var orderedSet = reorder(aChildren, b.children);
+    var bChildren = orderedSet.children;
 
-    var aLen = aChildren.length
-    var bLen = bChildren.length
-    var len = aLen > bLen ? aLen : bLen
+    var aLen = aChildren.length;
+    var bLen = bChildren.length;
+    var len = aLen > bLen ? aLen : bLen;
 
     for (var i = 0; i < len; i++) {
-        var leftNode = aChildren[i]
-        var rightNode = bChildren[i]
-        index += 1
+        var leftNode = aChildren[i];
+        var rightNode = bChildren[i];
+        index += 1;
 
         if (!leftNode) {
             if (rightNode) {
                 // Excess nodes in b need to be added
-                apply = appendPatch(apply,
-                    new VPatch(VPatch.INSERT, null, rightNode))
+                apply = appendPatch(apply, new VPatch(VPatch.INSERT, null, rightNode));
             }
         } else {
-            walk(leftNode, rightNode, patch, index)
+            walk(leftNode, rightNode, patch, index);
         }
 
         if (isVNode(leftNode) && leftNode.count) {
-            index += leftNode.count
+            index += leftNode.count;
         }
     }
 
     if (orderedSet.moves) {
         // Reorder nodes last
-        apply = appendPatch(apply, new VPatch(
-            VPatch.ORDER,
-            a,
-            orderedSet.moves
-        ))
+        apply = appendPatch(apply, new VPatch(VPatch.ORDER, a, orderedSet.moves));
     }
 
-    return apply
+    return apply;
 }
 
 function clearState(vNode, patch, index) {
     // TODO: Make this a single walk, not two
-    unhook(vNode, patch, index)
-    destroyWidgets(vNode, patch, index)
+    unhook(vNode, patch, index);
+    destroyWidgets(vNode, patch, index);
 }
 
 // Patch records for all destroyed widgets must be added because we need
@@ -3982,192 +4049,179 @@ function clearState(vNode, patch, index) {
 function destroyWidgets(vNode, patch, index) {
     if (isWidget(vNode)) {
         if (typeof vNode.destroy === "function") {
-            patch[index] = appendPatch(
-                patch[index],
-                new VPatch(VPatch.REMOVE, vNode, null)
-            )
+            patch[index] = appendPatch(patch[index], new VPatch(VPatch.REMOVE, vNode, null));
         }
     } else if (isVNode(vNode) && (vNode.hasWidgets || vNode.hasThunks)) {
-        var children = vNode.children
-        var len = children.length
+        var children = vNode.children;
+        var len = children.length;
         for (var i = 0; i < len; i++) {
-            var child = children[i]
-            index += 1
+            var child = children[i];
+            index += 1;
 
-            destroyWidgets(child, patch, index)
+            destroyWidgets(child, patch, index);
 
             if (isVNode(child) && child.count) {
-                index += child.count
+                index += child.count;
             }
         }
     } else if (isThunk(vNode)) {
-        thunks(vNode, null, patch, index)
+        thunks(vNode, null, patch, index);
     }
 }
 
 // Create a sub-patch for thunks
 function thunks(a, b, patch, index) {
-    var nodes = handleThunk(a, b)
-    var thunkPatch = diff(nodes.a, nodes.b)
+    var nodes = handleThunk(a, b);
+    var thunkPatch = diff(nodes.a, nodes.b);
     if (hasPatches(thunkPatch)) {
-        patch[index] = new VPatch(VPatch.THUNK, null, thunkPatch)
+        patch[index] = new VPatch(VPatch.THUNK, null, thunkPatch);
     }
 }
 
 function hasPatches(patch) {
     for (var index in patch) {
         if (index !== "a") {
-            return true
+            return true;
         }
     }
 
-    return false
+    return false;
 }
 
 // Execute hooks when two nodes are identical
 function unhook(vNode, patch, index) {
     if (isVNode(vNode)) {
         if (vNode.hooks) {
-            patch[index] = appendPatch(
-                patch[index],
-                new VPatch(
-                    VPatch.PROPS,
-                    vNode,
-                    undefinedKeys(vNode.hooks)
-                )
-            )
+            patch[index] = appendPatch(patch[index], new VPatch(VPatch.PROPS, vNode, undefinedKeys(vNode.hooks)));
         }
 
         if (vNode.descendantHooks || vNode.hasThunks) {
-            var children = vNode.children
-            var len = children.length
+            var children = vNode.children;
+            var len = children.length;
             for (var i = 0; i < len; i++) {
-                var child = children[i]
-                index += 1
+                var child = children[i];
+                index += 1;
 
-                unhook(child, patch, index)
+                unhook(child, patch, index);
 
                 if (isVNode(child) && child.count) {
-                    index += child.count
+                    index += child.count;
                 }
             }
         }
     } else if (isThunk(vNode)) {
-        thunks(vNode, null, patch, index)
+        thunks(vNode, null, patch, index);
     }
 }
 
 function undefinedKeys(obj) {
-    var result = {}
+    var result = {};
 
     for (var key in obj) {
-        result[key] = undefined
+        result[key] = undefined;
     }
 
-    return result
+    return result;
 }
 
 // List diff, naive left to right reordering
 function reorder(aChildren, bChildren) {
     // O(M) time, O(M) memory
-    var bChildIndex = keyIndex(bChildren)
-    var bKeys = bChildIndex.keys
-    var bFree = bChildIndex.free
+    var bChildIndex = keyIndex(bChildren);
+    var bKeys = bChildIndex.keys;
+    var bFree = bChildIndex.free;
 
     if (bFree.length === bChildren.length) {
         return {
             children: bChildren,
             moves: null
-        }
+        };
     }
 
     // O(N) time, O(N) memory
-    var aChildIndex = keyIndex(aChildren)
-    var aKeys = aChildIndex.keys
-    var aFree = aChildIndex.free
+    var aChildIndex = keyIndex(aChildren);
+    var aKeys = aChildIndex.keys;
+    var aFree = aChildIndex.free;
 
     if (aFree.length === aChildren.length) {
         return {
             children: bChildren,
             moves: null
-        }
+        };
     }
 
     // O(MAX(N, M)) memory
-    var newChildren = []
+    var newChildren = [];
 
-    var freeIndex = 0
-    var freeCount = bFree.length
-    var deletedItems = 0
+    var freeIndex = 0;
+    var freeCount = bFree.length;
+    var deletedItems = 0;
 
     // Iterate through a and match a node in b
     // O(N) time,
-    for (var i = 0 ; i < aChildren.length; i++) {
-        var aItem = aChildren[i]
-        var itemIndex
+    for (var i = 0; i < aChildren.length; i++) {
+        var aItem = aChildren[i];
+        var itemIndex;
 
         if (aItem.key) {
             if (bKeys.hasOwnProperty(aItem.key)) {
                 // Match up the old keys
-                itemIndex = bKeys[aItem.key]
-                newChildren.push(bChildren[itemIndex])
-
+                itemIndex = bKeys[aItem.key];
+                newChildren.push(bChildren[itemIndex]);
             } else {
                 // Remove old keyed items
-                itemIndex = i - deletedItems++
-                newChildren.push(null)
+                itemIndex = i - deletedItems++;
+                newChildren.push(null);
             }
         } else {
             // Match the item in a with the next free item in b
             if (freeIndex < freeCount) {
-                itemIndex = bFree[freeIndex++]
-                newChildren.push(bChildren[itemIndex])
+                itemIndex = bFree[freeIndex++];
+                newChildren.push(bChildren[itemIndex]);
             } else {
                 // There are no free items in b to match with
                 // the free items in a, so the extra free nodes
                 // are deleted.
-                itemIndex = i - deletedItems++
-                newChildren.push(null)
+                itemIndex = i - deletedItems++;
+                newChildren.push(null);
             }
         }
     }
 
-    var lastFreeIndex = freeIndex >= bFree.length ?
-        bChildren.length :
-        bFree[freeIndex]
+    var lastFreeIndex = freeIndex >= bFree.length ? bChildren.length : bFree[freeIndex];
 
     // Iterate through b and append any new keys
     // O(M) time
     for (var j = 0; j < bChildren.length; j++) {
-        var newItem = bChildren[j]
+        var newItem = bChildren[j];
 
         if (newItem.key) {
             if (!aKeys.hasOwnProperty(newItem.key)) {
                 // Add any new keyed items
                 // We are adding new items to the end and then sorting them
                 // in place. In future we should insert new items in place.
-                newChildren.push(newItem)
+                newChildren.push(newItem);
             }
         } else if (j >= lastFreeIndex) {
             // Add any leftover non-keyed items
-            newChildren.push(newItem)
+            newChildren.push(newItem);
         }
     }
 
-    var simulate = newChildren.slice()
-    var simulateIndex = 0
-    var removes = []
-    var inserts = []
-    var simulateItem
+    var simulate = newChildren.slice();
+    var simulateIndex = 0;
+    var removes = [];
+    var inserts = [];
+    var simulateItem;
 
     for (var k = 0; k < bChildren.length;) {
-        var wantedItem = bChildren[k]
-        simulateItem = simulate[simulateIndex]
+        var wantedItem = bChildren[k];
+        simulateItem = simulate[simulateIndex];
 
         // remove items
         while (simulateItem === null && simulate.length) {
-            removes.push(remove(simulate, simulateIndex, null))
-            simulateItem = simulate[simulateIndex]
+            removes.push(remove(simulate, simulateIndex, null));
+            simulateItem = simulate[simulateIndex];
         }
 
         if (!simulateItem || simulateItem.key !== wantedItem.key) {
@@ -4176,41 +4230,38 @@ function reorder(aChildren, bChildren) {
                 if (simulateItem && simulateItem.key) {
                     // if an insert doesn't put this key in place, it needs to move
                     if (bKeys[simulateItem.key] !== k + 1) {
-                        removes.push(remove(simulate, simulateIndex, simulateItem.key))
-                        simulateItem = simulate[simulateIndex]
+                        removes.push(remove(simulate, simulateIndex, simulateItem.key));
+                        simulateItem = simulate[simulateIndex];
                         // if the remove didn't put the wanted item in place, we need to insert it
                         if (!simulateItem || simulateItem.key !== wantedItem.key) {
-                            inserts.push({key: wantedItem.key, to: k})
+                            inserts.push({ key: wantedItem.key, to: k });
                         }
                         // items are matching, so skip ahead
                         else {
-                            simulateIndex++
-                        }
+                                simulateIndex++;
+                            }
+                    } else {
+                        inserts.push({ key: wantedItem.key, to: k });
                     }
-                    else {
-                        inserts.push({key: wantedItem.key, to: k})
-                    }
+                } else {
+                    inserts.push({ key: wantedItem.key, to: k });
                 }
-                else {
-                    inserts.push({key: wantedItem.key, to: k})
-                }
-                k++
+                k++;
             }
             // a key in simulate has no matching wanted key, remove it
             else if (simulateItem && simulateItem.key) {
-                removes.push(remove(simulate, simulateIndex, simulateItem.key))
-            }
-        }
-        else {
-            simulateIndex++
-            k++
+                    removes.push(remove(simulate, simulateIndex, simulateItem.key));
+                }
+        } else {
+            simulateIndex++;
+            k++;
         }
     }
 
     // remove all the remaining nodes from simulate
-    while(simulateIndex < simulate.length) {
-        simulateItem = simulate[simulateIndex]
-        removes.push(remove(simulate, simulateIndex, simulateItem && simulateItem.key))
+    while (simulateIndex < simulate.length) {
+        simulateItem = simulate[simulateIndex];
+        removes.push(remove(simulate, simulateIndex, simulateItem && simulateItem.key));
     }
 
     // If the only moves we have are deletes then we can just
@@ -4219,7 +4270,7 @@ function reorder(aChildren, bChildren) {
         return {
             children: newChildren,
             moves: null
-        }
+        };
     }
 
     return {
@@ -4228,61 +4279,63 @@ function reorder(aChildren, bChildren) {
             removes: removes,
             inserts: inserts
         }
-    }
+    };
 }
 
 function remove(arr, index, key) {
-    arr.splice(index, 1)
+    arr.splice(index, 1);
 
     return {
         from: index,
         key: key
-    }
+    };
 }
 
 function keyIndex(children) {
-    var keys = {}
-    var free = []
-    var length = children.length
+    var keys = {};
+    var free = [];
+    var length = children.length;
 
     for (var i = 0; i < length; i++) {
-        var child = children[i]
+        var child = children[i];
 
         if (child.key) {
-            keys[child.key] = i
+            keys[child.key] = i;
         } else {
-            free.push(i)
+            free.push(i);
         }
     }
 
     return {
-        keys: keys,     // A hash of key name to index
-        free: free      // An array of unkeyed item indices
-    }
+        keys: keys, // A hash of key name to index
+        free: free // An array of unkeyed item indices
+    };
 }
 
 function appendPatch(apply, patch) {
     if (apply) {
         if (isArray(apply)) {
-            apply.push(patch)
+            apply.push(patch);
         } else {
-            apply = [apply, patch]
+            apply = [apply, patch];
         }
 
-        return apply
+        return apply;
     } else {
-        return patch
+        return patch;
     }
 }
 
 },{"../vnode/handle-thunk":47,"../vnode/is-thunk":48,"../vnode/is-vnode":50,"../vnode/is-vtext":51,"../vnode/is-widget":52,"../vnode/vpatch":55,"./diff-props":57,"x-is-array":59}],59:[function(require,module,exports){
-var nativeIsArray = Array.isArray
-var toString = Object.prototype.toString
+"use strict";
 
-module.exports = nativeIsArray || isArray
+var nativeIsArray = Array.isArray;
+var toString = Object.prototype.toString;
+
+module.exports = nativeIsArray || isArray;
 
 function isArray(obj) {
-    return toString.call(obj) === "[object Array]"
+    return toString.call(obj) === "[object Array]";
 }
 
 },{}],60:[function(require,module,exports){
@@ -4389,6 +4442,7 @@ var App = function (_mix$with) {
         _this.Component = _this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         _this.component = null;
         _this.renderInterval = opts.renderInterval;
+        _this.renderPromises = {};
         _this.stylesRenderFormat = opts.stylesRenderFormat;
         _this.markupRenderFormat = opts.markupRenderFormat;
         _this.markupTransforms = opts.markupTransforms;
@@ -4573,10 +4627,15 @@ var App = function (_mix$with) {
                 });
 
                 _this4.component.on('markeddirty', function (evt) {
-                    requestAnimationFrame(function () {
-                        _this4.el.classList.add('rendering-' + evt.pipelineName);
-                        _this4.el.classList.add('rendering');
-                        _this4.component.render(evt.pipelineName);
+                    _this4.renderPromises[evt.pipelineName] = new Promise(function (resolve) {
+                        requestAnimationFrame(function () {
+                            _this4.el.classList.add('rendering-' + evt.pipelineName);
+                            _this4.el.classList.add('rendering');
+                            _this4.component.render(evt.pipelineName).then(function (results) {
+                                _this4.renderPromises[evt.pipelineName] = null;
+                                resolve(results);
+                            });
+                        });
                     });
                 });
 
@@ -4677,6 +4736,7 @@ var Component = function (_mix$with) {
             store: {
                 value: new Store(Object.assign({
                     $bind: _this.bindEvent.bind(_this),
+                    $bindValue: _this.bindEventValue.bind(_this),
                     $act: _this.createAction.bind(_this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
@@ -4916,6 +4976,11 @@ var Component = function (_mix$with) {
         value: function bindEvent(funcText, opts) {
             var consts = this.constructor.Weddell.consts;
             return "(function(event){" + (opts && opts.preventDefault ? 'event.preventDefault();' : '') + (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') + funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+        }
+    }, {
+        key: 'bindEventValue',
+        value: function bindEventValue(propName, opts) {
+            return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
         }
     }, {
         key: 'markDirty',
@@ -6294,14 +6359,18 @@ module.exports = function (_Weddell) {
                                         component: null,
                                         componentName: null
                                     });
-                                    return Promise.all([_this2.component.awaitRender(), jobs.reduce(function (promise, obj) {
+                                    return jobs.reduce(function (promise, obj) {
                                         return promise.then(function () {
                                             return obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, { matches: matches });
                                         });
-                                    }, Promise.resolve())]);
+                                    }, Promise.resolve()).then(function (results) {
+                                        return _this2.renderPromises.markup ? _this2.renderPromises.markup.then(function () {
+                                            return results;
+                                        }) : results;
+                                    });
                                 }, console.warn).then(function (results) {
                                     _this2.el.classList.remove('routing');
-                                    return results[1];
+                                    return results;
                                 });
                             }.bind(_this),
                             onHashChange: function (hash) {
@@ -6523,7 +6592,6 @@ var Router = function () {
         this.currentRoute = null;
         this.routes = [];
         this.onRoute = opts.onRoute;
-        this.onHashChange = opts.onHashChange;
         this._isInit = false;
         if (opts.routes) {
             this.addRoutes(opts.routes);
@@ -6536,7 +6604,7 @@ var Router = function () {
             var _this = this;
 
             if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-                return Promise.resolve(null);
+                return true;
             }
             if (typeof pathName === 'string') {
                 var matches = this.matchRoute(pathName, this.routes);
@@ -6548,7 +6616,7 @@ var Router = function () {
             }
             if (matches) {
                 if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                    return Promise.resolve(null);
+                    return true;
                 }
                 var promise = Promise.all(matches.map(function (currMatch, key) {
 
@@ -6672,11 +6740,11 @@ var Router = function () {
             var _this3 = this;
 
             if (!this._isInit && this.routes) {
-                // if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+                if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
                 this._isInit = true;
 
                 addEventListener('popstate', this.onPopState.bind(this));
-                addEventListener('hashchange', this.hashChange.bind(this));
+                addEventListener('hashchange', this.onHashChange.bind(this));
 
                 document.body.addEventListener('click', function (evt) {
                     var clickedATag = findParent.byMatcher(evt.target, function (el) {
@@ -6691,13 +6759,14 @@ var Router = function () {
                             var result = _this3.route(aPath);
                             if (result) {
                                 evt.preventDefault();
-                                result.then(function (matches) {
-                                    if (matches) {
+                                _this3.replaceState(location.pathname, location.hash);
+                                if (result.then) {
+                                    result.then(function (matches) {
                                         _this3.pushState(matches.fullPath, hash, { x: 0, y: 0 });
-                                    } else if (hash !== location.hash) {
-                                        _this3.pushState(location.pathname, hash);
-                                    }
-                                });
+                                    });
+                                } else if (hash !== location.hash) {
+                                    _this3.pushState(location.pathname, hash);
+                                }
                             }
                         }
                     }
@@ -6715,11 +6784,6 @@ var Router = function () {
         key: 'pushState',
         value: function pushState(pathName, hash, scrollPos) {
             if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-            if (history.state) {
-                var currentScrollPos = { x: window.pageXOffset, y: window.pageYOffset };
-                //first set our scroll position into previous state so that we can restore it when we navigate back
-                history.replaceState(Object.assign({}, history.state, { scrollPos: currentScrollPos }), document.title, location.pathname + location.hash);
-            }
             if (typeof hash === 'string') {
                 location.hash = hash;
             }
@@ -6737,8 +6801,8 @@ var Router = function () {
             this.setScrollPos(scrollPos, hash);
         }
     }, {
-        key: 'hashChange',
-        value: function hashChange(evt) {
+        key: 'onHashChange',
+        value: function onHashChange(evt) {
             if (!history.state) {
                 this.replaceState(location.pathname, location.hash, { x: window.pageXOffset, y: window.pageYOffset });
             }
@@ -6758,14 +6822,15 @@ var Router = function () {
     }, {
         key: 'onPopState',
         value: function onPopState(evt) {
+            //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
             var state = history.state;
 
             if (evt && evt.state) {
                 var result = this.route(evt.state.fullPath);
-                if (result) {
+                if (result && evt.state.scrollPos) {
                     if (result.then) {
                         result.then(function (matches) {
-                            return window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
+                            window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
                         });
                     } else {
                         window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);

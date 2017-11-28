@@ -682,6 +682,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         this.component = null;
         this.renderInterval = opts.renderInterval;
+        this.renderPromises = {};
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
@@ -846,11 +847,17 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('markeddirty', evt => {
-                    requestAnimationFrame(() => {
-                        this.el.classList.add('rendering-' + evt.pipelineName);
-                        this.el.classList.add('rendering');
-                        this.component.render(evt.pipelineName);
-                    });
+                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
+                        requestAnimationFrame(() => {
+                            this.el.classList.add('rendering-' + evt.pipelineName);
+                            this.el.classList.add('rendering');
+                            this.component.render(evt.pipelineName)
+                                .then(results => {
+                                    this.renderPromises[evt.pipelineName] = null;
+                                    resolve(results);
+                                });
+                        });
+                    })
                 });
 
                 this.initRenderLifecycleStyleHooks(this.component);
@@ -930,6 +937,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             store: {
                 value: new Store(Object.assign({
                     $bind: this.bindEvent.bind(this),
+                    $bindValue: this.bindEventValue.bind(this),
                     $act: this.createAction.bind(this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
@@ -1151,6 +1159,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
             (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
             funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+    }
+
+    bindEventValue(propName, opts) {
+        return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
     markDirty(changedKey) {
