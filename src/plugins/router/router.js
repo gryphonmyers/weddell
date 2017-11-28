@@ -19,7 +19,7 @@ class Router {
 
     route(pathName) {
         if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-            return Promise.resolve(null);
+            return true;
         }
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
