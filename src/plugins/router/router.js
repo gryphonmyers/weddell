@@ -264,7 +264,11 @@ class Router {
 
     setScrollPos(scrollPos, hash) {
         if (hash) {
-            var el = document.querySelector(hash);
+            var el;
+            try {
+                el = document.querySelector(hash);
+            } catch (err) { }
+            
             if (el) {
                 window.scrollTo(el.offsetLeft, el.offsetTop);
             }
