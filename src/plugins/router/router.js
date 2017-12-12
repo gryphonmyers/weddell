@@ -19,7 +19,7 @@ class Router {
 
     route(pathName) {
         if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-            return true;
+            return Promise.resolve(Object.assign([].concat(this.currentRoute), {isCurrentRoute: true}, this.currentRoute));
         }
         if (typeof pathName === 'string') {
             var matches = this.matchRoute(pathName, this.routes);
@@ -31,7 +31,7 @@ class Router {
         }
         if (matches) {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                return true;
+                return Promise.resolve(Object.assign(matches, {isCurrentRoute: true}));
             }
             var promise = Promise.all(matches.map((currMatch, key) => {
 
@@ -80,40 +80,63 @@ class Router {
         return matchedRoute || null;
     }
 
-    matchRoute(pathName, routes, routePath) {
+    matchRoute(pathName, routes, routePath, fullPath, parentMatched) {
         if (!routePath) routePath = [];
         var result = null;
         if (typeof pathName !== 'string') {
             return null;
         }
-        if (pathName.charAt(0) !== '/' && this.currentRoute) {
-            pathName = this.currentRoute.fullPath + pathName;
+        
+        if (typeof fullPath === 'undefined') {
+            fullPath = pathName;
+        }
+
+        if (fullPath.charAt(0) !== '/' && this.currentRoute) {
+            fullPath = this.currentRoute.fullPath + fullPath;
         }
         routes.every((currRoute) => {
             var params = [];
-            var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(pathObj => pathObj.route).concat(currRoute).reduce((finalPattern, pathObj) => {
-                return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
-            }, '');
-            var match = pathToRegexp(currPattern, params, {}).exec(pathName);
-            var newPath = routePath.concat({route: currRoute, match, params})
+
+            if (currRoute.pattern.charAt(0) !== '/') {
+                if (parentMatched) {
+                    var regex = pathToRegexp('/' + currRoute.pattern, params, {end: false});
+                    var routePathname = pathName;
+                    var routeFullPath = fullPath;
+                    var match = regex.exec(routePathname);
+                }
+
+            } else {
+                regex = pathToRegexp(currRoute.pattern, params, {end: false});
+                routePathname = fullPath;
+                routeFullPath = routePathname;
+                match = regex.exec(routePathname);
+            }
+
+            var newPath = routePath.concat({route: currRoute, match, params});
             if (match) {
                 result = newPath;
             }
             if (currRoute.children) {
-                var childResult = this.matchRoute(pathName, currRoute.children, newPath);
+                var childResult = this.matchRoute(routePathname.replace(regex, ''), currRoute.children, newPath, routeFullPath, !!match);
                 result = childResult || result;
             }
+
             if (result) {
-                var currMatch = result[result.length - 1];
-                result.paramVals = currMatch.params.reduce((finalVal, param, key) => {
-                    finalVal[param.name] = currMatch.match[key + 1];
-                    return finalVal;
+                result.paramVals = result.reduce((paramsObj, routeObj) => {
+                    routeObj.params.forEach((param, key) => {
+                        if (routeObj.match) {
+                            paramsObj[param.name] = routeObj.match[key + 1];
+                        }
+                    });
+                    return paramsObj;
                 }, {});
+
                 result.route = result[result.length - 1].route;
-                result.fullPath = result[result.length - 1].match[0];
+                result.fullPath = fullPath;
             }
             return !result;
         });
+
         return result;
     }
 
@@ -122,28 +145,39 @@ class Router {
     }
 
     compileRouterLink(obj) {
-        var paramDefaults = {};
-        var routeName;
-        if (this.currentRoute) {
-            routeName = this.currentRoute.route.name;
-            var matchedRoute = this.currentRoute[this.currentRoute.length - 1]
-            var matches = matchedRoute.match.slice(1);
-            matchedRoute.params.forEach((param, key)=> {
-                if (typeof matches[key] !== 'undefined') paramDefaults[param.name] = matches[key];
-            });
-        }
-        routeName = obj.name ? obj.name : routeName;
-        obj.params = Object.assign(paramDefaults, obj.params);
-        /*
+         /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
+        var paramDefaults = {};
+        var routeName;
+       
+        if (this.currentRoute) {
+            routeName = this.currentRoute.route.name;
+
+            paramDefaults = this.currentRoute.reduce((params, currRoute) => {
+                currRoute.params.forEach((param, key) => {
+                    var val = currRoute.match[key + 1];
+                    if (typeof val !== 'undefined') {
+                        params[param.name] = val;
+                    }
+                })
+                return params;
+            }, paramDefaults);
+        }
+        
+        routeName = obj.name ? obj.name : routeName;
+        obj.params = Object.assign(paramDefaults, obj.params);
+       
         var route = Router.getNamedRoute(routeName, this.routes);
+        
         if (route) {
             try {
-                var fullPath = pathToRegexp.compile(route.reduce((finalPath, pathRoute) => {
+                var pattern = route.reduce((finalPath, pathRoute) => {
                     var segment = pathRoute.pattern;
                     return pathRoute.pattern.charAt(0) === '/' ? segment : finalPath + segment;
-                }, ''))(obj.params);
+                }, '');
+
+                var fullPath = pathToRegexp.compile(pattern)(obj.params);
             } catch (err) {
                 throw "Encountered error trying to build router link: " + err.toString();
             }
@@ -177,18 +211,19 @@ class Router {
                         var split = href.split('#');
                         var aPath = split[0];
                         var hash = split[1];
+
                         var result = this.route(aPath);
                         if (result) {
                             evt.preventDefault();
                             this.replaceState(location.pathname, location.hash)
-                            if (result.then) {
-                                result
-                                    .then(matches => {
+                            result
+                                .then(matches => {
+                                    if (!matches.isCurrentRoute) {
                                         this.pushState(matches.fullPath, hash, {x:0,y:0});
-                                    });
-                            } else if (hash !== location.hash) {
-                                this.pushState(location.pathname, hash);
-                            }
+                                    } else if (hash !== location.hash) {
+                                        this.pushState(location.pathname, hash);
+                                    }
+                                });
                         }
                     }
                 }
@@ -242,7 +277,7 @@ class Router {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
 
-        if (evt && evt.state) {
+        if (evt && evt.state && typeof evt.state.fullPath === 'string') {
             var result = this.route(evt.state.fullPath);
             if (result && evt.state.scrollPos) {
                 if (result.then) {

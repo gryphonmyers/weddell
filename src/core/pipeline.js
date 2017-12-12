@@ -103,6 +103,9 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
     }
 
     callTemplate(locals, template) {
+        if (!this) {
+            debugger;
+        }
         return template.call(this, locals);
     }
 
