@@ -32,6 +32,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         Object.defineProperties(this, {
             isRoot: { value: opts.isRoot },
             _isMounted: {writable:true, value: false},
+            _hasMounted: {writable:true, value: false},
             _isInit: { writable: true, value: false},
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
