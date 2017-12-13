@@ -4,6 +4,26 @@ var findParent = require('find-parent');
 var compact = require('array-compact');
 var defaultOpts = {};
 
+function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
+    var params = [];
+
+    if (pattern.charAt(0) !== '/') {
+        if (parentMatched) {
+            var regex = pathToRegexp('/' + pattern, params, {end});
+            var routePathname = pathName;
+            var routeFullPath = fullPath;
+            var match = regex.exec(routePathname);
+        }
+    } else {
+        regex = pathToRegexp(pattern, params, {end});
+        routePathname = fullPath;
+        routeFullPath = routePathname;
+        match = regex.exec(routePathname);
+    }
+
+    return { params, match, fullPath: routeFullPath, pathName: routePathname, regex };
+}
+
 class Router {
 
     constructor(opts) {
@@ -94,31 +114,22 @@ class Router {
         if (fullPath.charAt(0) !== '/' && this.currentRoute) {
             fullPath = this.currentRoute.fullPath + fullPath;
         }
+
         routes.every((currRoute) => {
             var params = [];
 
-            if (currRoute.pattern.charAt(0) !== '/') {
-                if (parentMatched) {
-                    var regex = pathToRegexp('/' + currRoute.pattern, params, {end: false});
-                    var routePathname = pathName;
-                    var routeFullPath = fullPath;
-                    var match = regex.exec(routePathname);
-                }
+            var currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, false);
 
-            } else {
-                regex = pathToRegexp(currRoute.pattern, params, {end: false});
-                routePathname = fullPath;
-                routeFullPath = routePathname;
-                match = regex.exec(routePathname);
-            }
+            var newPath = routePath.concat({route: currRoute, match: currMatch.match, params: currMatch.params});
 
-            var newPath = routePath.concat({route: currRoute, match, params});
-            if (match) {
-                result = newPath;
-            }
             if (currRoute.children) {
-                var childResult = this.matchRoute(routePathname.replace(regex, ''), currRoute.children, newPath, routeFullPath, !!match);
-                result = childResult || result;
+                result = this.matchRoute(currMatch.pathName.replace(currMatch.regex, ''), currRoute.children, newPath, currMatch.fullPath, !!currMatch.match);
+            }
+
+            if (!result) {
+                currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, true);
+
+                result = currMatch.match ? routePath.concat({route: currRoute, match: currMatch.match, params: currMatch.params }) : null;
             }
 
             if (result) {
@@ -134,6 +145,7 @@ class Router {
                 result.route = result[result.length - 1].route;
                 result.fullPath = fullPath;
             }
+
             return !result;
         });
 
