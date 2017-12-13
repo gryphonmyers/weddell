@@ -385,8 +385,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             components.push(componentResult);
         });
         return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
+            .then(() => (!this._hasMounted && this.onFirstMount) ? this.onFirstMount.call(this) : null)
             .then(() => {
                 if (!this._isMounted) this._isMounted = true;
+                if (!this._hasMounted) this._hasMounted = true;
                 return pipeline.render(targetFormat);
             })
             .then(output => {
