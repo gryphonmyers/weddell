@@ -1,7 +1,6 @@
 var DOMReady = require('document-ready-promise')();
 var defaults = require('object.defaults/immutable');
 var mix = require('mixwith-es5').mix;
-var debounce = require('debounce');
 var Sig = require('./sig');
 var EventEmitterMixin = require('./event-emitter-mixin');
 var isApplicationOf = require('mixwith-es5').isApplicationOf;
@@ -29,6 +28,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         this.component = null;
+        this.shouldRerender = {};
         this.renderInterval = opts.renderInterval;
         this.renderPromises = {};
         this.stylesRenderFormat = opts.stylesRenderFormat;
@@ -73,10 +73,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
         this.renderers[evt.renderFormat].call(this, evt.output);
-        this.el.classList.remove('rendering-markup');
-        if (!this.el.classList.contains('rendering-styles')) {
-            this.el.classList.remove('rendering');
-        }
         this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
     }
 
@@ -110,12 +106,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
         var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
-
-        this.el.classList.remove('rendering-styles');
-
-        if (!this.el.classList.contains('rendering-markup')) {
-            this.el.classList.remove('rendering');
-        }
 
         this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
     }
@@ -168,6 +158,21 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         });
     }
 
+    scheduleRender(pipelineName) {
+        return new Promise((resolve) => {
+            requestAnimationFrame(() => {
+                this.component.render(pipelineName)
+                    .then(() => {
+                        if (this.shouldRerender[pipelineName]) {
+                            this.shouldRerender[pipelineName] = false;
+                            return this.scheduleRender(pipelineName);
+                        }
+                    })
+                    .then(resolve)
+            })
+        })
+    }
+
     init() {
         Object.seal(this);
         return DOMReady
@@ -195,25 +200,28 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('markeddirty', evt => {
-                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
-                        requestAnimationFrame(() => {
-                            this.el.classList.add('rendering-' + evt.pipelineName);
-                            this.el.classList.add('rendering');
-                            this.component.render(evt.pipelineName)
-                                .then(results => {
-                                    this.renderPromises[evt.pipelineName] = null;
-                                    resolve(results);
-                                });
-                        });
-                    })
+                    if (!this.renderPromises[evt.pipelineName]) {
+                        this.el.classList.add('rendering-' + evt.pipelineName);
+                        this.el.classList.add('rendering');
+                        this.renderPromises[evt.pipelineName] = this.scheduleRender(evt.pipelineName)
+                            .then(() => {
+                                this.renderPromises[evt.pipelineName] = null;
+                                this.el.classList.remove('rendering-' + evt.pipelineName);
+                                if (Object.values(this.renderPromises).every(val => !val)) {
+                                    this.el.classList.remove('rendering');
+                                }
+                            });
+                    } else {
+                        this.shouldRerender[evt.pipelineName] = true;
+                    }
                 });
 
                 this.initRenderLifecycleStyleHooks(this.component);
 
                 return this.component.init(this.componentInitOpts)
                     .then(() => {
-                        this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
-                        this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
+                        this.component.on('rendermarkup', this.renderMarkup.bind(this));
+                        this.component.on('renderstyles', this.renderStyles.bind(this));
                         this.component.render();
                     })
             })

@@ -302,10 +302,11 @@ class Router {
                             window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y)
                         })
                 } else {
-                     window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
+                    window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
                 }
             }
         }
     }
 }
+
 module.exports = Router;
