@@ -48,6 +48,9 @@ class Router {
         } else if (pathName) {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
+            if (matches)  {
+                return this.route(matches.fullPath);
+            }
         }
         if (matches) {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
