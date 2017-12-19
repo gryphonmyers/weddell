@@ -437,7 +437,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 .map(entry => {
                     return childComponent.on(entry[0], function() {
                         if (childComponent._isMounted) {
-                            entry[1].apply(this, arguments);
+                            entry[1].apply(this, Array.from(arguments).concat(childComponent));
                         }
                     }.bind(this))
                 })

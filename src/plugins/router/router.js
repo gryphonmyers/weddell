@@ -258,7 +258,7 @@ class Router {
         if (typeof hash === 'string') {
             location.hash = hash;
         }
-        history.pushState({fullPath: pathName, hash, scrollPos}, document.title, pathName + (hash  || ''));
+        history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, pathName + (hash  || ''));
 
         this.setScrollPos(scrollPos, hash);
     }
@@ -266,7 +266,7 @@ class Router {
     replaceState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
-        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos}, document.title, pathName + (hash  || ''));
+        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, pathName + (hash  || ''));
 
         this.setScrollPos(scrollPos, hash);
     }
@@ -296,7 +296,7 @@ class Router {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
 
-        if (evt && evt.state && typeof evt.state.fullPath === 'string') {
+        if (evt && evt.state && evt.state.isWeddellState === true) {
             var result = this.route(evt.state.fullPath);
             if (result && evt.state.scrollPos) {
                 if (result.then) {

@@ -29,6 +29,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _proxyObjs: {configurable: false,value: {}},
             _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
+            _firstGet: {writable: true, value: false},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
@@ -137,7 +138,12 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         if (this._cache[key]) {
             return this._cache[key];
         }
-
+        if (this.shouldEvalFunctions && !this._firstGet) {
+            this._firstGet = true;
+            for (var propName in this._funcProps) {
+                this[propName];
+            }
+        }
         if (key in this._funcProps && !this._initialCalled[key]) {
             this._initialCalled[key] = true;
             val = this[key] = this.evaluateFunctionProperty(key);
@@ -185,12 +191,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     await(key) {
+        if (Array.isArray(key)) {
+            return Promise.all(key.map(subKey => this.await(subKey)));
+        }
         return Promise.resolve(this.getValue(key) || new Promise(resolve => {
             var off = this.watch(key, vals => {
                 off();
                 resolve(vals);
-            });
-        }));
+            }, true, true);
+        }))
     }
 
     evaluateFunctionProperty(key) {
