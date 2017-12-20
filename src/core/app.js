@@ -65,7 +65,8 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     renderCSS(CSSString) {
-        this.styleEl.textContent = CSSString;
+        this.styleEl.innerText = '';
+        this.styleEl.appendChild(document.createTextNode(CSSString));
     }
 
     renderMarkup(evt) {
