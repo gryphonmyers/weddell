@@ -52,7 +52,7 @@ module.exports = function(_Weddell){
                                                     .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                             }, Promise.resolve())
                                             .then(results => {
-                                                return this.renderPromises.markup ? this.renderPromises.markup.then(() => results) : results;
+                                                return this.renderPromise ? this.renderPromise.then(() => results) : results;
                                             });
                                     }, console.warn)
                                     .then(results => {

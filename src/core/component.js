@@ -388,7 +388,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
             .then(() => (!this._hasMounted && this.onFirstMount) ? this.onFirstMount.call(this) : null)
             .then(() => {
-                if (!this._isMounted) this._isMounted = true;
+                if (!this._isMounted) {
+                    this._isMounted = true;
+                }
                 if (!this._hasMounted) this._hasMounted = true;
                 return pipeline.render(targetFormat);
             })
@@ -414,9 +416,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                         var componentInstances = Object.values(entry[1]);
                                         var componentName = entry[0];
                                         var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
-                                        return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
-                                            return renderedComponent.componentOutput.component !== instance
-                                        })));
+
+                                        return finalArr.concat(
+                                            componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+                                                return renderedComponent.componentOutput.component !== instance
+                                            }))
+                                        );
                                     }, [])
                                     .map(unrenderedComponent => unrenderedComponent.unmount())
                             )

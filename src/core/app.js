@@ -28,9 +28,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
         this.component = null;
-        this.shouldRerender = {};
+        this.shouldRender = {};
         this.renderInterval = opts.renderInterval;
-        this.renderPromises = {};
+        this.renderPromise = null;
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
@@ -162,17 +162,30 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         });
     }
 
-    scheduleRender(pipelineName) {
+    scheduleRender() {
         return new Promise((resolve) => {
             requestAnimationFrame(() => {
-                this.component.render(pipelineName)
+                var promise;
+                if (this.shouldRender.markup && this.shouldRender.styles) {
+                    this.shouldRender.markup = false;
+                    this.shouldRender.styles = false;
+                    promise = this.component.render('markup')
+                        .then(() => this.component.render('styles'))
+                } else if (this.shouldRender.styles) {
+                    this.shouldRender.styles = false;
+                    promise = this.component.render('styles');
+                } else if (this.shouldRender.markup) {
+                    this.shouldRender.markup = false;
+                    promise = this.component.render('markup');
+                }
+
+                promise
+                    .then(() => Object.values(this.shouldRender).some(val => val) ? this.scheduleRender() : null)
                     .then(() => {
-                        if (this.shouldRerender[pipelineName]) {
-                            this.shouldRerender[pipelineName] = false;
-                            return this.scheduleRender(pipelineName);
-                        }
+                        this.el.classList.remove('rendering-styles');
+                        this.el.classList.remove('rendering-markup');
+                        resolve();
                     })
-                    .then(resolve)
             })
         })
     }
@@ -204,19 +217,18 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('markeddirty', evt => {
-                    if (!this.renderPromises[evt.pipelineName]) {
+                    if (!this.shouldRender[evt.pipelineName]) {
                         this.el.classList.add('rendering-' + evt.pipelineName);
+                        this.shouldRender[evt.pipelineName] = true;
+                    }
+
+                    if (!this.renderPromise) {
                         this.el.classList.add('rendering');
-                        this.renderPromises[evt.pipelineName] = this.scheduleRender(evt.pipelineName)
+                        this.renderPromise = this.scheduleRender()
                             .then(() => {
-                                this.renderPromises[evt.pipelineName] = null;
-                                this.el.classList.remove('rendering-' + evt.pipelineName);
-                                if (Object.values(this.renderPromises).every(val => !val)) {
-                                    this.el.classList.remove('rendering');
-                                }
+                                this.renderPromise = null;
+                                this.el.classList.remove('rendering');
                             });
-                    } else {
-                        this.shouldRerender[evt.pipelineName] = true;
                     }
                 });
 
