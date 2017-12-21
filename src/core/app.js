@@ -65,11 +65,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     renderCSS(CSSString) {
-        document.head.removeChild(this.styleEl);
-        this.styleEl = document.createElement('style');
-        this.styleEl.setAttribute('type', 'text/css');
-        this.styleEl.appendChild(document.createTextNode(CSSString));
-        document.head.appendChild(this.styleEl);
+        this.styleEl.textContent = CSSString;
     }
 
     renderMarkup(evt) {
@@ -101,13 +97,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
         };
         var instanceStyles = flattenStyles(evt);
-        
+
         staticStyles = staticStyles.reduce((finalArr, styleObj) => {
-            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
+            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class._BaseClass === styleObj.class._BaseClass || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
                 return finalArr.concat(styleObj)
             }
             return finalArr;
         }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
+
         var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
 
