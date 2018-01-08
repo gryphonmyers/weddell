@@ -32,6 +32,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         Object.defineProperties(this, {
             isRoot: { value: opts.isRoot },
             _isMounted: {writable:true, value: false},
+            _renderPromise: {writable:true, value: null},
+            renderPromise: {get: () => {
+                return this._renderPromise || (opts.parentComponent ? opts.parentComponent.renderPromise : null)
+            }},
             _hasMounted: {writable:true, value: false},
             _isInit: { writable: true, value: false},
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
@@ -162,7 +166,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     awaitRender(val) {
-        return this.awaitEvent('renderdommarkup')
+        return (this.renderPromise ? this.renderPromise : Promise.resolve())
             .then(() => val);
     }
 
@@ -447,6 +451,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     }.bind(this))
                 })
         }
+    }
+
+    markRendering(promise) {
+        this._renderPromise = promise ? promise : null;
     }
 
     unmount() {

@@ -224,8 +224,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         this.renderPromise = this.scheduleRender()
                             .then(() => {
                                 this.renderPromise = null;
+                                this.component.markRendering(false);
                                 this.el.classList.remove('rendering');
                             });
+                        this.component.markRendering(this.renderPromise);
                     }
                 });
 
