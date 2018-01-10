@@ -5,6 +5,7 @@ var mix = require('mixwith-es5').mix;
 var DeDupe = require('mixwith-es5').DeDupe;
 var Sig = require('./sig');
 var includes = require('../utils/includes');
+var difference = require('../utils/difference');
 
 Sig.addTypeAlias('CSSString', 'String');
 
@@ -33,6 +34,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             isRoot: { value: opts.isRoot },
             _isMounted: {writable:true, value: false},
             _renderPromise: {writable:true, value: null},
+            _lastRenderedComponentClasses: {writable: true, value:null},
             renderPromise: {get: () => {
                 return this._renderPromise || (opts.parentComponent ? opts.parentComponent.renderPromise : null)
             }},
@@ -139,6 +141,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this[propName].on('change', evt => {
                 this.markDirty(evt.changedKey);
             })
+        });
+
+        this.on('componentschange', evt => {
+            this._pipelines.styles.markDirty();
         });
 
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
@@ -413,6 +419,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             components,
                             renderFormat
                         };
+
+                        var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
+                        
+                        if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
+                            this.trigger("componentschange", {componentClasses, components})
+                        }
+                        this._lastRenderedComponentClasses = componentClasses;
 
                         return Promise.all(
                                 Object.entries(this._componentInstances)
