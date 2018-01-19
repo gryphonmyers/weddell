@@ -213,7 +213,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
-                this.component.on('markeddirty', evt => {
+                this.component.on('wantsrender', evt => {
                     if (!this.shouldRender[evt.pipelineName]) {
                         this.el.classList.add('rendering-' + evt.pipelineName);
                         this.shouldRender[evt.pipelineName] = true;

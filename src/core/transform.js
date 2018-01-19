@@ -23,18 +23,18 @@ class Transform {
     }
 
     static compose(func, transforms) {
-        return transforms.reduce((composed, transform) => {
+        return transforms ? transforms.reduce((composed, transform) => {
             return function(){
                 return transform.applyTransform(composed.apply(this, arguments));
             }
-        }, func);
+        }, func) : func;
     }
 
     static getTransformPath(transforms, from, to, _soFar) {
         //TODO add heuristics to make this process faster
         if (!_soFar) _soFar = [];
         if (from.checkIfMatch(to)) {
-            return _soFar;
+            return _soFar.concat(transforms.filter(transform => transform.from.checkIfMatch(from) && transform.to.checkIfMatch(to) && _soFar.indexOf(transform) === -1));
         }
         return transforms.filter(transform => {
             return transform.from.checkIfMatch(from, true);

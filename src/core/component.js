@@ -144,7 +144,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
 
         this.on('componentschange', evt => {
-            this._pipelines.styles.markDirty();
+            this.markDirty(null, 'styles');
+        });
+
+        this.on('markeddirty', evt => {
+            //if it's a markup render, render both
+            this.scheduleRender(evt.pipelineName === 'markup' ? null : evt.pipelineName);
         });
 
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
@@ -239,7 +244,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
         var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
         var markupTransforms = this._pipelines.markup.transforms;
-        var stylesTransforms = this._pipelines.styles.transforms;;
+        var stylesTransforms = this._pipelines.styles.transforms;
 
         var obj = {};
 
@@ -259,8 +264,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     parentComponent.trigger('createcomponent', Object.assign({}, evt));
                 });
 
-                this.on('markeddirty', evt => {
-                    parentComponent.markDirty();
+                this.on('wantsrender', evt => {
+                    parentComponent.scheduleRender(evt.pipelineName);
                 });
             }
         }
@@ -299,10 +304,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
-    markDirty(changedKey) {
-        return Object.values(this._pipelines).forEach((pipeline, pipelineType) => {
-            pipeline.markDirty(changedKey);
-        });
+    scheduleRender(pipelineName) {
+        return (pipelineName ? [pipelineName] : Object.keys(this._pipelines))
+            .map((pipelineName) => {
+                return this.trigger('wantsrender', {pipelineName});
+            });   
+    }
+
+    markDirty(changedKey, pipelineName) {
+        return (pipelineName ? [[pipelineName, this._pipelines[pipelineName]]] : Object.entries(this._pipelines))
+            .map((entry) => {
+                return entry[1].markDirty(changedKey);
+            });
     }
 
     renderStyles() {

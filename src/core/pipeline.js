@@ -1,6 +1,8 @@
 var EventEmitterMixin = require('./event-emitter-mixin');
 var mix = require('mixwith-es5').mix;
 
+var inputCache = {};
+
 var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
     constructor(opts) {
         super(opts);
@@ -21,19 +23,30 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
             inputFormat: { value: new Sig(opts.inputFormat) },
             _isDynamic: { value: opts.isDynamic, writable: true },
             transforms: { value: opts.transforms, writable: true },
-            targetRenderFormat: { value: new Sig(opts.targetRenderFormat) },
-            _instances: { value: {}, writable: true },
-            _isInit: { value: false, writable: true }
+            targetRenderFormat: { value: new Sig(opts.targetRenderFormat) }
         });
     }
 
-    init() {
-        if (!this._isInit) {
-            if (this.input) {
-                this.template = this.processInput(this.targetRenderFormat);
-            }
-            this._isInit = true;
+    addTransform(transform) {
+        if (this.transforms.indexOf(transform) === -1) {
+            this.transforms = this.transforms.concat(transform);
         }
+    }
+
+    getTemplate(targetRenderFormat) {
+        
+        if (!(this.targetRenderFormat in inputCache)) {
+            inputCache[this.targetRenderFormat] = {input:[], processed: [] };
+        }
+
+        var ii = inputCache[this.targetRenderFormat].input.indexOf(this.input);
+        if (ii === -1) {
+            ii = inputCache[this.targetRenderFormat].input.length;
+            inputCache[this.targetRenderFormat].input.push(this.input);
+            inputCache[this.targetRenderFormat].processed.push(this.processInput(targetRenderFormat));
+        }
+
+        return inputCache[this.targetRenderFormat].processed[ii];
     }
 
     processInput(targetRenderFormat) {
@@ -71,19 +84,12 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
                 .reduce((finalVal, transform) => {
                     return finalVal || Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
                 }, null);
-
-            if (!targetRenderFormat.checkIfMatch(returnType)) {
-                if (!transforms) {
-                    throw "Could not find a tranform path from " + returnType.validated + ' to ' + targetRenderFormat.validated;
-                }
-                template = Transform.compose(input, transforms);
-            } else {
-                template = input;
-            }
+            template = Transform.compose(input, transforms);
         } else {
             transforms = Transform.getTransformPath(this.transforms, this.inputFormat, targetRenderFormat);
 
             if (!transforms){
+                debugger;
                 throw "Could not find appropriate transform for " + this.inputFormat.validated + " to " + targetRenderFormat.validated;
             }
 
@@ -107,17 +113,9 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
     }
 
     render(targetFormat) {
-        if (!this._isInit) {
-            this.init();
-        }
         if (this.isDirty || !this._cache) {
             var Sig = this.constructor.Weddell.classes.Sig;
-            var template = this.template;
-            if (targetFormat) {
-                targetFormat = new Sig(targetFormat);
-                //TODO cache processed input formats so we don't run into cases where processInput is running every time state changes. We could probably also remove the initialization process and have this only happen lazily
-                template = !targetFormat.checkIfMatch(this.targetRenderFormat) ? this.processInput(targetFormat) : this.template;
-            }
+            var template = this.getTemplate(targetFormat ? new Sig(targetFormat) : this.targetRenderFormat);
             var accessed = {};
             var off = this._store.on('get', function(evt){
                 accessed[evt.key] = 1;

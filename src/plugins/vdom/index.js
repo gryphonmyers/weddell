@@ -16,6 +16,31 @@ var defaultAppOpts = {
     markupRenderFormat: 'VNode'
 };
 
+class VDOMWidget {
+    constructor(opts) {
+        this.type = 'Widget';
+        this.vTree = opts.vTree;
+        this.dom = null;
+    }
+    
+    init() {
+        return this.vTree ? createElement(this.vTree) : null;
+    }
+
+    update(previousWidget, prevDOMNode) {
+        if (Array.isArray(this.vTree)) {
+            throw "Cannot render a component with multiple nodes at root!";
+        }
+
+        var patches = VDOMDiff(previousWidget.vTree, this.vTree);
+        this.dom = VDOMPatch(prevDOMNode || this.dom, patches);
+    }
+
+    destroy(DOMNode) {
+
+    }
+}
+
 module.exports = function(Weddell, pluginOpts) {
     return Weddell.plugin({
         id: 'vdom',
@@ -74,7 +99,24 @@ module.exports = function(Weddell, pluginOpts) {
                 var Component = class extends Component {
                     constructor(opts) {
                         opts = defaults(opts, defaultComponentOpts);
+
                         super(opts);
+
+                        var Transform = this.constructor.Weddell.classes.Transform;
+
+                        this._pipelines.markup.addTransform(new Transform({
+                            from: 'VNode',
+                            to: 'VNode',
+                            func: (vTree) => {
+                                if (Array.isArray(vTree)) {
+                                    if (vTree.length > 1) {
+                                        console.warn('Your markup was truncated, as your component had more than one root node.');
+                                    }
+                                    vTree = vTree[0];
+                                }
+                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({ vTree }) : vTree : null;
+                            }
+                        }))
 
                         this.renderers.VNode = this.replaceVNodeComponents.bind(this);
                     }
@@ -83,8 +125,22 @@ module.exports = function(Weddell, pluginOpts) {
 
                     }
 
+
                     replaceVNodeComponents(node, content, renderedComponents, isContent) {
                         isContent = !!isContent;
+
+                        if (!node) {
+                            return Promise.resolve([]);
+                        }
+
+                        if (node.type === 'Widget') {
+                            return this.replaceVNodeComponents(node.vTree, content, renderedComponents, isContent)
+                                .then(output => {
+                                    return new VDOMWidget({vTree: output })
+                                });                            
+                        }
+                        
+
                         if (Array.isArray(node)) {
                             return Promise.all(node.reduce((final, childNode) => {
                                 var result = this.replaceVNodeComponents(childNode, content, renderedComponents, isContent);
@@ -101,7 +157,6 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.tagName) {
                             if (node.tagName.toUpperCase() in this._tagDirectives) {
                                 return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes, isContent);
-
                             } else if (node.tagName === 'CONTENT') {
                                 return this.replaceVNodeComponents(content, null, renderedComponents, true);
                             } else {
