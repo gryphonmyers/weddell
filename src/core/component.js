@@ -329,15 +329,26 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     }))
                     .then(components => {
                         var evtObj = {
-                            output,
-                            staticStyles: this.constructor.styles || null,
                             component: this,
                             components,
                             wasRendered: true,
                             renderFormat: this._pipelines.styles.targetRenderFormat
                         };
 
-                        this.trigger('renderstyles', Object.assign({}, evtObj));
+                        Object.defineProperties(evtObj, {
+                            staticStyles: {
+                                get: function(){
+                                    return this.constructor.styles || null;
+                                }.bind(this)
+                            },
+                            output: {
+                                get: function(){
+                                    return output
+                                }
+                            }
+                        })
+
+                        this.trigger('renderstyles', evtObj);
 
                         return evtObj;
                     });
@@ -407,64 +418,69 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             components[componentResult.componentName].push(componentResult)
             components.push(componentResult);
         });
-        return Promise.resolve()
-            .then(() => {
-                if (!this._isMounted) {
-                    this._isMounted = true;
-                    return this.onMount ? this.onMount.call(this) : null;
-                }
-            })
-            .then(() => {
-                if (!this._hasMounted) {
-                    this._hasMounted = true;
-                    return this.onFirstMount ? this.onFirstMount.call(this) : null;
-                }
-            })
-            .then(() => pipeline.render(targetFormat))
-            .then(output => {
-                var renderFormat = targetFormat.val;
-                if (!(renderFormat in this.renderers)) {
-                    throw "No appropriate component markup renderer found for format: " + renderFormat;
-                }
-                return this.renderers[renderFormat].call(this, output, content)
-                    .then(output => {
-                        off();
-                        var evObj = {
-                            output,
-                            component: this,
-                            id: this._id,
-                            components,
-                            renderFormat
-                        };
-
-                        var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
-
-                        if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
-                            this.trigger("componentschange", {componentClasses, components})
+        return new Promise((resolve, reject) => {
+            requestAnimationFrame(() => {
+                Promise.resolve()
+                    .then(() => {
+                        if (!this._isMounted) {
+                            this._isMounted = true;
+                            return this.onMount ? this.onMount.call(this) : null;
                         }
-                        this._lastRenderedComponentClasses = componentClasses;
-
-                        return Promise.all(
-                                Object.entries(this._componentInstances)
-                                    .reduce((finalArr, entry) => {
-                                        var componentInstances = Object.values(entry[1]);
-                                        var componentName = entry[0];
-                                        var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
-
-                                        return finalArr.concat(
-                                            componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
-                                                return renderedComponent.componentOutput.component !== instance
-                                            }))
-                                        );
-                                    }, [])
-                                    .map(unrenderedComponent => unrenderedComponent.unmount())
-                            )
-                            .then(() => {
-                                this.trigger('rendermarkup', Object.assign({}, evObj));
-                                return evObj;
+                    })
+                    .then(() => {
+                        if (!this._hasMounted) {
+                            this._hasMounted = true;
+                            return this.onFirstMount ? this.onFirstMount.call(this) : null;
+                        }
+                    })
+                    .then(() => pipeline.render(targetFormat))
+                    .then(output => {
+                        var renderFormat = targetFormat.val;
+                        if (!(renderFormat in this.renderers)) {
+                            throw "No appropriate component markup renderer found for format: " + renderFormat;
+                        }
+                        return this.renderers[renderFormat].call(this, output, content)
+                            .then(output => {
+                                off();
+                                var evObj = {
+                                    output,
+                                    component: this,
+                                    id: this._id,
+                                    components,
+                                    renderFormat
+                                };
+        
+                                var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
+        
+                                if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
+                                    this.trigger("componentschange", {componentClasses, components})
+                                }
+                                this._lastRenderedComponentClasses = componentClasses;
+        
+                                return Promise.all(
+                                        Object.entries(this._componentInstances)
+                                            .reduce((finalArr, entry) => {
+                                                var componentInstances = Object.values(entry[1]);
+                                                var componentName = entry[0];
+                                                var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
+        
+                                                return finalArr.concat(
+                                                    componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+                                                        return renderedComponent.componentOutput.component !== instance
+                                                    }))
+                                                );
+                                            }, [])
+                                            .map(unrenderedComponent => unrenderedComponent.unmount())
+                                    )
+                                    .then(() => {
+                                        this.trigger('rendermarkup', Object.assign({}, evObj));
+                                        return evObj;
+                                    });
                             });
-                    });
-            });
+                    })
+                    .then(resolve);
+            })
+        })
     }
 
     addComponentEvents(componentName, childComponent, index) {
