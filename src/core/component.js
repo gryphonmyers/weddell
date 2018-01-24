@@ -325,7 +325,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             .then(output => {
                 return Promise.all(Object.entries(this.components).map(entry => {
                         var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
-
                         return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
                     }))
                     .then(components => {
@@ -408,15 +407,20 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             components[componentResult.componentName].push(componentResult)
             components.push(componentResult);
         });
-        return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
-            .then(() => (!this._hasMounted && this.onFirstMount) ? this.onFirstMount.call(this) : null)
+        return Promise.resolve()
             .then(() => {
                 if (!this._isMounted) {
                     this._isMounted = true;
+                    return this.onMount ? this.onMount.call(this) : null;
                 }
-                if (!this._hasMounted) this._hasMounted = true;
-                return pipeline.render(targetFormat);
             })
+            .then(() => {
+                if (!this._hasMounted) {
+                    this._hasMounted = true;
+                    return this.onFirstMount ? this.onFirstMount.call(this) : null;
+                }
+            })
+            .then(() => pipeline.render(targetFormat))
             .then(output => {
                 var renderFormat = targetFormat.val;
                 if (!(renderFormat in this.renderers)) {
@@ -434,7 +438,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         };
 
                         var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
-                        
+
                         if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
                             this.trigger("componentschange", {componentClasses, components})
                         }
