@@ -78,6 +78,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
     renderStyles(evt) {
         var staticStyles = [];
+        
         var flattenStyles = (obj) => {
             var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
             var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');

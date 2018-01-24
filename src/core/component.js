@@ -337,11 +337,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
                         Object.defineProperties(evtObj, {
                             staticStyles: {
+                                enumerable: true,
                                 get: function(){
                                     return this.constructor.styles || null;
                                 }.bind(this)
                             },
                             output: {
+                                enumerable: true,
                                 get: function(){
                                     return output
                                 }
