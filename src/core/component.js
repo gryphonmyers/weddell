@@ -32,6 +32,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             isRoot: { value: opts.isRoot },
+            _renderMethods: {writeable:true, value: {
+                markup: 'renderMarkup',
+                styles: 'renderStyles'
+            }},
             _isMounted: {writable:true, value: false},
             _renderPromise: {writable:true, value: null},
             _lastRenderedComponentClasses: {writable: true, value:null},
@@ -223,6 +227,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     func: ComponentClass,
                     class: newClass
                 });
+                newClass._id = generateHash();
                 return newClass;
             }
         } else {
@@ -323,10 +328,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         return this._pipelines.styles.render()
             .then(output => {
-                return Promise.all(Object.entries(this.components).map(entry => {
-                        var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
-                        return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
-                    }))
+                return Promise.all(this.getMountedChildComponents().map(instance => instance.renderStyles()))
                     .then(components => {
                         var evtObj = {
                             component: this,
@@ -357,6 +359,15 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
+    getMountedChildComponents() {
+        return Object.entries(this.components)
+            .reduce((finalArr, entry) => {
+                return Object.values(this._componentInstances[entry[0]])
+                    .filter(instance => instance._isMounted)
+                    .concat(finalArr);
+            }, [])
+    }
+
     render(pipelineType) {
         this.trigger('beforerender');
 
@@ -366,15 +377,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var pipeline = this._pipelines[pipelineType];
         var args =  Array.from(arguments).slice(1);
 
-        switch(pipelineType) {
-            case 'markup':
-                var output = this.renderMarkup.apply(this, args);
-                break;
-            case 'styles':
-                output = this.renderStyles.apply(this, args);
-                break;
-            default:
-        }
+        var output = this[this._renderMethods[pipelineType]].apply(this, args);
 
         return Promise.resolve(output)
             .then(evt => {

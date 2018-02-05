@@ -1,4 +1,5 @@
 var h = require('virtual-dom/h');
+var svg = require('virtual-dom/virtual-hyperscript/svg');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
 var VNode = require('virtual-dom/vnode/vnode');
@@ -193,8 +194,8 @@ module.exports = function(Weddell, pluginOpts) {
                                     var properties = Object.assign({}, node.properties, {
                                         key: node.key
                                     });
-
-                                    return h(node.tagName, properties, children.reduce((final, child) => {
+                                    var hfunc = node.namespace ? svg : h;
+                                    return hfunc(node.tagName, properties, children.reduce((final, child) => {
                                         return child ? final.concat(child) : final;
                                     }, []));
                                 });
