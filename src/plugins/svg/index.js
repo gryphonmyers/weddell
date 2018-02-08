@@ -90,7 +90,7 @@ module.exports = function(_Weddell){
                             for (var SVGID in this.mountedSVGs[ownerID]) {
                                 var obj = this.mountedSVGs[ownerID][SVGID];
 
-                                obj.el.parentNode.removeChild(obj.el);
+                                obj.el.parentNode && obj.el.parentNode.removeChild(obj.el);
 
                                 obj.availableTo.forEach(owner => owner.availableSVGs = {})
                             }
