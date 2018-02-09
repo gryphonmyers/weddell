@@ -387,15 +387,19 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     assignProps(props) {
+        this.inputs.filter(input => !(input in props))
+            .forEach(key => {
+                this.props[key] = null;
+            });
         Object.assign(this.props, Object.entries(props)
-            .filter(entry => includes(this.inputs, entry[0]))
+            .filter(entry => this.inputs.includes(entry[0]))
             .reduce((finalObj, entry) => {
                 finalObj[entry[0]] = entry[1]
                 return finalObj
             }, {}));
 
         this.state.$attributes = Object.entries(props)
-            .filter(entry => !includes(this.inputs, entry[0]))
+            .filter(entry => !this.inputs.includes(entry[0]))
             .reduce((finalObj, entry) => {
                 finalObj[entry[0]] = entry[1]
                 return finalObj
@@ -410,7 +414,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (!targetFormat) {
             targetFormat = pipeline.targetRenderFormat;
         }
-
+        
         if (props) {
             this.assignProps(props)
         }
