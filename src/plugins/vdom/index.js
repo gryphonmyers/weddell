@@ -21,7 +21,8 @@ class VDOMWidget {
     constructor(opts) {
         this.type = 'Widget';
         this.vTree = opts.vTree;
-        this.dom = null;
+        this.onUpdate = opts.onUpdate;
+        this.componentID = opts.componentID;
     }
     
     init() {
@@ -34,7 +35,14 @@ class VDOMWidget {
         }
 
         var patches = VDOMDiff(previousWidget.vTree, this.vTree);
-        this.dom = VDOMPatch(prevDOMNode || this.dom, patches);
+        var el = VDOMPatch(prevDOMNode, patches);
+
+        if (el && patches) {
+            if (this.onUpdate) {
+                this.onUpdate(el, this, patches)
+            }
+        }
+        return el;
     }
 
     destroy(DOMNode) {
@@ -103,6 +111,8 @@ module.exports = function(Weddell, pluginOpts) {
 
                         super(opts);
 
+                        Object.defineProperty(this, '_el', {value: null, writable: true });
+
                         var Transform = this.constructor.Weddell.classes.Transform;
 
                         this._pipelines.markup.addTransform(new Transform({
@@ -115,35 +125,53 @@ module.exports = function(Weddell, pluginOpts) {
                                     }
                                     vTree = vTree[0];
                                 }
-                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({ vTree }) : vTree : null;
+                                
+                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({ 
+                                    vTree,
+                                    componentID: this._id,
+                                    onUpdate: this.onVDOMUpdate.bind(this)
+                                }) : vTree : null;
                             }
                         }))
 
                         this.renderers.VNode = this.replaceVNodeComponents.bind(this);
                     }
 
+                    onDOMMove() {
+                        //no op
+                    }
+
                     resolveTagDirective(node, directive) {
 
                     }
 
+                    onVDOMUpdate(el, vTree, patches) {
+                        if (this._el) {
+                            var positionComparison = this._el.compareDocumentPosition(el);
+                            if (positionComparison !== 0) {
+                                this.trigger("dommove", { newEl: el });
+                                if (this.onDOMMove) this.onDOMMove.call(this, el);
+                            }
+                        }
+                        this._el = el;
+                    }
 
                     replaceVNodeComponents(node, content, renderedComponents, isContent) {
                         isContent = !!isContent;
 
                         if (!node) {
-                            return Promise.resolve([]);
+                            return Promise.resolve(null);
                         }
 
                         if (node.type === 'Widget') {
                             return this.replaceVNodeComponents(node.vTree, content, renderedComponents, isContent)
                                 .then(output => {
-                                    return new VDOMWidget({vTree: output })
+                                    return new VDOMWidget({vTree: output, onUpdate: node.onUpdate, componentID: node.componentID })
                                 });                            
                         }
                         
-
                         if (Array.isArray(node)) {
-                            return Promise.all(node.reduce((final, childNode) => {
+                            return Promise.all(compact(node).reduce((final, childNode) => {
                                 var result = this.replaceVNodeComponents(childNode, content, renderedComponents, isContent);
                                 return result ? final.concat(result) : final;
                             }, []));

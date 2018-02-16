@@ -34,19 +34,22 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
     }
 
     getTemplate(targetRenderFormat) {
-        
         if (!(this.targetRenderFormat in inputCache)) {
             inputCache[this.targetRenderFormat] = {input:[], processed: [] };
         }
-
-        var ii = inputCache[this.targetRenderFormat].input.indexOf(this.input);
-        if (ii === -1) {
-            ii = inputCache[this.targetRenderFormat].input.length;
-            inputCache[this.targetRenderFormat].input.push(this.input);
-            inputCache[this.targetRenderFormat].processed.push(this.processInput(targetRenderFormat));
+        
+        if (this.input) {
+            var ii = -1
+            var ii = inputCache[this.targetRenderFormat].input.indexOf(this.input);
+            if (ii === -1) {
+                ii = inputCache[this.targetRenderFormat].input.length;
+                inputCache[this.targetRenderFormat].input.push(this.input);
+                inputCache[this.targetRenderFormat].processed.push(this.processInput(targetRenderFormat));
+            }
+            return inputCache[this.targetRenderFormat].processed[ii];
         }
 
-        return inputCache[this.targetRenderFormat].processed[ii];
+        return null;        
     }
 
     processInput(targetRenderFormat) {

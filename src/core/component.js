@@ -110,7 +110,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     inputFormat: new Sig(opts.markupFormat),
                     transforms: opts.markupTransforms,
                     targetRenderFormat: opts.targetMarkupRenderFormat,
-                    input: opts.markupTemplate || opts.markup || null
+                    input: opts.markupTemplate ? opts.markupTemplate.bind(this) : (opts.markup || null)
                 }),
                 styles: new Pipeline({
                     name: 'styles',
@@ -120,7 +120,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     inputFormat: new Sig(opts.stylesFormat),
                     transforms: opts.stylesTransforms,
                     targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || ' '
+                    input: opts.stylesTemplate ? opts.stylesTemplate.bind(this) : (opts.styles || ' ')
                 })
             }
         });
