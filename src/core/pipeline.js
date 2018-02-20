@@ -128,13 +128,13 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
             off();
             this._watchedProperties = accessed;
 
-            return Promise.resolve(output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
+            return Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
                 .then(() => {
                     this.isDirty = false;
                     this._cache = output
                     this.trigger('render', {output});
                     return output;
-                }) : null);
+                });
         }
         return Promise.resolve(this._cache);
     }
