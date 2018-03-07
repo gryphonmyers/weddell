@@ -112,6 +112,9 @@ module.exports = function(Weddell, pluginOpts) {
                         super(opts);
 
                         Object.defineProperty(this, '_el', {value: null, writable: true });
+                        Object.defineProperty(this, 'el', {get: function(){
+                            return this._el;
+                        }.bind(this) });
 
                         var Transform = this.constructor.Weddell.classes.Transform;
 
