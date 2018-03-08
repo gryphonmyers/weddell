@@ -127,10 +127,9 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
             //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
             off();
             this._watchedProperties = accessed;
-
+            this.isDirty = false;
             return Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
                 .then(() => {
-                    this.isDirty = false;
                     this._cache = output
                     this.trigger('render', {output});
                     return output;
