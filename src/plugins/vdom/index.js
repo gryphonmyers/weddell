@@ -208,7 +208,7 @@ module.exports = function(Weddell, pluginOpts) {
                                             return this.getComponentInstance(componentEntry[0], index)
                                                 .then(componentInstance => {
                                                     renderedComponents[index] = componentInstance;
-                                                    return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'));
+                                                    return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'), this);
                                                 });
                                         })
                                         .then(componentOutput => {

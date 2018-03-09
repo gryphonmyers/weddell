@@ -21,6 +21,7 @@ var defaultOpts = {
 var defaultInitOpts = {};
 
 var _generatedComponentClasses = [];
+var testElement = document.createElement('div');
 
 var Component = class extends mix(Component).with(EventEmitterMixin) {
     constructor(opts) {
@@ -36,6 +37,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 markup: 'renderMarkup',
                 styles: 'renderStyles'
             }},
+            _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: false},
             _renderPromise: {writable:true, value: null},
             _lastRenderedComponentClasses: {writable: true, value:null},
@@ -386,27 +388,65 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
-    assignProps(props) {
+    assignProps(props, parentScope) {
         this.inputs.filter(input => !(input in props))
             .forEach(key => {
                 this.props[key] = null;
             });
-        Object.assign(this.props, Object.entries(props)
-            .filter(entry => this.inputs.includes(entry[0]))
-            .reduce((finalObj, entry) => {
-                finalObj[entry[0]] = entry[1]
-                return finalObj
-            }, {}));
 
-        this.state.$attributes = Object.entries(props)
-            .filter(entry => !this.inputs.includes(entry[0]))
-            .reduce((finalObj, entry) => {
-                finalObj[entry[0]] = entry[1]
-                return finalObj
-            }, {});
+        var parsedProps = Object.entries(props)
+            .reduce((acc, entry) => {
+                if (this.inputs.includes(entry[0])) {
+                    acc[0][entry[0]] = entry[1];
+                } else if (entry[0].slice(0,2) === 'on' && !(entry[0] in testElement)) {
+                    acc[1][entry[0]] = entry[1];
+                } else {
+                    acc[2][entry[0]] = entry[1];
+                }
+                return acc;
+            }, [{},{},{}]);//first item props, second item event handlers, third item attributes
+        
+        Object.assign(this.props, parsedProps[0]);
+        this.bindInlineEventHandlers(parsedProps[1], parentScope);
+        this.state.$attributes = parsedProps[2];
     }
 
-    renderMarkup(content, props, targetFormat) {
+    bindInlineEventHandlers(handlersObj, scope) {
+        var results = Object.entries(this._inlineEventHandlers)
+            .reduce((acc, currHandlerEntry) => {
+                if (currHandlerEntry[0] in acc[1]) {
+                    if (currHandlerEntry[1].handlerString !== handlersObj[currHandlerEntry[0]]) {
+                        //there is a new handler for this event, and it does not match existing handler. replace
+                        acc[0].push(currHandlerEntry);
+                    } else {
+                        //there is a new handler for this event and it does match existing handler. Do nothing
+                        delete acc[1][currHandlerEntry[0]];
+                    }
+                }
+                return acc;
+            }, [[], Object.assign({}, handlersObj)]); //arr[0] handlers to remove, arr[1] events to add
+
+        var handlerEntriesToRemove = results[0];
+        var handlersToAdd = results[1];
+
+        handlerEntriesToRemove.forEach(handlerEntry => {
+            handlerEntry[1].off()
+            delete this._inlineEventHandlers[handlerEntry[0]];
+        });
+
+        for (var eventName in handlersToAdd) {
+            var handlerString = handlersToAdd[eventName];
+            this._inlineEventHandlers[eventName] = {handlerString};
+            try {
+                var callback = new Function('component', 'event', handlerString).bind(scope, this)
+            } catch (err) {
+                throw "Failed parsing event handler for component: " + err.stack;
+            }
+            this._inlineEventHandlers[eventName].off = this.on(eventName.slice(2), callback);
+        }
+    }
+
+    renderMarkup(content, props, targetFormat, parentScope) {
         this.trigger('beforerendermarkup');
 
         var pipeline = this._pipelines.markup;
@@ -416,7 +456,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
         
         if (props) {
-            this.assignProps(props)
+            this.assignProps(props, parentScope)
         }
 
         var components = [];
@@ -521,6 +561,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     .map(component => component.unmount())
             )
             .then(() => {
+                for (var eventName in this._inlineEventHandlers) {
+                    this._inlineEventHandlers[eventName].off();
+                    delete this._inlineEventHandlers[eventName];
+                }
                 if (this._isMounted) {
                     this._isMounted = false;
                     this.trigger('unmount');
