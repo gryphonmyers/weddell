@@ -5,7 +5,6 @@ var Sig = require('./sig');
 var EventEmitterMixin = require('./event-emitter-mixin');
 var isApplicationOf = require('mixwith-es5').isApplicationOf;
 var Component = require('./component');
-var ActionDispatcher = require('./action-dispatcher');
 
 Sig.addTypeAlias('CSSString', 'String');
 
@@ -54,11 +53,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.defineProperty(window, consts.VAR_NAME, {
             value: {app: this, components: {} }
         });
-
-        Object.defineProperty(this, '_actionDispatcher', {
-            value: new ActionDispatcher
-        });
-
+        
         this.pipelines = {
             styles: {
                 init: 'initStylesPipeline',
@@ -70,13 +65,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 componentEvent: 'rendermarkup'
             }            
         };
-
-        this.on('createcomponent', evt => {
-            this._actionDispatcher.addDispatchee(evt.component);
-            evt.component.on('createaction', evt => {
-                this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
-            });
-        });
     }
 
     renderCSS(CSSString) {
@@ -102,7 +90,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             throw "No appropriate markup renderer found for format: " + evt.renderFormat;
         }
         this.renderers[evt.renderFormat].call(this, evt.output);
-        this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
+        this.component.trigger('renderdommarkup', Object.assign({}, evt));
     }
 
     renderStyles(evt) {
@@ -138,7 +126,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
         this.renderCSS(styles);
 
-        this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
+        this.component.trigger('renderdomstyles', Object.assign({}, evt));
     }
 
     makeComponentClass(ComponentClass) {

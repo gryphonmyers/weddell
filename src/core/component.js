@@ -33,6 +33,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             isRoot: { value: opts.isRoot },
+            root: {value: opts.isRoot ? this : opts.root },
             _renderMethods: {writeable:true, value: {
                 markup: 'renderMarkup',
                 styles: 'renderStyles'
@@ -73,8 +74,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             store: {
                 value: new Store(Object.assign({
                     $bind: this.bindEvent.bind(this),
-                    $bindValue: this.bindEventValue.bind(this),
-                    $act: this.createAction.bind(this)
+                    $bindValue: this.bindEventValue.bind(this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
@@ -187,10 +187,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             .then(() => val);
     }
 
-    createAction(actionName, actionData) {
-        this.trigger('createaction', {actionName, actionData});
-    }
-
     onInit() {
         //Default event handler, noop
     }
@@ -248,6 +244,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         ChildComponent = this.makeComponentClass(ChildComponent);
 
         var parentComponent = this;
+        var root = this.root;
         var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
         var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
         var markupTransforms = this._pipelines.markup.transforms;
@@ -258,6 +255,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         obj[componentName] = class extends ChildComponent {
             constructor(opts) {
                 super(defaults({
+                    root,
                     parentComponent,
                     targetMarkupRenderFormat,
                     targetStylesRenderFormat,
