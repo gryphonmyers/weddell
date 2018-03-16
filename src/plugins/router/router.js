@@ -131,8 +131,12 @@ class Router {
 
             if (!result) {
                 currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, true);
-
-                result = currMatch.match ? routePath.concat({route: currRoute, match: currMatch.match, params: currMatch.params }) : null;
+                var matchObj = {route: currRoute, match: currMatch.match, params: currMatch.params };
+                var isValid = true;
+                if (currRoute.validator) {
+                    isValid = currRoute.validator.call(currRoute, matchObj);
+                }
+                result = currMatch.match && isValid ? routePath.concat(matchObj) : null;
             }
 
             if (result) {
