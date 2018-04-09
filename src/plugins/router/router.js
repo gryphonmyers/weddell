@@ -37,11 +37,11 @@ class Router {
         }
     }
 
-    route(pathName) {
-        if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-            return Promise.resolve(Object.assign([].concat(this.currentRoute), {isCurrentRoute: true}, this.currentRoute));
-        }
+    route(pathName, isRedirect) {
         if (typeof pathName === 'string') {
+            var hashIndex = pathName.indexOf('#');
+            var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
+            pathName = hashIndex > -1 ? pathName.slice(0, hashIndex) : pathName;
             var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
@@ -49,38 +49,52 @@ class Router {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
             if (matches)  {
-                return this.route(matches.fullPath);
+                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), isRedirect);
             }
         }
         if (matches) {
+            var isInitialRoute = !this.currentRoute;
+            
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                return Promise.resolve(Object.assign(matches, {isCurrentRoute: true}));
+                var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
+                    .then(matches => {
+                        if (hash != matches.isCurrentRoute.hash) {
+                            this.pushState(matches.fullPath, hash);
+                        }
+                    });
+            } else {
+                promise = Promise.all(matches.map((currMatch, key) => {
+                        if (key === matches.length - 1 && currMatch.route.redirect) {
+                            if (typeof currMatch.route.redirect === 'function') {
+                                var redirectPath = currMatch.route.redirect.call(this, matches);
+                            } else {
+                                //assuming string - path
+                                redirectPath = currMatch.route.redirect;
+                            }
+                            if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
+                            return Promise.reject(redirectPath);
+                        }
+        
+                        return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
+                    }))
+                    .then(results => {
+                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
+                            .then(() => matches)
+                            .then(matches => {
+                                if (isInitialRoute || isRedirect) {
+                                    this.replaceState(matches.fullPath, hash);
+                                } else if (!matches.isCurrentRoute) {
+                                    this.pushState(matches.fullPath, hash, {x:0,y:0});
+                                }
+                                return matches;
+                            });
+                    }, redirectPath => {
+                        return this.route(redirectPath, true)
+                    });
+    
+                this.currentRoute = matches;
             }
-            var promise = Promise.all(matches.map((currMatch, key) => {
-
-                if (key === matches.length - 1 && currMatch.route.redirect) {
-                    if (typeof currMatch.route.redirect === 'function') {
-                        var redirectPath = currMatch.route.redirect.call(this, matches);
-                    } else {
-                        //assuming string - path
-                        redirectPath = currMatch.route.redirect;
-                    }
-                    if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
-                    return Promise.reject(redirectPath);
-                }
-
-                return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
-            }))
-            .then(results => {
-                return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
-                    .then(() => matches);
-            }, redirectPath => {
-                return this.route(redirectPath)
-            });
-
-            this.currentRoute = matches;
-
-            return promise;
+            return promise;                
         }
         return null;
     }
@@ -227,32 +241,16 @@ class Router {
                 if (clickedATag) {
                     var href = clickedATag.getAttribute('href');
                     if (href) {
-                        var split = href.split('#');
-                        var aPath = split[0];
-                        var hash = split[1];
-
-                        var result = this.route(aPath);
+                        var result = this.route(href);
                         if (result) {
                             evt.preventDefault();
-                            this.replaceState(location.pathname, location.hash)
-                            result
-                                .then(matches => {
-                                    if (!matches.isCurrentRoute) {
-                                        this.pushState(matches.fullPath, hash, {x:0,y:0});
-                                    } else if (hash !== location.hash) {
-                                        this.pushState(location.pathname, hash);
-                                    }
-                                });
+                            this.replaceState(location.pathname, location.hash);
                         }
                     }
                 }
             });
-            var result = this.route(location.pathname);
-            return result && result.then(matches => {
-                    if (matches) {
-                        this.replaceState(matches.fullPath, location.hash)
-                    }
-                })
+
+            return this.route(location.pathname + location.hash);
         }
         return Promise.resolve();
     }
