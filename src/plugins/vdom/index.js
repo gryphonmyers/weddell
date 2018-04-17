@@ -128,7 +128,6 @@ module.exports = function(Weddell, pluginOpts) {
                                     }
                                     vTree = vTree[0];
                                 }
-                                
                                 return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({ 
                                     vTree,
                                     componentID: this._id,
@@ -192,7 +191,7 @@ module.exports = function(Weddell, pluginOpts) {
                             } else if (node.tagName === 'CONTENT') {
                                 return this.replaceVNodeComponents(content, null, renderedComponents, true);
                             } else {
-                                var componentEntry = Object.entries(this.components)
+                                var componentEntry = Object.entries(this.collectComponentTree())
                                     .find(entry => {
                                         return entry[0].toLowerCase() == node.tagName.toLowerCase()
                                     });
@@ -205,7 +204,7 @@ module.exports = function(Weddell, pluginOpts) {
 
                                     return this.replaceVNodeComponents(node.children, content, renderedComponents, false)
                                         .then(componentContent => {
-                                            return this.getComponentInstance(componentEntry[0], index)
+                                            return componentEntry[1].sourceInstance.getComponentInstance(componentEntry[0], index)
                                                 .then(componentInstance => {
                                                     renderedComponents[index] = componentInstance;
                                                     return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'), this);

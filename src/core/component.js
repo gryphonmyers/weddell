@@ -17,9 +17,7 @@ var defaultOpts = {
     isRoot: false,
     stylesFormat: 'CSSString'
 };
-
 var defaultInitOpts = {};
-
 var _generatedComponentClasses = [];
 var testElement = document.createElement('div');
 
@@ -158,7 +156,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this.scheduleRender(evt.pipelineName === 'markup' ? null : evt.pipelineName);
         });
 
+        this.getParent = () => opts.parentComponent || null;
+
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+    }
+
+    collectComponentTree() {
+        var parent = this.getParent();
+        return Object.entries(this.components)
+                .reduce((acc, entry) => {
+                    return Object.assign(acc, {
+                        [entry[0]]: {
+                            sourceInstance: this, 
+                            componentClass: entry[1]
+                        }
+                    })
+                }, parent ? parent.collectComponentTree() : {});
     }
 
     queryDOM(query) {
