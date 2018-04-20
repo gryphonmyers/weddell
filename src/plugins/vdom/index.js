@@ -211,7 +211,7 @@ module.exports = function(Weddell, pluginOpts) {
                                                 });
                                         })
                                         .then(componentOutput => {
-                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes, isContent});
+                                            componentEntry[1].sourceInstance.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes, isContent});
                                             return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
                                         });
                                 }
