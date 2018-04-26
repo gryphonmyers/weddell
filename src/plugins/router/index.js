@@ -26,7 +26,9 @@ module.exports = function(_Weddell){
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
-                                return componentNames.reduce((promise, componentName) => {
+                                return componentNames
+                                    .map(componentName => componentName.toLowerCase())
+                                    .reduce((promise, componentName) => {
                                         return promise
                                             .then(currentComponent => {
                                                 return currentComponent.getComponentInstance(componentName, 'router')

@@ -92,10 +92,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             _componentInstances: { value:
-                Object.keys(opts.components).reduce((final, key) => {
-                    final[key] = {};
-                    return final;
-                }, {})
+                Object.keys(opts.components)
+                    .map(key => key.toLowerCase())
+                    .reduce((final, key) => {
+                        final[key] = {};
+                        return final;
+                    }, {})
             },
             _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
         });
@@ -126,10 +128,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
 
         Object.defineProperty(this, 'components', {
-            value: Object.entries(opts.components).reduce((final, entry) => {
-                final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
-                return final;
-            }, {})
+            value: Object.entries(opts.components)
+                .map(entry => [entry[0].toLowerCase(), entry[1]])
+                .reduce((final, entry) => {
+                    final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
+                    return final;
+                }, {})
         })
 
         Object.entries(this._pipelines).forEach(entry =>
@@ -166,7 +170,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Object.entries(this.components)
                 .reduce((acc, entry) => {
                     return Object.assign(acc, {
-                        [entry[0]]: {
+                        [entry[0].toLowerCase()]: {
                             sourceInstance: this, 
                             componentClass: entry[1]
                         }
@@ -587,6 +591,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     makeComponentInstance(componentName, index, opts) {
+        componentName = componentName.toLowerCase();
         var instance = new (this.components[componentName])({
             store: defaults({
                 $componentID: this.components[componentName]._id,
@@ -598,6 +603,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     getComponentInstance(componentName, index) {
+        componentName = componentName.toLowerCase()
         var instances = this._componentInstances[componentName]
         if (instances && !(index in instances)) {
             this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
