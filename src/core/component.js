@@ -6,6 +6,7 @@ var DeDupe = require('mixwith-es5').DeDupe;
 var Sig = require('./sig');
 var includes = require('../utils/includes');
 var difference = require('../utils/difference');
+var compact = require('array-compact');
 
 Sig.addTypeAlias('CSSString', 'String');
 
@@ -47,25 +48,26 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _isInit: { writable: true, value: false},
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
-            inputs : { value: opts.inputs },
+            inputs : { value: compact(opts.inputs) },
             renderers: { value: {} },
             _tagDirectives: { value: {} },
             _componentListenerCallbacks: {value:{}, writable:true}
         });
 
         var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
-                .filter(entry => this.inputs.find(input => input === entry[0]))
-                .reduce((final, entry) => {
-                    final[entry[1]] = entry[0];
-                    return final;
-                }, {}) : {};
-
+            .filter(entry => this.inputs.find(input => input === entry[0] || input.key === entry[0]))
+            .reduce((final, entry) => {
+                final[entry[1]] = entry[0];
+                return final;
+            }, {}) : {};
+            
         Object.defineProperties(this, {
             props: {
-                value: new Store(this.inputs, {
+                value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
                     inputMappings,
+                    validators: this.inputs.filter(input => typeof input === 'object').reduce((final, inputObj) => Object.assign(final, {[inputObj.key]: {validator: inputObj.validator, required: inputObj.required}}), {}),
                     shouldEvalFunctions: false
                 })
             },
@@ -404,14 +406,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     assignProps(props, parentScope) {
-        this.inputs.filter(input => !(input in props))
-            .forEach(key => {
-                this.props[key] = null;
+        this.inputs.filter(input => !(input in props || input.key in props))
+            .forEach(input => {
+                this.props[input.key || input] = null;
             });
 
         var parsedProps = Object.entries(props)
             .reduce((acc, entry) => {
-                if (this.inputs.includes(entry[0])) {
+                if (this.inputs.some(input => input === entry[0] || input.key === entry[0])) {
                     acc[0][entry[0]] = entry[1];
                 } else if (entry[0].slice(0,2) === 'on' && !(entry[0] in testElement)) {
                     acc[1][entry[0]] = entry[1];

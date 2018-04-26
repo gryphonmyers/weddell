@@ -10,7 +10,8 @@ var uniq = require('array-uniq');
 var defaultOpts = {
     shouldMonitorChanges: true,
     shouldEvalFunctions: true,
-    inputMappings: {}
+    inputMappings: {},
+    validators: {}
 };
 
 var Store = class extends mix(Store).with(EventEmitterMixin) {
@@ -30,6 +31,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
             _firstGet: {writable: true, value: false},
+            _validators: {value: opts.validators},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
@@ -99,6 +101,16 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                     if (this.shouldEvalFunctions && typeof newValue === 'function') {
                         this._funcProps[key] = newValue;
                     } else {
+                        if (key in this._validators) {
+                            var input = this._validators[key];
+                            var val = newValue == null ? this.getValue(key) : newValue;
+                            if (input.required && val == null) {
+                                throw `Required component input missing: ${key}`;
+                            }
+                            if (input.validator && !input.validator(val)) {
+                                throw `Input failed validation: ${key}. Received value: ${val}`;
+                            }
+                        }
                         this._data[key] = newValue;
 
                         if (this.shouldMonitorChanges) {
