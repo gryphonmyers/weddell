@@ -26,40 +26,46 @@ module.exports = function(_Weddell){
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
-                                return componentNames
-                                    .map(componentName => componentName.toLowerCase())
-                                    .reduce((promise, componentName) => {
-                                        return promise
-                                            .then(currentComponent => {
-                                                return currentComponent.getComponentInstance(componentName, 'router')
-                                                    .then(component => {
-                                                        if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
-                                                        jobs.push({
-                                                            component,
-                                                            currentComponent,
-                                                            componentName
-                                                        });
-                                                        return component;
-                                                    });
-                                            })
-                                    }, Promise.resolve(this.component))
-                                    .then(lastComponent => {
-                                        jobs.push({
-                                            currentComponent: lastComponent,
-                                            component: null,
-                                            componentName: null
-                                        });
-                                        return jobs.reduce((promise, obj) => {
+                                return Promise.resolve(this.onBeforeRoute ? this.onBeforeRoute.call(this, { matches, componentNames }) : null)
+                                    .then(() => {
+                                        this.el.classList.add('prerouting-finished');
+                                        
+                                        return componentNames
+                                            .map(componentName => componentName.toLowerCase())
+                                            .reduce((promise, componentName) => {
                                                 return promise
-                                                    .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
-                                            }, Promise.resolve())
+                                                    .then(currentComponent => {
+                                                        return currentComponent.getComponentInstance(componentName, 'router')
+                                                            .then(component => {
+                                                                if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
+                                                                jobs.push({
+                                                                    component,
+                                                                    currentComponent,
+                                                                    componentName
+                                                                });
+                                                                return component;
+                                                            });
+                                                    })
+                                            }, Promise.resolve(this.component))
+                                            .then(lastComponent => {
+                                                jobs.push({
+                                                    currentComponent: lastComponent,
+                                                    component: null,
+                                                    componentName: null
+                                                });
+                                                return jobs.reduce((promise, obj) => {
+                                                        return promise
+                                                            .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                                    }, Promise.resolve())
+                                                    .then(results => {
+                                                        return this.renderPromise ? this.renderPromise.then(() => results) : results;
+                                                    });
+                                            }, console.warn)
                                             .then(results => {
-                                                return this.renderPromise ? this.renderPromise.then(() => results) : results;
-                                            });
-                                    }, console.warn)
-                                    .then(results => {
-                                        this.el.classList.remove('routing');
-                                        return results;
+                                                this.el.classList.remove('routing');
+                                                this.el.classList.remove('prerouting-finished');
+                                                return results;
+                                            })
                                     })
                             }.bind(this),
                             onHashChange: function(hash) {
