@@ -550,11 +550,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     addComponentEvents(componentName, childComponent, index) {
-        if (this.constructor.componentEventListeners && this.constructor.componentEventListeners[componentName]) {
+        var componentKeyIndex;
+        if (this.constructor.componentEventListeners && (componentKeyIndex = Object.keys(this.constructor.componentEventListeners).map(key => key.toLowerCase()).indexOf(componentName)) > -1) {
             if (!(componentName in this._componentListenerCallbacks)) {
                 this._componentListenerCallbacks[componentName] = {}
             }
-            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[componentName])
+            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[Object.keys(this.constructor.componentEventListeners)[componentKeyIndex]])
                 .map(entry => {
                     return childComponent.on(entry[0], function() {
                         if (childComponent._isMounted) {
