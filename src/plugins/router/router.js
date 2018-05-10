@@ -37,7 +37,7 @@ class Router {
         }
     }
 
-    route(pathName, isRedirect) {
+    route(pathName, shouldReplaceState) {
         if (typeof pathName === 'string') {
             var hashIndex = pathName.indexOf('#');
             var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
@@ -49,12 +49,11 @@ class Router {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
             if (matches)  {
-                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), isRedirect);
+                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState);
             }
         }
         if (matches) {
             var isInitialRoute = !this.currentRoute;
-            
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
                     .then(matches => {
@@ -81,10 +80,10 @@ class Router {
                         return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
                             .then(() => matches)
                             .then(matches => {
-                                if (isInitialRoute || isRedirect) {
+                                if (isInitialRoute || shouldReplaceState) {
                                     this.replaceState(matches.fullPath, hash);
                                 } else if (!matches.isCurrentRoute) {
-                                    this.pushState(matches.fullPath, hash, {x:0,y:0});
+                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.route.keepUpdateScrollPos ? null : {x:0,y:0});
                                 }
                                 return matches;
                             });
@@ -170,6 +169,8 @@ class Router {
             return !result;
         });
 
+        result.isRouteUpdate = this.currentRoute && result.route.name === this.currentRoute.route.name;
+
         return result;
     }
 
@@ -181,6 +182,7 @@ class Router {
          /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
+        if (typeof obj === 'string') return obj;
         var paramDefaults = {};
         var routeName;
        
@@ -220,7 +222,7 @@ class Router {
                 match: null
             }];
             matches.route = route;
-            matches.fullPath = fullPath;
+            matches.fullPath = fullPath[0] !== '/' ? '/' + fullPath : fullPath;
             return matches;
         } else {
             console.warn('could not find route with name', routeName);
@@ -299,7 +301,7 @@ class Router {
         var state = history.state;
 
         if (evt && evt.state && evt.state.isWeddellState === true) {
-            var result = this.route(evt.state.fullPath);
+            var result = this.route(evt.state.fullPath, true);
             if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result

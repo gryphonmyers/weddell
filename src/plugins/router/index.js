@@ -26,6 +26,11 @@ module.exports = function(_Weddell){
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
+                                
+                                if (matches.isRouteUpdate) {
+                                    this.el.classList.add('route-update');
+                                }
+                                this.trigger('routematched', {matches});
                                 return Promise.resolve(this.onBeforeRoute ? this.onBeforeRoute.call(this, { matches, componentNames }) : null)
                                     .then(() => {
                                         this.el.classList.add('prerouting-finished');
@@ -64,6 +69,8 @@ module.exports = function(_Weddell){
                                             .then(results => {
                                                 this.el.classList.remove('routing');
                                                 this.el.classList.remove('prerouting-finished');
+                                                this.el.classList.remove('route-update');
+                                                this.trigger('route', {matches, results});
                                                 return results;
                                             })
                                     })
@@ -74,7 +81,11 @@ module.exports = function(_Weddell){
                         });
 
                         this.on('createcomponent', evt => {
+                            this.on('routematched', routeEvt => {
+                                evt.component.state.$currentRoute = routeEvt.matches;
+                            });
                             evt.component.router = this.router;
+                            evt.component.state.$currentRoute = this.router.currentRoute;
                         });
                     }
 
@@ -114,12 +125,16 @@ module.exports = function(_Weddell){
                         opts.stateClass = RouterState;
                         var self;
                         super(defaults(opts, {
+                            state: {
+                                $currentRoute: null
+                            },
                             store: {
                                 $routerLink: function(){
                                     return self.compileRouterLink.apply(self, arguments);
                                 }
                             }
                         }));
+
                         self = this;
 
                         this.addTagDirective('RouterView', this.compileRouterView.bind(this));
@@ -161,8 +176,10 @@ module.exports = function(_Weddell){
 
                     compileRouterLink(obj) {
                         var matches = this.router.compileRouterLink(obj);
-                        if (matches) {
+                        if (matches && typeof matches === 'object') {
                             return matches.fullPath;
+                        } else if (typeof matches === 'string') {
+                            return matches;
                         }
                     }
 
