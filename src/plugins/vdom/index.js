@@ -22,11 +22,16 @@ class VDOMWidget {
         this.type = 'Widget';
         this.vTree = opts.vTree;
         this.onUpdate = opts.onUpdate;
+        this.onInit = opts.onInit;
         this.componentID = opts.componentID;
     }
     
     init() {
-        return this.vTree ? createElement(this.vTree) : null;
+        var el = this.vTree ? createElement(this.vTree) : null;
+        if (this.onInit) {
+            this.onInit(el, this);
+        }
+        return el;
     }
 
     update(previousWidget, prevDOMNode) {
@@ -128,10 +133,11 @@ module.exports = function(Weddell, pluginOpts) {
                                     }
                                     vTree = vTree[0];
                                 }
-                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({ 
+                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({
                                     vTree,
                                     componentID: this._id,
-                                    onUpdate: this.onVDOMUpdate.bind(this)
+                                    onUpdate: this.onVDOMUpdate.bind(this),
+                                    onInit: this.onVDOMInit.bind(this)
                                 }) : vTree : null;
                             }
                         }))
@@ -143,8 +149,21 @@ module.exports = function(Weddell, pluginOpts) {
                         //no op
                     }
 
+                    onDOMCreate() {
+                        
+                    }
+
+                    onDOMChange() {
+
+                    }
+
                     resolveTagDirective(node, directive) {
 
+                    }
+
+                    onVDOMInit(el, vTree) {
+                        this._el = el;
+                        this.onDOMCreate.call(this, { el });
                     }
 
                     onVDOMUpdate(el, vTree, patches) {
@@ -155,6 +174,9 @@ module.exports = function(Weddell, pluginOpts) {
                                 if (this.onDOMMove) this.onDOMMove.call(this, el);
                             }
                         }
+                        if (this._el !== el) {
+                            this.onDOMChange.call(this, { newEl: el });
+                        }                        
                         this._el = el;
                     }
 
@@ -168,7 +190,7 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.type === 'Widget') {
                             return this.replaceVNodeComponents(node.vTree, content, renderedComponents, isContent)
                                 .then(output => {
-                                    return new VDOMWidget({vTree: output, onUpdate: node.onUpdate, componentID: node.componentID })
+                                    return new VDOMWidget({vTree: output, onInit: node.onInit, onUpdate: node.onUpdate, componentID: node.componentID })
                                 });                            
                         }
                         

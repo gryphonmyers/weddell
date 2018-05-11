@@ -45,6 +45,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 return this._renderPromise || (opts.parentComponent ? opts.parentComponent.renderPromise : null)
             }},
             _hasMounted: {writable:true, value: false},
+            _hasRendered: {writable:true, value: false},
             _isInit: { writable: true, value: false},
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             _id : { value: generateHash() },
@@ -543,6 +544,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                         return evObj;
                                     });
                             });
+                    })
+                    .then(output => {
+                        if (!this._hasRendered) {
+                            this._hasRendered = true;
+                            return Promise.resolve(this.onFirstRender ? this.onFirstRender.call(this) : null)
+                                .then(() => output);
+                        }
+                        return output;
                     })
                     .then(resolve);
             })
