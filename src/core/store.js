@@ -85,6 +85,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         this.on('change', evt => {
             delete this._cache[evt.changedKey];
         });
+
+        Object.seal(this);
     }
 
     set(key, val, isReadOnly) {
