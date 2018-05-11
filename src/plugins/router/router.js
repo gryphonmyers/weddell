@@ -182,7 +182,7 @@ class Router {
          /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
-        if (typeof obj === 'string' || !obj) return obj;
+        if (typeof obj === 'string') return obj;
         var paramDefaults = {};
         var routeName;
        
