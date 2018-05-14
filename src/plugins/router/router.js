@@ -168,8 +168,10 @@ class Router {
 
             return !result;
         });
-
-        result.isRouteUpdate = this.currentRoute && result.route.name === this.currentRoute.route.name;
+        
+        if (result) {
+            result.isRouteUpdate = this.currentRoute && result.route.name === this.currentRoute.route.name;
+        }        
 
         return result;
     }
