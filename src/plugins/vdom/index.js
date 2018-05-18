@@ -157,6 +157,10 @@ module.exports = function(Weddell, pluginOpts) {
 
                     }
 
+                    onDOMCreateOrChange() {
+
+                    }
+
                     resolveTagDirective(node, directive) {
 
                     }
@@ -164,20 +168,25 @@ module.exports = function(Weddell, pluginOpts) {
                     onVDOMInit(el, vTree) {
                         this._el = el;
                         this.onDOMCreate.call(this, { el });
+                        this.onDOMCreateOrChange.call(this, { el, prevEl: null });
                     }
 
                     onVDOMUpdate(el, vTree, patches) {
-                        if (this._el) {
-                            var positionComparison = this._el.compareDocumentPosition(el);
-                            if (positionComparison !== 0) {
-                                this.trigger("dommove", { newEl: el });
-                                if (this.onDOMMove) this.onDOMMove.call(this, el);
+                        var prevEl = this._el;
+
+                        if (el !== prevEl) {
+                            this._el = el;
+                            this.onDOMChange.call(this, { newEl: el, prevEl });
+                            this.onDOMCreateOrChange.call(this, { newEl: el, prevEl });
+
+                            if (prevEl) {
+                                var positionComparison = prevEl.compareDocumentPosition(el);
+                                if (positionComparison !== 0) {
+                                    this.trigger("dommove", { newEl: el, prevEl });
+                                    if (this.onDOMMove) this.onDOMMove.call(this, { newEl: el, prevEl });
+                                }
                             }
-                        }
-                        if (this._el !== el) {
-                            this.onDOMChange.call(this, { newEl: el });
                         }                        
-                        this._el = el;
                     }
 
                     replaceVNodeComponents(node, content, renderedComponents, isContent) {
