@@ -142,7 +142,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             if (obj.staticStyles) {
                 var staticObj = {
                     class: obj.component.constructor,
-                    styles: obj.staticStyles.trim()
+                    styles: (typeof obj.staticStyles === 'string' ? obj.staticStyles.trim() : '')
                 };
                 if (this.childStylesFirst) {
                     staticStyles.unshift(staticObj)
