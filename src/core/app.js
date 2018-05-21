@@ -18,6 +18,13 @@ var defaultOpts = {
     childStylesFirst: true
 };
 
+function createStyleEl() {
+    var styleEl = document.createElement('style');
+    styleEl.setAttribute('type', 'text/css');
+    document.head.appendChild(styleEl);
+    return styleEl;
+}
+
 var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
@@ -67,21 +74,53 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         };
     }
 
-    renderCSS(CSSString) {
-        this.styleEl.textContent = CSSString;
+    renderCSS(staticStyles=[], instanceStyles=[]) {
+        if (this.styles && !this.styleEl.textContent) {
+            this.styleEl.textContent = this.styles;
+        }
+        var prevEl;
+        var leftovers = staticStyles.concat(instanceStyles).reduce((final, obj) => {
+            var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
+            var styleEl;
+
+            if (styleIndex === -1) {
+                styleEl = createStyleEl();
+                styleEl.id = 'weddell-style-' + obj.id;
+                styleEl.classList.add('weddell-style');
+            } else {
+                styleEl = final.splice(styleIndex, 1)[0];
+            }
+
+            if (!(styleEl.textContent === obj.styles)) {
+                styleEl.textContent = obj.styles;
+            }
+
+            if (prevEl) {
+                var comparison = prevEl.compareDocumentPosition(styleEl);
+                if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                    prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                }
+            }
+
+            prevEl = styleEl;
+
+            return final;
+        }, Array.from(document.querySelectorAll('head style.weddell-style')));
+
+        leftovers.forEach(el => {
+            document.head.removeChild(el);
+        });
     }
 
     initStylesPipeline() {
         if (typeof this.styleEl == 'string') {
             this.styleEl = document.querySelector(this.styleEl);
         } else if (!this.styleEl) {
-            this.styleEl = document.createElement('style');
-            this.styleEl.setAttribute('type', 'text/css');
-            document.head.appendChild(this.styleEl);
+            this.styleEl = createStyleEl();
         }
         var appStyles = this.styles;
         if (appStyles) {
-            this.renderCSS(appStyles);
+            this.renderCSS();
         }
     }
 
@@ -97,13 +136,13 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         var staticStyles = [];
         
         var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
-            var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
+            var childStyles = (obj.components ? obj.components.map(flattenStyles) : []).reduce((final, item) => final.concat(item), []);
+            var styles = Array.isArray(obj) ? obj.map(flattenStyles) : ({ styles: obj.output ? obj.output.trim() : '', id: obj.component._id });
 
             if (obj.staticStyles) {
                 var staticObj = {
                     class: obj.component.constructor,
-                    styles: obj.staticStyles
+                    styles: obj.staticStyles.trim()
                 };
                 if (this.childStylesFirst) {
                     staticStyles.unshift(staticObj)
@@ -111,20 +150,20 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     staticStyles.push(staticObj)
                 }
             }
-
-            return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
+            return (this.childStylesFirst ? childStyles.concat(styles) : [styles].concat(childStyles));
         };
-        var instanceStyles = flattenStyles(evt);
+        var instanceStyles = flattenStyles(evt)
+            .filter(item => item.styles);
 
         staticStyles = staticStyles.reduce((finalArr, styleObj) => {
             if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class._BaseClass === styleObj.class._BaseClass || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
                 return finalArr.concat(styleObj)
             }
             return finalArr;
-        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
+        }, [])
+        .map(item => ({ id: item.class._id || 'root', styles: item.styles }))
 
-        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
-        this.renderCSS(styles);
+        this.renderCSS(staticStyles, instanceStyles);
 
         this.component.trigger('renderdomstyles', Object.assign({}, evt));
     }
