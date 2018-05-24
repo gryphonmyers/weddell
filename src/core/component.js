@@ -150,7 +150,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         ['props', 'state'].forEach((propName) => {
             this[propName].on('change', evt => {
-                this.markDirty(evt.changedKey);
+                if (evt.target === this[propName]) {
+                    this.markDirty(evt.changedKey);
+                }
             })
         });
 
@@ -516,21 +518,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                     components,
                                     renderFormat
                                 };
-        
+
                                 var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
-        
+
                                 if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
                                     this.trigger("componentschange", {componentClasses, components})
                                 }
                                 this._lastRenderedComponentClasses = componentClasses;
-        
+
                                 return Promise.all(
                                         Object.entries(this._componentInstances)
                                             .reduce((finalArr, entry) => {
                                                 var componentInstances = Object.values(entry[1]);
                                                 var componentName = entry[0];
                                                 var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
-        
+
                                                 return finalArr.concat(
                                                     componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
                                                         return renderedComponent.componentOutput.component !== instance

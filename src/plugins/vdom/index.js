@@ -133,16 +133,20 @@ module.exports = function(Weddell, pluginOpts) {
                                     }
                                     vTree = vTree[0];
                                 }
-                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({
-                                    vTree,
-                                    componentID: this._id,
-                                    onUpdate: this.onVDOMUpdate.bind(this),
-                                    onInit: this.onVDOMInit.bind(this)
-                                }) : vTree : null;
+                                
+                                return vTree || null;
                             }
                         }))
 
-                        this.renderers.VNode = this.replaceVNodeComponents.bind(this);
+                        this.renderers.VNode = (output, content) => {
+                            return Promise.resolve(output ? this.replaceVNodeComponents(output, content)
+                                .then(vTree => vTree.type !== 'Widget' ? new VDOMWidget({
+                                    vTree: vTree,
+                                    componentID: this._id,
+                                    onUpdate: this.onVDOMUpdate.bind(this),
+                                    onInit: this.onVDOMInit.bind(this)
+                                }) : vTree) : null);
+                        };
                     }
 
                     onDOMMove() {
@@ -197,17 +201,14 @@ module.exports = function(Weddell, pluginOpts) {
                         }
 
                         if (node.type === 'Widget') {
-                            return this.replaceVNodeComponents(node.vTree, content, renderedComponents, isContent)
-                                .then(output => {
-                                    return new VDOMWidget({vTree: output, onInit: node.onInit, onUpdate: node.onUpdate, componentID: node.componentID })
-                                });                            
+                            return Promise.resolve(node);                 
                         }
                         
                         if (Array.isArray(node)) {
-                            return Promise.all(compact(node).reduce((final, childNode) => {
-                                var result = this.replaceVNodeComponents(childNode, content, renderedComponents, isContent);
-                                return result ? final.concat(result) : final;
-                            }, []));
+                            return Promise.all(compact(
+                                node.map((childNode) => 
+                                    this.replaceVNodeComponents(childNode, content, renderedComponents, isContent))
+                            ));
                         }
 
                         var Sig = this.constructor.Weddell.classes.Sig;

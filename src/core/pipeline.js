@@ -15,7 +15,7 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
             static: {value: null, writable: true},
             onRender: {value: opts.onRender},
             _store: {value: opts.store},
-            _cache: {value: null, writable: true},
+            _cache: {writable: true},
             _watchedProperties: {value: {}, writable: true},
             _promise: {value: Promise.resolve(), writable: true},
             _requestHandle: {value: null, writable: true},
@@ -92,7 +92,6 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
             transforms = Transform.getTransformPath(this.transforms, this.inputFormat, targetRenderFormat);
 
             if (!transforms){
-                debugger;
                 throw "Could not find appropriate transform for " + this.inputFormat.validated + " to " + targetRenderFormat.validated;
             }
 
@@ -116,20 +115,21 @@ var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
     }
 
     render(targetFormat) {
-        if (this.isDirty || !this._cache) {
+        if (this.isDirty || typeof this._cache === 'undefined') {
             var Sig = this.constructor.Weddell.classes.Sig;
             var template = this.getTemplate(targetFormat ? new Sig(targetFormat) : this.targetRenderFormat);
             var accessed = {};
             var off = this._store.on('get', function(evt){
                 accessed[evt.key] = 1;
             });
-            var output = template ? this.callTemplate(this._store, template) : this.static;
+            var output = template ? this.callTemplate(this._store, template) : this.static || null;
             //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
             off();
             this._watchedProperties = accessed;
             this.isDirty = false;
-            return Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
-                .then(() => {
+            return Promise.resolve(this.onRender ? this.onRender.call(this, output) : null)
+                .then(() => output)
+                .then(output => {
                     this._cache = output
                     this.trigger('render', {output});
                     return output;
