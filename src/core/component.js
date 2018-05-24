@@ -150,9 +150,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         ['props', 'state'].forEach((propName) => {
             this[propName].on('change', evt => {
-                if (evt.target === this[propName]) {
-                    this.markDirty(evt.changedKey);
-                }
+                this.markDirty(evt.changedKey);
             })
         });
 
