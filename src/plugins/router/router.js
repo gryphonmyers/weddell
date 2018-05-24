@@ -54,6 +54,7 @@ class Router {
         }
         if (matches) {
             var isInitialRoute = !this.currentRoute;
+            
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
                     .then(matches => {
@@ -83,14 +84,13 @@ class Router {
                                 if (isInitialRoute || shouldReplaceState) {
                                     this.replaceState(matches.fullPath, hash);
                                 } else if (!matches.isCurrentRoute) {
-                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.route.keepUpdateScrollPos ? null : {x:0,y:0});
+                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : {x:0,y:0});
                                 }
                                 return matches;
                             });
                     }, redirectPath => {
                         return this.route(redirectPath, true)
                     });
-    
                 this.currentRoute = matches;
             }
             return promise;                
@@ -170,7 +170,10 @@ class Router {
         });
         
         if (result) {
-            result.isRouteUpdate = this.currentRoute && result.route.name === this.currentRoute.route.name;
+            result.isRouteUpdate = !!(this.currentRoute && result.route.name === this.currentRoute.route.name);
+            result.keepUpdateScrollPos = result.isRouteUpdate && !!(typeof result.route.keepUpdateScrollPos === 'function' ? 
+                        (result.route.keepUpdateScrollPos.call(this, {newRoute: result, prevRoute: this.currentRoute})) : 
+                        result.route.keepUpdateScrollPos);
         }        
 
         return result;
