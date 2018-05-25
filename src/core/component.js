@@ -150,7 +150,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         ['props', 'state'].forEach((propName) => {
             this[propName].on('change', evt => {
-                this.markDirty(evt.changedKey);
+                if (evt.target !== this[propName]) {
+                    if (this.checkChangedKey(evt.changedKey)) {
+                        this.scheduleRender();
+                    }
+                }
             })
         });
 
@@ -165,7 +169,73 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         this.getParent = () => opts.parentComponent || null;
 
+        this.vNodeTemplate = this.constructor.makeVNodeTemplate(opts.markup, this.constructor.markup);
+        this.stylesTemplate = this.constructor.makeStylesTemplate(opts.styles, this.constructor.styles);
+        this.vTree = null;
+        this.vDOMWidget = null;
+        this.constructor.mountedInstances = ;
+        
+        this.constructor.instances[this._id] = this;
+
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+    }
+
+    static get mountedInstances() {
+        return staticProps.mountedInstaces;
+    }
+
+
+    static get mountedComponents() {
+        return {};
+        return this._
+    }
+
+    static set mountedComponents(val) {
+        this._mountedComponents = {};
+    }
+
+    static makeVNodeTemplate(input, staticInput) {
+        /*
+        * Take instance and static template inputs, return a function that will generate the correct output.
+        */
+
+        return [input, staticInput].reduce((acc, curr) => {
+            if (!acc) {
+                if (typeof curr === 'function') {
+                    return curr;
+                }
+                if (typeof curr === 'string') {
+                    //TODO support template string parser;
+                }
+            }
+            return acc;
+        }, null);
+    }
+
+    static makeStylesTemplate(input) {
+        if (this.constructor.styles) {
+
+        }
+    }
+
+    renderVNode() {
+        var accessed = {};
+        this.state.on('get', evt => {
+            accessed[evt.changedKey] = 1;
+        });
+
+        this.constructor.markup
+    }
+
+    renderStyles() {
+        this.constructor.styles
+
+        //Render static styles
+
+    }
+
+    checkChangedKey() {
+
     }
 
     collectComponentTree() {
@@ -211,13 +281,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         //Default event handler, noop
     }
 
-    onRenderMarkup() {
-        //Default event handler, noop
-    }
+    // onRenderMarkup() {
+    //     //Default event handler, noop
+    // }
 
-    onRenderStyles() {
-        //Default event handler, noop
-    }
+    // onRenderStyles() {
+    //     //Default event handler, noop
+    // }
 
     addTagDirective(name, directive) {
         this._tagDirectives[name.toUpperCase()] = directive;
@@ -329,55 +399,55 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
-    scheduleRender(pipelineName) {
-        return (pipelineName ? [pipelineName] : Object.keys(this._pipelines))
-            .map((pipelineName) => {
-                return this.trigger('wantsrender', {pipelineName});
-            });   
-    }
+    // scheduleRender(pipelineName) {
+    //     return (pipelineName ? [pipelineName] : Object.keys(this._pipelines))
+    //         .map((pipelineName) => {
+    //             return this.trigger('wantsrender', {pipelineName});
+    //         });   
+    // }
 
-    markDirty(changedKey, pipelineName) {
-        return (pipelineName ? [[pipelineName, this._pipelines[pipelineName]]] : Object.entries(this._pipelines))
-            .map((entry) => {
-                return entry[1].markDirty(changedKey);
-            });
-    }
+    // markDirty(changedKey, pipelineName) {
+    //     return (pipelineName ? [[pipelineName, this._pipelines[pipelineName]]] : Object.entries(this._pipelines))
+    //         .map((entry) => {
+    //             return entry[1].markDirty(changedKey);
+    //         });
+    // }
 
-    renderStyles() {
-        this.trigger('beforerenderstyles');
+    // renderStyles() {
+    //     this.trigger('beforerenderstyles');
 
-        return this._pipelines.styles.render()
-            .then(output => {
-                return Promise.all(this.getMountedChildComponents().map(instance => instance.renderStyles()))
-                    .then(components => {
-                        var evtObj = {
-                            component: this,
-                            components,
-                            wasRendered: true,
-                            renderFormat: this._pipelines.styles.targetRenderFormat
-                        };
+    //     return this._pipelines.styles.render()
+    //         .then(output => {
+    //             return Promise.all(this.getMountedChildComponents().map(instance => instance.renderStyles()))
+    //                 .then(components => {
+    //                     var evtObj = {
+    //                         component: this,
+    //                         components,
+    //                         wasRendered: true,
+    //                         renderFormat: this._pipelines.styles.targetRenderFormat
+    //                     };
 
-                        Object.defineProperties(evtObj, {
-                            staticStyles: {
-                                enumerable: true,
-                                get: function(){
-                                    return this.constructor.styles || null;
-                                }.bind(this)
-                            },
-                            output: {
-                                enumerable: true,
-                                get: function(){
-                                    return output
-                                }
-                            }
-                        })
+    //                     Object.defineProperties(evtObj, {
+    //                         staticStyles: {
+    //                             enumerable: true,
+    //                             get: function(){
+    //                                 return this.constructor.styles || null;
+    //                             }.bind(this)
+    //                         },
+    //                         output: {
+    //                             enumerable: true,
+    //                             get: function(){
+    //                                 return output
+    //                             }
+    //                         }
+    //                     })
 
-                        this.trigger('renderstyles', evtObj);
+    //                     this.trigger('renderstyles', evtObj);
 
-                        return evtObj;
-                    });
-            });
-    }
+    //                     return evtObj;
+    //                 });
+    //         });
+    // }
 
     getMountedChildComponents() {
         return Object.entries(this.components)
@@ -388,23 +458,23 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }, [])
     }
 
-    render(pipelineType) {
-        this.trigger('beforerender');
+    // render(pipelineType) {
+    //     this.trigger('beforerender');
 
-        if (!pipelineType) {
-            return Promise.all(Object.keys(this._pipelines).map(pipelineType => this.render.call(this, pipelineType)));
-        }
-        var pipeline = this._pipelines[pipelineType];
-        var args =  Array.from(arguments).slice(1);
+    //     if (!pipelineType) {
+    //         return Promise.all(Object.keys(this._pipelines).map(pipelineType => this.render.call(this, pipelineType)));
+    //     }
+    //     var pipeline = this._pipelines[pipelineType];
+    //     var args =  Array.from(arguments).slice(1);
 
-        var output = this[this._renderMethods[pipelineType]].apply(this, args);
+    //     var output = this[this._renderMethods[pipelineType]].apply(this, args);
 
-        return Promise.resolve(output)
-            .then(evt => {
-                this.trigger('render', Object.assign({}, evt));
-                return evt;
-            });
-    }
+    //     return Promise.resolve(output)
+    //         .then(evt => {
+    //             this.trigger('render', Object.assign({}, evt));
+    //             return evt;
+    //         });
+    // }
 
     assignProps(props, parentScope) {
         this.inputs.filter(input => !(input in props || input.key in props))
@@ -464,99 +534,99 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    renderMarkup(content, props, targetFormat, parentScope) {
-        this.trigger('beforerendermarkup');
+    // renderMarkup(content, props, targetFormat, parentScope) {
+    //     this.trigger('beforerendermarkup');
 
-        var pipeline = this._pipelines.markup;
+    //     var pipeline = this._pipelines.markup;
 
-        if (!targetFormat) {
-            targetFormat = pipeline.targetRenderFormat;
-        }
+    //     if (!targetFormat) {
+    //         targetFormat = pipeline.targetRenderFormat;
+    //     }
         
-        if (props) {
-            this.assignProps(props, parentScope)
-        }
+    //     if (props) {
+    //         this.assignProps(props, parentScope)
+    //     }
 
-        var components = [];
-        var off = this.on('rendercomponent', componentResult => {
-            if (!(componentResult.componentName in components)) {
-                components[componentResult.componentName] = [];
-            }
-            components[componentResult.componentName].push(componentResult)
-            components.push(componentResult);
-        });
-        return new Promise((resolve, reject) => {
-            requestAnimationFrame(() => {
-                Promise.resolve()
-                    .then(() => {
-                        if (!this._isMounted) {
-                            this._isMounted = true;
-                            return this.onMount ? this.onMount.call(this) : null;
-                        }
-                    })
-                    .then(() => {
-                        if (!this._hasMounted) {
-                            this._hasMounted = true;
-                            return this.onFirstMount ? this.onFirstMount.call(this) : null;
-                        }
-                    })
-                    .then(() => pipeline.render(targetFormat))
-                    .then(output => {
-                        var renderFormat = targetFormat.val;
-                        if (!(renderFormat in this.renderers)) {
-                            throw "No appropriate component markup renderer found for format: " + renderFormat;
-                        }
-                        return this.renderers[renderFormat].call(this, output, content)
-                            .then(output => {
-                                off();
-                                var evObj = {
-                                    output,
-                                    component: this,
-                                    id: this._id,
-                                    components,
-                                    renderFormat
-                                };
+    //     var components = [];
+    //     var off = this.on('rendercomponent', componentResult => {
+    //         if (!(componentResult.componentName in components)) {
+    //             components[componentResult.componentName] = [];
+    //         }
+    //         components[componentResult.componentName].push(componentResult)
+    //         components.push(componentResult);
+    //     });
+    //     return new Promise((resolve, reject) => {
+    //         requestAnimationFrame(() => {
+    //             Promise.resolve()
+    //                 .then(() => {
+    //                     if (!this._isMounted) {
+    //                         this._isMounted = true;
+    //                         return this.onMount ? this.onMount.call(this) : null;
+    //                     }
+    //                 })
+    //                 .then(() => {
+    //                     if (!this._hasMounted) {
+    //                         this._hasMounted = true;
+    //                         return this.onFirstMount ? this.onFirstMount.call(this) : null;
+    //                     }
+    //                 })
+    //                 .then(() => pipeline.render(targetFormat))
+    //                 .then(output => {
+    //                     var renderFormat = targetFormat.val;
+    //                     if (!(renderFormat in this.renderers)) {
+    //                         throw "No appropriate component markup renderer found for format: " + renderFormat;
+    //                     }
+    //                     return this.renderers[renderFormat].call(this, output, content)
+    //                         .then(output => {
+    //                             off();
+    //                             var evObj = {
+    //                                 output,
+    //                                 component: this,
+    //                                 id: this._id,
+    //                                 components,
+    //                                 renderFormat
+    //                             };
         
-                                var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
+    //                             var componentClasses = components.map(comp => comp.componentOutput.component.constructor._BaseClass);
         
-                                if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
-                                    this.trigger("componentschange", {componentClasses, components})
-                                }
-                                this._lastRenderedComponentClasses = componentClasses;
+    //                             if (this._lastRenderedComponentClasses  && this._lastRenderedComponentClasses.length && difference(componentClasses, this._lastRenderedComponentClasses).length) {
+    //                                 this.trigger("componentschange", {componentClasses, components})
+    //                             }
+    //                             this._lastRenderedComponentClasses = componentClasses;
         
-                                return Promise.all(
-                                        Object.entries(this._componentInstances)
-                                            .reduce((finalArr, entry) => {
-                                                var componentInstances = Object.values(entry[1]);
-                                                var componentName = entry[0];
-                                                var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
+    //                             return Promise.all(
+    //                                     Object.entries(this._componentInstances)
+    //                                         .reduce((finalArr, entry) => {
+    //                                             var componentInstances = Object.values(entry[1]);
+    //                                             var componentName = entry[0];
+    //                                             var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
         
-                                                return finalArr.concat(
-                                                    componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
-                                                        return renderedComponent.componentOutput.component !== instance
-                                                    }))
-                                                );
-                                            }, [])
-                                            .map(unrenderedComponent => unrenderedComponent.unmount())
-                                    )
-                                    .then(() => {
-                                        this.trigger('rendermarkup', Object.assign({}, evObj));
-                                        return evObj;
-                                    });
-                            });
-                    })
-                    .then(output => {
-                        if (!this._hasRendered) {
-                            this._hasRendered = true;
-                            return Promise.resolve(this.onFirstRender ? this.onFirstRender.call(this) : null)
-                                .then(() => output);
-                        }
-                        return output;
-                    })
-                    .then(resolve);
-            })
-        })
-    }
+    //                                             return finalArr.concat(
+    //                                                 componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
+    //                                                     return renderedComponent.componentOutput.component !== instance
+    //                                                 }))
+    //                                             );
+    //                                         }, [])
+    //                                         .map(unrenderedComponent => unrenderedComponent.unmount())
+    //                                 )
+    //                                 .then(() => {
+    //                                     this.trigger('rendermarkup', Object.assign({}, evObj));
+    //                                     return evObj;
+    //                                 });
+    //                         });
+    //                 })
+    //                 .then(output => {
+    //                     if (!this._hasRendered) {
+    //                         this._hasRendered = true;
+    //                         return Promise.resolve(this.onFirstRender ? this.onFirstRender.call(this) : null)
+    //                             .then(() => output);
+    //                     }
+    //                     return output;
+    //                 })
+    //                 .then(resolve);
+    //         })
+    //     })
+    // }
 
     addComponentEvents(componentName, childComponent, index) {
         var componentKeyIndex;
