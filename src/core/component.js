@@ -3,12 +3,70 @@ var defaults = require('object.defaults/immutable');
 var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
 var DeDupe = require('mixwith-es5').DeDupe;
-var Sig = require('./sig');
+// var Sig = require('./sig');
 var includes = require('../utils/includes');
 var difference = require('../utils/difference');
 var compact = require('array-compact');
+var h = require('virtual-dom/h');
+var svg = require('virtual-dom/virtual-hyperscript/svg');
+// Sig.addTypeAlias('CSSString', 'String');
 
-Sig.addTypeAlias('CSSString', 'String');
+class VDOMWidget {
+
+    constructor(opts) {
+        this.type = 'Widget';
+        // this.WeddellComponentClass = opts.WeddellComponentClass;
+        this.weddellComponent = null;
+        this.parentWeddellComponent = opts.parentWeddellComponent;
+        this.weddellComponentName = opts.weddellComponentName;
+        this.weddellComponentIndex = opts.weddellComponentIndex;
+        this.content = opts.content;
+        this.props = opts.props;
+
+        this.vTree = opts.vTree;
+        this.onUpdate = opts.onUpdate;
+        this.onInit = opts.onInit;
+        this.componentID = opts.componentID;
+    }
+    
+    init() {
+        this.weddellComponent = this.parentWeddellComponent
+            .makeComponentInstance(this.weddellComponentName, this.weddellComponentIndex);
+
+        this._componentInstances[this.weddellComponentName] = this.weddellComponent;
+
+        this.parentWeddellComponent._componentInstances
+
+            // node.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentEntry[0]].length
+
+        var el = this.vTree ? createElement(this.vTree) : null;
+
+        if (this.onInit) {
+            this.onInit(el, this);
+        }
+        return el;
+    }
+
+    update(previousWidget, prevDOMNode) {
+        if (Array.isArray(this.vTree)) {
+            throw "Cannot render a component with multiple nodes at root!";
+        }
+
+        var patches = VDOMDiff(previousWidget.vTree, this.vTree);
+        var el = VDOMPatch(prevDOMNode, patches);
+
+        if (el && patches) {
+            if (this.onUpdate) {
+                this.onUpdate(el, this, patches)
+            }
+        }
+        return el;
+    }
+
+    destroy(DOMNode) {
+
+    }
+}
 
 var defaultOpts = {
     components: {},
@@ -16,7 +74,7 @@ var defaultOpts = {
     state: {},
     inputs: [],
     isRoot: false,
-    stylesFormat: 'CSSString'
+    // stylesFormat: 'CSSString'
 };
 var defaultInitOpts = {};
 var _generatedComponentClasses = [];
@@ -26,8 +84,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        Sig = this.constructor.Weddell.classes.Sig;
-        var Pipeline = this.constructor.Weddell.classes.Pipeline;
+        // Sig = this.constructor.Weddell.classes.Sig;
+        // var Pipeline = this.constructor.Weddell.classes.Pipeline;
         var Store = this.constructor.Weddell.classes.Store;
 
         Object.defineProperties(this, {
@@ -105,30 +163,30 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
         });
 
-        Object.defineProperty(this, '_pipelines', {
-            value: {
-                markup: new Pipeline({
-                    name: 'markup',
-                    store: this._locals,
-                    onRender: this.onRenderMarkup.bind(this),
-                    isDynamic: !!opts.markupTemplate,
-                    inputFormat: new Sig(opts.markupFormat),
-                    transforms: opts.markupTransforms,
-                    targetRenderFormat: opts.targetMarkupRenderFormat,
-                    input: opts.markupTemplate ? opts.markupTemplate.bind(this) : (opts.markup || null)
-                }),
-                styles: new Pipeline({
-                    name: 'styles',
-                    store: this._locals,
-                    onRender: this.onRenderStyles.bind(this),
-                    isDynamic: !!opts.stylesTemplate,
-                    inputFormat: new Sig(opts.stylesFormat),
-                    transforms: opts.stylesTransforms,
-                    targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate ? opts.stylesTemplate.bind(this) : (opts.styles || ' ')
-                })
-            }
-        });
+        // Object.defineProperty(this, '_pipelines', {
+        //     value: {
+        //         markup: new Pipeline({
+        //             name: 'markup',
+        //             store: this._locals,
+        //             onRender: this.onRenderMarkup.bind(this),
+        //             isDynamic: !!opts.markupTemplate,
+        //             inputFormat: new Sig(opts.markupFormat),
+        //             transforms: opts.markupTransforms,
+        //             targetRenderFormat: opts.targetMarkupRenderFormat,
+        //             input: opts.markupTemplate ? opts.markupTemplate.bind(this) : (opts.markup || null)
+        //         }),
+        //         styles: new Pipeline({
+        //             name: 'styles',
+        //             store: this._locals,
+        //             onRender: this.onRenderStyles.bind(this),
+        //             isDynamic: !!opts.stylesTemplate,
+        //             inputFormat: new Sig(opts.stylesFormat),
+        //             transforms: opts.stylesTransforms,
+        //             targetRenderFormat: opts.targetStylesRenderFormat,
+        //             input: opts.stylesTemplate ? opts.stylesTemplate.bind(this) : (opts.styles || ' ')
+        //         })
+        //     }
+        // });
 
         Object.defineProperty(this, 'components', {
             value: Object.entries(opts.components)
@@ -139,14 +197,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 }, {})
         })
 
-        Object.entries(this._pipelines).forEach(entry =>
-            entry[1].on('markeddirty', evt => {
-                this.trigger('markeddirty', Object.assign({
-                    pipeline: entry[1],
-                    pipelineName: entry[0]
-                }, evt))
-            })
-        );
+        // Object.entries(this._pipelines).forEach(entry =>
+        //     entry[1].on('markeddirty', evt => {
+        //         this.trigger('markeddirty', Object.assign({
+        //             pipeline: entry[1],
+        //             pipelineName: entry[0]
+        //         }, evt))
+        //     })
+        // );
 
         ['props', 'state'].forEach((propName) => {
             this[propName].on('change', evt => {
@@ -162,10 +220,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this.markDirty(null, 'styles');
         });
 
-        this.on('markeddirty', evt => {
-            //if it's a markup render, render both
-            this.scheduleRender(evt.pipelineName === 'markup' ? null : evt.pipelineName);
-        });
+        // this.on('markeddirty', evt => {
+        //     //if it's a markup render, render both
+        //     this.scheduleRender(evt.pipelineName === 'markup' ? null : evt.pipelineName);
+        // });
 
         this.getParent = () => opts.parentComponent || null;
 
@@ -173,7 +231,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this.stylesTemplate = this.constructor.makeStylesTemplate(opts.styles, this.constructor.styles);
         this.vTree = null;
         this.vDOMWidget = null;
-        this.constructor.mountedInstances = ;
+        // this.constructor.mountedInstances = ;
         
         this.constructor.instances[this._id] = this;
 
@@ -220,11 +278,66 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     renderVNode() {
         var accessed = {};
+        
         this.state.on('get', evt => {
             accessed[evt.changedKey] = 1;
         });
 
-        this.constructor.markup
+        var vTree = this.vNodeTemplate.call(this, this.store, h);
+
+        if (Array.isArray(vTree)) {
+            if (vTree.length > 1) {
+                console.warn('Template output was truncated in', this.constructor.name, 'component. Component templates must return a single vNode!');
+            }            
+            vTree = vTree[0];
+        }
+        
+        this.vTree = this.replaceComponentPlaceholders(vTree);
+    }
+
+    replaceComponentPlaceholders(vNode) {
+        var components;
+        var componentName = vNode.tagName.toLowerCase();
+
+        if (componentName === 'content') {
+            return this.vDOMWidget.content;
+        } else if (componentName in (components = this.collectComponentTree())) {
+            var props = vNode.properties.attributes;
+            var content = vNode.children;
+
+            return this.getInitComponentInstance()
+                .then(instance => {
+                    return new VDOMWidget({
+                        parentWeddellComponent: this,
+                        weddellComponentName: componentName,
+                        content,
+                        props
+                    });
+                });
+                            
+        } else if (vNode.children) {
+            var didChange = false;
+            var children = vNode.children.reduce((acc, child) => {
+                var newChild = this.replaceComponentPlaceholders(child);
+                if (newChild !== child) {
+                    didChange = true;
+                }
+                if (newChild) {
+                    return acc.concat(newChild);
+                }
+                return acc;
+            }, []);
+
+            if (didChange) {
+                var properties = Object.assign({}, vNode.properties, {
+                    key: vNode.key
+                });
+                var hfunc = vNode.namespace ? svg : h;
+                //TODO convert h nodes with namespace even if no children
+                return hfunc(vNode.tagName, properties, children);
+            }
+        }
+        return vNode;
     }
 
     renderStyles() {
@@ -234,8 +347,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     }
 
-    checkChangedKey() {
-
+    checkChangedKey(key) {
+        
     }
 
     collectComponentTree() {
@@ -335,10 +448,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         var parentComponent = this;
         var root = this.root;
-        var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
-        var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
-        var markupTransforms = this._pipelines.markup.transforms;
-        var stylesTransforms = this._pipelines.styles.transforms;
+        // var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
+        // var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
+        // var markupTransforms = this._pipelines.markup.transforms;
+        // var stylesTransforms = this._pipelines.styles.transforms;
 
         var obj = {};
 
@@ -347,20 +460,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 super(defaults({
                     root,
                     parentComponent,
-                    targetMarkupRenderFormat,
-                    targetStylesRenderFormat,
-                    markupTransforms,
-                    stylesTransforms
+                    // targetMarkupRenderFormat,
+                    // targetStylesRenderFormat,
+                    // markupTransforms,
+                    // stylesTransforms
                 }, opts))
 
                 parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
 
                 this.on('createcomponent', evt => {
                     parentComponent.trigger('createcomponent', Object.assign({}, evt));
-                });
-
-                this.on('wantsrender', evt => {
-                    parentComponent.scheduleRender(evt.pipelineName);
                 });
             }
         }
@@ -385,6 +494,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 });
         }
         return Promise.resolve(this);
+    }
+
+    requestRender() {
+        this.trigger('wantsrender')
+        var parent = this.getParent();
+        if (parent) {
+            parent.requestRender();
+        }
     }
 
     bindEvent(funcText, opts) {
@@ -487,6 +604,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 if (this.inputs.some(input => input === entry[0] || input.key === entry[0])) {
                     acc[0][entry[0]] = entry[1];
                 } else if (entry[0].slice(0,2) === 'on' && !(entry[0] in testElement)) {
+                    //TODO support more spec-compliant data- attrs
                     acc[1][entry[0]] = entry[1];
                 } else {
                     acc[2][entry[0]] = entry[1];
@@ -649,28 +767,28 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this._renderPromise = promise ? promise : null;
     }
 
-    unmount() {
-        return Promise.all(
-                Object.values(this._componentInstances)
-                    .reduce((finalArr, components) => {
-                        return finalArr.concat(Object.values(components));
-                    }, [])
-                    .map(component => component.unmount())
-            )
-            .then(() => {
-                for (var eventName in this._inlineEventHandlers) {
-                    this._inlineEventHandlers[eventName].off();
-                    delete this._inlineEventHandlers[eventName];
-                }
-                if (this._isMounted) {
-                    this._isMounted = false;
-                    this.trigger('unmount');
-                    if (this.onUnmount) {
-                        return this.onUnmount.call(this);
-                    }
-                }
-            })
-    }
+    // unmount() {
+    //     return Promise.all(
+    //             Object.values(this._componentInstances)
+    //                 .reduce((finalArr, components) => {
+    //                     return finalArr.concat(Object.values(components));
+    //                 }, [])
+    //                 .map(component => component.unmount())
+    //         )
+    //         .then(() => {
+    //             for (var eventName in this._inlineEventHandlers) {
+    //                 this._inlineEventHandlers[eventName].off();
+    //                 delete this._inlineEventHandlers[eventName];
+    //             }
+    //             if (this._isMounted) {
+    //                 this._isMounted = false;
+    //                 this.trigger('unmount');
+    //                 if (this.onUnmount) {
+    //                     return this.onUnmount.call(this);
+    //                 }
+    //             }
+    //         })
+    // }
 
     makeComponentInstance(componentName, index, opts) {
         componentName = componentName.toLowerCase();
@@ -686,13 +804,20 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     getComponentInstance(componentName, index) {
         componentName = componentName.toLowerCase()
-        var instances = this._componentInstances[componentName]
-        if (instances && !(index in instances)) {
-            this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
+        var instances = this._componentInstances[componentName];
+        return instances[index];
+    }
 
-            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.components[componentName]._initOpts);
+    getInitComponentInstance(componentName, index) {
+        var instance = this.getComponentInstance(componentName, index);
+
+        if (!instance) {
+            return (this._componentInstances[componentName][index] = this.makeComponentInstance(componentName, index))
+                .init(this.components[componentName]._initOpts)
+                .then(() => instance);
         }
-        return Promise.resolve(instances ? instances[index] : null);
+
+        return Promise.resolve(instance);
     }
 
     cleanupComponentInstances() {
