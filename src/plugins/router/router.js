@@ -53,6 +53,7 @@ class Router {
             }
         }
         if (matches) {
+            Object.assign(matches, {hash});
             var isInitialRoute = !this.currentRoute;
             
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
