@@ -121,13 +121,17 @@ module.exports = function(_Weddell){
             }),
             Component: Mixin(function(Component){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
+
+                    static get state() {
+                        return Object.assign({
+                            $currentRoute: null
+                        }, super.state);
+                    }
+
                     constructor(opts) {
                         opts.stateClass = RouterState;
                         var self;
                         super(defaults(opts, {
-                            state: {
-                                $currentRoute: null
-                            },
                             store: {
                                 $routerLink: function(){
                                     return self.compileRouterLink.apply(self, arguments);

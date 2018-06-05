@@ -1,24 +1,31 @@
-var DOMReady = require('document-ready-promise')();
-var defaults = require('object.defaults/immutable');
-var mix = require('mixwith-es5').mix;
-var Sig = require('./sig');
-var EventEmitterMixin = require('./event-emitter-mixin');
-var isApplicationOf = require('mixwith-es5').isApplicationOf;
-var Component = require('./component');
+const DOMReady = require('document-ready-promise')();
+const defaults = require('object.defaults/immutable');
+const mix = require('mixwith-es5').mix;
+const EventEmitterMixin = require('./event-emitter-mixin');
+const isApplicationOf = require('mixwith-es5').isApplicationOf;
+const Component = require('./component');
+const VDOMPatch = require('virtual-dom/patch');
+const VDOMDiff = require('virtual-dom/diff');
+const h = require('virtual-dom/h');
+const createElement = require('virtual-dom/create-element');
 
-Sig.addTypeAlias('CSSString', 'String');
+const VDOMWidget = require('./vdom-widget');
 
-var defaultOpts = {
-    renderInterval: 41.6667,
-    markupRenderFormat: null,
-    stylesRenderFormat: 'CSSString',
+const defaultOpts = {
     markupTransforms: [],
-    pipelineInitMethods: {},
     stylesTransforms: [],
     childStylesFirst: true
 };
 
 var App = class extends mix(App).with(EventEmitterMixin) {
+
+    static get patchers() {
+        return [
+            'patchDOM',
+            'patchStyles'
+        ];
+    }
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
@@ -28,18 +35,28 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.pipelineInitMethods = opts.pipelineInitMethods;
         this.styleEl = opts.styleEl;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
-        this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
-        this.component = null;
         this.shouldRender = {};
         this.renderInterval = opts.renderInterval;
-        this.renderPromise = null;
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
         this.stylesTransforms = opts.stylesTransforms;
         this.childStylesFirst = opts.childStylesFirst;
-        this.renderers = {};
-        var Sig = this.constructor.Weddell.classes.Sig;
+        this.patchers = {};
+
+        Object.defineProperties(this, {
+            Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
+            component: { get: () => this._component },
+            vTree: { value: h('div'), writable: true },
+            _patchPromise: { value: null, writable: true },
+            patchPromise: { get: () => this._patchPromise },
+            _queuedFrame: { value: null, writable: true },
+            _patchRequests: { value: [], writable: true },
+            _patchPromise: { value: null, writable: true },
+            _queuedFrame: { value: null, writable: true },
+            _resolveFunc: { value: null, writable: true },
+            _component: { value: null, writable: true }
+        })
 
         var consts = this.constructor.Weddell.consts;
 
@@ -53,18 +70,27 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         Object.defineProperty(window, consts.VAR_NAME, {
             value: {app: this, components: {} }
         });
-        
-        this.pipelines = {
-            styles: {
-                init: 'initStylesPipeline',
-                render: 'renderStyles',
-                componentEvent: 'renderstyles'
-            },
-            markup: {
-                render: 'renderMarkup',
-                componentEvent: 'rendermarkup'
-            }            
-        };
+
+        Object.defineProperties(this, {
+            rootNode: { value: createElement(this.vTree), writable: true }
+        })
+    }
+
+    patchDOM(patchRequests) {
+        if (!this.rootNode.parentNode) {
+            this.el.appendChild(this.rootNode);
+        }
+        var newTree = new VDOMWidget({weddellComponent: this.component});
+        var patches = VDOMDiff(this.vTree, newTree);
+        var rootNode = VDOMPatch(this.rootNode, patches);
+        this.rootNode = rootNode;
+        this.vTree = newTree;
+        this.trigger('patchdom');
+    }
+
+    patchStyles() {
+
+        this.trigger('patchstyles');
     }
 
     renderCSS(CSSString) {
@@ -83,14 +109,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         if (appStyles) {
             this.renderCSS(appStyles);
         }
-    }
-
-    renderMarkup(evt) {
-        if (!(evt.renderFormat in this.renderers)) {
-            throw "No appropriate markup renderer found for format: " + evt.renderFormat;
-        }
-        this.renderers[evt.renderFormat].call(this, evt.output);
-        this.component.trigger('renderdommarkup', Object.assign({}, evt));
     }
 
     renderStyles(evt) {
@@ -129,28 +147,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.component.trigger('renderdomstyles', Object.assign({}, evt));
     }
 
-    makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof Component || ComponentClass.prototype.constructor === Component)) {
-            if (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component) {
-                return ComponentClass;
-            }
-            throw "Component input is a class extending Component, but it does not have necessary plugins applied to it. Consider using a factory function instead.";
-        } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assuming it is a component factory function
-            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
-        } else {
-            //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
-            throw "Unsupported component input";
-        }
-    }
-
     makeComponent() {
         var component = new (this.Component)({
-            isRoot: true,
-            targetStylesRenderFormat: this.stylesRenderFormat,
-            targetMarkupRenderFormat: this.markupRenderFormat,
-            markupTransforms: this.markupTransforms,
-            stylesTransforms: this.stylesTransforms
+            isRoot: true
         });
 
         component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
@@ -177,25 +176,26 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         });
     }
 
-    scheduleRender() {
-        return new Promise((resolve) => {
-            requestAnimationFrame(() => {
-                var neededRenders = this.renderOrder.filter(pipeline => this.shouldRender[pipeline]);
-                neededRenders.forEach(pipeline => this.shouldRender[pipeline] = false)
-                neededRenders
-                    .reduce((promise, pipeline) => {
-                        return promise
-                            .then(() => this.component.render(pipeline));
-                    }, Promise.resolve())
-                    .then(() => Object.values(this.shouldRender).some(val => val) ? this.scheduleRender() : null)
-                    .then(() => {
-                        this.renderOrder.forEach(pipeline => {
-                            this.el.classList.remove('rendering-' + pipeline);
-                        })
-                        resolve();
-                    });                    
+    queuePatch(renderResults) {
+        if (!this._patchPromise) {
+            this._patchPromise = new Promise((resolve) => {
+                this._resolveFunc = resolve;
             })
-        })
+            .then(renderResults => {
+                this._patchPromise = null;
+                this._queuedFrame = null;
+                this._resolveFunc = null;
+                this.constructor.patchers.forEach(patcher => {
+                    this[patcher](this._patchRequests)
+                });
+                this._patchRequests = [];
+            })
+        } else {
+            cancelAnimationFrame(this._queuedFrame);
+        }
+        this._queuedFrame = requestAnimationFrame(
+            this._resolveFunc.bind(this, (this._patchRequests = this._patchRequests.concat(renderResults)))
+        );
     }
 
     init() {
@@ -203,34 +203,19 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             .then(() => {
                 if (typeof this.el == 'string') {
                     this.el = document.querySelector(this.el);
+                    if (!this.el) {
+                        throw "Could no"
+                    }
                 }
 
-                Object.values(this.pipelines).forEach(pipelineObj => {
-                    this[pipelineObj.init] && this[pipelineObj.init].call(this);
-                });
-
-                this.component = this.makeComponent();
+                this._component = this.makeComponent();
 
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
-                this.component.on('wantsrender', evt => {
-                    if (!this.shouldRender[evt.pipelineName]) {
-                        this.el.classList.add('rendering-' + evt.pipelineName);
-                        this.shouldRender[evt.pipelineName] = true;
-                    }
-
-                    if (!this.renderPromise) {
-                        this.el.classList.add('rendering');
-                        this.renderPromise = this.scheduleRender()
-                            .then(() => {
-                                this.renderPromise = null;
-                                this.component.markRendering(false);
-                                this.el.classList.remove('rendering');
-                            });
-                        this.component.markRendering(this.renderPromise);
-                    }
+                this.component.on('requestpatch', evt => {
+                    this.queuePatch(evt);
                 });
 
                 this.initRenderLifecycleStyleHooks(this.component);
@@ -238,14 +223,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 Object.seal(this);
 
                 return this.component.init(this.componentInitOpts)
-                    .then(() => {
-
-                        Object.values(this.pipelines).forEach(pipelineObj => {
-                            this.component.on(pipelineObj.componentEvent, this[pipelineObj.render].bind(this));
-                        });
-
-                        this.component.render();
-                    })
             })
     }
 }
