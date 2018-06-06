@@ -50,11 +50,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             vTree: { value: h('div'), writable: true },
             _patchPromise: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
-            _queuedFrame: { value: null, writable: true },
+            _RAFCallback: { value: null, writable: true },
             _patchRequests: { value: [], writable: true },
             _patchPromise: { value: null, writable: true },
-            _queuedFrame: { value: null, writable: true },
-            _resolveFunc: { value: null, writable: true },
             _component: { value: null, writable: true }
         })
 
@@ -80,6 +78,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         if (!this.rootNode.parentNode) {
             this.el.appendChild(this.rootNode);
         }
+        this.component.refreshPendingWidgets();
         var newTree = new VDOMWidget({weddellComponent: this.component});
         var patches = VDOMDiff(this.vTree, newTree);
         var rootNode = VDOMPatch(this.rootNode, patches);
@@ -89,7 +88,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     patchStyles() {
-
         this.trigger('patchstyles');
     }
 
@@ -176,26 +174,29 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         });
     }
 
-    queuePatch(renderResults) {
+    queuePatch(patchRequests) {
         if (!this._patchPromise) {
+            var resolveFunc;
             this._patchPromise = new Promise((resolve) => {
-                this._resolveFunc = resolve;
+                resolveFunc = resolve;
             })
-            .then(renderResults => {
+            .then(patchRequests => {
                 this._patchPromise = null;
-                this._queuedFrame = null;
-                this._resolveFunc = null;
                 this.constructor.patchers.forEach(patcher => {
-                    this[patcher](this._patchRequests)
+                    this[patcher](patchRequests)
                 });
-                this._patchRequests = [];
             })
+
+            this._patchRequests = [].concat(patchRequests);
+
+            requestAnimationFrame(this._RAFCallback = () =>{
+                this._RAFCallback = null;
+                resolveFunc(this._patchRequests);
+                this._patchRequests = [];
+            });
         } else {
-            cancelAnimationFrame(this._queuedFrame);
+            this._patchRequests = this._patchRequests.concat(patchRequests);
         }
-        this._queuedFrame = requestAnimationFrame(
-            this._resolveFunc.bind(this, (this._patchRequests = this._patchRequests.concat(renderResults)))
-        );
     }
 
     init() {

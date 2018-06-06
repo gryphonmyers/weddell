@@ -37,10 +37,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get renderMethods() {
         return ['renderVNode', 'renderStyles'];
     }
-
-    static get patchRequestInterval() {
-        return 16.667;
-    }
     
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
@@ -68,7 +64,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: false},
             _componentsRequestingPatch: {writable: true, value: []},
-            _pendingPatchRequests: {writable: true, value: []},
             _renderPromise: {writable:true, value: null},
             _lastRenderedComponentClasses: {writable: true, value:null},
             _hasMounted: {writable:true, value: false},
@@ -350,15 +345,17 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
-    refreshWidgets(vNode, targetComponents) {
-        if (vNode.type === 'Widget') {
-            if (targetComponents.includes(vNode.weddellComponent)) {
-                return new VDOMWidget({weddellComponent: vNode.weddellComponent});
-            }
-        } else if (vNode.children) {
-            var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
-            if (children.some((child, ii) => child !== vNode.children[ii])) {
-                return cloneVNode(vNode, children);
+    refreshWidgets(vNode, targetComponents=[]) {
+        if (targetComponents.length) {
+            if (vNode.type === 'Widget') {
+                if (targetComponents.includes(vNode.weddellComponent)) {
+                    return new VDOMWidget({weddellComponent: vNode.weddellComponent});
+                }
+            } else if (vNode.children) {
+                var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
+                if (children.some((child, ii) => child !== vNode.children[ii])) {
+                    return cloneVNode(vNode, children);
+                }
             }
         }
         return vNode;
@@ -720,25 +717,19 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         instance.on('requestpatch', evt => {
             if (this.vTree) {
-                if (this._patchRequestPromise) {
-                    this._componentsRequestingPatch.push(instance);
-                    this._pendingPatchRequests = this._pendingPatchRequests.concat(Array.isArray(evt) ? evt : Object.assign({}, evt));
-                } else {
-                    this._patchRequestPromise = new Promise(resolve => {
-                        setTimeout(resolve, this.constructor.patchRequestInterval)
-                    })
-                    .then(results => {
-                        this.vTree = this.refreshWidgets(this.vTree, uniq(this._componentsRequestingPatch));
-                        this.trigger('requestpatch', this._pendingPatchRequests);
-                        this._componentsRequestingPatch = [];
-                        this._pendingPatchRequests = [];
-                        this._patchRequestPromise = null;
-                    })
-                } 
+                this._componentsRequestingPatch.push(instance);
+                this.trigger('requestpatch', Object.assign({}, evt));
             }    
         });
 
         return instance;
+    }
+
+    refreshPendingWidgets() {
+        var componentsToRefresh = uniq(this._componentsRequestingPatch);
+        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
+        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
+        this._componentsRequestingPatch = [];
     }
 
     getComponentInstance(componentName, index) {
