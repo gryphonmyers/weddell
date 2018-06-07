@@ -33,6 +33,8 @@ module.exports = class VDOMWidget {
             this.weddellComponent.onMove.call(this.weddellComponent, { newEl: el, prevEl: prevDOMNode });
         }
 
+        //@TODO pretty sure there is a case where one set of mounted components could transform into an entirely different set of components, which would trigger updates but no inits or destroys
+
         this.vTree = this.weddellComponent.vTree;
         
         return el;

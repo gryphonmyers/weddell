@@ -17,9 +17,18 @@ const defaultOpts = {
     childStylesFirst: true
 };
 
+function createStyleEl(id, className=null) {
+    var styleEl = document.createElement('style');
+    styleEl.setAttribute('type', 'text/css');
+    document.head.appendChild(styleEl);
+    styleEl.id = id;
+    styleEl.classList.add(className);
+    return styleEl;
+}
+
 var App = class extends mix(App).with(EventEmitterMixin) {
 
-    static get patchers() {
+    static get patchMethods() {
         return [
             'patchDOM',
             'patchStyles'
@@ -29,11 +38,12 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        this.styles = opts.styles;
-        this.el = opts.el;
+        if (opts.styles) {
+            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
+        }
+        this.styles = opts.styles || this.constructor.styles;
         this.renderOrder = ['markup', 'styles'];
         this.pipelineInitMethods = opts.pipelineInitMethods;
-        this.styleEl = opts.styleEl;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.shouldRender = {};
         this.renderInterval = opts.renderInterval;
@@ -42,12 +52,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.markupTransforms = opts.markupTransforms;
         this.stylesTransforms = opts.stylesTransforms;
         this.childStylesFirst = opts.childStylesFirst;
-        this.patchers = {};
 
         Object.defineProperties(this, {
             Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
             component: { get: () => this._component },
             vTree: { value: h('div'), writable: true },
+            el: { get: () => this._el },
+            _el: { value: null, writable: true },
+            _elInput: { value: opts.el },
             _patchPromise: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
             _RAFCallback: { value: null, writable: true },
@@ -87,62 +99,95 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.trigger('patchdom');
     }
 
-    patchStyles() {
-        this.trigger('patchstyles');
-    }
+    patchStyles(patchRequests) {
+        var results = patchRequests.reduceRight((acc, item) => {
+            if (!(item.classId in acc.classes)) {
+                acc.classes[item.classId] = item;
+            }
+            if (!(item.id in acc.components)) {
+                acc.components[item.id] = item;
+            }
+            return acc;
+        }, {classes:{}, components:{}});
 
-    renderCSS(CSSString) {
-        this.styleEl.textContent = CSSString;
-    }
+        var instanceStyles = [];
+        var staticStyles = {};
 
-    initStylesPipeline() {
-        if (typeof this.styleEl == 'string') {
-            this.styleEl = document.querySelector(this.styleEl);
-        } else if (!this.styleEl) {
-            this.styleEl = document.createElement('style');
-            this.styleEl.setAttribute('type', 'text/css');
-            document.head.appendChild(this.styleEl);
-        }
-        var appStyles = this.styles;
-        if (appStyles) {
-            this.renderCSS(appStyles);
-        }
-    }
+        this.component.walkComponents(component => {
+            var id = component.id;
+            var stylesObj = id in results.components ? results.components[id].results.renderStyles : null;
+            
+            var makeObj = (key, obj) => obj ? Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), {id, needsPatch: true }) : {id, needsPatch: false};
+            
+            instanceStyles.push(makeObj('dynamicStyles', stylesObj));
 
-    renderStyles(evt) {
-        var staticStyles = [];
-        
-        var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
-            var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
+            id = component.constructor.id;
 
-            if (obj.staticStyles) {
-                var staticObj = {
-                    class: obj.component.constructor,
-                    styles: obj.staticStyles
-                };
-                if (this.childStylesFirst) {
-                    staticStyles.unshift(staticObj)
+            if (!(id in staticStyles)) {
+                stylesObj = id in results.classes ? results.classes[id].results.renderStyles : null;
+                staticStyles[id] = makeObj('staticStyles', stylesObj);
+            }
+        }, component => component.isMounted);
+
+        staticStyles = Object.values(staticStyles);
+
+        //We now have a pretty good idea what we're writing. Let's patch those styles to DOM
+
+        var prevEl;
+        var styles;
+
+        staticStyles.concat(instanceStyles)
+            .reduce((final, obj) => {
+                var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
+                var styleEl;
+
+                if (!obj.needsPatch) {
+                    if (styleIndex > -1) {
+                        styleEl = final.splice(styleIndex, 1)[0];
+
+                        if (prevEl) {
+                            var comparison = prevEl.compareDocumentPosition(styleEl);
+                            if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                                prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                            }
+                        }
+
+                        prevEl = styleEl;
+                    }
+                    return final;
                 } else {
-                    staticStyles.push(staticObj)
-                }
-            }
+                    styles = obj.styles || '';
 
-            return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
-        };
-        var instanceStyles = flattenStyles(evt);
+                    if (!styles) {
+                        if (styleIndex === -1) {
+                            final.splice(styleIndex, 1);
+                        }
+                        return final;
+                    }
 
-        staticStyles = staticStyles.reduce((finalArr, styleObj) => {
-            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class._BaseClass === styleObj.class._BaseClass || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
-                return finalArr.concat(styleObj)
-            }
-            return finalArr;
-        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
+                    styleEl = styleIndex > -1 ? final.splice(styleIndex, 1)[0] : createStyleEl('weddell-style-' + obj.id, 'weddell-style');
 
-        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
-        this.renderCSS(styles);
+                    if (prevEl) {
+                        var comparison = prevEl.compareDocumentPosition(styleEl);
+                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        }
+                    }
 
-        this.component.trigger('renderdomstyles', Object.assign({}, evt));
+                    prevEl = styleEl;                    
+
+                    if (styleEl.textContent !== styles) {
+                        styleEl.textContent = styles;
+                    }                    
+                }              
+
+                return final;
+            }, Array.from(document.querySelectorAll('head style.weddell-style')))
+            .forEach(el => {
+                document.head.removeChild(el);
+            });
+
+        this.trigger('patchstyles');
     }
 
     makeComponent() {
@@ -158,22 +203,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return component
     }
 
-    initRenderLifecycleStyleHooks(rootComponent) {
-        this.component.once('renderdomstyles', evt => {
-            this.el.classList.add('first-styles-render-complete');
-            if (this.el.classList.contains('first-markup-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
-
-        this.component.once('renderdommarkup', evt => {
-            this.el.classList.add('first-markup-render-complete');
-            if (this.el.classList.contains('first-styles-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
-    }
-
     queuePatch(patchRequests) {
         if (!this._patchPromise) {
             var resolveFunc;
@@ -182,9 +211,11 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             })
             .then(patchRequests => {
                 this._patchPromise = null;
-                this.constructor.patchers.forEach(patcher => {
+                this.constructor.patchMethods.forEach(patcher => {
                     this[patcher](patchRequests)
                 });
+                this.trigger('patch');
+                return this.onPatch()
             })
 
             this._patchRequests = [].concat(patchRequests);
@@ -199,14 +230,28 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
     }
 
+    onPatch() {
+        //noop
+    }
+
+    awaitPatch() {
+        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
+    }
+
     init() {
         return DOMReady
             .then(() => {
-                if (typeof this.el == 'string') {
-                    this.el = document.querySelector(this.el);
-                    if (!this.el) {
-                        throw "Could no"
+                var el = this._elInput;
+                if (typeof el == 'string') {
+                    el = document.querySelector(el);
+                    if (!el) {
+                        throw new Error("Could not mount an element using provided query.");
                     }
+                }
+                this._el = el;
+
+                if (this.styles) {
+                    createStyleEl('weddell-app-styles').textContent = this.styles;
                 }
 
                 this._component = this.makeComponent();
@@ -224,6 +269,12 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 Object.seal(this);
 
                 return this.component.init(this.componentInitOpts)
+                    .then(() => {
+                        return this.awaitPatch()
+                            .then(() => {
+                                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+                            })
+                    })
             })
     }
 }

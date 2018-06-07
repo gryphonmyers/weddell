@@ -59,6 +59,56 @@
 
 var Weddell = require('../src/presets/weddell-ro.js');
 var defaults = require('defaults-es6/deep');
+var subComponents = {
+    'nested-component': Component => class extends Component {
+        static get components() {
+            return this._components ? this._components : this._components = {
+                'deeply-nested-component': Component => class extends Component {
+                    static get state() {
+                        return defaults({
+                            posX: 0
+                        }, super.state);
+                    }
+
+                    static get markup() {
+                        return (locals, h) => {
+                            return h('.google', { className: 'cmpt-' + locals.$id }, [locals.posX + ' off'])
+                        }
+                    }
+
+                    static get styles() {
+                        return `
+                            .google {
+                                color: green;
+                                transition: transform .5s;
+                            }
+                        `;
+                    }
+
+                    static get dynamicStyles() {
+                        return locals => `
+                            .google.cmpt-${locals.$id} {
+                                transform: scale(${locals.posX.toFixed(1)})
+                            }
+                        `;
+                    }
+
+                    onMount() {
+                        window.addEventListener('scroll', () => {
+                            this.state.posX = Math.random() * 3;
+                        })
+                    }
+                }
+            }
+        }
+
+        static get markup() {
+            return (locals, h) => {
+                return h('.boasdas', [h('deeply-nested-component'), h('deeply-nested-component')])
+            }
+        }
+    }
+}
 
 var SubComponent = Component => class extends Component {
     static get markup() {
@@ -86,39 +136,7 @@ var SubComponent = Component => class extends Component {
     }
 
     static get components() {
-        return {
-            'nested-component': Component => class extends Component {
-                static get components() {
-                    return {
-                        'deeply-nested-component': Component => class extends Component {
-                            static get state() {
-                                return defaults({
-                                    posX: 0
-                                }, super.state);
-                            }
-
-                            static get markup() {
-                                return (locals, h) => {
-                                    return h('.google', [locals.posX + ' off'])
-                                }
-                            }
-
-                            onMount() {
-                                window.addEventListener('scroll', () => {
-                                    this.state.posX = Math.random() * 1000;
-                                })
-                            }
-                        }
-                    }
-                }
-
-                static get markup() {
-                    return (locals, h) => {
-                        return h('.boasdas', [h('deeply-nested-component'), h('deeply-nested-component')])
-                    }
-                }
-            }
-        }
+        return subComponents
     }
 
     static get state() {
@@ -161,13 +179,14 @@ var app = new Weddell.classes.App({
 
             static get state() {
                 return defaults({
-                    body: 'Blooo'
+                    body: 'Blooo',
+                    fontSize: '12px'
                 }, super.state);
             }
 
             static get markup() {
                 return (locals, h) => {
-                    return h('.foo', [ h('span.boo', {}, [locals.body]), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2') ])
+                    return h('.foo', [ h('span.boo', { className: 'cmpt-' + locals.$id }, [locals.body]), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2') ])
                 };
             }
 
@@ -177,6 +196,16 @@ var app = new Weddell.classes.App({
                         color: red;
                     }
                 `;
+            }
+
+            static get dynamicStyles() {
+                return (locals) => {
+                    return `
+                        .foo.cmpt-${locals.$id} {
+                            font-size: ${locals.fontSize};
+                        }
+                    `;
+                }
             }
         }
     }

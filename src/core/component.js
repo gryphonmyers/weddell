@@ -30,7 +30,7 @@ const defaultOpts = {
     isRoot: false
 };
 const defaultInitOpts = {};
-const _generatedComponentClasses = [];
+const _generatedComponentClasses = {};
 const testElement = document.createElement('div');
 
 var Component = class extends mix(Component).with(EventEmitterMixin) {
@@ -45,6 +45,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             id: { get: () => this._id },
+            path: { get: () => this._path },
+            classPath: { get: () => this._classPath },
             isRoot: { value: opts.isRoot },
             content: { value: [], writable: true},
             hasMounted: {get: () => this._hasMounted},
@@ -60,6 +62,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             renderers: { value: {} },
 
             _el: { value: null, writable: true },
+            _lastAccessedStateKeys: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _shouldRerender: { value: false, writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: false},
@@ -82,6 +86,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }, {}) : {};
             
         Object.defineProperties(this, {
+            _path: { value: `${opts.parentComponent ? opts.parentComponent.path + '/': ''}${this.id}`},
+            _classPath: { value: `${opts.parentComponent ? opts.parentComponent.classPath + '/': ''}${this.constructor.id}`},
             props: {
                 value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
@@ -147,11 +153,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         //     this.markDirty(null, 'styles');
         // });
 
-        // this.on('markeddirty', evt => {
-        //     //if it's a markup render, render both
-        //     this.scheduleRender(evt.pipelineName === 'markup' ? null : evt.pipelineName);
-        // });
-
         this.getParent = () => opts.parentComponent || null;
         if (opts.markupTemplate) {
             console.warn("You are using deprecated syntax. 'markupTemplate' will be removed in the next major version. Use static 'markup' getter.");
@@ -159,8 +160,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (opts.stylesTemplate) {
             console.warn("You are using deprecated syntax. 'stylesTemplate' will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
         }
-        this.vNodeTemplate = this.constructor.makeVNodeTemplate(opts.markup, this.constructor.markup, opts.markupTemplate);
-        this.stylesTemplate = this.constructor.makeStylesTemplate(opts.styles || opts.stylesTemplate, this.constructor.styles);
+        this.vNodeTemplate = this.constructor.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
+        this.stylesTemplate = this.constructor.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
         this.vTree = null;
 
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
@@ -171,7 +172,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             .reduce((acc, method) => {
                 return acc
                     .then(results => {
-                        return this[method]()
+                        return Promise.resolve(this[method]())
                             .then(result => {
                                 Object.defineProperty(results, method, { get: () => result, enumerable: true });
                                 return results;
@@ -183,7 +184,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     .then(results => {
                         if (this._shouldRerender) {
                             this._shouldRerender = false;
-                            return Promise.reject('Canceling request patch');
+                            return Promise.reject('Canceling patch request due to rerender');
                         }
                         return results;
                     })
@@ -229,7 +230,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     requestPatch(results) {
-        this.trigger('requestpatch', {results: Object.create(results), id: this.id, classId: this.constructor.id });
+        this.trigger('requestpatch', {results: Object.create(results), id: this.id, classId: this.constructor.id, path: this.path, classPath: this.classPath });
     }
 
     static get mountedInstances() {
@@ -262,10 +263,42 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }, null);
     }
 
-    static makeStylesTemplate(instanceStyles, staticStyles) {
-        if (this.constructor.styles) {
-
+    static makeStylesTemplate(dynamicStyles, staticStyles='') {
+        if (typeof dynamicStyles === 'function') {
+               
+        } else if (dynamicStyles) {
+            throw new Error(`Only functions are supported for dynamic styles for now.`);
         }
+
+        if (typeof staticStyles !== 'string') {
+            throw new Error(`Only strings are supported for static component styles.`);
+        }
+
+        return (locals) => {
+            var styles = dynamicStyles ? dynamicStyles.call(this, locals) : null;
+            return Object.defineProperties({}, {
+                dynamicStyles: {
+                    get: () => styles
+                },
+                staticStyles: {
+                    get: () => staticStyles
+                }
+            })
+        }
+    }
+
+    renderStyles() {
+        var accessed = {};
+
+        this.state.on('get', evt => {
+            accessed[evt.changedKey] = 1;
+        });
+
+        var results = this.stylesTemplate.call(this, this.state);
+
+        this._lastAccessedStateKeys.renderVNode = Object.keys(accessed);
+
+        return results;
     }
 
     renderVNode() {
@@ -276,6 +309,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         });
 
         var vTree = this.vNodeTemplate.call(this, this.state, h);
+
+        this._lastAccessedStateKeys.renderVNode = Object.keys(accessed);
 
         if (Array.isArray(vTree)) {
             if (vTree.length > 1) {
@@ -361,14 +396,44 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return vNode;
     }
 
-    renderStyles() {
-        this.constructor.styles
-        //Render static styles
+    walkComponents(callback, filterFunc=()=>true) {
+        if (filterFunc(this)) {
+            callback(this)
+        }
+        for (var componentName in this.components) {
+            Object.values(this._componentInstances[componentName])
+                .forEach(instance => instance.walkComponents(callback, filterFunc))
+        }
+    }
 
-        return Promise.resolve(this.constructor.styles);
+    getMountTree() {
+        if (this.isMounted) {
+            var obj = {};
+            obj.id = this.id;
+            for (var componentName in this.components) {
+                var instances = Object.values(this._componentInstances[componentName])
+                    .map(instance => instance.getMountTree())
+                    .filter(item => item != null)
+    
+                if (instances.length) {
+                    obj[this.components[componentName].id] = instances;
+                }
+            }
+            return obj;
+        } else {
+            return null;
+        }
+    }
+
+    refreshPendingWidgets() {
+        var componentsToRefresh = uniq(this._componentsRequestingPatch);
+        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
+        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
+        this._componentsRequestingPatch = [];
     }
 
     checkChangedKey(key) {
+        // console.log(this._lastAccessedStateKeys);
         return true
         //@TODO check in last accessed keys to determine dirtyness
     }
@@ -433,7 +498,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     static makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.Weddell.classes.Component || ComponentClass.prototype.constructor === this.Weddell.classes.Component)) {
+        if (typeof ComponentClass === 'function' && !ComponentClass.prototype) {
+            // We got a non-Component class function, so we assume it is a component factory function
+            var str = ComponentClass.toString();
+            if (str in this.generatedComponentClasses) {
+                return this.generatedComponentClasses[str];
+            } else {
+                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(ComponentClass.call(this, this.Weddell.classes.Component));
+            }
+        } else {
+            return this.bootstrapComponentClass(ComponentClass);
+        }        
+    }
+
+    static bootstrapComponentClass(ComponentClass) {
+        var WeddellComponent = this.Weddell.classes.Component;
+        if (ComponentClass.prototype && (ComponentClass.prototype instanceof WeddellComponent || ComponentClass.prototype.constructor === WeddellComponent)) {
             if (!ComponentClass.id) {
                 var id = generateHash();
                 var BaseClass = ComponentClass;
@@ -448,31 +528,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 }
             }
             return ComponentClass;
-        } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assume it is a component factory function
-            var match = this.generatedComponentClasses.find(compClass => compClass.func === ComponentClass);
-            if (match) {
-                return match.class;
-            } else {
-                var id = generateHash();
-                var BaseClass = ComponentClass;
-                
-                var BaseClass = ComponentClass.call(this, this.Weddell.classes.Component);
-                var newClass = class Component extends BaseClass {
-                    static get id() {
-                        return id;
-                    }
-
-                    static get BaseClass() {
-                        return BaseClass;
-                    }
-                }
-                this.generatedComponentClasses.push({
-                    func: ComponentClass,
-                    class: newClass
-                });
-                return newClass;
-            }
         } else {
             //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
             throw "Unsupported component input";
@@ -719,17 +774,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             if (this.vTree) {
                 this._componentsRequestingPatch.push(instance);
                 this.trigger('requestpatch', Object.assign({}, evt));
-            }    
+            }
         });
 
         return instance;
-    }
-
-    refreshPendingWidgets() {
-        var componentsToRefresh = uniq(this._componentsRequestingPatch);
-        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
-        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
-        this._componentsRequestingPatch = [];
     }
 
     getComponentInstance(componentName, index) {
