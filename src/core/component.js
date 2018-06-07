@@ -64,7 +64,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _el: { value: null, writable: true },
             _lastAccessedStateKeys: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
-            _shouldRerender: { value: false, writable: true },
+            _dirtyRenderers: { value: false, writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: false},
             _componentsRequestingPatch: {writable: true, value: []},
@@ -160,14 +160,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (opts.stylesTemplate) {
             console.warn("You are using deprecated syntax. 'stylesTemplate' will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
         }
-        this.vNodeTemplate = this.constructor.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
-        this.stylesTemplate = this.constructor.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
+        this.vNodeTemplate = this.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
+        this.stylesTemplate = this.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
         this.vTree = null;
 
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
     }
 
-    render() {
+    render(dirtyRenderers=null) {
         var promise = this.constructor.renderMethods
             .reduce((acc, method) => {
                 return acc
@@ -182,9 +182,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             .then(results => {
                 return Promise.resolve(results)
                     .then(results => {
-                        if (this._shouldRerender) {
-                            this._shouldRerender = false;
-                            return Promise.reject('Canceling patch request due to rerender');
+                        if (this._dirtyRenderers) {
+                            this._dirtyRenderers = null;
+                            return Promise.reject(this._dirtyRenderers);
                         }
                         return results;
                     })
@@ -193,8 +193,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         this._hasRendered = true;
                         this.requestPatch(results);
                         return results;
-                    }, () => {
-                        return this.render();
+                    }, dirtyRenderers => {
+                        return this.render(dirtyRenderers);
                     })
             }, err => {
                 throw err;
@@ -245,7 +245,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this._mountedComponents = {};
     }
 
-    static makeVNodeTemplate() {
+    makeVNodeTemplate() {
         /*
         * Take instance and static template inputs, return a function that will generate the correct output.
         */
@@ -253,7 +253,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Array.from(arguments).reduce((acc, curr) => {
             if (!acc) {
                 if (typeof curr === 'function') {
-                    return curr;
+                    return this.wrapTemplate(curr, 'renderVNode', h);
                 }
                 if (typeof curr === 'string') {
                     //TODO support template string parser;
@@ -263,7 +263,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }, null);
     }
 
-    static makeStylesTemplate(dynamicStyles, staticStyles='') {
+    makeStylesTemplate(dynamicStyles, staticStyles='') {
         if (typeof dynamicStyles === 'function') {
                
         } else if (dynamicStyles) {
@@ -274,7 +274,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             throw new Error(`Only strings are supported for static component styles.`);
         }
 
-        return (locals) => {
+        return this.wrapTemplate((locals) => {
             var styles = dynamicStyles ? dynamicStyles.call(this, locals) : null;
             return Object.defineProperties({}, {
                 dynamicStyles: {
@@ -284,33 +284,31 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     get: () => staticStyles
                 }
             })
-        }
+        }, 'renderStyles');
+    }
+
+    wrapTemplate(func, renderMethodName) {
+        return () => {
+            var accessed = {};
+        
+            this.state.on('get', evt => {
+                accessed[evt.key] = 1;
+            });
+
+            var result = func.apply(this, [this.state].concat(Array.from(arguments).slice(2)));
+
+            this._lastAccessedStateKeys[renderMethodName] = accessed;
+
+            return result;
+        }        
     }
 
     renderStyles() {
-        var accessed = {};
-
-        this.state.on('get', evt => {
-            accessed[evt.changedKey] = 1;
-        });
-
-        var results = this.stylesTemplate.call(this, this.state);
-
-        this._lastAccessedStateKeys.renderVNode = Object.keys(accessed);
-
-        return results;
+        return this.stylesTemplate();
     }
 
     renderVNode() {
-        var accessed = {};
-        
-        this.state.on('get', evt => {
-            accessed[evt.changedKey] = 1;
-        });
-
-        var vTree = this.vNodeTemplate.call(this, this.state, h);
-
-        this._lastAccessedStateKeys.renderVNode = Object.keys(accessed);
+        var vTree = this.vNodeTemplate();
 
         if (Array.isArray(vTree)) {
             if (vTree.length > 1) {
@@ -380,6 +378,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             });
     }
 
+    refreshPendingWidgets() {
+        var componentsToRefresh = uniq(this._componentsRequestingPatch);
+        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
+        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
+        this._componentsRequestingPatch = [];
+    }
+
     refreshWidgets(vNode, targetComponents=[]) {
         if (targetComponents.length) {
             if (vNode.type === 'Widget') {
@@ -406,36 +411,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    getMountTree() {
-        if (this.isMounted) {
-            var obj = {};
-            obj.id = this.id;
-            for (var componentName in this.components) {
-                var instances = Object.values(this._componentInstances[componentName])
-                    .map(instance => instance.getMountTree())
-                    .filter(item => item != null)
-    
-                if (instances.length) {
-                    obj[this.components[componentName].id] = instances;
-                }
-            }
-            return obj;
-        } else {
-            return null;
-        }
-    }
-
-    refreshPendingWidgets() {
-        var componentsToRefresh = uniq(this._componentsRequestingPatch);
-        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
-        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
-        this._componentsRequestingPatch = [];
-    }
-
     checkChangedKey(key) {
-        // console.log(this._lastAccessedStateKeys);
-        return true
-        //@TODO check in last accessed keys to determine dirtyness
+        return Object.entries(this._lastAccessedStateKeys)
+            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, {[entry[0]]:1}) : acc, null);
     }
 
     collectComponentTree() {
@@ -581,11 +559,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             ['props', 'state'].forEach((propName) => {
                 this[propName].on('change', evt => {
                     if (evt.target === this[propName]) {
-                        if (this.checkChangedKey(evt.changedKey)) {
+                        var dirtyRenderers = this.checkChangedKey(evt.changedKey);
+                        if (dirtyRenderers) {
                             if (this.renderPromise) {
-                                this._shouldRerender = true;
+                                this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers);
                             } else {
-                                this.render();
+                                this.render(dirtyRenderers);
                             }
                         }
                     }
@@ -618,43 +597,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     bindEventValue(propName, opts) {
         return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
-
-
-    // renderStyles() {
-    //     this.trigger('beforerenderstyles');
-
-    //     return this._pipelines.styles.render()
-    //         .then(output => {
-    //             return Promise.all(this.getMountedChildComponents().map(instance => instance.renderStyles()))
-    //                 .then(components => {
-    //                     var evtObj = {
-    //                         component: this,
-    //                         components,
-    //                         wasRendered: true,
-    //                         renderFormat: this._pipelines.styles.targetRenderFormat
-    //                     };
-
-    //                     Object.defineProperties(evtObj, {
-    //                         staticStyles: {
-    //                             enumerable: true,
-    //                             get: function(){
-    //                                 return this.constructor.styles || null;
-    //                             }.bind(this)
-    //                         },
-    //                         output: {
-    //                             enumerable: true,
-    //                             get: function(){
-    //                                 return output
-    //                             }
-    //                         }
-    //                     })
-
-    //                     this.trigger('renderstyles', evtObj);
-
-    //                     return evtObj;
-    //                 });
-    //         });
-    // }
 
     getMountedChildComponents() {
         return Object.entries(this.components)

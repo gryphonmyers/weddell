@@ -25,6 +25,7 @@ module.exports = class VDOMWidget {
         if (Array.isArray(this.vTree)) {
             throw "Cannot render a component with multiple nodes at root!";
         }
+        // console.log(previousWidget.weddellComponent.constructor.id);
         var patches = VDOMDiff(previousWidget.vTree, this.weddellComponent.vTree);
         var el = VDOMPatch(prevDOMNode, patches);
 

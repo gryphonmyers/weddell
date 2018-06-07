@@ -111,6 +111,11 @@ var subComponents = {
 }
 
 var SubComponent = Component => class extends Component {
+
+    onUnmount() {
+        console.log('onunmounted');
+    }
+
     static get markup() {
         return (locals, h) => {
             var bgColor = Math.floor(Math.random() * 3);
@@ -149,9 +154,11 @@ var SubComponent = Component => class extends Component {
     }
 
     onMount() {
-        setInterval(() => {
-            this.state.color = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
-        }, 2000);
+        console.log('mounted');
+
+        // setInterval(() => {
+        //     this.state.color = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
+        // }, 2000);
     }
 }
 
@@ -173,21 +180,39 @@ var app = new Weddell.classes.App({
             static get components() {
                 return {
                     'my-component': SubComponent,
-                    'my-component-2': SubComponent
+                    'my-component-2': SubComponent,
+                    'my-component-3': SubComponent
                 }
             }
 
             static get state() {
                 return defaults({
                     body: 'Blooo',
-                    fontSize: '12px'
+                    fontSize: '12px',
+                    a: true
                 }, super.state);
             }
 
             static get markup() {
                 return (locals, h) => {
-                    return h('.foo', [ h('span.boo', { className: 'cmpt-' + locals.$id }, [locals.body]), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2') ])
+                    return h('.foo', [ h('span.boo', { className: 'cmpt-' + locals.$id }, [locals.body]) ].concat(locals.a ? [
+                        h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), 
+                        h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), 
+                        h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), 
+                        h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2')
+                    ] : [
+                        h('my-component-3'), h('my-component-3'), h('my-component-3'), h('my-component-3'), 
+                        h('my-component-3'), h('my-component-3'), h('my-component-3'), h('my-component-3'), 
+                        h('my-component-3'), h('my-component-3'), h('my-component-3'), h('my-component-3'), 
+                        h('my-component-3'), h('my-component-3'), h('my-component-3'), h('my-component-3')
+                    ]))
                 };
+            }
+
+            onMount() {
+                setInterval(() => {
+                    this.state.a = !this.state.a;
+                }, 5000);
             }
 
             static get styles() {
