@@ -160,7 +160,7 @@ module.exports = function(_Weddell){
                                     }));
                                     this.addState(componentName, routerState);
                                     routerState.on(['exit', 'enter'], evt => {
-                                        this.markDirty();
+                                        this.render();
                                     });
                                 });
                         })
