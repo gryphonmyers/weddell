@@ -4,7 +4,6 @@ const generateHash = require('../utils/make-hash');
 const mix = require('mixwith-es5').mix;
 const DeDupe = require('mixwith-es5').DeDupe;
 const difference = require('../utils/difference');
-const compact = require('array-compact');
 const h = require('virtual-dom/h');
 const svg = require('virtual-dom/virtual-hyperscript/svg');
 const VDOMWidget = require('./vdom-widget');
@@ -13,15 +12,12 @@ function flatten(arr) {
     return [].concat(...arr);
 }
 
-function uniq(arr) {
-    return arr.reduce((acc, item) => acc.includes(item) ? acc : acc.concat(item), []);
+function compact(arr) {
+    return arr.filter(item => item != null);
 }
 
-function cloneVNode(vNode, newChildren=null, preserveIfUnchanged=false) {
-    return preserveIfUnchanged && !newChildren && !vNode.namespace && false ? vNode : 
-        (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
-            key: vNode.key
-        }), newChildren || vNode.children);
+function uniq(arr) {
+    return arr.reduce((acc, item) => acc.includes(item) ? acc : acc.concat(item), []);
 }
 
 const defaultOpts = {
@@ -45,8 +41,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         Object.defineProperties(this, {
             id: { get: () => this._id },
-            path: { get: () => this._path },
-            classPath: { get: () => this._classPath },
             isRoot: { value: opts.isRoot },
             content: { value: [], writable: true},
             hasMounted: {get: () => this._hasMounted},
@@ -67,11 +61,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _dirtyRenderers: { value: false, writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: false},
+            _lastRenderedComponents: {writable: true, value: null},
             _componentsRequestingPatch: {writable: true, value: []},
-            _renderPromise: {writable:true, value: null},
-            _lastRenderedComponentClasses: {writable: true, value:null},
+            _renderPromise: {writable: true, value: null},
             _hasMounted: {writable:true, value: false},
             _hasRendered: {writable:true, value: false},
+            _renderCache: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _isInit: { writable: true, value: false},            
             _id : { value: generateHash() },
             _tagDirectives: { value: {} },
@@ -86,8 +82,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }, {}) : {};
             
         Object.defineProperties(this, {
-            _path: { value: `${opts.parentComponent ? opts.parentComponent.path + '/': ''}${this.id}`},
-            _classPath: { value: `${opts.parentComponent ? opts.parentComponent.classPath + '/': ''}${this.constructor.id}`},
             props: {
                 value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
@@ -205,44 +199,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return !this._renderPromise ? (this._renderPromise = promise): promise;
     }
 
-    onInit() {
-        //noop
-    }
-
-    onFirstRender() {
-        //noop
-    }
-
-    onRender() {
-        //noop
-    }
-
-    onMove() {
-        //noop
-    }
-
-    onMount() {
-        //noop
-    }
-
-    onUnmount() {
-        //noop
-    }
+    onInit() {}
+    onFirstRender() {}
+    onRender() {}
+    onDOMCreate() {}
+    onDOMMove() {}
+    onDOMChange() {}
+    onDOMCreateOrChange() {}
+    onDOMDestroy() {}
+    onMount() {}
+    onUnmount() {}
+    onFirstMount() {}
+    onRenderMarkup() {}
+    onRenderStyles() {}
 
     requestPatch(results) {
-        this.trigger('requestpatch', {results: Object.create(results), id: this.id, classId: this.constructor.id, path: this.path, classPath: this.classPath });
-    }
-
-    static get mountedInstances() {
-        return staticProps.mountedInstaces;
-    }
-
-    static get mountedComponents() {
-        return {};
-    }
-
-    static set mountedComponents(val) {
-        this._mountedComponents = {};
+        this.trigger('requestpatch', {results: Object.create(results), id: this.id, classId: this.constructor.id });
     }
 
     makeVNodeTemplate() {
@@ -297,6 +269,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
             var result = func.apply(this, [this.state].concat(Array.from(arguments).slice(2)));
 
+            this._renderCache[renderMethodName] = result;
             this._lastAccessedStateKeys[renderMethodName] = accessed;
 
             return result;
@@ -304,7 +277,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     renderStyles() {
-        return this.stylesTemplate();
+        return Promise.resolve(this.stylesTemplate())
+            .then(results => {
+                return Promise.resolve(this.onRenderStyles())
+                    .then(() => results);
+            })
     }
 
     renderVNode() {
@@ -316,19 +293,23 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }            
             vTree = vTree[0];
         }
-
-        return this.replaceComponentPlaceholders(vTree)
+        var renderedComponents = {};
+        return vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
             .then(vTree => {
                 this.vTree = vTree;
-                return this.onRenderMarkup();
+                return Promise.all(flatten(Object.values(renderedComponents)))
+                    .then(rendered => {
+                        this._lastRenderedComponents = rendered.reduce((acc, item) => Object.assign(acc, {[item.id]: item}, {}), {})
+                    })
             })
-            .then(() => this.vTree)
+            .then(() => this.onRenderMarkup())
+            .then(() => this.vTree) : this.vTree = null;
     }
 
     replaceComponentPlaceholders(vNode, renderedComponents={}) {
         var components;
         var componentName;
-
+        
         if (Array.isArray(vNode)) {
             return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)));
         } else if (!vNode.tagName) {
@@ -341,7 +322,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             var promise = this.replaceComponentPlaceholders(vNode.children, renderedComponents)
                 .then(children => {
                     if (children.some((child, ii) => vNode.children[ii] !== child)) {
-                        return cloneVNode(vNode, flatten(children));
+                        return VDOMWidget.cloneVNode(vNode, flatten(children));
                     }
                     return vNode;
                 })            
@@ -362,19 +343,23 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     renderedComponents[componentName].push(prom);
 
                     return prom
-                        .then(instance => {
+                        .then(component => {
                             return Promise.all(content.map(contentNode => {
-                                    return instance.replaceComponentPlaceholders(contentNode)
+                                    return component.replaceComponentPlaceholders(contentNode)
                                 }))
                                 .then(content => {
-                                    instance.content = content;
-                                    instance.assignProps(props, this);
-                                    return new VDOMWidget({weddellComponent: instance});
+                                    component.content = content;
+                                    component.assignProps(props, this);
+                                    return component.mount()
+                                        .then(didMount => {
+                                            this.trigger('componentplaceholderreplaced', {component});
+                                            return new VDOMWidget({component});
+                                        });
                                 });
                         });        
                 }
 
-                return cloneVNode(vNode, null, true);
+                return VDOMWidget.cloneVNode(vNode, null, true);
             });
     }
 
@@ -386,16 +371,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     refreshWidgets(vNode, targetComponents=[]) {
-        if (targetComponents.length) {
-            if (vNode.type === 'Widget') {
-                if (targetComponents.includes(vNode.weddellComponent)) {
-                    return new VDOMWidget({weddellComponent: vNode.weddellComponent});
-                }
-            } else if (vNode.children) {
-                var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
-                if (children.some((child, ii) => child !== vNode.children[ii])) {
-                    return cloneVNode(vNode, children);
-                }
+        if (!vNode) {
+            return vNode;
+        } else if (vNode.type === 'Widget') {
+            if (targetComponents.includes(vNode.component)) {
+                return new VDOMWidget({component: vNode.component});
+            }
+        } else if (vNode.children) {
+            var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
+            if (children.some((child, ii) => child !== vNode.children[ii])) {
+                return VDOMWidget.cloneVNode(vNode, children);
             }
         }
         return vNode;
@@ -409,6 +394,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             Object.values(this._componentInstances[componentName])
                 .forEach(instance => instance.walkComponents(callback, filterFunc))
         }
+    }
+
+    reduceComponents(callback, initialVal, filterFunc=()=>true) {
+        var acc = initialVal;
+        if (filterFunc(this)) {
+            acc = callback(acc, this)
+        }
+        for (var componentName in this.components) {
+            acc = Object.values(this._componentInstances[componentName])
+                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc), acc);
+        }
+        return acc;
     }
 
     checkChangedKey(key) {
@@ -453,14 +450,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     awaitRender(val) {
         return (this.renderPromise ? this.renderPromise : Promise.resolve())
             .then(() => val);
-    }
-
-    onRenderMarkup() {
-        //Default event handler, noop
-    }
-
-    onRenderStyles() {
-        //Default event handler, noop
     }
 
     addTagDirective(name, directive) {
@@ -599,12 +588,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     getMountedChildComponents() {
-        return Object.entries(this.components)
-            .reduce((finalArr, entry) => {
-                return Object.values(this._componentInstances[entry[0]])
-                    .filter(instance => instance.isMounted)
-                    .concat(finalArr);
-            }, [])
+        return this.reduceComponents((acc, component) => 
+            acc.concat(component), [], component => 
+                component !== this && component._isMounted);
     }
 
     assignProps(props, parentScope) {
@@ -686,20 +672,33 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     unmount() {
-        for (var eventName in this._inlineEventHandlers) {
-            this._inlineEventHandlers[eventName].off();
-            delete this._inlineEventHandlers[eventName];
+        if (this._isMounted) {
+            for (var eventName in this._inlineEventHandlers) {
+                this._inlineEventHandlers[eventName].off();
+                delete this._inlineEventHandlers[eventName];
+            }
+            this._isMounted = false;
+            this.trigger('unmount');
+            return Promise.resolve(this.onUnmount())
+                .then(() => true);
         }
-        this._isMounted = false;
-        this.trigger('unmount');
-        this.onUnmount.call(this);
+        return Promise.resolve(false);
     }
 
     mount() {
-        this._isMounted = true;
-        this._hasMounted = true;
-        this.trigger('mount');
-        this.onMount.call(this);
+        if (!this._isMounted) {
+            this._isMounted = true;
+            this.trigger('mount');
+            var arr = [this.onMount()];
+            if (!this.hasMounted) {
+                this._hasMounted = true;
+                this.trigger('firstmount');
+                arr.push(this.onFirstMount());
+            }
+            return Promise.all(arr)
+                .then(() => true);
+        }
+        return Promise.resolve(false);
     }
 
     makeComponentInstance(componentName, index, opts) {
@@ -719,6 +718,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }
         });
 
+        instance.on('componentleavedom', evt => this.trigger('componentleavedom', Object.assign({}, evt)))
+        instance.on('componententerdom', evt => this.trigger('componententerdom', Object.assign({}, evt)))
+  
         return instance;
     }
 

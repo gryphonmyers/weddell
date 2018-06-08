@@ -6,17 +6,44 @@ var createElement = require('virtual-dom/create-element');
 module.exports = class VDOMWidget {
     constructor(opts) {
         this.type = 'Widget';
-        this.weddellComponent = opts.weddellComponent;
-        this.vTree = opts.weddellComponent.vTree;
+        this.component = opts.component;
+        this.vTree = opts.component.vTree;
     }
-    
-    init() {
-        var el = this.vTree ? createElement(this.vTree) : null;
-        
-        if (el) {
-            this.weddellComponent._el = el;
-            this.weddellComponent.mount();
+
+    static cloneVNode(vNode, newChildren=null, preserveIfUnchanged=false) {
+        return preserveIfUnchanged && !newChildren && !vNode.namespace && false ? vNode : 
+            (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
+                key: vNode.key
+            }), newChildren || vNode.children);
+    }
+
+    static pruneNullNodes(vNode) {
+        if (!vNode) {
+            throw "Can't prune null nodes from a null node!";
         }
+
+        if (vNode.type === 'Widget') {
+            if (vNode.component.vTree == null) {
+                return null;
+            }
+        } else if (vNode.children) {
+            var children = vNode.children.filter(child => this.pruneNullNodes(child));
+            if (children.length !== vNode.children.length || children.some((child, ii) => child !== vNode.children[ii])) {
+                return this.cloneVNode(vNode, children);
+            }
+        }
+        return vNode;
+    }
+
+    init() {
+        if (!this.vTree) {
+            throw "Component has no VTree to init with";
+        }
+        var el = createElement(this.vTree);
+        this.component._el = el;
+
+        this.component.onDOMCreate.call(this.component, {el});
+        this.component.onDOMCreateOrChange.call(this.component, {el});
 
         return el;
     }
@@ -25,24 +52,30 @@ module.exports = class VDOMWidget {
         if (Array.isArray(this.vTree)) {
             throw "Cannot render a component with multiple nodes at root!";
         }
-        // console.log(previousWidget.weddellComponent.constructor.id);
-        var patches = VDOMDiff(previousWidget.vTree, this.weddellComponent.vTree);
+
+        previousWidget.component.trigger('componentleavedom', {component: previousWidget.component});
+        this.component.trigger('componententerdom', {component: this.component});
+        
+        var patches = VDOMDiff(previousWidget.vTree, this.component.vTree);
         var el = VDOMPatch(prevDOMNode, patches);
 
-        if (previousWidget.weddellComponent !== this.weddellComponent) {
-            this.weddellComponent._el = el;
-            this.weddellComponent.onMove.call(this.weddellComponent, { newEl: el, prevEl: prevDOMNode });
+        if (previousWidget.component !== this.component) {
+            this.component._el = el;
+            this.component.onDOMChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
+            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
         }
 
-        //@TODO pretty sure there is a case where one set of mounted components could transform into an entirely different set of components, which would trigger updates but no inits or destroys
-
-        this.vTree = this.weddellComponent.vTree;
+        //@TODO onDOMMove?
+        if (this.component.vTree == null) {
+            debugger;
+        }
+        this.vTree = this.component.vTree;
         
         return el;
     }
 
     destroy(DOMNode) {
-        this.weddellComponent.unmount();
-        this.weddellComponent._el = null;
+        this.component.onDOMDestroy.call(this.component, {el: this.component._el});
+        this.component._el = null;
     }
 }

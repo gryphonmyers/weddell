@@ -90,12 +90,23 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         if (!this.rootNode.parentNode) {
             this.el.appendChild(this.rootNode);
         }
+
         this.component.refreshPendingWidgets();
-        var newTree = new VDOMWidget({weddellComponent: this.component});
-        var patches = VDOMDiff(this.vTree, newTree);
+        var newTree = new VDOMWidget({component: this.component});
+        var diffTree = VDOMWidget.pruneNullNodes(newTree.vTree);//this.component.constructor.pruneNullNodes(newTree);
+        var patches = VDOMDiff(this.vTree, diffTree);
         var rootNode = VDOMPatch(this.rootNode, patches);
         this.rootNode = rootNode;
         this.vTree = newTree;
+
+        var mountedComponents = this.component
+            .reduceComponents((acc, component) => Object.assign(acc, component._lastRenderedComponents), {})
+
+        this.component.walkComponents(component => {
+                return component.isMounted ? component.unmount() : component.mount()
+            },
+            component => component.isMounted !== (component.id in mountedComponents));
+
         this.trigger('patchdom');
     }
 
@@ -115,16 +126,18 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
         this.component.walkComponents(component => {
             var id = component.id;
-            var stylesObj = id in results.components ? results.components[id].results.renderStyles : null;
+            var needsPatch = id in results.components;
+            var stylesObj = needsPatch ? results.components[id].results.renderStyles : component._renderCache.renderStyles;
             
-            var makeObj = (key, obj) => obj ? Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), {id, needsPatch: true }) : {id, needsPatch: false};
+            var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), {id, needsPatch})
             
             instanceStyles.push(makeObj('dynamicStyles', stylesObj));
 
             id = component.constructor.id;
 
             if (!(id in staticStyles)) {
-                stylesObj = id in results.classes ? results.classes[id].results.renderStyles : null;
+                needsPatch = id in results.classes;
+                stylesObj = needsPatch ? results.classes[id].results.renderStyles : component._renderCache.renderStyles;
                 staticStyles[id] = makeObj('staticStyles', stylesObj);
             }
         }, component => component.isMounted);
@@ -144,16 +157,26 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 if (!obj.needsPatch) {
                     if (styleIndex > -1) {
                         styleEl = final.splice(styleIndex, 1)[0];
-
-                        if (prevEl) {
-                            var comparison = prevEl.compareDocumentPosition(styleEl);
-                            if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
-                                prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
-                            }
+                    } else {
+                        styles = obj.styles;
+                        if (styles) {
+                            styleEl = createStyleEl('weddell-style-' + obj.id, 'weddell-style');
+                            styleEl.textContent = obj.styles;
                         }
+                    }
 
+                    if (prevEl && styleEl) {
+                        var comparison = prevEl.compareDocumentPosition(styleEl);
+                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        }
+                        
+                    }
+
+                    if (styleEl) {
                         prevEl = styleEl;
                     }
+                    
                     return final;
                 } else {
                     styles = obj.styles || '';
@@ -259,7 +282,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
-
                 this.component.on('requestpatch', evt => {
                     this.queuePatch(evt);
                 });
@@ -269,12 +291,11 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 Object.seal(this);
 
                 return this.component.init(this.componentInitOpts)
-                    .then(() => {
-                        return this.awaitPatch()
-                            .then(() => {
-                                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
-                            })
-                    })
+                    .then(() =>  this.component.mount())
+                    .then(() => this.awaitPatch()
+                        .then(() => {
+                            this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+                        }))
             })
     }
 }
