@@ -2,8 +2,6 @@ const DOMReady = require('document-ready-promise')();
 const defaults = require('object.defaults/immutable');
 const mix = require('mixwith-es5').mix;
 const EventEmitterMixin = require('./event-emitter-mixin');
-const isApplicationOf = require('mixwith-es5').isApplicationOf;
-const Component = require('./component');
 const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
@@ -105,7 +103,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.component.walkComponents(component => {
                 return component.isMounted ? component.unmount() : component.mount()
             },
-            component => component.isMounted !== (component.id in mountedComponents));
+            component => component !== this.component && component.isMounted !== (component.id in mountedComponents));
 
         this.trigger('patchdom');
     }
@@ -258,6 +256,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     awaitPatch() {
+        return this.patchPromise || Promise.resolve();
+    }
+
+    awaitNextPatch() {
         return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
     }
 
@@ -286,12 +288,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     this.queuePatch(evt);
                 });
 
-                this.initRenderLifecycleStyleHooks(this.component);
-
                 Object.seal(this);
 
                 return this.component.init(this.componentInitOpts)
-                    .then(() =>  this.component.mount())
+                    .then(() => this.component.mount())
                     .then(() => this.awaitPatch()
                         .then(() => {
                             this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');

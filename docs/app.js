@@ -108,6 +108,24 @@ var SubComponent = Component => class extends Component {
 
 var app = new Weddell.classes.App({
     el: '#app',
+    routes: [
+        {
+            name: 'homey',
+            pattern: '/boo',
+            handler: function(){
+                // debugger;
+                return 'other-component-yo'
+            }
+        },
+        {
+            name: 'home',
+            pattern: '/',
+            handler: function(){
+                // debugger;
+                return 'routed-component-yo'
+            }
+        }
+    ],
     Component: Component => {
         return class extends Component {
             constructor(opts) {
@@ -120,6 +138,22 @@ var app = new Weddell.classes.App({
 
             static get components() {
                 return {
+                    'routed-component-yo': Component => class extends Component {
+                        static get markup() {
+                            return (locals, h) => h('.bingo', ['The blarney stone']);
+                        }
+                    },
+                    'other-component-yo': Component => class extends Component {
+                        static get markup() {
+                            return (locals, h) => h('.bingo', ['The moogie stone' + locals.borgus]);
+                        }
+
+                        static get inputs() {
+                            return [
+                                'borgus'
+                            ];
+                        }
+                    },
                     'my-component': SubComponent,
                     'my-component-2': SubComponent,
                     'my-component-3': SubComponent
@@ -130,13 +164,16 @@ var app = new Weddell.classes.App({
                 return defaults({
                     body: 'Blooo',
                     fontSize: '12px',
-                    a: true
+                    a: true,
+                    johnson: 'Twinkle'
                 }, super.state);
             }
 
             static get markup() {
                 return (locals, h) => {
-                    return h('.foo', [ h('span.boo', { className: 'cmpt-' + locals.$id }, [locals.body]) ].concat(locals.a ? [
+                    return h('.foo', [ h('routerview', { attributes: {
+                        borgus: locals.johnson
+                    }}), h('a', {attributes: {href: '/boo'}}, 'Wuzipan'), h('span.boo', { className: 'cmpt-' + locals.$id }, [locals.body]) ].concat(locals.a ? [
                         h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), 
                         h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), 
                         h('my-component'), h('my-component-2'), h('my-component'), h('my-component-2'), 
@@ -150,9 +187,15 @@ var app = new Weddell.classes.App({
                 };
             }
 
+            onUnmount() {
+                console.log('unmount')
+            }
+
             onMount() {
+                console.log('mount');
                 setInterval(() => {
                     this.state.a = !this.state.a;
+                    this.state.johnson += 'too';
                 }, 5000);
             }
 

@@ -18,6 +18,8 @@ module.exports = function(_Weddell){
         classes:  {
             App: Mixin(function(App){
                 return class extends App {
+                    onBeforeRoute() {}
+
                     constructor(opts) {
                         super(opts);
 
@@ -31,7 +33,7 @@ module.exports = function(_Weddell){
                                     this.el.classList.add('route-update');
                                 }
                                 this.trigger('routematched', {matches});
-                                return Promise.resolve(this.onBeforeRoute ? this.onBeforeRoute.call(this, { matches, componentNames }) : null)
+                                return Promise.resolve(this.onBeforeRoute.call(this, { matches, componentNames }))
                                     .then(() => {
                                         this.el.classList.add('prerouting-finished');
                                         
@@ -40,7 +42,7 @@ module.exports = function(_Weddell){
                                             .reduce((promise, componentName) => {
                                                 return promise
                                                     .then(currentComponent => {
-                                                        return currentComponent.getComponentInstance(componentName, 'router')
+                                                        return currentComponent.getInitComponentInstance(componentName, 'router')
                                                             .then(component => {
                                                                 if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
                                                                 jobs.push({
@@ -63,7 +65,8 @@ module.exports = function(_Weddell){
                                                             .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                                     }, Promise.resolve())
                                                     .then(results => {
-                                                        return this.renderPromise ? this.renderPromise.then(() => results) : results;
+                                                        return this.awaitPatch()
+                                                            .then(() => results);
                                                     });
                                             }, console.warn)
                                             .then(results => {
@@ -89,33 +92,9 @@ module.exports = function(_Weddell){
                         });
                     }
 
-                    initRenderLifecycleStyleHooks(rootComponent) {
-                        var off = rootComponent.on('renderdomstyles', evt => {
-                            if (evt.component.currentState) {
-                                this.el.classList.add('first-styles-render-complete');
-                                if (this.el.classList.contains('first-markup-render-complete')) {
-                                    this.el.classList.add('first-render-complete');
-                                }
-                                off();
-                            }
-                        });
-                
-                       var off2 = rootComponent.on('renderdommarkup', evt => {
-                            this.el.classList.add('first-markup-render-complete');
-                            if (evt.component.currentState) {
-                                if (this.el.classList.contains('first-styles-render-complete')) {
-                                    this.el.classList.add('first-render-complete');
-                                    off2();
-                                }
-                            }
-                        });
-                    }
-
                     init() {
                         return super.init()
-                            .then(() => {
-                                return this.router.init();
-                            });
+                            .then(() => this.router.init());
                     }
                 }
             }),
@@ -123,9 +102,17 @@ module.exports = function(_Weddell){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
 
                     static get state() {
-                        return Object.assign({
+                        return defaults({
                             $currentRoute: null
                         }, super.state);
+                    }
+
+                    static get tagDirectives() {
+                        return defaults({
+                            routerview: function(vNode, content, props){
+                                return this.compileRouterView(content, props);
+                            } 
+                        }, super.tagDirectives)
                     }
 
                     constructor(opts) {
@@ -141,8 +128,6 @@ module.exports = function(_Weddell){
 
                         self = this;
 
-                        this.addTagDirective('RouterView', this.compileRouterView.bind(this));
-
                         this.on('init', () => {
                             Object.entries(this.components)
                                 .forEach(entry => {
@@ -150,7 +135,7 @@ module.exports = function(_Weddell){
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
                                         var machineStateMethod = methods[0];
                                         finalObj[machineStateMethod] = (evt) => {
-                                            return this.getComponentInstance(componentName, 'router')
+                                            return this.getInitComponentInstance(componentName, 'router')
                                                 .then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
                                         }
                                         return finalObj;
@@ -159,23 +144,16 @@ module.exports = function(_Weddell){
                                         componentName
                                     }));
                                     this.addState(componentName, routerState);
-                                    routerState.on(['exit', 'enter'], evt => {
-                                        this.render();
-                                    });
                                 });
+                            this.on(['enterstate', 'exitstate'], evt => {
+                                //@TODO this could be optimized to not force a render of the parent
+                                this.markDirty();
+                            });
                         })
                     }
 
-                    compileRouterView(content, props, isContent) {
-                        if (this.currentState) {
-                            return this.getComponentInstance(this.currentState.componentName, 'router')
-                                .then(component => component.render('markup', content, props))
-                                .then(routerOutput => {
-                                    this.trigger('rendercomponent', {componentOutput: routerOutput, componentName: this.currentState.componentName, props, isContent});
-                                    return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
-                                });
-                        }
-                        return Promise.resolve(null);
+                    compileRouterView(content, props, isContent=false) {
+                        return this.currentState ? this.makeChildComponentWidget(this.currentState.componentName, 'router', content, props) : null;
                     }
 
                     compileRouterLink(obj) {

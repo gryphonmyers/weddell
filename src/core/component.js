@@ -22,7 +22,7 @@ function uniq(arr) {
 
 const defaultOpts = {
     store: {},
-    inputs: [],
+    inputs: null,
     isRoot: false
 };
 const defaultInitOpts = {};
@@ -38,7 +38,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         opts = defaults(opts, defaultOpts);
         super(opts);
         var Store = this.constructor.Weddell.classes.Store;
-
+        if (opts.inputs) {
+            console.warn('you are using outdated syntax! opts.inputs is deprecated in favor of static getter.')
+        }
         Object.defineProperties(this, {
             id: { get: () => this._id },
             isRoot: { value: opts.isRoot },
@@ -51,7 +53,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             root: {value: opts.isRoot ? this : opts.root },
-            inputs : { value: compact(opts.inputs) },
+            inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
+            //@TODO inputs don't need to be stored on isntance at all
 
             renderers: { value: {} },
 
@@ -60,7 +63,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _dirtyRenderers: { value: false, writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
-            _isMounted: {writable:true, value: false},
+            _isMounted: {writable:true, value: null},
             _lastRenderedComponents: {writable: true, value: null},
             _componentsRequestingPatch: {writable: true, value: []},
             _renderPromise: {writable: true, value: null},
@@ -214,7 +217,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     onRenderStyles() {}
 
     requestPatch(results) {
-        this.trigger('requestpatch', {results: Object.create(results), id: this.id, classId: this.constructor.id });
+        this.trigger('requestpatch', {results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
     }
 
     makeVNodeTemplate() {
@@ -306,6 +309,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             .then(() => this.vTree) : this.vTree = null;
     }
 
+    static get state() {
+        return {};
+    }
+
+    static get tagDirectives() {
+        return {
+            content: function() {
+                return this.content;
+            }
+        }
+    }
+
     replaceComponentPlaceholders(vNode, renderedComponents={}) {
         var components;
         var componentName;
@@ -314,8 +329,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)));
         } else if (!vNode.tagName) {
             return vNode;
-        } else if ((componentName = vNode.tagName.toLowerCase()) === 'content') {
-            return Promise.resolve(this.content);
+        } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
+            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes));
         }
 
         if (vNode.children) {
@@ -339,27 +354,35 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         renderedComponents[componentName] = [];
                     }
                     var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
-                    var prom = this.getInitComponentInstance(componentName, index)
-                    renderedComponents[componentName].push(prom);
-
-                    return prom
-                        .then(component => {
-                            return Promise.all(content.map(contentNode => {
-                                    return component.replaceComponentPlaceholders(contentNode)
-                                }))
-                                .then(content => {
-                                    component.content = content;
-                                    component.assignProps(props, this);
-                                    return component.mount()
-                                        .then(didMount => {
-                                            this.trigger('componentplaceholderreplaced', {component});
-                                            return new VDOMWidget({component});
-                                        });
-                                });
-                        });        
+        
+                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);        
                 }
 
                 return VDOMWidget.cloneVNode(vNode, null, true);
+            });
+    }
+
+    makeChildComponentWidget(componentName, index, content, props, renderedComponents = {}) {
+        var prom = this.getInitComponentInstance(componentName, index);
+        if (!(componentName in renderedComponents)) {
+            renderedComponents[componentName] = [];
+        }
+        renderedComponents[componentName].push(prom);
+
+        return prom
+            .then(component => {
+                return Promise.all(content.map(contentNode => {
+                        return component.replaceComponentPlaceholders(contentNode, renderedComponents)
+                    }))
+                    .then(content => {
+                        component.content = content;
+                        component.assignProps(props, this);
+                        return component.mount()
+                            .then(didMount => {
+                                this.trigger('componentplaceholderreplaced', {component});
+                                return new VDOMWidget({component});
+                            });
+                    });
             });
     }
 
@@ -539,6 +562,15 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         return obj[componentName];
     }
+    
+    markDirty(dirtyRenderers={}) {
+        //@TODO maybe also set dirtyRenderers when component isn't mounted
+        if (this.renderPromise || !this.isMounted) {
+            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
+        } else {
+            this.render(dirtyRenderers);
+        }
+    }
 
     init(opts) {
         opts = defaults(opts, this.defaultInitOpts);
@@ -550,11 +582,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     if (evt.target === this[propName]) {
                         var dirtyRenderers = this.checkChangedKey(evt.changedKey);
                         if (dirtyRenderers) {
-                            if (this.renderPromise) {
-                                this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers);
-                            } else {
-                                this.render(dirtyRenderers);
-                            }
+                            this.markDirty(dirtyRenderers);
                         }
                     }
                 })
@@ -689,13 +717,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (!this._isMounted) {
             this._isMounted = true;
             this.trigger('mount');
-            var arr = [this.onMount()];
+            var arr = ['onMount'];
             if (!this.hasMounted) {
                 this._hasMounted = true;
                 this.trigger('firstmount');
-                arr.push(this.onFirstMount());
+                arr.push('onFirstMount');
             }
-            return Promise.all(arr)
+            if (this._dirtyRenderers) {
+                this._dirtyRenderers = null;
+                return this.render()
+                    .then(() => Promise.all(arr.map(func => this[func]())));
+            }
+            return Promise.all(arr.map(func => this[func]()))
                 .then(() => true);
         }
         return Promise.resolve(false);
