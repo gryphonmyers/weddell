@@ -561,7 +561,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
     
     markDirty(dirtyRenderers={}) {
-        //@TODO maybe also set dirtyRenderers when component isn't mounted
         if (this.renderPromise || !this.isMounted) {
             this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
         } else {
