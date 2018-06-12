@@ -26,7 +26,7 @@ const defaultOpts = {
     isRoot: false
 };
 const defaultInitOpts = {};
-const _generatedComponentClasses = {};
+var _generatedComponentClasses = {};
 const testElement = document.createElement('div');
 
 var Component = class extends mix(Component).with(EventEmitterMixin) {
