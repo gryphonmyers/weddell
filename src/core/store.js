@@ -3,7 +3,6 @@ var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
 var includes = require('../utils/includes');
 var difference = require('../utils/difference');
-var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
 var uniq = require('array-uniq');
 

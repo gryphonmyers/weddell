@@ -21,91 +21,6 @@ function validate (item) {
 }
 
 },{}],2:[function(require,module,exports){
-/*!
- * array-each <https://github.com/jonschlinkert/array-each>
- *
- * Copyright (c) 2015, 2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-/**
- * Loop over each item in an array and call the given function on every element.
- *
- * ```js
- * each(['a', 'b', 'c'], function(ele) {
- *   return ele + ele;
- * });
- * //=> ['aa', 'bb', 'cc']
- *
- * each(['a', 'b', 'c'], function(ele, i) {
- *   return i + ele;
- * });
- * //=> ['0a', '1b', '2c']
- * ```
- *
- * @name each
- * @alias forEach
- * @param {Array} `array`
- * @param {Function} `fn`
- * @param {Object} `thisArg` (optional) pass a `thisArg` to be used as the context in which to call the function.
- * @return {undefined}
- * @api public
- */
-
-module.exports = function each(arr, cb, thisArg) {
-  if (arr == null) return;
-
-  var len = arr.length;
-  var idx = -1;
-
-  while (++idx < len) {
-    var ele = arr[idx];
-    if (cb.call(thisArg, ele, idx, arr) === false) {
-      break;
-    }
-  }
-};
-
-},{}],3:[function(require,module,exports){
-/*!
- * array-slice <https://github.com/jonschlinkert/array-slice>
- *
- * Copyright (c) 2014-2015, 2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function slice(arr, start, end) {
-  var len = arr.length;
-  var range = [];
-
-  start = idx(arr, start);
-  end = idx(arr, end, len);
-
-  while (start < end) {
-    range.push(arr[start++]);
-  }
-  return range;
-};
-
-function idx(arr, pos, end) {
-  var len = arr.length;
-
-  if (pos == null) {
-    pos = end || 0;
-  } else if (pos < 0) {
-    pos = Math.max(len + pos, 0);
-  } else {
-    pos = Math.min(pos, len);
-  }
-
-  return pos;
-}
-
-},{}],4:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -171,175 +86,9 @@ if ('Set' in global) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],5:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 
-},{}],6:[function(require,module,exports){
-/*!
- * Cross-Browser Split 1.1.1
- * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
- * Available under the MIT License
- * ECMAScript compliant, uniform cross-browser split method
- */
-
-/**
- * Splits a string into an array of strings using a regex or string separator. Matches of the
- * separator are not included in the result array. However, if `separator` is a regex that contains
- * capturing groups, backreferences are spliced into the result each time `separator` is matched.
- * Fixes browser bugs compared to the native `String.prototype.split` and can be used reliably
- * cross-browser.
- * @param {String} str String to split.
- * @param {RegExp|String} separator Regex or string to use for separating the string.
- * @param {Number} [limit] Maximum number of items to include in the result array.
- * @returns {Array} Array of substrings.
- * @example
- *
- * // Basic use
- * split('a b c d', ' ');
- * // -> ['a', 'b', 'c', 'd']
- *
- * // With limit
- * split('a b c d', ' ', 2);
- * // -> ['a', 'b']
- *
- * // Backreferences in result array
- * split('..word1 word2..', /([a-z]+)(\d+)/i);
- * // -> ['..', 'word', '1', ' ', 'word', '2', '..']
- */
-module.exports = (function split(undef) {
-
-  var nativeSplit = String.prototype.split,
-    compliantExecNpcg = /()??/.exec("")[1] === undef,
-    // NPCG: nonparticipating capturing group
-    self;
-
-  self = function(str, separator, limit) {
-    // If `separator` is not a regex, use `nativeSplit`
-    if (Object.prototype.toString.call(separator) !== "[object RegExp]") {
-      return nativeSplit.call(str, separator, limit);
-    }
-    var output = [],
-      flags = (separator.ignoreCase ? "i" : "") + (separator.multiline ? "m" : "") + (separator.extended ? "x" : "") + // Proposed for ES6
-      (separator.sticky ? "y" : ""),
-      // Firefox 3+
-      lastLastIndex = 0,
-      // Make `global` and avoid `lastIndex` issues by working with a copy
-      separator = new RegExp(separator.source, flags + "g"),
-      separator2, match, lastIndex, lastLength;
-    str += ""; // Type-convert
-    if (!compliantExecNpcg) {
-      // Doesn't need flags gy, but they don't hurt
-      separator2 = new RegExp("^" + separator.source + "$(?!\\s)", flags);
-    }
-    /* Values for `limit`, per the spec:
-     * If undefined: 4294967295 // Math.pow(2, 32) - 1
-     * If 0, Infinity, or NaN: 0
-     * If positive number: limit = Math.floor(limit); if (limit > 4294967295) limit -= 4294967296;
-     * If negative number: 4294967296 - Math.floor(Math.abs(limit))
-     * If other: Type-convert, then use the above rules
-     */
-    limit = limit === undef ? -1 >>> 0 : // Math.pow(2, 32) - 1
-    limit >>> 0; // ToUint32(limit)
-    while (match = separator.exec(str)) {
-      // `separator.lastIndex` is not reliable cross-browser
-      lastIndex = match.index + match[0].length;
-      if (lastIndex > lastLastIndex) {
-        output.push(str.slice(lastLastIndex, match.index));
-        // Fix browsers whose `exec` methods don't consistently return `undefined` for
-        // nonparticipating capturing groups
-        if (!compliantExecNpcg && match.length > 1) {
-          match[0].replace(separator2, function() {
-            for (var i = 1; i < arguments.length - 2; i++) {
-              if (arguments[i] === undef) {
-                match[i] = undef;
-              }
-            }
-          });
-        }
-        if (match.length > 1 && match.index < str.length) {
-          Array.prototype.push.apply(output, match.slice(1));
-        }
-        lastLength = match[0].length;
-        lastLastIndex = lastIndex;
-        if (output.length >= limit) {
-          break;
-        }
-      }
-      if (separator.lastIndex === match.index) {
-        separator.lastIndex++; // Avoid an infinite loop
-      }
-    }
-    if (lastLastIndex === str.length) {
-      if (lastLength || !separator.test("")) {
-        output.push("");
-      }
-    } else {
-      output.push(str.slice(lastLastIndex));
-    }
-    return output.length > limit ? output.slice(0, limit) : output;
-  };
-
-  return self;
-})();
-
-},{}],7:[function(require,module,exports){
-/**
- * Returns a function, that, as long as it continues to be invoked, will not
- * be triggered. The function will be called after it stops being called for
- * N milliseconds. If `immediate` is passed, trigger the function on the
- * leading edge, instead of the trailing. The function also has a property 'clear' 
- * that is a function which will clear the timer to prevent previously scheduled executions. 
- *
- * @source underscore.js
- * @see http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
- * @param {Function} function to wrap
- * @param {Number} timeout in ms (`100`)
- * @param {Boolean} whether to execute at the beginning (`false`)
- * @api public
- */
-
-module.exports = function debounce(func, wait, immediate){
-  var timeout, args, context, timestamp, result;
-  if (null == wait) wait = 100;
-
-  function later() {
-    var last = Date.now() - timestamp;
-
-    if (last < wait && last >= 0) {
-      timeout = setTimeout(later, wait - last);
-    } else {
-      timeout = null;
-      if (!immediate) {
-        result = func.apply(context, args);
-        context = args = null;
-      }
-    }
-  };
-
-  var debounced = function(){
-    context = this;
-    args = arguments;
-    timestamp = Date.now();
-    var callNow = immediate && !timeout;
-    if (!timeout) timeout = setTimeout(later, wait);
-    if (callNow) {
-      result = func.apply(context, args);
-      context = args = null;
-    }
-
-    return result;
-  };
-
-  debounced.clear = function() {
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-  };
-
-  return debounced;
-};
-
-},{}],8:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -435,7 +184,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":9,"./lib/keys.js":10}],9:[function(require,module,exports){
+},{"./lib/is_arguments.js":5,"./lib/keys.js":6}],5:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -457,7 +206,7 @@ function unsupported(object){
     false;
 };
 
-},{}],10:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -468,17 +217,17 @@ function shim (obj) {
   return keys;
 }
 
-},{}],11:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var makeDefaultsFunc = require('./src/make-defaults-func');
 module.exports = makeDefaultsFunc(true, require('./src/array-merge'));
 
-},{"./src/array-merge":12,"./src/make-defaults-func":13}],12:[function(require,module,exports){
+},{"./src/array-merge":8,"./src/make-defaults-func":9}],8:[function(require,module,exports){
 module.exports = function() {
     return Array.from(arguments).slice(1).reduce((finalArr, arr) => {
         return finalArr.concat(arr.filter(item => finalArr.indexOf(item) < 0));
     }, arguments[0]);
 };
-},{}],13:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = function(deep, merge) {
     return function defaults() {
         return Array.from(arguments).slice(1).reduce((sourceObj, obj) => {
@@ -496,7 +245,7 @@ module.exports = function(deep, merge) {
     }
 };
 
-},{}],14:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (document, promise) {
   if (typeof module !== 'undefined') module.exports = promise
   else document.ready = promise
@@ -523,29 +272,7 @@ module.exports = function(deep, merge) {
   })
 })
 
-},{}],15:[function(require,module,exports){
-'use strict';
-
-var OneVersionConstraint = require('individual/one-version');
-
-var MY_VERSION = '7';
-OneVersionConstraint('ev-store', MY_VERSION);
-
-var hashKey = '__EV_STORE_KEY@' + MY_VERSION;
-
-module.exports = EvStore;
-
-function EvStore(elem) {
-    var hash = elem[hashKey];
-
-    if (!hash) {
-        hash = elem[hashKey] = {};
-    }
-
-    return hash;
-}
-
-},{"individual/one-version":21}],16:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var FindParent = {
@@ -588,135 +315,7 @@ var FindParent = {
 
 module.exports = FindParent;
 
-},{}],17:[function(require,module,exports){
-/*!
- * for-in <https://github.com/jonschlinkert/for-in>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function forIn(obj, fn, thisArg) {
-  for (var key in obj) {
-    if (fn.call(thisArg, obj[key], key, obj) === false) {
-      break;
-    }
-  }
-};
-
-},{}],18:[function(require,module,exports){
-/*!
- * for-own <https://github.com/jonschlinkert/for-own>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-var forIn = require('for-in');
-var hasOwn = Object.prototype.hasOwnProperty;
-
-module.exports = function forOwn(obj, fn, thisArg) {
-  forIn(obj, function(val, key) {
-    if (hasOwn.call(obj, key)) {
-      return fn.call(thisArg, obj[key], key, obj);
-    }
-  });
-};
-
-},{"for-in":17}],19:[function(require,module,exports){
-(function (global){
-var topLevel = typeof global !== 'undefined' ? global :
-    typeof window !== 'undefined' ? window : {}
-var minDoc = require('min-document');
-
-var doccy;
-
-if (typeof document !== 'undefined') {
-    doccy = document;
-} else {
-    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
-
-    if (!doccy) {
-        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
-    }
-}
-
-module.exports = doccy;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":5}],20:[function(require,module,exports){
-(function (global){
-'use strict';
-
-/*global window, global*/
-
-var root = typeof window !== 'undefined' ?
-    window : typeof global !== 'undefined' ?
-    global : {};
-
-module.exports = Individual;
-
-function Individual(key, value) {
-    if (key in root) {
-        return root[key];
-    }
-
-    root[key] = value;
-
-    return value;
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],21:[function(require,module,exports){
-'use strict';
-
-var Individual = require('./index.js');
-
-module.exports = OneVersion;
-
-function OneVersion(moduleName, version, defaultValue) {
-    var key = '__INDIVIDUAL_ONE_VERSION_' + moduleName;
-    var enforceKey = key + '_ENFORCE_SINGLETON';
-
-    var versionValue = Individual(enforceKey, version);
-
-    if (versionValue !== version) {
-        throw new Error('Can only have one copy of ' +
-            moduleName + '.\n' +
-            'You already have version ' + versionValue +
-            ' installed.\n' +
-            'This means you cannot install version ' + version);
-    }
-
-    return Individual(key, defaultValue);
-}
-
-},{"./index.js":20}],22:[function(require,module,exports){
-"use strict";
-
-module.exports = function isObject(x) {
-	return typeof x === "object" && x !== null;
-};
-
-},{}],23:[function(require,module,exports){
-/*!
- * isobject <https://github.com/jonschlinkert/isobject>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
-};
-
-},{}],24:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -858,7 +457,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }();
 });
 
-},{}],25:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var slice = require('array-slice');
@@ -880,7 +479,7 @@ module.exports = function immutableDefaults() {
   return defaults.apply(null, [{}].concat(args));
 };
 
-},{"./mutable":26,"array-slice":3}],26:[function(require,module,exports){
+},{"./mutable":14,"array-slice":16}],14:[function(require,module,exports){
 'use strict';
 
 var each = require('array-each');
@@ -917,7 +516,145 @@ module.exports = function defaults(target, objects) {
   return target;
 };
 
-},{"array-each":2,"array-slice":3,"for-own":18,"isobject":23}],27:[function(require,module,exports){
+},{"array-each":15,"array-slice":16,"for-own":18,"isobject":19}],15:[function(require,module,exports){
+/*!
+ * array-each <https://github.com/jonschlinkert/array-each>
+ *
+ * Copyright (c) 2015, 2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+'use strict';
+
+/**
+ * Loop over each item in an array and call the given function on every element.
+ *
+ * ```js
+ * each(['a', 'b', 'c'], function(ele) {
+ *   return ele + ele;
+ * });
+ * //=> ['aa', 'bb', 'cc']
+ *
+ * each(['a', 'b', 'c'], function(ele, i) {
+ *   return i + ele;
+ * });
+ * //=> ['0a', '1b', '2c']
+ * ```
+ *
+ * @name each
+ * @alias forEach
+ * @param {Array} `array`
+ * @param {Function} `fn`
+ * @param {Object} `thisArg` (optional) pass a `thisArg` to be used as the context in which to call the function.
+ * @return {undefined}
+ * @api public
+ */
+
+module.exports = function each(arr, cb, thisArg) {
+  if (arr == null) return;
+
+  var len = arr.length;
+  var idx = -1;
+
+  while (++idx < len) {
+    var ele = arr[idx];
+    if (cb.call(thisArg, ele, idx, arr) === false) {
+      break;
+    }
+  }
+};
+
+},{}],16:[function(require,module,exports){
+/*!
+ * array-slice <https://github.com/jonschlinkert/array-slice>
+ *
+ * Copyright (c) 2014-2015, 2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+'use strict';
+
+module.exports = function slice(arr, start, end) {
+  var len = arr.length;
+  var range = [];
+
+  start = idx(arr, start);
+  end = idx(arr, end, len);
+
+  while (start < end) {
+    range.push(arr[start++]);
+  }
+  return range;
+};
+
+function idx(arr, pos, end) {
+  var len = arr.length;
+
+  if (pos == null) {
+    pos = end || 0;
+  } else if (pos < 0) {
+    pos = Math.max(len + pos, 0);
+  } else {
+    pos = Math.min(pos, len);
+  }
+
+  return pos;
+}
+
+},{}],17:[function(require,module,exports){
+/*!
+ * for-in <https://github.com/jonschlinkert/for-in>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+'use strict';
+
+module.exports = function forIn(obj, fn, thisArg) {
+  for (var key in obj) {
+    if (fn.call(thisArg, obj[key], key, obj) === false) {
+      break;
+    }
+  }
+};
+
+},{}],18:[function(require,module,exports){
+/*!
+ * for-own <https://github.com/jonschlinkert/for-own>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+'use strict';
+
+var forIn = require('for-in');
+var hasOwn = Object.prototype.hasOwnProperty;
+
+module.exports = function forOwn(obj, fn, thisArg) {
+  forIn(obj, function(val, key) {
+    if (hasOwn.call(obj, key)) {
+      return fn.call(thisArg, obj[key], key, obj);
+    }
+  });
+};
+
+},{"for-in":17}],19:[function(require,module,exports){
+/*!
+ * isobject <https://github.com/jonschlinkert/isobject>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+'use strict';
+
+module.exports = function isObject(val) {
+  return val != null && typeof val === 'object' && Array.isArray(val) === false;
+};
+
+},{}],20:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -1345,27 +1082,242 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":28}],28:[function(require,module,exports){
+},{"isarray":21}],21:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],29:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":34}],30:[function(require,module,exports){
+},{"./vdom/create-element.js":34}],23:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":54}],31:[function(require,module,exports){
+},{"./vtree/diff.js":57}],24:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":41}],32:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":42}],25:[function(require,module,exports){
+/*!
+ * Cross-Browser Split 1.1.1
+ * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
+ * Available under the MIT License
+ * ECMAScript compliant, uniform cross-browser split method
+ */
+
+/**
+ * Splits a string into an array of strings using a regex or string separator. Matches of the
+ * separator are not included in the result array. However, if `separator` is a regex that contains
+ * capturing groups, backreferences are spliced into the result each time `separator` is matched.
+ * Fixes browser bugs compared to the native `String.prototype.split` and can be used reliably
+ * cross-browser.
+ * @param {String} str String to split.
+ * @param {RegExp|String} separator Regex or string to use for separating the string.
+ * @param {Number} [limit] Maximum number of items to include in the result array.
+ * @returns {Array} Array of substrings.
+ * @example
+ *
+ * // Basic use
+ * split('a b c d', ' ');
+ * // -> ['a', 'b', 'c', 'd']
+ *
+ * // With limit
+ * split('a b c d', ' ', 2);
+ * // -> ['a', 'b']
+ *
+ * // Backreferences in result array
+ * split('..word1 word2..', /([a-z]+)(\d+)/i);
+ * // -> ['..', 'word', '1', ' ', 'word', '2', '..']
+ */
+module.exports = (function split(undef) {
+
+  var nativeSplit = String.prototype.split,
+    compliantExecNpcg = /()??/.exec("")[1] === undef,
+    // NPCG: nonparticipating capturing group
+    self;
+
+  self = function(str, separator, limit) {
+    // If `separator` is not a regex, use `nativeSplit`
+    if (Object.prototype.toString.call(separator) !== "[object RegExp]") {
+      return nativeSplit.call(str, separator, limit);
+    }
+    var output = [],
+      flags = (separator.ignoreCase ? "i" : "") + (separator.multiline ? "m" : "") + (separator.extended ? "x" : "") + // Proposed for ES6
+      (separator.sticky ? "y" : ""),
+      // Firefox 3+
+      lastLastIndex = 0,
+      // Make `global` and avoid `lastIndex` issues by working with a copy
+      separator = new RegExp(separator.source, flags + "g"),
+      separator2, match, lastIndex, lastLength;
+    str += ""; // Type-convert
+    if (!compliantExecNpcg) {
+      // Doesn't need flags gy, but they don't hurt
+      separator2 = new RegExp("^" + separator.source + "$(?!\\s)", flags);
+    }
+    /* Values for `limit`, per the spec:
+     * If undefined: 4294967295 // Math.pow(2, 32) - 1
+     * If 0, Infinity, or NaN: 0
+     * If positive number: limit = Math.floor(limit); if (limit > 4294967295) limit -= 4294967296;
+     * If negative number: 4294967296 - Math.floor(Math.abs(limit))
+     * If other: Type-convert, then use the above rules
+     */
+    limit = limit === undef ? -1 >>> 0 : // Math.pow(2, 32) - 1
+    limit >>> 0; // ToUint32(limit)
+    while (match = separator.exec(str)) {
+      // `separator.lastIndex` is not reliable cross-browser
+      lastIndex = match.index + match[0].length;
+      if (lastIndex > lastLastIndex) {
+        output.push(str.slice(lastLastIndex, match.index));
+        // Fix browsers whose `exec` methods don't consistently return `undefined` for
+        // nonparticipating capturing groups
+        if (!compliantExecNpcg && match.length > 1) {
+          match[0].replace(separator2, function() {
+            for (var i = 1; i < arguments.length - 2; i++) {
+              if (arguments[i] === undef) {
+                match[i] = undef;
+              }
+            }
+          });
+        }
+        if (match.length > 1 && match.index < str.length) {
+          Array.prototype.push.apply(output, match.slice(1));
+        }
+        lastLength = match[0].length;
+        lastLastIndex = lastIndex;
+        if (output.length >= limit) {
+          break;
+        }
+      }
+      if (separator.lastIndex === match.index) {
+        separator.lastIndex++; // Avoid an infinite loop
+      }
+    }
+    if (lastLastIndex === str.length) {
+      if (lastLength || !separator.test("")) {
+        output.push("");
+      }
+    } else {
+      output.push(str.slice(lastLastIndex));
+    }
+    return output.length > limit ? output.slice(0, limit) : output;
+  };
+
+  return self;
+})();
+
+},{}],26:[function(require,module,exports){
+'use strict';
+
+var OneVersionConstraint = require('individual/one-version');
+
+var MY_VERSION = '7';
+OneVersionConstraint('ev-store', MY_VERSION);
+
+var hashKey = '__EV_STORE_KEY@' + MY_VERSION;
+
+module.exports = EvStore;
+
+function EvStore(elem) {
+    var hash = elem[hashKey];
+
+    if (!hash) {
+        hash = elem[hashKey] = {};
+    }
+
+    return hash;
+}
+
+},{"individual/one-version":29}],27:[function(require,module,exports){
+(function (global){
+var topLevel = typeof global !== 'undefined' ? global :
+    typeof window !== 'undefined' ? window : {}
+var minDoc = require('min-document');
+
+var doccy;
+
+if (typeof document !== 'undefined') {
+    doccy = document;
+} else {
+    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
+
+    if (!doccy) {
+        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
+    }
+}
+
+module.exports = doccy;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"min-document":3}],28:[function(require,module,exports){
+(function (global){
+'use strict';
+
+/*global window, global*/
+
+var root = typeof window !== 'undefined' ?
+    window : typeof global !== 'undefined' ?
+    global : {};
+
+module.exports = Individual;
+
+function Individual(key, value) {
+    if (key in root) {
+        return root[key];
+    }
+
+    root[key] = value;
+
+    return value;
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],29:[function(require,module,exports){
+'use strict';
+
+var Individual = require('./index.js');
+
+module.exports = OneVersion;
+
+function OneVersion(moduleName, version, defaultValue) {
+    var key = '__INDIVIDUAL_ONE_VERSION_' + moduleName;
+    var enforceKey = key + '_ENFORCE_SINGLETON';
+
+    var versionValue = Individual(enforceKey, version);
+
+    if (versionValue !== version) {
+        throw new Error('Can only have one copy of ' +
+            moduleName + '.\n' +
+            'You already have version ' + versionValue +
+            ' installed.\n' +
+            'This means you cannot install version ' + version);
+    }
+
+    return Individual(key, defaultValue);
+}
+
+},{"./index.js":28}],30:[function(require,module,exports){
+"use strict";
+
+module.exports = function isObject(x) {
+	return typeof x === "object" && x !== null;
+};
+
+},{}],31:[function(require,module,exports){
+var nativeIsArray = Array.isArray
+var toString = Object.prototype.toString
+
+module.exports = nativeIsArray || isArray
+
+function isArray(obj) {
+    return toString.call(obj) === "[object Array]"
+}
+
+},{}],32:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
@@ -1469,7 +1421,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":45,"is-object":22}],34:[function(require,module,exports){
+},{"../vnode/is-vhook.js":48,"is-object":30}],34:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -1517,7 +1469,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":43,"../vnode/is-vnode.js":46,"../vnode/is-vtext.js":47,"../vnode/is-widget.js":48,"./apply-properties":33,"global/document":19}],35:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":46,"../vnode/is-vnode.js":49,"../vnode/is-vtext.js":50,"../vnode/is-widget.js":51,"./apply-properties":33,"global/document":27}],35:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -1757,7 +1709,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":48,"../vnode/vpatch.js":51,"./apply-properties":33,"./update-widget":38}],37:[function(require,module,exports){
+},{"../vnode/is-widget.js":51,"../vnode/vpatch.js":54,"./apply-properties":33,"./update-widget":38}],37:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -1839,7 +1791,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":34,"./dom-index":35,"./patch-op":36,"global/document":19,"x-is-array":55}],38:[function(require,module,exports){
+},{"./create-element":34,"./dom-index":35,"./patch-op":36,"global/document":27,"x-is-array":31}],38:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -1856,7 +1808,44 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":48}],39:[function(require,module,exports){
+},{"../vnode/is-widget.js":51}],39:[function(require,module,exports){
+'use strict';
+
+module.exports = AttributeHook;
+
+function AttributeHook(namespace, value) {
+    if (!(this instanceof AttributeHook)) {
+        return new AttributeHook(namespace, value);
+    }
+
+    this.namespace = namespace;
+    this.value = value;
+}
+
+AttributeHook.prototype.hook = function (node, prop, prev) {
+    if (prev && prev.type === 'AttributeHook' &&
+        prev.value === this.value &&
+        prev.namespace === this.namespace) {
+        return;
+    }
+
+    node.setAttributeNS(this.namespace, prop, this.value);
+};
+
+AttributeHook.prototype.unhook = function (node, prop, next) {
+    if (next && next.type === 'AttributeHook' &&
+        next.namespace === this.namespace) {
+        return;
+    }
+
+    var colonPosition = prop.indexOf(':');
+    var localName = colonPosition > -1 ? prop.substr(colonPosition + 1) : prop;
+    node.removeAttributeNS(this.namespace, localName);
+};
+
+AttributeHook.prototype.type = 'AttributeHook';
+
+},{}],40:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -1885,7 +1874,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":15}],40:[function(require,module,exports){
+},{"ev-store":26}],41:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -1904,7 +1893,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -2043,7 +2032,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":44,"../vnode/is-vhook":45,"../vnode/is-vnode":46,"../vnode/is-vtext":47,"../vnode/is-widget":48,"../vnode/vnode.js":50,"../vnode/vtext.js":52,"./hooks/ev-hook.js":39,"./hooks/soft-set-hook.js":40,"./parse-tag.js":42,"x-is-array":55}],42:[function(require,module,exports){
+},{"../vnode/is-thunk":47,"../vnode/is-vhook":48,"../vnode/is-vnode":49,"../vnode/is-vtext":50,"../vnode/is-widget":51,"../vnode/vnode.js":53,"../vnode/vtext.js":55,"./hooks/ev-hook.js":40,"./hooks/soft-set-hook.js":41,"./parse-tag.js":43,"x-is-array":31}],43:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -2099,7 +2088,386 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":6}],43:[function(require,module,exports){
+},{"browser-split":25}],44:[function(require,module,exports){
+'use strict';
+
+var DEFAULT_NAMESPACE = null;
+var EV_NAMESPACE = 'http://www.w3.org/2001/xml-events';
+var XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink';
+var XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
+
+// http://www.w3.org/TR/SVGTiny12/attributeTable.html
+// http://www.w3.org/TR/SVG/attindex.html
+var SVG_PROPERTIES = {
+    'about': DEFAULT_NAMESPACE,
+    'accent-height': DEFAULT_NAMESPACE,
+    'accumulate': DEFAULT_NAMESPACE,
+    'additive': DEFAULT_NAMESPACE,
+    'alignment-baseline': DEFAULT_NAMESPACE,
+    'alphabetic': DEFAULT_NAMESPACE,
+    'amplitude': DEFAULT_NAMESPACE,
+    'arabic-form': DEFAULT_NAMESPACE,
+    'ascent': DEFAULT_NAMESPACE,
+    'attributeName': DEFAULT_NAMESPACE,
+    'attributeType': DEFAULT_NAMESPACE,
+    'azimuth': DEFAULT_NAMESPACE,
+    'bandwidth': DEFAULT_NAMESPACE,
+    'baseFrequency': DEFAULT_NAMESPACE,
+    'baseProfile': DEFAULT_NAMESPACE,
+    'baseline-shift': DEFAULT_NAMESPACE,
+    'bbox': DEFAULT_NAMESPACE,
+    'begin': DEFAULT_NAMESPACE,
+    'bias': DEFAULT_NAMESPACE,
+    'by': DEFAULT_NAMESPACE,
+    'calcMode': DEFAULT_NAMESPACE,
+    'cap-height': DEFAULT_NAMESPACE,
+    'class': DEFAULT_NAMESPACE,
+    'clip': DEFAULT_NAMESPACE,
+    'clip-path': DEFAULT_NAMESPACE,
+    'clip-rule': DEFAULT_NAMESPACE,
+    'clipPathUnits': DEFAULT_NAMESPACE,
+    'color': DEFAULT_NAMESPACE,
+    'color-interpolation': DEFAULT_NAMESPACE,
+    'color-interpolation-filters': DEFAULT_NAMESPACE,
+    'color-profile': DEFAULT_NAMESPACE,
+    'color-rendering': DEFAULT_NAMESPACE,
+    'content': DEFAULT_NAMESPACE,
+    'contentScriptType': DEFAULT_NAMESPACE,
+    'contentStyleType': DEFAULT_NAMESPACE,
+    'cursor': DEFAULT_NAMESPACE,
+    'cx': DEFAULT_NAMESPACE,
+    'cy': DEFAULT_NAMESPACE,
+    'd': DEFAULT_NAMESPACE,
+    'datatype': DEFAULT_NAMESPACE,
+    'defaultAction': DEFAULT_NAMESPACE,
+    'descent': DEFAULT_NAMESPACE,
+    'diffuseConstant': DEFAULT_NAMESPACE,
+    'direction': DEFAULT_NAMESPACE,
+    'display': DEFAULT_NAMESPACE,
+    'divisor': DEFAULT_NAMESPACE,
+    'dominant-baseline': DEFAULT_NAMESPACE,
+    'dur': DEFAULT_NAMESPACE,
+    'dx': DEFAULT_NAMESPACE,
+    'dy': DEFAULT_NAMESPACE,
+    'edgeMode': DEFAULT_NAMESPACE,
+    'editable': DEFAULT_NAMESPACE,
+    'elevation': DEFAULT_NAMESPACE,
+    'enable-background': DEFAULT_NAMESPACE,
+    'end': DEFAULT_NAMESPACE,
+    'ev:event': EV_NAMESPACE,
+    'event': DEFAULT_NAMESPACE,
+    'exponent': DEFAULT_NAMESPACE,
+    'externalResourcesRequired': DEFAULT_NAMESPACE,
+    'fill': DEFAULT_NAMESPACE,
+    'fill-opacity': DEFAULT_NAMESPACE,
+    'fill-rule': DEFAULT_NAMESPACE,
+    'filter': DEFAULT_NAMESPACE,
+    'filterRes': DEFAULT_NAMESPACE,
+    'filterUnits': DEFAULT_NAMESPACE,
+    'flood-color': DEFAULT_NAMESPACE,
+    'flood-opacity': DEFAULT_NAMESPACE,
+    'focusHighlight': DEFAULT_NAMESPACE,
+    'focusable': DEFAULT_NAMESPACE,
+    'font-family': DEFAULT_NAMESPACE,
+    'font-size': DEFAULT_NAMESPACE,
+    'font-size-adjust': DEFAULT_NAMESPACE,
+    'font-stretch': DEFAULT_NAMESPACE,
+    'font-style': DEFAULT_NAMESPACE,
+    'font-variant': DEFAULT_NAMESPACE,
+    'font-weight': DEFAULT_NAMESPACE,
+    'format': DEFAULT_NAMESPACE,
+    'from': DEFAULT_NAMESPACE,
+    'fx': DEFAULT_NAMESPACE,
+    'fy': DEFAULT_NAMESPACE,
+    'g1': DEFAULT_NAMESPACE,
+    'g2': DEFAULT_NAMESPACE,
+    'glyph-name': DEFAULT_NAMESPACE,
+    'glyph-orientation-horizontal': DEFAULT_NAMESPACE,
+    'glyph-orientation-vertical': DEFAULT_NAMESPACE,
+    'glyphRef': DEFAULT_NAMESPACE,
+    'gradientTransform': DEFAULT_NAMESPACE,
+    'gradientUnits': DEFAULT_NAMESPACE,
+    'handler': DEFAULT_NAMESPACE,
+    'hanging': DEFAULT_NAMESPACE,
+    'height': DEFAULT_NAMESPACE,
+    'horiz-adv-x': DEFAULT_NAMESPACE,
+    'horiz-origin-x': DEFAULT_NAMESPACE,
+    'horiz-origin-y': DEFAULT_NAMESPACE,
+    'id': DEFAULT_NAMESPACE,
+    'ideographic': DEFAULT_NAMESPACE,
+    'image-rendering': DEFAULT_NAMESPACE,
+    'in': DEFAULT_NAMESPACE,
+    'in2': DEFAULT_NAMESPACE,
+    'initialVisibility': DEFAULT_NAMESPACE,
+    'intercept': DEFAULT_NAMESPACE,
+    'k': DEFAULT_NAMESPACE,
+    'k1': DEFAULT_NAMESPACE,
+    'k2': DEFAULT_NAMESPACE,
+    'k3': DEFAULT_NAMESPACE,
+    'k4': DEFAULT_NAMESPACE,
+    'kernelMatrix': DEFAULT_NAMESPACE,
+    'kernelUnitLength': DEFAULT_NAMESPACE,
+    'kerning': DEFAULT_NAMESPACE,
+    'keyPoints': DEFAULT_NAMESPACE,
+    'keySplines': DEFAULT_NAMESPACE,
+    'keyTimes': DEFAULT_NAMESPACE,
+    'lang': DEFAULT_NAMESPACE,
+    'lengthAdjust': DEFAULT_NAMESPACE,
+    'letter-spacing': DEFAULT_NAMESPACE,
+    'lighting-color': DEFAULT_NAMESPACE,
+    'limitingConeAngle': DEFAULT_NAMESPACE,
+    'local': DEFAULT_NAMESPACE,
+    'marker-end': DEFAULT_NAMESPACE,
+    'marker-mid': DEFAULT_NAMESPACE,
+    'marker-start': DEFAULT_NAMESPACE,
+    'markerHeight': DEFAULT_NAMESPACE,
+    'markerUnits': DEFAULT_NAMESPACE,
+    'markerWidth': DEFAULT_NAMESPACE,
+    'mask': DEFAULT_NAMESPACE,
+    'maskContentUnits': DEFAULT_NAMESPACE,
+    'maskUnits': DEFAULT_NAMESPACE,
+    'mathematical': DEFAULT_NAMESPACE,
+    'max': DEFAULT_NAMESPACE,
+    'media': DEFAULT_NAMESPACE,
+    'mediaCharacterEncoding': DEFAULT_NAMESPACE,
+    'mediaContentEncodings': DEFAULT_NAMESPACE,
+    'mediaSize': DEFAULT_NAMESPACE,
+    'mediaTime': DEFAULT_NAMESPACE,
+    'method': DEFAULT_NAMESPACE,
+    'min': DEFAULT_NAMESPACE,
+    'mode': DEFAULT_NAMESPACE,
+    'name': DEFAULT_NAMESPACE,
+    'nav-down': DEFAULT_NAMESPACE,
+    'nav-down-left': DEFAULT_NAMESPACE,
+    'nav-down-right': DEFAULT_NAMESPACE,
+    'nav-left': DEFAULT_NAMESPACE,
+    'nav-next': DEFAULT_NAMESPACE,
+    'nav-prev': DEFAULT_NAMESPACE,
+    'nav-right': DEFAULT_NAMESPACE,
+    'nav-up': DEFAULT_NAMESPACE,
+    'nav-up-left': DEFAULT_NAMESPACE,
+    'nav-up-right': DEFAULT_NAMESPACE,
+    'numOctaves': DEFAULT_NAMESPACE,
+    'observer': DEFAULT_NAMESPACE,
+    'offset': DEFAULT_NAMESPACE,
+    'opacity': DEFAULT_NAMESPACE,
+    'operator': DEFAULT_NAMESPACE,
+    'order': DEFAULT_NAMESPACE,
+    'orient': DEFAULT_NAMESPACE,
+    'orientation': DEFAULT_NAMESPACE,
+    'origin': DEFAULT_NAMESPACE,
+    'overflow': DEFAULT_NAMESPACE,
+    'overlay': DEFAULT_NAMESPACE,
+    'overline-position': DEFAULT_NAMESPACE,
+    'overline-thickness': DEFAULT_NAMESPACE,
+    'panose-1': DEFAULT_NAMESPACE,
+    'path': DEFAULT_NAMESPACE,
+    'pathLength': DEFAULT_NAMESPACE,
+    'patternContentUnits': DEFAULT_NAMESPACE,
+    'patternTransform': DEFAULT_NAMESPACE,
+    'patternUnits': DEFAULT_NAMESPACE,
+    'phase': DEFAULT_NAMESPACE,
+    'playbackOrder': DEFAULT_NAMESPACE,
+    'pointer-events': DEFAULT_NAMESPACE,
+    'points': DEFAULT_NAMESPACE,
+    'pointsAtX': DEFAULT_NAMESPACE,
+    'pointsAtY': DEFAULT_NAMESPACE,
+    'pointsAtZ': DEFAULT_NAMESPACE,
+    'preserveAlpha': DEFAULT_NAMESPACE,
+    'preserveAspectRatio': DEFAULT_NAMESPACE,
+    'primitiveUnits': DEFAULT_NAMESPACE,
+    'propagate': DEFAULT_NAMESPACE,
+    'property': DEFAULT_NAMESPACE,
+    'r': DEFAULT_NAMESPACE,
+    'radius': DEFAULT_NAMESPACE,
+    'refX': DEFAULT_NAMESPACE,
+    'refY': DEFAULT_NAMESPACE,
+    'rel': DEFAULT_NAMESPACE,
+    'rendering-intent': DEFAULT_NAMESPACE,
+    'repeatCount': DEFAULT_NAMESPACE,
+    'repeatDur': DEFAULT_NAMESPACE,
+    'requiredExtensions': DEFAULT_NAMESPACE,
+    'requiredFeatures': DEFAULT_NAMESPACE,
+    'requiredFonts': DEFAULT_NAMESPACE,
+    'requiredFormats': DEFAULT_NAMESPACE,
+    'resource': DEFAULT_NAMESPACE,
+    'restart': DEFAULT_NAMESPACE,
+    'result': DEFAULT_NAMESPACE,
+    'rev': DEFAULT_NAMESPACE,
+    'role': DEFAULT_NAMESPACE,
+    'rotate': DEFAULT_NAMESPACE,
+    'rx': DEFAULT_NAMESPACE,
+    'ry': DEFAULT_NAMESPACE,
+    'scale': DEFAULT_NAMESPACE,
+    'seed': DEFAULT_NAMESPACE,
+    'shape-rendering': DEFAULT_NAMESPACE,
+    'slope': DEFAULT_NAMESPACE,
+    'snapshotTime': DEFAULT_NAMESPACE,
+    'spacing': DEFAULT_NAMESPACE,
+    'specularConstant': DEFAULT_NAMESPACE,
+    'specularExponent': DEFAULT_NAMESPACE,
+    'spreadMethod': DEFAULT_NAMESPACE,
+    'startOffset': DEFAULT_NAMESPACE,
+    'stdDeviation': DEFAULT_NAMESPACE,
+    'stemh': DEFAULT_NAMESPACE,
+    'stemv': DEFAULT_NAMESPACE,
+    'stitchTiles': DEFAULT_NAMESPACE,
+    'stop-color': DEFAULT_NAMESPACE,
+    'stop-opacity': DEFAULT_NAMESPACE,
+    'strikethrough-position': DEFAULT_NAMESPACE,
+    'strikethrough-thickness': DEFAULT_NAMESPACE,
+    'string': DEFAULT_NAMESPACE,
+    'stroke': DEFAULT_NAMESPACE,
+    'stroke-dasharray': DEFAULT_NAMESPACE,
+    'stroke-dashoffset': DEFAULT_NAMESPACE,
+    'stroke-linecap': DEFAULT_NAMESPACE,
+    'stroke-linejoin': DEFAULT_NAMESPACE,
+    'stroke-miterlimit': DEFAULT_NAMESPACE,
+    'stroke-opacity': DEFAULT_NAMESPACE,
+    'stroke-width': DEFAULT_NAMESPACE,
+    'surfaceScale': DEFAULT_NAMESPACE,
+    'syncBehavior': DEFAULT_NAMESPACE,
+    'syncBehaviorDefault': DEFAULT_NAMESPACE,
+    'syncMaster': DEFAULT_NAMESPACE,
+    'syncTolerance': DEFAULT_NAMESPACE,
+    'syncToleranceDefault': DEFAULT_NAMESPACE,
+    'systemLanguage': DEFAULT_NAMESPACE,
+    'tableValues': DEFAULT_NAMESPACE,
+    'target': DEFAULT_NAMESPACE,
+    'targetX': DEFAULT_NAMESPACE,
+    'targetY': DEFAULT_NAMESPACE,
+    'text-anchor': DEFAULT_NAMESPACE,
+    'text-decoration': DEFAULT_NAMESPACE,
+    'text-rendering': DEFAULT_NAMESPACE,
+    'textLength': DEFAULT_NAMESPACE,
+    'timelineBegin': DEFAULT_NAMESPACE,
+    'title': DEFAULT_NAMESPACE,
+    'to': DEFAULT_NAMESPACE,
+    'transform': DEFAULT_NAMESPACE,
+    'transformBehavior': DEFAULT_NAMESPACE,
+    'type': DEFAULT_NAMESPACE,
+    'typeof': DEFAULT_NAMESPACE,
+    'u1': DEFAULT_NAMESPACE,
+    'u2': DEFAULT_NAMESPACE,
+    'underline-position': DEFAULT_NAMESPACE,
+    'underline-thickness': DEFAULT_NAMESPACE,
+    'unicode': DEFAULT_NAMESPACE,
+    'unicode-bidi': DEFAULT_NAMESPACE,
+    'unicode-range': DEFAULT_NAMESPACE,
+    'units-per-em': DEFAULT_NAMESPACE,
+    'v-alphabetic': DEFAULT_NAMESPACE,
+    'v-hanging': DEFAULT_NAMESPACE,
+    'v-ideographic': DEFAULT_NAMESPACE,
+    'v-mathematical': DEFAULT_NAMESPACE,
+    'values': DEFAULT_NAMESPACE,
+    'version': DEFAULT_NAMESPACE,
+    'vert-adv-y': DEFAULT_NAMESPACE,
+    'vert-origin-x': DEFAULT_NAMESPACE,
+    'vert-origin-y': DEFAULT_NAMESPACE,
+    'viewBox': DEFAULT_NAMESPACE,
+    'viewTarget': DEFAULT_NAMESPACE,
+    'visibility': DEFAULT_NAMESPACE,
+    'width': DEFAULT_NAMESPACE,
+    'widths': DEFAULT_NAMESPACE,
+    'word-spacing': DEFAULT_NAMESPACE,
+    'writing-mode': DEFAULT_NAMESPACE,
+    'x': DEFAULT_NAMESPACE,
+    'x-height': DEFAULT_NAMESPACE,
+    'x1': DEFAULT_NAMESPACE,
+    'x2': DEFAULT_NAMESPACE,
+    'xChannelSelector': DEFAULT_NAMESPACE,
+    'xlink:actuate': XLINK_NAMESPACE,
+    'xlink:arcrole': XLINK_NAMESPACE,
+    'xlink:href': XLINK_NAMESPACE,
+    'xlink:role': XLINK_NAMESPACE,
+    'xlink:show': XLINK_NAMESPACE,
+    'xlink:title': XLINK_NAMESPACE,
+    'xlink:type': XLINK_NAMESPACE,
+    'xml:base': XML_NAMESPACE,
+    'xml:id': XML_NAMESPACE,
+    'xml:lang': XML_NAMESPACE,
+    'xml:space': XML_NAMESPACE,
+    'y': DEFAULT_NAMESPACE,
+    'y1': DEFAULT_NAMESPACE,
+    'y2': DEFAULT_NAMESPACE,
+    'yChannelSelector': DEFAULT_NAMESPACE,
+    'z': DEFAULT_NAMESPACE,
+    'zoomAndPan': DEFAULT_NAMESPACE
+};
+
+module.exports = SVGAttributeNamespace;
+
+function SVGAttributeNamespace(value) {
+  if (SVG_PROPERTIES.hasOwnProperty(value)) {
+    return SVG_PROPERTIES[value];
+  }
+}
+
+},{}],45:[function(require,module,exports){
+'use strict';
+
+var isArray = require('x-is-array');
+
+var h = require('./index.js');
+
+
+var SVGAttributeNamespace = require('./svg-attribute-namespace');
+var attributeHook = require('./hooks/attribute-hook');
+
+var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+module.exports = svg;
+
+function svg(tagName, properties, children) {
+    if (!children && isChildren(properties)) {
+        children = properties;
+        properties = {};
+    }
+
+    properties = properties || {};
+
+    // set namespace for svg
+    properties.namespace = SVG_NAMESPACE;
+
+    var attributes = properties.attributes || (properties.attributes = {});
+
+    for (var key in properties) {
+        if (!properties.hasOwnProperty(key)) {
+            continue;
+        }
+
+        var namespace = SVGAttributeNamespace(key);
+
+        if (namespace === undefined) { // not a svg attribute
+            continue;
+        }
+
+        var value = properties[key];
+
+        if (typeof value !== 'string' &&
+            typeof value !== 'number' &&
+            typeof value !== 'boolean'
+        ) {
+            continue;
+        }
+
+        if (namespace !== null) { // namespaced attribute
+            properties[key] = attributeHook(namespace, value);
+            continue;
+        }
+
+        attributes[key] = value
+        properties[key] = undefined
+    }
+
+    return h(tagName, properties, children);
+}
+
+function isChildren(x) {
+    return typeof x === 'string' || isArray(x);
+}
+
+},{"./hooks/attribute-hook":39,"./index.js":42,"./svg-attribute-namespace":44,"x-is-array":31}],46:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -2141,14 +2509,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":44,"./is-vnode":46,"./is-vtext":47,"./is-widget":48}],44:[function(require,module,exports){
+},{"./is-thunk":47,"./is-vnode":49,"./is-vtext":50,"./is-widget":51}],47:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],45:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -2157,7 +2525,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -2166,7 +2534,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":49}],47:[function(require,module,exports){
+},{"./version":52}],50:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -2175,17 +2543,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":49}],48:[function(require,module,exports){
+},{"./version":52}],51:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],49:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 module.exports = "2"
 
-},{}],50:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -2259,7 +2627,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":44,"./is-vhook":45,"./is-vnode":46,"./is-widget":48,"./version":49}],51:[function(require,module,exports){
+},{"./is-thunk":47,"./is-vhook":48,"./is-vnode":49,"./is-widget":51,"./version":52}],54:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -2283,7 +2651,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":49}],52:[function(require,module,exports){
+},{"./version":52}],55:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -2295,7 +2663,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":49}],53:[function(require,module,exports){
+},{"./version":52}],56:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -2355,7 +2723,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":45,"is-object":22}],54:[function(require,module,exports){
+},{"../vnode/is-vhook":48,"is-object":30}],57:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -2784,89 +3152,74 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":43,"../vnode/is-thunk":44,"../vnode/is-vnode":46,"../vnode/is-vtext":47,"../vnode/is-widget":48,"../vnode/vpatch":51,"./diff-props":53,"x-is-array":55}],55:[function(require,module,exports){
-var nativeIsArray = Array.isArray
-var toString = Object.prototype.toString
+},{"../vnode/handle-thunk":46,"../vnode/is-thunk":47,"../vnode/is-vnode":49,"../vnode/is-vtext":50,"../vnode/is-widget":51,"../vnode/vpatch":54,"./diff-props":56,"x-is-array":31}],58:[function(require,module,exports){
+const DOMReady = require('document-ready-promise')();
+const defaults = require('object.defaults/immutable');
+const mix = require('mixwith-es5').mix;
+const EventEmitterMixin = require('./event-emitter-mixin');
+const VDOMPatch = require('virtual-dom/patch');
+const VDOMDiff = require('virtual-dom/diff');
+const h = require('virtual-dom/h');
+const createElement = require('virtual-dom/create-element');
 
-module.exports = nativeIsArray || isArray
+const VDOMWidget = require('./vdom-widget');
 
-function isArray(obj) {
-    return toString.call(obj) === "[object Array]"
-}
-
-},{}],56:[function(require,module,exports){
-var mix = require('mixwith-es5').mix;
-var EventEmitterMixin = require('./event-emitter-mixin');
-var hasMixin = require('mixwith-es5').hasMixin;
-
-var ActionDispatcher = class extends mix(ActionDispatcher).with(EventEmitterMixin) {
-    constructor(opts) {
-        super(opts);
-        this._dispatchees = [];
-    }
-
-    addDispatchee(dispatchee) {
-        if (!hasMixin(dispatchee, EventEmitterMixin)) {
-            console.warn("Attempted to add a non-event emitter object as a dispatchee to the action dispatcher.");
-        }
-        if (this._dispatchees.indexOf(dispatchee) === -1) {
-            this._dispatchees.push(dispatchee);
-            return this.trigger('adddispatchee', {dispatchee});
-        }
-        return false;
-    }
-
-    dispatch(actionName, actionData) {
-        var result = this._dispatchees.map(dispatchee =>
-            dispatchee.trigger(actionName, Object.assign({}, actionData)));
-        this.trigger('dispatch', {actionName, actionData});
-        return result;
-    }
-};
-
-module.exports = ActionDispatcher;
-
-},{"./event-emitter-mixin":59,"mixwith-es5":24}],57:[function(require,module,exports){
-var DOMReady = require('document-ready-promise')();
-var defaults = require('object.defaults/immutable');
-var mix = require('mixwith-es5').mix;
-var debounce = require('debounce');
-var Sig = require('./sig');
-var EventEmitterMixin = require('./event-emitter-mixin');
-var isApplicationOf = require('mixwith-es5').isApplicationOf;
-var Component = require('./component');
-var ActionDispatcher = require('./action-dispatcher');
-
-Sig.addTypeAlias('CSSString', 'String');
-
-var defaultOpts = {
-    renderInterval: 41.6667,
-    markupRenderFormat: null,
-    stylesRenderFormat: 'CSSString',
+const defaultOpts = {
     markupTransforms: [],
     stylesTransforms: [],
     childStylesFirst: true
 };
 
+function createStyleEl(id, className=null) {
+    var styleEl = document.createElement('style');
+    styleEl.setAttribute('type', 'text/css');
+    document.head.appendChild(styleEl);
+    styleEl.id = id;
+    styleEl.classList.add(className);
+    return styleEl;
+}
+
 var App = class extends mix(App).with(EventEmitterMixin) {
+
+    static get patchMethods() {
+        return [
+            'patchDOM',
+            'patchStyles'
+        ];
+    }
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        this.styles = opts.styles;
-        this.el = opts.el;
-        this.styleEl = opts.styleEl;
+        if (opts.styles) {
+            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
+        }
+        this.styles = opts.styles || this.constructor.styles;
+        this.renderOrder = ['markup', 'styles'];
+        this.pipelineInitMethods = opts.pipelineInitMethods;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
-        this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
-        this.component = null;
+        this.shouldRender = {};
         this.renderInterval = opts.renderInterval;
-        this.renderPromises = {};
         this.stylesRenderFormat = opts.stylesRenderFormat;
         this.markupRenderFormat = opts.markupRenderFormat;
         this.markupTransforms = opts.markupTransforms;
         this.stylesTransforms = opts.stylesTransforms;
         this.childStylesFirst = opts.childStylesFirst;
-        this.renderers = {};
-        var Sig = this.constructor.Weddell.classes.Sig;
+
+        Object.defineProperties(this, {
+            Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
+            component: { get: () => this._component },
+            vTree: { value: h('div'), writable: true },
+            el: { get: () => this._el },
+            _el: { value: null, writable: true },
+            _elInput: { value: opts.el },
+            _patchPromise: { value: null, writable: true },
+            patchPromise: { get: () => this._patchPromise },
+            _RAFCallback: { value: null, writable: true },
+            _patchRequests: { value: [], writable: true },
+            _patchPromise: { value: null, writable: true },
+            _component: { value: null, writable: true }
+        })
 
         var consts = this.constructor.Weddell.consts;
 
@@ -2881,96 +3234,141 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             value: {app: this, components: {} }
         });
 
-        Object.defineProperty(this, '_actionDispatcher', {
-            value: new ActionDispatcher
-        });
-
-        this.on('createcomponent', evt => {
-            this._actionDispatcher.addDispatchee(evt.component);
-            evt.component.on('createaction', evt => {
-                this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
-            });
-        });
+        Object.defineProperties(this, {
+            rootNode: { value: createElement(this.vTree), writable: true }
+        })
     }
 
-    renderCSS(CSSString) {
-        this.styleEl.textContent = CSSString;
-    }
-
-    renderMarkup(evt) {
-        if (!(evt.renderFormat in this.renderers)) {
-            throw "No appropriate markup renderer found for format: " + evt.renderFormat;
+    patchDOM(patchRequests) {
+        if (!this.rootNode.parentNode) {
+            this.el.appendChild(this.rootNode);
         }
-        this.renderers[evt.renderFormat].call(this, evt.output);
-        this.el.classList.remove('rendering-markup');
-        if (!this.el.classList.contains('rendering-styles')) {
-            this.el.classList.remove('rendering');
-        }
-        this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
+
+        this.component.refreshPendingWidgets();
+        var newTree = new VDOMWidget({component: this.component});
+        var diffTree = VDOMWidget.pruneNullNodes(newTree.vTree);//this.component.constructor.pruneNullNodes(newTree);
+        var patches = VDOMDiff(this.vTree, diffTree);
+        var rootNode = VDOMPatch(this.rootNode, patches);
+        this.rootNode = rootNode;
+        this.vTree = newTree;
+
+        var mountedComponents = this.component
+            .reduceComponents((acc, component) => Object.assign(acc, component._lastRenderedComponents), {})
+
+        this.component.walkComponents(component => {
+                return component.isMounted ? component.unmount() : component.mount()
+            },
+            component => component !== this.component && component.isMounted !== (component.id in mountedComponents));
+
+        this.trigger('patchdom');
     }
 
-    renderStyles(evt) {
-        var staticStyles = [];
-        var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
-            var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
+    patchStyles(patchRequests) {
+        var results = patchRequests.reduceRight((acc, item) => {
+            if (!(item.classId in acc.classes)) {
+                acc.classes[item.classId] = item;
+            }
+            if (!(item.id in acc.components)) {
+                acc.components[item.id] = item;
+            }
+            return acc;
+        }, {classes:{}, components:{}});
 
-            if (obj.staticStyles) {
-                var staticObj = {
-                    class: obj.component.constructor,
-                    styles: obj.staticStyles
-                };
-                if (this.childStylesFirst) {
-                    staticStyles.unshift(staticObj)
+        var instanceStyles = [];
+        var staticStyles = {};
+
+        this.component.walkComponents(component => {
+            var id = component.id;
+            var needsPatch = id in results.components;
+            var stylesObj = needsPatch ? results.components[id].results.renderStyles : component._renderCache.renderStyles;
+            
+            var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), {id, needsPatch})
+            
+            instanceStyles.push(makeObj('dynamicStyles', stylesObj));
+
+            id = component.constructor.id;
+
+            if (!(id in staticStyles)) {
+                needsPatch = id in results.classes;
+                stylesObj = needsPatch ? results.classes[id].results.renderStyles : component._renderCache.renderStyles;
+                staticStyles[id] = makeObj('staticStyles', stylesObj);
+            }
+        }, component => component.isMounted);
+
+        staticStyles = Object.values(staticStyles);
+
+        //We now have a pretty good idea what we're writing. Let's patch those styles to DOM
+
+        var prevEl;
+        var styles;
+
+        staticStyles.concat(instanceStyles)
+            .reduce((final, obj) => {
+                var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
+                var styleEl;
+
+                if (!obj.needsPatch) {
+                    if (styleIndex > -1) {
+                        styleEl = final.splice(styleIndex, 1)[0];
+                    } else {
+                        styles = obj.styles;
+                        if (styles) {
+                            styleEl = createStyleEl('weddell-style-' + obj.id, 'weddell-style');
+                            styleEl.textContent = obj.styles;
+                        }
+                    }
+
+                    if (prevEl && styleEl) {
+                        var comparison = prevEl.compareDocumentPosition(styleEl);
+                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        }
+                        
+                    }
+
+                    if (styleEl) {
+                        prevEl = styleEl;
+                    }
+                    
+                    return final;
                 } else {
-                    staticStyles.push(staticObj)
-                }
-            }
+                    styles = obj.styles || '';
 
-            return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
-        };
-        var instanceStyles = flattenStyles(evt);
-        
-        staticStyles = staticStyles.reduce((finalArr, styleObj) => {
-            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
-                return finalArr.concat(styleObj)
-            }
-            return finalArr;
-        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
-        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
-        this.renderCSS(styles);
+                    if (!styles) {
+                        if (styleIndex === -1) {
+                            final.splice(styleIndex, 1);
+                        }
+                        return final;
+                    }
 
-        this.el.classList.remove('rendering-styles');
+                    styleEl = styleIndex > -1 ? final.splice(styleIndex, 1)[0] : createStyleEl('weddell-style-' + obj.id, 'weddell-style');
 
-        if (!this.el.classList.contains('rendering-markup')) {
-            this.el.classList.remove('rendering');
-        }
+                    if (prevEl) {
+                        var comparison = prevEl.compareDocumentPosition(styleEl);
+                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        }
+                    }
 
-        this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
-    }
+                    prevEl = styleEl;                    
 
-    makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof Component || ComponentClass.prototype.constructor === Component)) {
-            if (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component) {
-                return ComponentClass;
-            }
-            throw "Component input is a class extending Component, but it does not have necessary plugins applied to it. Consider using a factory function instead.";
-        } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assuming it is a component factory function
-            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
-        } else {
-            //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
-            throw "Unsupported component input";
-        }
+                    if (styleEl.textContent !== styles) {
+                        styleEl.textContent = styles;
+                    }                    
+                }              
+
+                return final;
+            }, Array.from(document.querySelectorAll('head style.weddell-style')))
+            .forEach(el => {
+                document.head.removeChild(el);
+            });
+
+        this.trigger('patchstyles');
     }
 
     makeComponent() {
         var component = new (this.Component)({
-            isRoot: true,
-            targetStylesRenderFormat: this.stylesRenderFormat,
-            targetMarkupRenderFormat: this.markupRenderFormat,
-            markupTransforms: this.markupTransforms,
-            stylesTransforms: this.stylesTransforms
+            isRoot: true
         });
 
         component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
@@ -2981,216 +3379,531 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return component
     }
 
-    initRenderLifecycleStyleHooks(rootComponent) {
-        this.component.once('renderdomstyles', evt => {
-            this.el.classList.add('first-styles-render-complete');
-            if (this.el.classList.contains('first-markup-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
+    queuePatch(patchRequests) {
+        if (!this._patchPromise) {
+            var resolveFunc;
+            this._patchPromise = new Promise((resolve) => {
+                resolveFunc = resolve;
+            })
+            .then(patchRequests => {
+                this._patchPromise = null;
+                this.constructor.patchMethods.forEach(patcher => {
+                    this[patcher](patchRequests)
+                });
+                this.trigger('patch');
+                return this.onPatch()
+            })
 
-        this.component.once('renderdommarkup', evt => {
-            this.el.classList.add('first-markup-render-complete');
-            if (this.el.classList.contains('first-styles-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
+            this._patchRequests = [].concat(patchRequests);
+
+            requestAnimationFrame(this._RAFCallback = () =>{
+                this._RAFCallback = null;
+                resolveFunc(this._patchRequests);
+                this._patchRequests = [];
+            });
+        } else {
+            this._patchRequests = this._patchRequests.concat(patchRequests);
+        }
+    }
+
+    onPatch() {
+        //noop
+    }
+
+    awaitPatch() {
+        return this.patchPromise || Promise.resolve();
+    }
+
+    awaitNextPatch() {
+        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
     }
 
     init() {
-        Object.seal(this);
         return DOMReady
             .then(() => {
-                if (typeof this.el == 'string') {
-                    this.el = document.querySelector(this.el);
+                var el = this._elInput;
+                if (typeof el == 'string') {
+                    el = document.querySelector(el);
+                    if (!el) {
+                        throw new Error("Could not mount an element using provided query.");
+                    }
+                }
+                this._el = el;
+
+                if (this.styles) {
+                    createStyleEl('weddell-app-styles').textContent = this.styles;
                 }
 
-                if (typeof this.styleEl == 'string') {
-                    this.styleEl = document.querySelector(this.styleEl);
-                } else if (!this.styleEl) {
-                    this.styleEl = document.createElement('style');
-                    this.styleEl.setAttribute('type', 'text/css');
-                    document.head.appendChild(this.styleEl);
-                }
-                var appStyles = this.styles;
-                if (appStyles) {
-                    this.renderCSS(appStyles);
-                }
-
-                this.component = this.makeComponent();
+                this._component = this.makeComponent();
 
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
-
-                this.component.on('markeddirty', evt => {
-                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
-                        requestAnimationFrame(() => {
-                            this.el.classList.add('rendering-' + evt.pipelineName);
-                            this.el.classList.add('rendering');
-                            this.component.render(evt.pipelineName)
-                                .then(results => {
-                                    this.renderPromises[evt.pipelineName] = null;
-                                    resolve(results);
-                                });
-                        });
-                    })
+                this.component.on('requestpatch', evt => {
+                    this.queuePatch(evt);
                 });
 
-                this.initRenderLifecycleStyleHooks(this.component);
+                Object.seal(this);
 
                 return this.component.init(this.componentInitOpts)
-                    .then(() => {
-                        this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
-                        this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
-                        this.component.render();
-                    })
+                    .then(() => this.component.mount())
+                    .then(() => this.awaitPatch()
+                        .then(() => {
+                            this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+                        }))
             })
     }
 }
 
 module.exports = App;
 
-},{"./action-dispatcher":56,"./component":58,"./event-emitter-mixin":59,"./sig":61,"debounce":7,"document-ready-promise":14,"mixwith-es5":24,"object.defaults/immutable":25}],58:[function(require,module,exports){
-var EventEmitterMixin = require('./event-emitter-mixin');
-var defaults = require('object.defaults/immutable');
-var generateHash = require('../utils/make-hash');
-var mix = require('mixwith-es5').mix;
-var DeDupe = require('mixwith-es5').DeDupe;
-var Sig = require('./sig');
-var includes = require('../utils/includes');
+},{"./event-emitter-mixin":60,"./vdom-widget":62,"document-ready-promise":10,"mixwith-es5":12,"object.defaults/immutable":13,"virtual-dom/create-element":22,"virtual-dom/diff":23,"virtual-dom/h":24,"virtual-dom/patch":32}],59:[function(require,module,exports){
+const EventEmitterMixin = require('./event-emitter-mixin');
+const defaults = require('object.defaults/immutable');
+const generateHash = require('../utils/make-hash');
+const mix = require('mixwith-es5').mix;
+const h = require('virtual-dom/h');
+const VDOMWidget = require('./vdom-widget');
 
-Sig.addTypeAlias('CSSString', 'String');
+function flatten(arr) {
+    return [].concat(...arr);
+}
 
-var defaultOpts = {
-    components: {},
+function compact(arr) {
+    return arr.filter(item => item != null);
+}
+
+function uniq(arr) {
+    return arr.reduce((acc, item) => acc.includes(item) ? acc : acc.concat(item), []);
+}
+
+const defaultOpts = {
     store: {},
-    state: {},
-    inputs: [],
-    isRoot: false,
-    stylesFormat: 'CSSString'
+    inputs: null,
+    isRoot: false
 };
-
-var defaultInitOpts = {};
-
-var _generatedComponentClasses = [];
+const defaultInitOpts = {};
+var _generatedComponentClasses = {};
+const testElement = document.createElement('div');
 
 var Component = class extends mix(Component).with(EventEmitterMixin) {
+    static get renderMethods() {
+        return ['renderVNode', 'renderStyles'];
+    }
+    
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        Sig = this.constructor.Weddell.classes.Sig;
-        var Pipeline = this.constructor.Weddell.classes.Pipeline;
         var Store = this.constructor.Weddell.classes.Store;
-
+        if (opts.inputs) {
+            console.warn('you are using outdated syntax! opts.inputs is deprecated in favor of static getter.')
+        }
         Object.defineProperties(this, {
+            id: { get: () => this._id },
             isRoot: { value: opts.isRoot },
-            _isMounted: {writable:true, value: false},
-            _isInit: { writable: true, value: false},
+            content: { value: [], writable: true},
+            hasMounted: {get: () => this._hasMounted},
+            isMounted: { get: () => this._isMounted },
+            renderPromise: {get: () => this._renderPromise},
+            hasRendered: {get: () => this._hasRendered},
+            el: {get: () => this._el},
+            isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
-            _id : { value: generateHash() },
-            inputs : { value: opts.inputs },
+            root: {value: opts.isRoot ? this : opts.root },
+            inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
+            //@TODO inputs don't need to be stored on isntance at all
+
             renderers: { value: {} },
+
+            _el: { value: null, writable: true },
+            _lastAccessedStateKeys: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
+            _dirtyRenderers: { value: false, writable: true },
+            _inlineEventHandlers: { writable: true, value: {} },
+            _isMounted: {writable:true, value: null},
+            _lastRenderedComponents: {writable: true, value: null},
+            _componentsRequestingPatch: {writable: true, value: []},
+            _renderPromise: {writable: true, value: null},
+            _hasMounted: {writable:true, value: false},
+            _hasRendered: {writable:true, value: false},
+            _renderCache: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
+            _isInit: { writable: true, value: false},            
+            _id : { value: generateHash() },
             _tagDirectives: { value: {} },
             _componentListenerCallbacks: {value:{}, writable:true}
         });
 
         var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
-                .filter(entry => this.inputs.find(input => input === entry[0]))
-                .reduce((final, entry) => {
-                    final[entry[1]] = entry[0];
-                    return final;
-                }, {}) : {};
-
+            .filter(entry => this.inputs.find(input => input === entry[0] || input.key === entry[0]))
+            .reduce((final, entry) => {
+                final[entry[1]] = entry[0];
+                return final;
+            }, {}) : {};
+            
         Object.defineProperties(this, {
             props: {
-                value: new Store(this.inputs, {
+                value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
                     inputMappings,
+                    validators: this.inputs.filter(input => typeof input === 'object').reduce((final, inputObj) => Object.assign(final, {[inputObj.key]: {validator: inputObj.validator, required: inputObj.required}}), {}),
                     shouldEvalFunctions: false
                 })
             },
             store: {
                 value: new Store(Object.assign({
                     $bind: this.bindEvent.bind(this),
-                    $bindValue: this.bindEventValue.bind(this),
-                    $act: this.createAction.bind(this)
+                    $bindValue: this.bindEventValue.bind(this)
                 }, opts.store), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
             }
         });
+
+        if (opts.state) {
+            console.warn("opts.state is deprecated in favor of static 'state' getter. Update your code!");
+        }
+        var state = this.constructor.state || opts.state || {};
         
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
                 $attributes: null,
-                $id: () => this._id
-            }, opts.state), {
+                $id: () => this.id
+            }, state), {
                 overrides: [this.props],
                 proxies: [this.store]
             })
         })
 
+        if (opts.components) {
+            console.warn("opts.components is deprecated in favor of static 'components' getter. Please update your code.");
+        }
+        var components = this.constructor.components || opts.components || {};
+        
         Object.defineProperties(this, {
             _componentInstances: { value:
-                Object.keys(opts.components).reduce((final, key) => {
-                    final[key] = {};
-                    return final;
-                }, {})
+                Object.keys(components)
+                    .map(key => key.toLowerCase())
+                    .reduce((final, key) => {
+                        final[key] = {};
+                        return final;
+                    }, {})
             },
             _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
         });
 
-        Object.defineProperty(this, '_pipelines', {
-            value: {
-                markup: new Pipeline({
-                    name: 'markup',
-                    store: this._locals,
-                    onRender: this.onRenderMarkup.bind(this),
-                    isDynamic: !!opts.markupTemplate,
-                    inputFormat: new Sig(opts.markupFormat),
-                    transforms: opts.markupTransforms,
-                    targetRenderFormat: opts.targetMarkupRenderFormat,
-                    input: opts.markupTemplate || opts.markup || null
-                }),
-                styles: new Pipeline({
-                    name: 'styles',
-                    store: this._locals,
-                    onRender: this.onRenderStyles.bind(this),
-                    isDynamic: !!opts.stylesTemplate,
-                    inputFormat: new Sig(opts.stylesFormat),
-                    transforms: opts.stylesTransforms,
-                    targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || ' '
-                })
-            }
-        });
-
         Object.defineProperty(this, 'components', {
-            value: Object.entries(opts.components).reduce((final, entry) => {
-                final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
-                return final;
-            }, {})
+            value: Object.entries(components)
+                .map(entry => [entry[0].toLowerCase(), entry[1]])
+                .reduce((final, entry) => {
+                    final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
+                    return final;
+                }, {})
         })
 
-        Object.entries(this._pipelines).forEach(entry =>
-            entry[1].on('markeddirty', evt => {
-                this.trigger('markeddirty', Object.assign({
-                    pipeline: entry[1],
-                    pipelineName: entry[0]
-                }, evt))
-            })
-        );
+        // this.on('componentschange', evt => {
+        //     this.markDirty(null, 'styles');
+        // });
 
-        ['props', 'state'].forEach((propName) => {
-            this[propName].on('change', evt => {
-                this.markDirty(evt.changedKey);
-            })
-        });
+        this.getParent = () => opts.parentComponent || null;
+        if (opts.markupTemplate) {
+            console.warn("You are using deprecated syntax. 'markupTemplate' will be removed in the next major version. Use static 'markup' getter.");
+        }
+        if (opts.stylesTemplate) {
+            console.warn("You are using deprecated syntax. 'stylesTemplate' will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
+        }
+        this.vNodeTemplate = this.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
+        this.stylesTemplate = this.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
+        this.vTree = null;
 
         window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+    }
+
+    render(dirtyRenderers=null) {
+        var promise = this.constructor.renderMethods
+            .reduce((acc, method) => {
+                return acc
+                    .then(results => {
+                        return Promise.resolve(this[method]())
+                            .then(result => {
+                                Object.defineProperty(results, method, { get: () => result, enumerable: true });
+                                return results;
+                            })
+                    })
+            }, Promise.resolve({}))
+            .then(results => {
+                return Promise.resolve(results)
+                    .then(results => {
+                        if (this._dirtyRenderers) {
+                            this._dirtyRenderers = null;
+                            return Promise.reject(this._dirtyRenderers);
+                        }
+                        return results;
+                    })
+                    .then(results => {
+                        this._renderPromise = null;
+                        this._hasRendered = true;
+                        this.requestPatch(results);
+                        return results;
+                    }, dirtyRenderers => {
+                        return this.render(dirtyRenderers);
+                    })
+            }, err => {
+                throw err;
+            })
+            .then(results => Promise.resolve(this.onRender())
+                .then(() => results))
+
+        return !this._renderPromise ? (this._renderPromise = promise): promise;
+    }
+
+    onInit() {}
+    onFirstRender() {}
+    onRender() {}
+    onDOMCreate() {}
+    onDOMMove() {}
+    onDOMChange() {}
+    onDOMCreateOrChange() {}
+    onDOMDestroy() {}
+    onMount() {}
+    onUnmount() {}
+    onFirstMount() {}
+    onRenderMarkup() {}
+    onRenderStyles() {}
+
+    requestPatch(results) {
+        this.trigger('requestpatch', {results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
+    }
+
+    makeVNodeTemplate() {
+        /*
+        * Take instance and static template inputs, return a function that will generate the correct output.
+        */
+
+        return Array.from(arguments).reduce((acc, curr) => {
+            if (!acc) {
+                if (typeof curr === 'function') {
+                    return this.wrapTemplate(curr, 'renderVNode', h);
+                }
+                if (typeof curr === 'string') {
+                    //TODO support template string parser;
+                }
+            }
+            return acc;
+        }, null);
+    }
+
+    makeStylesTemplate(dynamicStyles, staticStyles='') {
+        if (typeof dynamicStyles === 'function') {
+               
+        } else if (dynamicStyles) {
+            throw new Error(`Only functions are supported for dynamic styles for now.`);
+        }
+
+        if (typeof staticStyles !== 'string') {
+            throw new Error(`Only strings are supported for static component styles.`);
+        }
+
+        return this.wrapTemplate((locals) => {
+            var styles = dynamicStyles ? dynamicStyles.call(this, locals) : null;
+            return Object.defineProperties({}, {
+                dynamicStyles: {
+                    get: () => styles
+                },
+                staticStyles: {
+                    get: () => staticStyles
+                }
+            })
+        }, 'renderStyles');
+    }
+
+    wrapTemplate(func, renderMethodName) {
+        return () => {
+            var accessed = {};
+        
+            this.state.on('get', evt => {
+                accessed[evt.key] = 1;
+            });
+
+            var result = func.apply(this, [this.state].concat(Array.from(arguments).slice(2)));
+
+            this._renderCache[renderMethodName] = result;
+            this._lastAccessedStateKeys[renderMethodName] = accessed;
+
+            return result;
+        }        
+    }
+
+    renderStyles() {
+        return Promise.resolve(this.stylesTemplate())
+            .then(results => {
+                return Promise.resolve(this.onRenderStyles())
+                    .then(() => results);
+            })
+    }
+
+    renderVNode() {
+        var vTree = this.vNodeTemplate();
+
+        if (Array.isArray(vTree)) {
+            if (vTree.length > 1) {
+                console.warn('Template output was truncated in', this.constructor.name, 'component. Component templates must return a single vNode!');
+            }            
+            vTree = vTree[0];
+        }
+        var renderedComponents = {};
+        return vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
+            .then(vTree => {
+                this.vTree = vTree;
+                return Promise.all(flatten(Object.values(renderedComponents)))
+                    .then(rendered => {
+                        this._lastRenderedComponents = rendered.reduce((acc, item) => Object.assign(acc, {[item.id]: item}, {}), {})
+                    })
+            })
+            .then(() => this.onRenderMarkup())
+            .then(() => this.vTree) : this.vTree = null;
+    }
+
+    static get state() {
+        return {};
+    }
+
+    static get tagDirectives() {
+        return {
+            content: function() {
+                return this.content;
+            }
+        }
+    }
+
+    replaceComponentPlaceholders(vNode, renderedComponents={}) {
+        var components;
+        var componentName;
+        
+        if (Array.isArray(vNode)) {
+            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)));
+        } else if (!vNode.tagName) {
+            return vNode;
+        } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
+            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes));
+        }
+
+        if (vNode.children) {
+            var promise = this.replaceComponentPlaceholders(vNode.children, renderedComponents)
+                .then(children => {
+                    if (children.some((child, ii) => vNode.children[ii] !== child)) {
+                        return VDOMWidget.cloneVNode(vNode, flatten(children));
+                    }
+                    return vNode;
+                })            
+        } else {
+            promise = Promise.resolve(vNode);
+        }
+
+        return promise
+            .then(vNode => {
+                if (componentName in (components = this.collectComponentTree())) {
+                    var props = vNode.properties.attributes;
+                    var content = vNode.children || [];
+                    if (!(componentName in renderedComponents)) {
+                        renderedComponents[componentName] = [];
+                    }
+                    var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
+        
+                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);        
+                }
+
+                return VDOMWidget.cloneVNode(vNode, null, true);
+            });
+    }
+
+    makeChildComponentWidget(componentName, index, content, props, renderedComponents = {}) {
+        var prom = this.getInitComponentInstance(componentName, index);
+        if (!(componentName in renderedComponents)) {
+            renderedComponents[componentName] = [];
+        }
+        renderedComponents[componentName].push(prom);
+
+        return prom
+            .then(component => {
+                return Promise.all(content.map(contentNode => {
+                        return component.replaceComponentPlaceholders(contentNode, renderedComponents)
+                    }))
+                    .then(content => {
+                        component.content = content;
+                        component.assignProps(props, this);
+                        return component.mount()
+                            .then(didMount => {
+                                this.trigger('componentplaceholderreplaced', {component});
+                                return new VDOMWidget({component});
+                            });
+                    });
+            });
+    }
+
+    refreshPendingWidgets() {
+        var componentsToRefresh = uniq(this._componentsRequestingPatch);
+        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
+        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
+        this._componentsRequestingPatch = [];
+    }
+
+    refreshWidgets(vNode, targetComponents=[]) {
+        if (!vNode) {
+            return vNode;
+        } else if (vNode.type === 'Widget') {
+            if (targetComponents.includes(vNode.component)) {
+                return new VDOMWidget({component: vNode.component});
+            }
+        } else if (vNode.children) {
+            var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
+            if (children.some((child, ii) => child !== vNode.children[ii])) {
+                return VDOMWidget.cloneVNode(vNode, children);
+            }
+        }
+        return vNode;
+    }
+
+    walkComponents(callback, filterFunc=()=>true) {
+        if (filterFunc(this)) {
+            callback(this)
+        }
+        for (var componentName in this.components) {
+            Object.values(this._componentInstances[componentName])
+                .forEach(instance => instance.walkComponents(callback, filterFunc))
+        }
+    }
+
+    reduceComponents(callback, initialVal, filterFunc=()=>true) {
+        var acc = initialVal;
+        if (filterFunc(this)) {
+            acc = callback(acc, this)
+        }
+        for (var componentName in this.components) {
+            acc = Object.values(this._componentInstances[componentName])
+                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc), acc);
+        }
+        return acc;
+    }
+
+    checkChangedKey(key) {
+        return Object.entries(this._lastAccessedStateKeys)
+            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, {[entry[0]]:1}) : acc, null);
+    }
+
+    collectComponentTree() {
+        var parent = this.getParent();
+        return Object.entries(this.components)
+                .reduce((acc, entry) => {
+                    return Object.assign(acc, {
+                        [entry[0].toLowerCase()]: {
+                            sourceInstance: this, 
+                            componentClass: entry[1]
+                        }
+                    })
+                }, parent ? parent.collectComponentTree() : {});
     }
 
     queryDOM(query) {
@@ -3215,24 +3928,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     awaitRender(val) {
-        return this.awaitEvent('renderdommarkup')
+        return (this.renderPromise ? this.renderPromise : Promise.resolve())
             .then(() => val);
-    }
-
-    createAction(actionName, actionData) {
-        this.trigger('createaction', {actionName, actionData});
-    }
-
-    onInit() {
-        //Default event handler, noop
-    }
-
-    onRenderMarkup() {
-        //Default event handler, noop
-    }
-
-    onRenderStyles() {
-        //Default event handler, noop
     }
 
     addTagDirective(name, directive) {
@@ -3247,22 +3944,37 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return _generatedComponentClasses = val;
     }
 
-    makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
-            return ComponentClass;
-        } else if (typeof ComponentClass === 'function') {
+    static makeComponentClass(ComponentClass) {
+        if (typeof ComponentClass === 'function' && !ComponentClass.prototype) {
             // We got a non-Component class function, so we assume it is a component factory function
-            var match = this.constructor.generatedComponentClasses.find(compClass => compClass.func === ComponentClass);
-            if (match) {
-                return match.class;
+            var str = ComponentClass.toString();
+            if (str in this.generatedComponentClasses) {
+                return this.generatedComponentClasses[str];
             } else {
-                var newClass = ComponentClass.call(this, this.constructor.Weddell.classes.Component)
-                this.constructor.generatedComponentClasses.push({
-                    func: ComponentClass,
-                    class: newClass
-                });
-                return newClass;
+                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(ComponentClass.call(this, this.Weddell.classes.Component));
             }
+        } else {
+            return this.bootstrapComponentClass(ComponentClass);
+        }        
+    }
+
+    static bootstrapComponentClass(ComponentClass) {
+        var WeddellComponent = this.Weddell.classes.Component;
+        if (ComponentClass.prototype && (ComponentClass.prototype instanceof WeddellComponent || ComponentClass.prototype.constructor === WeddellComponent)) {
+            if (!ComponentClass.id) {
+                var id = generateHash();
+                var BaseClass = ComponentClass;
+                ComponentClass = class Component extends BaseClass {
+                    static get id() {
+                        return id;
+                    }
+
+                    static get BaseClass() {
+                        return BaseClass;
+                    }
+                }
+            }
+            return ComponentClass;
         } else {
             //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
             throw "Unsupported component input";
@@ -3276,24 +3988,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             ChildComponent = ChildComponent[0];
         }
 
-        ChildComponent = this.makeComponentClass(ChildComponent);
+        ChildComponent = this.constructor.makeComponentClass(ChildComponent);
 
         var parentComponent = this;
-        var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
-        var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
-        var markupTransforms = this._pipelines.markup.transforms;
-        var stylesTransforms = this._pipelines.styles.transforms;;
+        var root = this.root;
 
         var obj = {};
 
         obj[componentName] = class extends ChildComponent {
             constructor(opts) {
                 super(defaults({
+                    root,
                     parentComponent,
-                    targetMarkupRenderFormat,
-                    targetStylesRenderFormat,
-                    markupTransforms,
-                    stylesTransforms
                 }, opts))
 
                 parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
@@ -3301,27 +4007,51 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 this.on('createcomponent', evt => {
                     parentComponent.trigger('createcomponent', Object.assign({}, evt));
                 });
-
-                this.on('markeddirty', evt => {
-                    parentComponent.markDirty();
-                });
             }
         }
 
         this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
-        obj[componentName]._BaseClass = ChildComponent;
-        obj[componentName]._initOpts = initOpts;
-        obj[componentName]._inputMappings = inputMappings;
-        obj[componentName]._id = generateHash();
+
+        Object.defineProperties(obj[componentName], {
+            _initOpts: { value: initOpts },
+            _inputMappings: { value: inputMappings }
+        })
 
         return obj[componentName];
+    }
+    
+    markDirty(dirtyRenderers={}) {
+        //@TODO maybe also set dirtyRenderers when component isn't mounted
+        if (this.renderPromise || !this.isMounted) {
+            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
+        } else {
+            this.render(dirtyRenderers);
+        }
     }
 
     init(opts) {
         opts = defaults(opts, this.defaultInitOpts);
         if (!this._isInit) {
             this._isInit = true;
-            return Promise.resolve(this.onInit(opts))
+
+            ['props', 'state'].forEach((propName) => {
+                this[propName].on('change', evt => {
+                    if (evt.target === this[propName]) {
+                        var dirtyRenderers = this.checkChangedKey(evt.changedKey);
+                        if (dirtyRenderers) {
+                            this.markDirty(dirtyRenderers);
+                        }
+                    }
+                })
+            });
+            
+            return this.render()
+                .then(() => {
+                    return Promise.resolve(this.onFirstRender(opts))
+                })
+                .then(() => {
+                    return Promise.resolve(this.onInit(opts))
+                })
                 .then(() => {
                     this.trigger('init');
                     return this;
@@ -3342,153 +4072,84 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
-    markDirty(changedKey) {
-        return Object.values(this._pipelines).forEach((pipeline, pipelineType) => {
-            pipeline.markDirty(changedKey);
-        });
+    getMountedChildComponents() {
+        return this.reduceComponents((acc, component) => 
+            acc.concat(component), [], component => 
+                component !== this && component._isMounted);
     }
 
-    renderStyles() {
-        this.trigger('beforerenderstyles');
-
-        return this._pipelines.styles.render()
-            .then(output => {
-                return Promise.all(Object.entries(this.components).map(entry => {
-                        var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
-
-                        return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
-                    }))
-                    .then(components => {
-                        var evtObj = {
-                            output,
-                            staticStyles: this.constructor.styles || null,
-                            component: this,
-                            components,
-                            wasRendered: true,
-                            renderFormat: this._pipelines.styles.targetRenderFormat
-                        };
-
-                        this.trigger('renderstyles', Object.assign({}, evtObj));
-
-                        return evtObj;
-                    });
-            });
-    }
-
-    render(pipelineType) {
-        this.trigger('beforerender');
-
-        if (!pipelineType) {
-            return Promise.all(Object.keys(this._pipelines).map(pipelineType => this.render.call(this, pipelineType)));
-        }
-        var pipeline = this._pipelines[pipelineType];
-        var args =  Array.from(arguments).slice(1);
-
-        switch(pipelineType) {
-            case 'markup':
-                var output = this.renderMarkup.apply(this, args);
-                break;
-            case 'styles':
-                output = this.renderStyles.apply(this, args);
-                break;
-            default:
-        }
-
-        return Promise.resolve(output)
-            .then(evt => {
-                this.trigger('render', Object.assign({}, evt));
-                return evt;
-            });
-    }
-
-    assignProps(props) {
-        Object.assign(this.props, Object.entries(props)
-            .filter(entry => includes(this.inputs, entry[0]))
-            .reduce((finalObj, entry) => {
-                finalObj[entry[0]] = entry[1]
-                return finalObj
-            }, {}));
-
-        this.state.$attributes = Object.entries(props)
-            .filter(entry => !includes(this.inputs, entry[0]))
-            .reduce((finalObj, entry) => {
-                finalObj[entry[0]] = entry[1]
-                return finalObj
-            }, {});
-    }
-
-    renderMarkup(content, props, targetFormat) {
-        this.trigger('beforerendermarkup');
-
-        var pipeline = this._pipelines.markup;
-
-        if (!targetFormat) {
-            targetFormat = pipeline.targetRenderFormat;
-        }
-
+    assignProps(props, parentScope) {
         if (props) {
-            this.assignProps(props)
-        }
-
-        var components = [];
-        var off = this.on('rendercomponent', componentResult => {
-            if (!(componentResult.componentName in components)) {
-                components[componentResult.componentName] = [];
-            }
-            components[componentResult.componentName].push(componentResult)
-            components.push(componentResult);
-        });
-        return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
-            .then(() => {
-                if (!this._isMounted) this._isMounted = true;
-                return pipeline.render(targetFormat);
-            })
-            .then(output => {
-                var renderFormat = targetFormat.val;
-                if (!(renderFormat in this.renderers)) {
-                    throw "No appropriate component markup renderer found for format: " + renderFormat;
-                }
-                return this.renderers[renderFormat].call(this, output, content)
-                    .then(output => {
-                        off();
-                        var evObj = {
-                            output,
-                            component: this,
-                            id: this._id,
-                            components,
-                            renderFormat
-                        };
-
-                        return Promise.all(
-                                Object.entries(this._componentInstances)
-                                    .reduce((finalArr, entry) => {
-                                        var componentInstances = Object.values(entry[1]);
-                                        var componentName = entry[0];
-                                        var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
-                                        return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
-                                            return renderedComponent.componentOutput.component !== instance
-                                        })));
-                                    }, [])
-                                    .map(unrenderedComponent => unrenderedComponent.unmount())
-                            )
-                            .then(() => {
-                                this.trigger('rendermarkup', Object.assign({}, evObj));
-                                return evObj;
-                            });
-                    });
+            this.inputs.filter(input => !(input in props || input.key in props))
+            .forEach(input => {
+                this.props[input.key || input] = null;
             });
+
+            var parsedProps = Object.entries(props)
+                .reduce((acc, entry) => {
+                    if (this.inputs.some(input => input === entry[0] || input.key === entry[0])) {
+                        acc[0][entry[0]] = entry[1];
+                    } else if (entry[0].slice(0,2) === 'on' && !(entry[0] in testElement)) {
+                        //TODO support more spec-compliant data- attrs
+                        acc[1][entry[0]] = entry[1];
+                    } else {
+                        acc[2][entry[0]] = entry[1];
+                    }
+                    return acc;
+                }, [{},{},{}]);//first item props, second item event handlers, third item attributes
+            
+            Object.assign(this.props, parsedProps[0]);
+            this.bindInlineEventHandlers(parsedProps[1], parentScope);
+            this.state.$attributes = parsedProps[2];
+        }
+    }
+
+    bindInlineEventHandlers(handlersObj, scope) {
+        var results = Object.entries(this._inlineEventHandlers)
+            .reduce((acc, currHandlerEntry) => {
+                if (currHandlerEntry[0] in acc[1]) {
+                    if (currHandlerEntry[1].handlerString !== handlersObj[currHandlerEntry[0]]) {
+                        //there is a new handler for this event, and it does not match existing handler. replace
+                        acc[0].push(currHandlerEntry);
+                    } else {
+                        //there is a new handler for this event and it does match existing handler. Do nothing
+                        delete acc[1][currHandlerEntry[0]];
+                    }
+                }
+                return acc;
+            }, [[], Object.assign({}, handlersObj)]); //arr[0] handlers to remove, arr[1] events to add
+
+        var handlerEntriesToRemove = results[0];
+        var handlersToAdd = results[1];
+
+        handlerEntriesToRemove.forEach(handlerEntry => {
+            handlerEntry[1].off()
+            delete this._inlineEventHandlers[handlerEntry[0]];
+        });
+
+        for (var eventName in handlersToAdd) {
+            var handlerString = handlersToAdd[eventName];
+            this._inlineEventHandlers[eventName] = {handlerString};
+            try {
+                var callback = new Function('component', 'event', handlerString).bind(scope, this)
+            } catch (err) {
+                throw "Failed parsing event handler for component: " + err.stack;
+            }
+            this._inlineEventHandlers[eventName].off = this.on(eventName.slice(2), callback);
+        }
     }
 
     addComponentEvents(componentName, childComponent, index) {
-        if (this.constructor.componentEventListeners && this.constructor.componentEventListeners[componentName]) {
+        var componentKeyIndex;
+        if (this.constructor.componentEventListeners && (componentKeyIndex = Object.keys(this.constructor.componentEventListeners).map(key => key.toLowerCase()).indexOf(componentName)) > -1) {
             if (!(componentName in this._componentListenerCallbacks)) {
                 this._componentListenerCallbacks[componentName] = {}
             }
-            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[componentName])
+            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[Object.keys(this.constructor.componentEventListeners)[componentKeyIndex]])
                 .map(entry => {
                     return childComponent.on(entry[0], function() {
-                        if (childComponent._isMounted) {
-                            entry[1].apply(this, arguments);
+                        if (childComponent.isMounted) {
+                            entry[1].apply(this, Array.from(arguments).concat(childComponent));
                         }
                     }.bind(this))
                 })
@@ -3496,25 +4157,42 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     unmount() {
-        return Promise.all(
-                Object.values(this._componentInstances)
-                    .reduce((finalArr, components) => {
-                        return finalArr.concat(Object.values(components));
-                    }, [])
-                    .map(component => component.unmount())
-            )
-            .then(() => {
-                if (this._isMounted) {
-                    this._isMounted = false;
-                    this.trigger('unmount');
-                    if (this.onUnmount) {
-                        return this.onUnmount.call(this);
-                    }
-                }
-            })
+        if (this._isMounted) {
+            for (var eventName in this._inlineEventHandlers) {
+                this._inlineEventHandlers[eventName].off();
+                delete this._inlineEventHandlers[eventName];
+            }
+            this._isMounted = false;
+            this.trigger('unmount');
+            return Promise.resolve(this.onUnmount())
+                .then(() => true);
+        }
+        return Promise.resolve(false);
+    }
+
+    mount() {
+        if (!this._isMounted) {
+            this._isMounted = true;
+            this.trigger('mount');
+            var arr = ['onMount'];
+            if (!this.hasMounted) {
+                this._hasMounted = true;
+                this.trigger('firstmount');
+                arr.push('onFirstMount');
+            }
+            if (this._dirtyRenderers) {
+                this._dirtyRenderers = null;
+                return this.render()
+                    .then(() => Promise.all(arr.map(func => this[func]())));
+            }
+            return Promise.all(arr.map(func => this[func]()))
+                .then(() => true);
+        }
+        return Promise.resolve(false);
     }
 
     makeComponentInstance(componentName, index, opts) {
+        componentName = componentName.toLowerCase();
         var instance = new (this.components[componentName])({
             store: defaults({
                 $componentID: this.components[componentName]._id,
@@ -3522,17 +4200,34 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             })
         });
         this.addComponentEvents(componentName, instance, index);
+
+        instance.on('requestpatch', evt => {
+            if (this.vTree) {
+                this._componentsRequestingPatch.push(instance);
+                this.trigger('requestpatch', Object.assign({}, evt));
+            }
+        });
+
+        instance.on('componentleavedom', evt => this.trigger('componentleavedom', Object.assign({}, evt)))
+        instance.on('componententerdom', evt => this.trigger('componententerdom', Object.assign({}, evt)))
+  
         return instance;
     }
 
     getComponentInstance(componentName, index) {
-        var instances = this._componentInstances[componentName]
-        if (instances && !(index in instances)) {
-            this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
+        componentName = componentName.toLowerCase()
+        var instances = this._componentInstances[componentName];
+        return instances[index];
+    }
 
-            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.components[componentName]._initOpts);
+    getInitComponentInstance(componentName, index) {
+        var instance = this.getComponentInstance(componentName, index);
+        if (!instance) {
+            return (this._componentInstances[componentName][index] = this.makeComponentInstance(componentName, index))
+                .init(this.components[componentName]._initOpts);
         }
-        return Promise.resolve(instances ? instances[index] : null);
+
+        return Promise.resolve(instance);
     }
 
     cleanupComponentInstances() {
@@ -3542,7 +4237,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":74,"../utils/make-hash":75,"./event-emitter-mixin":59,"./sig":61,"mixwith-es5":24,"object.defaults/immutable":25}],59:[function(require,module,exports){
+},{"../utils/make-hash":74,"./event-emitter-mixin":60,"./vdom-widget":62,"mixwith-es5":12,"object.defaults/immutable":13,"virtual-dom/h":24}],60:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var includes = require('../utils/includes');
 
@@ -3608,290 +4303,20 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":74,"mixwith-es5":24}],60:[function(require,module,exports){
-var EventEmitterMixin = require('./event-emitter-mixin');
-var mix = require('mixwith-es5').mix;
-
-var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
-    constructor(opts) {
-        super(opts);
-        var Sig = this.constructor.Weddell.classes.Sig;
-        Object.defineProperties(this, {
-            isDirty: {value: false, writable: true},
-            name: {value: opts.name},
-            template: {value: null, writable: true},
-            input: {value: opts.input, writable: true},
-            static: {value: null, writable: true},
-            onRender: {value: opts.onRender},
-            _store: {value: opts.store},
-            _cache: {value: null, writable: true},
-            _watchedProperties: {value: {}, writable: true},
-            _promise: {value: Promise.resolve(), writable: true},
-            _requestHandle: {value: null, writable: true},
-            _currentResolve: {value: null, writable: true},
-            inputFormat: { value: new Sig(opts.inputFormat) },
-            _isDynamic: { value: opts.isDynamic, writable: true },
-            transforms: { value: opts.transforms, writable: true },
-            targetRenderFormat: { value: new Sig(opts.targetRenderFormat) },
-            _instances: { value: {}, writable: true },
-            _isInit: { value: false, writable: true }
-        });
-    }
-
-    init() {
-        if (!this._isInit) {
-            if (this.input) {
-                this.template = this.processInput(this.targetRenderFormat);
-            }
-            this._isInit = true;
-        }
-    }
-
-    processInput(targetRenderFormat) {
-        var input = this.input;
-        var Transform = this.constructor.Weddell.classes.Transform;
-        var Sig = this.constructor.Weddell.classes.Sig;
-        var transforms;
-        var inputFormat = this.inputFormat;
-        var template;
-        //TODO clean up this mess of a function
-        if (this._isDynamic && inputFormat.parsed.type !== 'function') {
-            var transforms = Transform.getMatchingTransforms(this.transforms, inputFormat, '(locals:Object, ...Any)=>Any')
-            if (!transforms) {
-                throw "Could not find appropriate transform to turn " + this.inputFormat + " into a template function.";
-            }
-            var templateTransform;
-            transforms = transforms
-                .reduce((finalVal, transform) => {
-                    if (!finalVal) {
-                        var returnType = new Sig(transform.to.parsed.returns);
-                        var result = Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
-                        if (result) {
-                            templateTransform = transform;
-                        }
-                    }
-                    return finalVal || result;
-                }, null);
-            if (!transforms) {
-                throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + targetRenderFormat.validated;
-            }
-            template = Transform.compose(templateTransform.applyTransform(input), transforms);
-        } else if (this._isDynamic && inputFormat.parsed.type === 'function') {
-            var returnType = new Sig(this.inputFormat.parsed.returns);
-            transforms = this.transforms
-                .reduce((finalVal, transform) => {
-                    return finalVal || Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
-                }, null);
-
-            if (!targetRenderFormat.checkIfMatch(returnType)) {
-                if (!transforms) {
-                    throw "Could not find a tranform path from " + returnType.validated + ' to ' + targetRenderFormat.validated;
-                }
-                template = Transform.compose(input, transforms);
-            } else {
-                template = input;
-            }
-        } else {
-            transforms = Transform.getTransformPath(this.transforms, this.inputFormat, targetRenderFormat);
-
-            if (!transforms){
-                throw "Could not find appropriate transform for " + this.inputFormat.validated + " to " + targetRenderFormat.validated;
-            }
-
-            template = function(){ return Transform.applyTransforms(input, transforms) };
-        }
-
-        return template;
-    }
-
-    markDirty(changedKey) {
-        if (!this.isDirty && (!changedKey || (changedKey in this._watchedProperties))) {
-            this.isDirty = true;
-            this.trigger('markeddirty', {changedKey});
-            return true;
-        }
-        return false;
-    }
-
-    callTemplate(locals, template) {
-        return template.call(this, locals);
-    }
-
-    render(targetFormat) {
-        if (!this._isInit) {
-            this.init();
-        }
-        if (this.isDirty || !this._cache) {
-            var Sig = this.constructor.Weddell.classes.Sig;
-            var template = this.template;
-            if (targetFormat) {
-                targetFormat = new Sig(targetFormat);
-                //TODO cache processed input formats so we don't run into cases where processInput is running every time state changes. We could probably also remove the initialization process and have this only happen lazily
-                template = !targetFormat.checkIfMatch(this.targetRenderFormat) ? this.processInput(targetFormat) : this.template;
-            }
-            var accessed = {};
-            var off = this._store.on('get', function(evt){
-                accessed[evt.key] = 1;
-            });
-            var output = template ? this.callTemplate(this._store, template) : this.static;
-            //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
-            off();
-            this._watchedProperties = accessed;
-
-            return Promise.resolve(output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
-                .then(() => {
-                    this.isDirty = false;
-                    this._cache = output
-                    this.trigger('render', {output});
-                    return output;
-                }) : null);
-        }
-        return Promise.resolve(this._cache);
-    }
-}
-
-module.exports = Pipeline;
-
-},{"./event-emitter-mixin":59,"mixwith-es5":24}],61:[function(require,module,exports){
-class Sig {
-    constructor(str) {
-        if (typeof str === 'object' && str.constructor === this.constructor) {
-            Object.defineProperties(this, Object.getOwnPropertyDescriptors(str));
-        } else {
-            this.val = typeof str === 'object' ? this.constructor.format(str) : str;
-            Object.defineProperties(this, {
-                _parsed: { value: null, writable: true },
-                _validated: { value: null, writable: true },
-                parsed: {
-                    get: () => this._parsed ? this._parsed : this._parsed = this.constructor.parse(this.val)
-                },
-                validated: {
-                    get: () => this._validated ? this._validated : this._validated = this.constructor.format(this.parsed)
-                }
-            });
-        }
-    }
-
-    static parseArgs(str) {
-        return str ? str.split(',').map(arg => {
-            var rest = arg.split('...');
-            if (rest.length > 1) {
-                arg = rest[1];
-                return this.parseVal(arg, true);
-            }
-            return this.parseVal(arg);
-        }) : [];
-    }
-
-    static parse(str) {
-        var arr;
-        var formatted = {};
-        var arr = new RegExp(this.pattern).exec(str);
-        if (arr) {
-            if (arr[1] || arr[2] || arr[3]) {
-                //func arguments and body
-                return {
-                    type: 'function',
-                    name: arr[1],
-                    args: this.parseArgs(arr[2]),
-                    returns: this.parse(arr[3])
-                }
-            } else if (arr[4]) {
-                //not func
-                return this.parseVal(arr[4]);
-            }
-        }
-        console.warn("No matches for signature:", str, "Please ensure it is valid");
-    }
-
-    static parseVal(str, variadic) {
-        var parsed = str.split(':').map(str => str.trim());
-        return {name: parsed[1] ? parsed[0] : undefined, type: parsed[1] || parsed[0], variadic};
-    }
-
-    static formatVal(obj) {
-        return obj.name ? obj.name + ':' + obj.type : obj.type;
-    }
-
-    static formatArgs(args) {
-        return args.map(arg => {
-            return ((arg.variadic && '...') || '') + this.formatVal(arg);
-        }).join(',');
-    }
-
-    static formatFunc(obj) {
-        return (obj.name ? obj.name + ':' : '') + '(' + this.formatArgs(obj.args) + ')=>' + this.format(obj.returns)
-    }
-
-    static format(obj) {
-        if (obj.type === 'function') {
-            return this.formatFunc(obj);
-        } else {
-            return this.formatVal(obj);
-        }
-    }
-
-    static compare(obj1, obj2, strict) {
-        return obj1 && obj2 &&
-            this.compareTypes(obj1.type, obj2.type, strict) &&
-            (!obj1.name || !obj2.name || obj1.name === obj2.name) &&
-            obj1.variadic === obj1.variadic &&
-            ((obj1.type !== 'function' && obj2.type !== 'function') ||
-            this.compare(obj1.returns, obj2.returns));        
-    }
-
-    static compareTypes(type1, type2, strict) {
-        return type1 === 'Any' ||
-            type2 === 'Any' ||
-            type1 === type2 ||
-            (strict ? false : this.checkTypeAliases(type1, type2));
-    }
-
-    static checkTypeAliases(type1, type2) {
-        //TODO recursive check to get inherited aliases
-        return this.customTypes.filter((typeObj) => typeObj.alias === type1)
-            .some((typeObj) => typeObj.type === type2) ||
-            this.customTypes.filter((typeObj) => typeObj.alias === type2)
-                .some((typeObj) => typeObj.type === type1)
-    }
-
-    static addTypeAlias(alias, type) {
-        if (alias === 'Any') throw "Cannot alias a type to 'Any'";
-        this.customTypes.push({type, alias});
-    }
-
-    checkIfMatch(sig, strict) {
-        if (typeof sig === 'string') {
-            sig = new this.constructor(sig);
-        }
-        return sig.validated === this.validated ||
-            this.constructor.compare(this.parsed, sig.parsed, strict);
-    }
-
-    wrap(funcName, args) {
-        return new this.constructor((funcName ? funcName + ':' : '') + '(' + (args ? args.join(',') : '') + ')=>' + this.val);
-    }
-}
-
-Sig.pattern = /(?:(?:(?:([^\(]*):)*\(([^\(]+)\)=>(.*))|(.+))/;
-Sig.customTypes = [];
-
-module.exports = Sig;
-
-},{}],62:[function(require,module,exports){
+},{"../utils/includes":73,"mixwith-es5":12}],61:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('object.defaults/immutable');
 var includes = require('../utils/includes');
 var difference = require('../utils/difference');
-var generateHash = require('../utils/make-hash');
 var mix = require('mixwith-es5').mix;
 var uniq = require('array-uniq');
 
 var defaultOpts = {
     shouldMonitorChanges: true,
     shouldEvalFunctions: true,
-    inputMappings: {}
+    inputMappings: {},
+    validators: {}
 };
 
 var Store = class extends mix(Store).with(EventEmitterMixin) {
@@ -3910,6 +4335,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _proxyObjs: {configurable: false,value: {}},
             _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
+            _firstGet: {writable: true, value: false},
+            _validators: {value: opts.validators},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
@@ -3963,6 +4390,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         this.on('change', evt => {
             delete this._cache[evt.changedKey];
         });
+
+        Object.seal(this);
     }
 
     set(key, val, isReadOnly) {
@@ -3979,12 +4408,22 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                     if (this.shouldEvalFunctions && typeof newValue === 'function') {
                         this._funcProps[key] = newValue;
                     } else {
+                        if (key in this._validators) {
+                            var input = this._validators[key];
+                            var val = newValue == null ? this.getValue(key) : newValue;
+                            if (input.required && val == null) {
+                                throw `Required component input missing: ${key}`;
+                            }
+                            if (input.validator && !input.validator(val)) {
+                                throw `Input failed validation: ${key}. Received value: ${val}`;
+                            }
+                        }
                         this._data[key] = newValue;
 
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
-                                this.trigger('change', {changedKey: key, newValue, oldValue});
+                                this.trigger('change', {target: this, changedKey: key, newValue, oldValue});
                             }
                         }
                     }
@@ -4018,7 +4457,12 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         if (this._cache[key]) {
             return this._cache[key];
         }
-
+        if (this.shouldEvalFunctions && !this._firstGet) {
+            this._firstGet = true;
+            for (var propName in this._funcProps) {
+                this[propName];
+            }
+        }
         if (key in this._funcProps && !this._initialCalled[key]) {
             this._initialCalled[key] = true;
             val = this[key] = this.evaluateFunctionProperty(key);
@@ -4066,12 +4510,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     await(key) {
+        if (Array.isArray(key)) {
+            return Promise.all(key.map(subKey => this.await(subKey)));
+        }
         return Promise.resolve(this.getValue(key) || new Promise(resolve => {
             var off = this.watch(key, vals => {
                 off();
                 resolve(vals);
-            });
-        }));
+            }, true, true);
+        }))
     }
 
     evaluateFunctionProperty(key) {
@@ -4111,66 +4558,94 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":72,"../utils/includes":74,"../utils/make-hash":75,"./event-emitter-mixin":59,"array-uniq":4,"deep-equal":8,"mixwith-es5":24,"object.defaults/immutable":25}],63:[function(require,module,exports){
-class Transform {
+},{"../utils/difference":71,"../utils/includes":73,"./event-emitter-mixin":60,"array-uniq":2,"deep-equal":4,"mixwith-es5":12,"object.defaults/immutable":13}],62:[function(require,module,exports){
+var VDOMPatch = require('virtual-dom/patch');
+var VDOMDiff = require('virtual-dom/diff');
+var h = require('virtual-dom/h');
+var createElement = require('virtual-dom/create-element');
+const svg = require('virtual-dom/virtual-hyperscript/svg');
+
+module.exports = class VDOMWidget {
     constructor(opts) {
-        var Sig = this.constructor.Weddell.classes.Sig;
-        this.func = opts.func;
-        this.from = new Sig(opts.from);
-        this.to = new Sig(opts.to);
+        this.type = 'Widget';
+        this.component = opts.component;
+        this.vTree = opts.component.vTree;
     }
 
-    applyTransform(input) {
-        return this.func(input);
+    static cloneVNode(vNode, newChildren=null, preserveIfUnchanged=false) {
+        return preserveIfUnchanged && !newChildren && !vNode.namespace && false ? vNode : 
+            (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
+                key: vNode.key
+            }), newChildren || vNode.children);
     }
 
-    static applyTransforms(input, transforms) {
-        return transforms.reduce((finalVal, transform) => {
-            return Array.isArray(transform) ? this.applyTransforms(finalVal, transform) : transform.applyTransform(finalVal);
-        }, input);
-    }
-
-    static getMatchingTransforms(transforms, from, to) {
-        return transforms.filter(transform => {
-            return (!to || transform.to.checkIfMatch(to)) && (!from || transform.from.checkIfMatch(from));
-        });
-    }
-
-    static compose(func, transforms) {
-        return transforms.reduce((composed, transform) => {
-            return function(){
-                return transform.applyTransform(composed.apply(this, arguments));
-            }
-        }, func);
-    }
-
-    static getTransformPath(transforms, from, to, _soFar) {
-        //TODO add heuristics to make this process faster
-        if (!_soFar) _soFar = [];
-        if (from.checkIfMatch(to)) {
-            return _soFar;
+    static pruneNullNodes(vNode) {
+        if (!vNode) {
+            throw "Can't prune null nodes from a null node!";
         }
-        return transforms.filter(transform => {
-            return transform.from.checkIfMatch(from, true);
-        }).reduce((finalVal, transform) => {
-            return finalVal || this.getTransformPath(transforms, transform.to, to, _soFar.concat(transform));
-        }, null);
+
+        if (vNode.type === 'Widget') {
+            if (vNode.component.vTree == null) {
+                return null;
+            }
+        } else if (vNode.children) {
+            var children = vNode.children.filter(child => this.pruneNullNodes(child));
+            if (children.length !== vNode.children.length || children.some((child, ii) => child !== vNode.children[ii])) {
+                return this.cloneVNode(vNode, children);
+            }
+        }
+        return vNode;
+    }
+
+    init() {
+        if (!this.vTree) {
+            throw "Component has no VTree to init with";
+        }
+        var el = createElement(this.vTree);
+        this.component._el = el;
+
+        this.component.onDOMCreate.call(this.component, {el});
+        this.component.onDOMCreateOrChange.call(this.component, {el});
+
+        return el;
+    }
+
+    update(previousWidget, prevDOMNode) {
+        if (Array.isArray(this.vTree)) {
+            throw "Cannot render a component with multiple nodes at root!";
+        }
+
+        previousWidget.component.trigger('componentleavedom', {component: previousWidget.component});
+        this.component.trigger('componententerdom', {component: this.component});
+        
+        var patches = VDOMDiff(previousWidget.vTree, this.component.vTree);
+        var el = VDOMPatch(prevDOMNode, patches);
+
+        if (previousWidget.component !== this.component) {
+            this.component._el = el;
+            this.component.onDOMChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
+            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
+        }
+
+        //@TODO onDOMMove?
+        if (this.component.vTree == null) {
+            debugger;
+        }
+        this.vTree = this.component.vTree;
+        
+        return el;
+    }
+
+    destroy(DOMNode) {
+        this.component.onDOMDestroy.call(this.component, {el: this.component._el});
+        this.component._el = null;
     }
 }
-
-Transform.heuristics = {};
-
-module.exports = Transform;
-
-},{}],64:[function(require,module,exports){
+},{"virtual-dom/create-element":22,"virtual-dom/diff":23,"virtual-dom/h":24,"virtual-dom/patch":32,"virtual-dom/virtual-hyperscript/svg":45}],63:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
 var Store = require('./store');
-var Pipeline = require('./pipeline');
-var Transform = require('./transform');
-var Sig = require('./sig');
-var includes = require('../utils/includes');
 
 class _Weddell {
     static plugin(pluginObj) {
@@ -4178,8 +4653,8 @@ class _Weddell {
         if (!pluginObj.id) {
             throw 'Got a plugin with no ID assigned. Aborting';
         }
-        if (!includes(NewWeddell.loadedPlugins, pluginObj.id)) {
-            if (pluginObj.requires && !includes(NewWeddell.loadedPlugins, pluginObj.requires)) {
+        if (!NewWeddell.loadedPlugins.includes(pluginObj.id)) {
+            if (pluginObj.requires && !NewWeddell.loadedPlugins.includes(pluginObj.requires)) {
                 [].concat(pluginObj.requires).forEach((plugReq) => {
                     throw 'Plugin ' + pluginObj.id + ' requires the plugin ' + plugReq + ', which is not loaded. Load ' + plugReq + ' first.';
                 });
@@ -4229,7 +4704,7 @@ Object.values(_Weddell.classes).forEach(function(commonClass){
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":74,"./app":57,"./component":58,"./pipeline":60,"./sig":61,"./store":62,"./transform":63,"mixwith-es5":24}],65:[function(require,module,exports){
+},{"./app":58,"./component":59,"./store":61,"mixwith-es5":12}],64:[function(require,module,exports){
 var Mixin = require('mixwith-es5').Mixin;
 var mix = require('mixwith-es5').mix;
 var Router = require('./router');
@@ -4250,6 +4725,8 @@ module.exports = function(_Weddell){
         classes:  {
             App: Mixin(function(App){
                 return class extends App {
+                    onBeforeRoute() {}
+
                     constructor(opts) {
                         super(opts);
 
@@ -4258,38 +4735,54 @@ module.exports = function(_Weddell){
                             onRoute: function(matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
-                                return componentNames.reduce((promise, componentName) => {
-                                        return promise
-                                            .then(currentComponent => {
-                                                return currentComponent.getComponentInstance(componentName, 'router')
-                                                    .then(component => {
-                                                        if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
-                                                        jobs.push({
-                                                            component,
-                                                            currentComponent,
-                                                            componentName
-                                                        });
-                                                        return component;
-                                                    });
-                                            })
-                                    }, Promise.resolve(this.component))
-                                    .then(lastComponent => {
-                                        jobs.push({
-                                            currentComponent: lastComponent,
-                                            component: null,
-                                            componentName: null
-                                        });
-                                        return jobs.reduce((promise, obj) => {
+                                
+                                if (matches.isRouteUpdate) {
+                                    this.el.classList.add('route-update');
+                                }
+                                this.trigger('routematched', {matches});
+                                return Promise.resolve(this.onBeforeRoute.call(this, { matches, componentNames }))
+                                    .then(() => {
+                                        this.el.classList.add('prerouting-finished');
+                                        
+                                        return componentNames
+                                            .map(componentName => componentName.toLowerCase())
+                                            .reduce((promise, componentName) => {
                                                 return promise
-                                                    .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
-                                            }, Promise.resolve())
+                                                    .then(currentComponent => {
+                                                        return currentComponent.getInitComponentInstance(componentName, 'router')
+                                                            .then(component => {
+                                                                if (!component) return Promise.reject('Failed to resolve ' + componentName + ' while routing.');// throw "Could not navigate to component " + key;
+                                                                jobs.push({
+                                                                    component,
+                                                                    currentComponent,
+                                                                    componentName
+                                                                });
+                                                                return component;
+                                                            });
+                                                    })
+                                            }, Promise.resolve(this.component))
+                                            .then(lastComponent => {
+                                                jobs.push({
+                                                    currentComponent: lastComponent,
+                                                    component: null,
+                                                    componentName: null
+                                                });
+                                                return jobs.reduce((promise, obj) => {
+                                                        return promise
+                                                            .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                                    }, Promise.resolve())
+                                                    .then(results => {
+                                                        return this.awaitPatch()
+                                                            .then(() => results);
+                                                    });
+                                            }, console.warn)
                                             .then(results => {
-                                                return this.renderPromises.markup ? this.renderPromises.markup.then(() => results) : results;
-                                            });
-                                    }, console.warn)
-                                    .then(results => {
-                                        this.el.classList.remove('routing');
-                                        return results;
+                                                this.el.classList.remove('routing');
+                                                this.el.classList.remove('prerouting-finished');
+                                                this.el.classList.remove('route-update');
+                                                this.trigger('route', {matches, results});
+                                                return results;
+                                            })
                                     })
                             }.bind(this),
                             onHashChange: function(hash) {
@@ -4298,42 +4791,37 @@ module.exports = function(_Weddell){
                         });
 
                         this.on('createcomponent', evt => {
+                            this.on('routematched', routeEvt => {
+                                evt.component.state.$currentRoute = routeEvt.matches;
+                            });
                             evt.component.router = this.router;
-                        });
-                    }
-
-                    initRenderLifecycleStyleHooks(rootComponent) {
-                        var off = rootComponent.on('renderdomstyles', evt => {
-                            if (evt.component.currentState) {
-                                this.el.classList.add('first-styles-render-complete');
-                                if (this.el.classList.contains('first-markup-render-complete')) {
-                                    this.el.classList.add('first-render-complete');
-                                }
-                                off();
-                            }
-                        });
-                
-                       var off2 = rootComponent.on('renderdommarkup', evt => {
-                            this.el.classList.add('first-markup-render-complete');
-                            if (evt.component.currentState) {
-                                if (this.el.classList.contains('first-styles-render-complete')) {
-                                    this.el.classList.add('first-render-complete');
-                                    off2();
-                                }
-                            }
+                            evt.component.state.$currentRoute = this.router.currentRoute;
                         });
                     }
 
                     init() {
                         return super.init()
-                            .then(() => {
-                                return this.router.init();
-                            });
+                            .then(() => this.router.init());
                     }
                 }
             }),
             Component: Mixin(function(Component){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
+
+                    static get state() {
+                        return defaults({
+                            $currentRoute: null
+                        }, super.state);
+                    }
+
+                    static get tagDirectives() {
+                        return defaults({
+                            routerview: function(vNode, content, props){
+                                return this.compileRouterView(content, props);
+                            } 
+                        }, super.tagDirectives)
+                    }
+
                     constructor(opts) {
                         opts.stateClass = RouterState;
                         var self;
@@ -4344,9 +4832,8 @@ module.exports = function(_Weddell){
                                 }
                             }
                         }));
-                        self = this;
 
-                        this.addTagDirective('RouterView', this.compileRouterView.bind(this));
+                        self = this;
 
                         this.on('init', () => {
                             Object.entries(this.components)
@@ -4355,7 +4842,7 @@ module.exports = function(_Weddell){
                                     var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
                                         var machineStateMethod = methods[0];
                                         finalObj[machineStateMethod] = (evt) => {
-                                            return this.getComponentInstance(componentName, 'router')
+                                            return this.getInitComponentInstance(componentName, 'router')
                                                 .then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
                                         }
                                         return finalObj;
@@ -4364,29 +4851,24 @@ module.exports = function(_Weddell){
                                         componentName
                                     }));
                                     this.addState(componentName, routerState);
-                                    routerState.on(['exit', 'enter'], evt => {
-                                        this.markDirty();
-                                    });
                                 });
+                            this.on(['enterstate', 'exitstate'], evt => {
+                                //@TODO this could be optimized to not force a render of the parent
+                                this.markDirty();
+                            });
                         })
                     }
 
-                    compileRouterView(content, props, isContent) {
-                        if (this.currentState) {
-                            return this.getComponentInstance(this.currentState.componentName, 'router')
-                                .then(component => component.render('markup', content, props))
-                                .then(routerOutput => {
-                                    this.trigger('rendercomponent', {componentOutput: routerOutput, componentName: this.currentState.componentName, props, isContent});
-                                    return Array.isArray(routerOutput.output) ? routerOutput.output[0] : routerOutput.output;
-                                });
-                        }
-                        return Promise.resolve(null);
+                    compileRouterView(content, props, isContent=false) {
+                        return this.currentState ? this.makeChildComponentWidget(this.currentState.componentName, 'router', content, props) : null;
                     }
 
                     compileRouterLink(obj) {
                         var matches = this.router.compileRouterLink(obj);
-                        if (matches) {
+                        if (matches && typeof matches === 'object') {
                             return matches.fullPath;
+                        } else if (typeof matches === 'string') {
+                            return matches;
                         }
                     }
 
@@ -4402,7 +4884,7 @@ module.exports = function(_Weddell){
     });
 }
 
-},{"./machine-state-mixin":66,"./router":67,"./state-machine-mixin":68,"defaults-es6/deep-merge":11,"mixwith-es5":24}],66:[function(require,module,exports){
+},{"./machine-state-mixin":65,"./router":66,"./state-machine-mixin":67,"defaults-es6/deep-merge":7,"mixwith-es5":12}],65:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -4437,12 +4919,32 @@ var MachineState = Mixin(function(superClass) {
 });
 module.exports = MachineState;
 
-},{"../../core/event-emitter-mixin":59,"mixwith-es5":24}],67:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":60,"mixwith-es5":12}],66:[function(require,module,exports){
 var defaults = require('object.defaults/immutable');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var compact = require('array-compact');
 var defaultOpts = {};
+
+function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
+    var params = [];
+
+    if (pattern.charAt(0) !== '/') {
+        if (parentMatched) {
+            var regex = pathToRegexp('/' + pattern, params, {end});
+            var routePathname = pathName;
+            var routeFullPath = fullPath;
+            var match = regex.exec(routePathname);
+        }
+    } else {
+        regex = pathToRegexp(pattern, params, {end});
+        routePathname = fullPath;
+        routeFullPath = routePathname;
+        match = regex.exec(routePathname);
+    }
+
+    return { params, match, fullPath: routeFullPath, pathName: routePathname, regex };
+}
 
 class Router {
 
@@ -4457,47 +4959,63 @@ class Router {
         }
     }
 
-    route(pathName) {
-        if (this.currentRoute && (pathName === this.currentRoute.fullPath || pathName.fullPath === this.currentRoute.fullPath)) {
-            return true;
-        }
+    route(pathName, shouldReplaceState) {
         if (typeof pathName === 'string') {
+            var hashIndex = pathName.indexOf('#');
+            var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
+            pathName = hashIndex > -1 ? pathName.slice(0, hashIndex) : pathName;
             var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
         } else if (pathName) {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
+            if (matches)  {
+                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState);
+            }
         }
         if (matches) {
+            var isInitialRoute = !this.currentRoute;
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                return true;
+                var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
+                    .then(matches => {
+                        if (hash != matches.isCurrentRoute.hash) {
+                            this.pushState(matches.fullPath, hash);
+                        }
+                    });
+            } else {
+                promise = Promise.all(matches.map((currMatch, key) => {
+                        if (key === matches.length - 1 && currMatch.route.redirect) {
+                            if (typeof currMatch.route.redirect === 'function') {
+                                var redirectPath = currMatch.route.redirect.call(this, matches);
+                            } else {
+                                //assuming string - path
+                                redirectPath = currMatch.route.redirect;
+                            }
+                            if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
+                            return Promise.reject(redirectPath);
+                        }
+        
+                        return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
+                    }))
+                    .then(results => {
+                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
+                            .then(() => matches)
+                            .then(matches => {
+                                if (isInitialRoute || shouldReplaceState) {
+                                    this.replaceState(matches.fullPath, hash);
+                                } else if (!matches.isCurrentRoute) {
+                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.route.keepUpdateScrollPos ? null : {x:0,y:0});
+                                }
+                                return matches;
+                            });
+                    }, redirectPath => {
+                        return this.route(redirectPath, true)
+                    });
+    
+                this.currentRoute = matches;
             }
-            var promise = Promise.all(matches.map((currMatch, key) => {
-
-                if (key === matches.length - 1 && currMatch.route.redirect) {
-                    if (typeof currMatch.route.redirect === 'function') {
-                        var redirectPath = currMatch.route.redirect.call(this, matches);
-                    } else {
-                        //assuming string - path
-                        redirectPath = currMatch.route.redirect;
-                    }
-                    if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
-                    return Promise.reject(redirectPath);
-                }
-
-                return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
-            }))
-            .then(results => {
-                return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
-                    .then(() => matches);
-            }, redirectPath => {
-                return this.route(redirectPath)
-            });
-
-            this.currentRoute = matches;
-
-            return promise;
+            return promise;                
         }
         return null;
     }
@@ -4520,40 +5038,63 @@ class Router {
         return matchedRoute || null;
     }
 
-    matchRoute(pathName, routes, routePath) {
+    matchRoute(pathName, routes, routePath, fullPath, parentMatched) {
         if (!routePath) routePath = [];
         var result = null;
         if (typeof pathName !== 'string') {
             return null;
         }
-        if (pathName.charAt(0) !== '/' && this.currentRoute) {
-            pathName = this.currentRoute.fullPath + pathName;
+        
+        if (typeof fullPath === 'undefined') {
+            fullPath = pathName;
         }
+
+        if (fullPath.charAt(0) !== '/' && this.currentRoute) {
+            fullPath = this.currentRoute.fullPath + fullPath;
+        }
+
         routes.every((currRoute) => {
             var params = [];
-            var currPattern = currRoute.pattern.charAt(0) === '/' ? currRoute.pattern : routePath.map(pathObj => pathObj.route).concat(currRoute).reduce((finalPattern, pathObj) => {
-                return pathObj.pattern.charAt(0) === '/' ? pathObj.pattern : finalPattern + pathObj.pattern;
-            }, '');
-            var match = pathToRegexp(currPattern, params, {}).exec(pathName);
-            var newPath = routePath.concat({route: currRoute, match, params})
-            if (match) {
-                result = newPath;
-            }
+
+            var currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, false);
+
+            var newPath = routePath.concat({route: currRoute, match: currMatch.match, params: currMatch.params});
+
             if (currRoute.children) {
-                var childResult = this.matchRoute(pathName, currRoute.children, newPath);
-                result = childResult || result;
+                result = this.matchRoute(currMatch.pathName.replace(currMatch.regex, ''), currRoute.children, newPath, currMatch.fullPath, !!currMatch.match);
             }
+
+            if (!result) {
+                currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, true);
+                var matchObj = {route: currRoute, match: currMatch.match, params: currMatch.params };
+                var isValid = true;
+                if (currRoute.validator) {
+                    isValid = currRoute.validator.call(currRoute, matchObj);
+                }
+                result = currMatch.match && isValid ? routePath.concat(matchObj) : null;
+            }
+
             if (result) {
-                var currMatch = result[result.length - 1];
-                result.paramVals = currMatch.params.reduce((finalVal, param, key) => {
-                    finalVal[param.name] = currMatch.match[key + 1];
-                    return finalVal;
+                result.paramVals = result.reduce((paramsObj, routeObj) => {
+                    routeObj.params.forEach((param, key) => {
+                        if (routeObj.match) {
+                            paramsObj[param.name] = routeObj.match[key + 1];
+                        }
+                    });
+                    return paramsObj;
                 }, {});
+
                 result.route = result[result.length - 1].route;
-                result.fullPath = result[result.length - 1].match[0];
+                result.fullPath = fullPath;
             }
+
             return !result;
         });
+        
+        if (result) {
+            result.isRouteUpdate = this.currentRoute && result.route.name === this.currentRoute.route.name;
+        }        
+
         return result;
     }
 
@@ -4562,28 +5103,40 @@ class Router {
     }
 
     compileRouterLink(obj) {
-        var paramDefaults = {};
-        var routeName;
-        if (this.currentRoute) {
-            routeName = this.currentRoute.route.name;
-            var matchedRoute = this.currentRoute[this.currentRoute.length - 1]
-            var matches = matchedRoute.match.slice(1);
-            matchedRoute.params.forEach((param, key)=> {
-                if (typeof matches[key] !== 'undefined') paramDefaults[param.name] = matches[key];
-            });
-        }
-        routeName = obj.name ? obj.name : routeName;
-        obj.params = Object.assign(paramDefaults, obj.params);
-        /*
+         /*
         * Takes an object specifying a router name and params, returns an object with compiled path and matched route
         */
+        if (typeof obj === 'string') return obj;
+        var paramDefaults = {};
+        var routeName;
+       
+        if (this.currentRoute) {
+            routeName = this.currentRoute.route.name;
+
+            paramDefaults = this.currentRoute.reduce((params, currRoute) => {
+                currRoute.params.forEach((param, key) => {
+                    var val = currRoute.match[key + 1];
+                    if (typeof val !== 'undefined') {
+                        params[param.name] = val;
+                    }
+                })
+                return params;
+            }, paramDefaults);
+        }
+        
+        routeName = obj.name ? obj.name : routeName;
+        obj.params = Object.assign(paramDefaults, obj.params);
+       
         var route = Router.getNamedRoute(routeName, this.routes);
+        
         if (route) {
             try {
-                var fullPath = pathToRegexp.compile(route.reduce((finalPath, pathRoute) => {
+                var pattern = route.reduce((finalPath, pathRoute) => {
                     var segment = pathRoute.pattern;
                     return pathRoute.pattern.charAt(0) === '/' ? segment : finalPath + segment;
-                }, ''))(obj.params);
+                }, '');
+
+                var fullPath = pathToRegexp.compile(pattern)(obj.params);
             } catch (err) {
                 throw "Encountered error trying to build router link: " + err.toString();
             }
@@ -4593,7 +5146,7 @@ class Router {
                 match: null
             }];
             matches.route = route;
-            matches.fullPath = fullPath;
+            matches.fullPath = fullPath[0] !== '/' ? '/' + fullPath : fullPath;
             return matches;
         } else {
             console.warn('could not find route with name', routeName);
@@ -4614,31 +5167,16 @@ class Router {
                 if (clickedATag) {
                     var href = clickedATag.getAttribute('href');
                     if (href) {
-                        var split = href.split('#');
-                        var aPath = split[0];
-                        var hash = split[1];
-                        var result = this.route(aPath);
+                        var result = this.route(href);
                         if (result) {
                             evt.preventDefault();
-                            this.replaceState(location.pathname, location.hash)
-                            if (result.then) {
-                                result
-                                    .then(matches => {
-                                        this.pushState(matches.fullPath, hash, {x:0,y:0});
-                                    });
-                            } else if (hash !== location.hash) {
-                                this.pushState(location.pathname, hash);
-                            }
+                            this.replaceState(location.pathname, location.hash);
                         }
                     }
                 }
             });
-            var result = this.route(location.pathname);
-            return result && result.then(matches => {
-                    if (matches) {
-                        this.replaceState(matches.fullPath, location.hash)
-                    }
-                })
+
+            return this.route(location.pathname + location.hash);
         }
         return Promise.resolve();
     }
@@ -4648,7 +5186,7 @@ class Router {
         if (typeof hash === 'string') {
             location.hash = hash;
         }
-        history.pushState({fullPath: pathName, hash, scrollPos}, document.title, pathName + (hash  || ''));
+        history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, pathName + (hash  || ''));
 
         this.setScrollPos(scrollPos, hash);
     }
@@ -4656,7 +5194,7 @@ class Router {
     replaceState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
-        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos}, document.title, pathName + (hash  || ''));
+        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, pathName + (hash  || ''));
 
         this.setScrollPos(scrollPos, hash);
     }
@@ -4669,7 +5207,11 @@ class Router {
 
     setScrollPos(scrollPos, hash) {
         if (hash) {
-            var el = document.querySelector(hash);
+            var el;
+            try {
+                el = document.querySelector(hash);
+            } catch (err) { }
+            
             if (el) {
                 window.scrollTo(el.offsetLeft, el.offsetTop);
             }
@@ -4682,8 +5224,8 @@ class Router {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
 
-        if (evt && evt.state) {
-            var result = this.route(evt.state.fullPath);
+        if (evt && evt.state && evt.state.isWeddellState === true) {
+            var result = this.route(evt.state.fullPath, true);
             if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result
@@ -4691,15 +5233,16 @@ class Router {
                             window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y)
                         })
                 } else {
-                     window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
+                    window.scrollTo(evt.state.scrollPos.x, evt.state.scrollPos.y);
                 }
             }
         }
     }
 }
+
 module.exports = Router;
 
-},{"array-compact":1,"find-parent":16,"object.defaults/immutable":25,"path-to-regexp":27}],68:[function(require,module,exports){
+},{"array-compact":1,"find-parent":11,"object.defaults/immutable":13,"path-to-regexp":20}],67:[function(require,module,exports){
 var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 var DeDupe = require('mixwith-es5').DeDupe;
@@ -4783,8 +5326,9 @@ var StateMachine = Mixin(function(superClass) {
 })
 module.exports = StateMachine;
 
-},{"../../core/event-emitter-mixin":59,"./machine-state-mixin":66,"mixwith-es5":24}],69:[function(require,module,exports){
+},{"../../core/event-emitter-mixin":60,"./machine-state-mixin":65,"mixwith-es5":12}],68:[function(require,module,exports){
 var h = require('virtual-dom/h');
+var svg = require('virtual-dom/virtual-hyperscript/svg');
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
 var VNode = require('virtual-dom/vnode/vnode');
@@ -4801,6 +5345,44 @@ var defaultComponentOpts = {
 var defaultAppOpts = {
     markupRenderFormat: 'VNode'
 };
+
+class VDOMWidget {
+    constructor(opts) {
+        this.type = 'Widget';
+        this.vTree = opts.vTree;
+        this.onUpdate = opts.onUpdate;
+        this.onInit = opts.onInit;
+        this.componentID = opts.componentID;
+    }
+    
+    init() {
+        var el = this.vTree ? createElement(this.vTree) : null;
+        if (this.onInit) {
+            this.onInit(el, this);
+        }
+        return el;
+    }
+
+    update(previousWidget, prevDOMNode) {
+        if (Array.isArray(this.vTree)) {
+            throw "Cannot render a component with multiple nodes at root!";
+        }
+
+        var patches = VDOMDiff(previousWidget.vTree, this.vTree);
+        var el = VDOMPatch(prevDOMNode, patches);
+
+        if (el && patches) {
+            if (this.onUpdate) {
+                this.onUpdate(el, this, patches)
+            }
+        }
+        return el;
+    }
+
+    destroy(DOMNode) {
+
+    }
+}
 
 module.exports = function(Weddell, pluginOpts) {
     return Weddell.plugin({
@@ -4860,19 +5442,98 @@ module.exports = function(Weddell, pluginOpts) {
                 var Component = class extends Component {
                     constructor(opts) {
                         opts = defaults(opts, defaultComponentOpts);
+
                         super(opts);
 
+                        Object.defineProperty(this, '_el', {value: null, writable: true });
+                        Object.defineProperty(this, 'el', {get: function(){
+                            return this._el;
+                        }.bind(this) });
+
+                        var Transform = this.constructor.Weddell.classes.Transform;
+
+                        this._pipelines.markup.addTransform(new Transform({
+                            from: 'VNode',
+                            to: 'VNode',
+                            func: (vTree) => {
+                                if (Array.isArray(vTree)) {
+                                    if (vTree.length > 1) {
+                                        console.warn('Your markup was truncated, as your component had more than one root node.');
+                                    }
+                                    vTree = vTree[0];
+                                }
+                                return vTree ? vTree.type !== 'Widget' ? new VDOMWidget({
+                                    vTree,
+                                    componentID: this._id,
+                                    onUpdate: this.onVDOMUpdate.bind(this),
+                                    onInit: this.onVDOMInit.bind(this)
+                                }) : vTree : null;
+                            }
+                        }))
+
                         this.renderers.VNode = this.replaceVNodeComponents.bind(this);
+                    }
+
+                    onDOMMove() {
+                        //no op
+                    }
+
+                    onDOMCreate() {
+                        
+                    }
+
+                    onDOMChange() {
+
+                    }
+
+                    onDOMCreateOrChange() {
+
                     }
 
                     resolveTagDirective(node, directive) {
 
                     }
 
+                    onVDOMInit(el, vTree) {
+                        this._el = el;
+                        this.onDOMCreate.call(this, { el });
+                        this.onDOMCreateOrChange.call(this, { el, prevEl: null });
+                    }
+
+                    onVDOMUpdate(el, vTree, patches) {
+                        var prevEl = this._el;
+
+                        if (el !== prevEl) {
+                            this._el = el;
+                            this.onDOMChange.call(this, { newEl: el, prevEl });
+                            this.onDOMCreateOrChange.call(this, { newEl: el, prevEl });
+
+                            if (prevEl) {
+                                var positionComparison = prevEl.compareDocumentPosition(el);
+                                if (positionComparison !== 0) {
+                                    this.trigger("dommove", { newEl: el, prevEl });
+                                    if (this.onDOMMove) this.onDOMMove.call(this, { newEl: el, prevEl });
+                                }
+                            }
+                        }                        
+                    }
+
                     replaceVNodeComponents(node, content, renderedComponents, isContent) {
                         isContent = !!isContent;
+
+                        if (!node) {
+                            return Promise.resolve(null);
+                        }
+
+                        if (node.type === 'Widget') {
+                            return this.replaceVNodeComponents(node.vTree, content, renderedComponents, isContent)
+                                .then(output => {
+                                    return new VDOMWidget({vTree: output, onInit: node.onInit, onUpdate: node.onUpdate, componentID: node.componentID })
+                                });                            
+                        }
+                        
                         if (Array.isArray(node)) {
-                            return Promise.all(node.reduce((final, childNode) => {
+                            return Promise.all(compact(node).reduce((final, childNode) => {
                                 var result = this.replaceVNodeComponents(childNode, content, renderedComponents, isContent);
                                 return result ? final.concat(result) : final;
                             }, []));
@@ -4887,11 +5548,10 @@ module.exports = function(Weddell, pluginOpts) {
                         if (node.tagName) {
                             if (node.tagName.toUpperCase() in this._tagDirectives) {
                                 return this._tagDirectives[node.tagName.toUpperCase()](content, node.properties.attributes, isContent);
-
                             } else if (node.tagName === 'CONTENT') {
                                 return this.replaceVNodeComponents(content, null, renderedComponents, true);
                             } else {
-                                var componentEntry = Object.entries(this.components)
+                                var componentEntry = Object.entries(this.collectComponentTree())
                                     .find(entry => {
                                         return entry[0].toLowerCase() == node.tagName.toLowerCase()
                                     });
@@ -4904,14 +5564,14 @@ module.exports = function(Weddell, pluginOpts) {
 
                                     return this.replaceVNodeComponents(node.children, content, renderedComponents, false)
                                         .then(componentContent => {
-                                            return this.getComponentInstance(componentEntry[0], index)
+                                            return componentEntry[1].sourceInstance.getComponentInstance(componentEntry[0], index)
                                                 .then(componentInstance => {
                                                     renderedComponents[index] = componentInstance;
-                                                    return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'));
+                                                    return componentInstance.render('markup', componentContent, node.properties.attributes, new Sig('VNode'), this);
                                                 });
                                         })
                                         .then(componentOutput => {
-                                            this.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes, isContent});
+                                            componentEntry[1].sourceInstance.trigger('rendercomponent', {componentOutput, componentName: node.tagName, props: node.properties.attributes, isContent});
                                             return Array.isArray(componentOutput.output) ? componentOutput.output[0] : componentOutput.output
                                         });
                                 }
@@ -4924,8 +5584,8 @@ module.exports = function(Weddell, pluginOpts) {
                                     var properties = Object.assign({}, node.properties, {
                                         key: node.key
                                     });
-
-                                    return h(node.tagName, properties, children.reduce((final, child) => {
+                                    var hfunc = node.namespace ? svg : h;
+                                    return hfunc(node.tagName, properties, children.reduce((final, child) => {
                                         return child ? final.concat(child) : final;
                                     }, []));
                                 });
@@ -4944,31 +5604,30 @@ module.exports = function(Weddell, pluginOpts) {
     });
 }
 
-},{"../../utils/flatmap":73,"array-compact":1,"mixwith-es5":24,"object.defaults/immutable":25,"virtual-dom/create-element":29,"virtual-dom/diff":30,"virtual-dom/h":31,"virtual-dom/patch":32,"virtual-dom/vnode/vnode":50}],70:[function(require,module,exports){
+},{"../../utils/flatmap":72,"array-compact":1,"mixwith-es5":12,"object.defaults/immutable":13,"virtual-dom/create-element":22,"virtual-dom/diff":23,"virtual-dom/h":24,"virtual-dom/patch":32,"virtual-dom/virtual-hyperscript/svg":45,"virtual-dom/vnode/vnode":53}],69:[function(require,module,exports){
 module.exports = require('../plugins/vdom')(
     require('../plugins/router')(require('./weddell'))
 );
 
-},{"../plugins/router":65,"../plugins/vdom":69,"./weddell":71}],71:[function(require,module,exports){
+},{"../plugins/router":64,"../plugins/vdom":68,"./weddell":70}],70:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":64}],72:[function(require,module,exports){
-// var includes = require('./includes');
+},{"../core/weddell":63}],71:[function(require,module,exports){
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = (arr, func) =>
     arr.reduce((final,val) =>
         final.concat(func(val)), [])
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = function(arr, val){
     return arr.some(currKey=>currKey === val);
 }
 
-},{}],75:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -4979,5 +5638,5 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[70])(70)
+},{}]},{},[69])(69)
 });

@@ -2,6 +2,7 @@ var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
 var h = require('virtual-dom/h');
 var createElement = require('virtual-dom/create-element');
+const svg = require('virtual-dom/virtual-hyperscript/svg');
 
 module.exports = class VDOMWidget {
     constructor(opts) {

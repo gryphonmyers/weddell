@@ -2,10 +2,6 @@ var mix = require('mixwith-es5').mix;
 var App = require('./app');
 var Component = require('./component');
 var Store = require('./store');
-var Pipeline = require('./pipeline');
-var Transform = require('./transform');
-var Sig = require('./sig');
-var includes = require('../utils/includes');
 
 class _Weddell {
     static plugin(pluginObj) {
@@ -13,8 +9,8 @@ class _Weddell {
         if (!pluginObj.id) {
             throw 'Got a plugin with no ID assigned. Aborting';
         }
-        if (!includes(NewWeddell.loadedPlugins, pluginObj.id)) {
-            if (pluginObj.requires && !includes(NewWeddell.loadedPlugins, pluginObj.requires)) {
+        if (!NewWeddell.loadedPlugins.includes(pluginObj.id)) {
+            if (pluginObj.requires && !NewWeddell.loadedPlugins.includes(pluginObj.requires)) {
                 [].concat(pluginObj.requires).forEach((plugReq) => {
                     throw 'Plugin ' + pluginObj.id + ' requires the plugin ' + plugReq + ', which is not loaded. Load ' + plugReq + ' first.';
                 });

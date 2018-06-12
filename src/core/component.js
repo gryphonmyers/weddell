@@ -2,10 +2,7 @@ const EventEmitterMixin = require('./event-emitter-mixin');
 const defaults = require('object.defaults/immutable');
 const generateHash = require('../utils/make-hash');
 const mix = require('mixwith-es5').mix;
-const DeDupe = require('mixwith-es5').DeDupe;
-const difference = require('../utils/difference');
 const h = require('virtual-dom/h');
-const svg = require('virtual-dom/virtual-hyperscript/svg');
 const VDOMWidget = require('./vdom-widget');
 
 function flatten(arr) {
