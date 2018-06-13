@@ -37,7 +37,11 @@ class Router {
         }
     }
 
-    route(pathName, shouldReplaceState) {
+    route(pathName, shouldReplaceState=false, triggeringEvent=null) {
+        if (typeof shouldReplaceState !== 'boolean') {
+            triggeringEvent = shouldReplaceState;
+            shouldReplaceState = false
+        }
         if (typeof pathName === 'string') {
             var hashIndex = pathName.indexOf('#');
             var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
@@ -49,11 +53,13 @@ class Router {
              //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
             if (matches)  {
-                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState);
+                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState, triggeringEvent);
             }
         }
         if (matches) {
+            Object.assign(matches, {hash, triggeringEvent});
             var isInitialRoute = !this.currentRoute;
+            
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
                     .then(matches => {
@@ -83,14 +89,13 @@ class Router {
                                 if (isInitialRoute || shouldReplaceState) {
                                     this.replaceState(matches.fullPath, hash);
                                 } else if (!matches.isCurrentRoute) {
-                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.route.keepUpdateScrollPos ? null : {x:0,y:0});
+                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : {x:0,y:0});
                                 }
                                 return matches;
                             });
                     }, redirectPath => {
-                        return this.route(redirectPath, true)
+                        return this.route(redirectPath, true, triggeringEvent)
                     });
-    
                 this.currentRoute = matches;
             }
             return promise;                
@@ -170,7 +175,10 @@ class Router {
         });
         
         if (result) {
-            result.isRouteUpdate = this.currentRoute && result.route.name === this.currentRoute.route.name;
+            result.isRouteUpdate = !!(this.currentRoute && result.route.name === this.currentRoute.route.name);
+            result.keepUpdateScrollPos = result.isRouteUpdate && !!(typeof result.route.keepUpdateScrollPos === 'function' ? 
+                        (result.route.keepUpdateScrollPos.call(this, {newRoute: result, prevRoute: this.currentRoute})) : 
+                        result.route.keepUpdateScrollPos);
         }        
 
         return result;
@@ -245,7 +253,7 @@ class Router {
                 if (clickedATag) {
                     var href = clickedATag.getAttribute('href');
                     if (href) {
-                        var result = this.route(href);
+                        var result = this.route(href, evt);
                         if (result) {
                             evt.preventDefault();
                             this.replaceState(location.pathname, location.hash);
@@ -303,7 +311,7 @@ class Router {
         var state = history.state;
 
         if (evt && evt.state && evt.state.isWeddellState === true) {
-            var result = this.route(evt.state.fullPath, true);
+            var result = this.route(evt.state.fullPath, true, evt);
             if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result
