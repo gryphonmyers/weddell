@@ -1,13 +1,40 @@
-var Mixin = require('mixwith-es5').Mixin;
-var mix = require('mixwith-es5').mix;
-var defaults = require('defaults-es6/deep-merge');
-var parseSVG = require('./parse-svg');
-var svg = require('virtual-dom/virtual-hyperscript/svg');
+const Mixin = require('mixwith-es5').Mixin;
+const defaults = require('defaults-es6/deep-merge');
+const svg = require('virtual-dom/virtual-hyperscript/svg');
+const VdomThunk = require('../../core/vdom-thunk');
 
-var defaultComponentOpts = {
+class SvgVdomThunk extends VdomThunk {
+    constructor(opts) {
+        super(opts);
+        this.id = opts.id;
+    }
+
+    render() {
+        var href = this.component.getSvgHref(this.id);
+        return href ? svg('svg.weddell-svg', [
+            svg('use', {
+                'xlink:href': '#' + href
+            })
+        ]) : null;
+    }
+}
+
+const defaultComponentOpts = {
     SVGFormat: '(locals)=>SVGString',
     SVGTransforms: [],
     targetSVGRenderFormat: 'SVGString'
+};
+
+function parseSvg(svg, id) {
+    //taken from http://stackoverflow.com/questions/3642035/jquerys-append-not-working-with-svg-element
+    var div= document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+    div.innerHTML= '<svg xmlns="http://www.w3.org/2000/svg">'+svg+'</svg>';
+    var frag= document.createDocumentFragment();
+    while (div.firstChild.firstChild) {
+        div.firstChild.firstChild.id = id;
+        frag.appendChild(div.firstChild.firstChild);
+    }
+    return frag;
 };
 
 module.exports = function(_Weddell){
@@ -16,152 +43,164 @@ module.exports = function(_Weddell){
         classes:  {
             App: Mixin(function(App){
                 return class extends App {
-                    constructor(opts) {
-                        super(opts);
 
-                        this.renderOrder.push('svg');
-                        this.pipelines.svg = {
-                            init: 'initSVG',
-                            render: 'renderSVG',
-                            componentEvent: 'rendersvg'
-                        };
-                        this.mountedSVGs = {};
+                    static get patchMethods() {
+                        return ['patchSVG'].concat(super.patchMethods);
                     }
 
-                    initSVG() {
-                        this.SVGEl = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg');
-                        document.body.appendChild(this.SVGEl);
-                        this.SVGEl.style.display = 'none';
+                    initPatchers() {
+                        super.initPatchers()
+                        this.svgEl = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg');
+                        document.body.appendChild(this.svgEl);
+                        this.svgEl.style.display = 'none';
                     }
 
-                    renderSVG(evt) {
-                        var processOwner = (input, owner, ID, unmountedSVGs) => {
-                            if (Array.isArray(input)) {
-                                input.forEach(item => processOwner(item, owner, ID, unmountedSVGs))
+                    static processSvg() {
+                        //@TODO be more consistent about what we expect svg to look like
+                        // else if (Array.isArray(output)) {
+                        //     return output.map(this.processSvgOutput);
+                        // } else if (output && typeof output === 'object') {
+                        //     if (output.ID || output.SVG) {
+                        //         console.warn('You are using deprecated syntax. svg assets should be strings with ids inline.')
+                        //     }
+                        //     return output;
+                        // } else {
+                        //     return () => {
+                        //         return [] || null;
+                        //     }
+                        // }  
+                    }
+
+                    patchSVG(patchRequests) {
+                        var results = patchRequests.reduceRight((acc, item) => {
+                            if (!(item.classId in acc)) {
+                                acc[item.classId] = item;
+                            }
+                            return acc;
+                        }, {});
+
+                        var cachedSVG = {};
+                        var toWalk = Object.values(this.component.reduceComponents((acc, curr, depth) => {
+                            if (!(curr.constructor.id in acc)) {
+                                acc[curr.constructor.id] = {
+                                    classId: curr.constructor.id
+                                };   
+                            }
+                            cachedSVG[curr.constructor.id] = curr._renderCache.renderSvg;
+                            return acc;
+                        }, results));
+
+                        var mountedSvgs = {};
+
+                        var leftovers = toWalk.reduce((acc, curr) => {
+                            var cachedSvg = cachedSVG[curr.classId];
+                            if (curr.results) {
+                                if (curr.results.renderSvg) {
+                                    curr.results.renderSvg.forEach(svgObj => {
+                                        var svgId = `svg-sprite-${curr.classId}-${svgObj.ID}`;
+                                        var svgIndex = acc.findIndex(svgEl => svgEl.id === svgId);
+                                        
+                                        var el = parseSvg(svgObj.SVG, svgId);
+                                        if (svgIndex !== -1) {
+                                            //element exists. we need to replace it with the new version.
+                                            this.svgEl.removeChild(final.splice(svgIndex, 1));   
+                                        }
+                                        this.svgEl.appendChild(el);
+                                        mountedSvgs[svgId] = 1;
+                                    })
+                                } else {
+                                    //our patch is null, so let's wipe out any previously mounted svgs
+                                    if (cachedSvg) {
+                                        cachedSvg.forEach(svgObj => {
+                                            var svgId = `svg-sprite-${curr.classId}-${svgObj.ID}`;
+                                            var svgIndex = acc.findIndex(svgEl => svgEl.id === svgId);
+
+                                            if (svgIndex > -1) {
+                                                //an element does exist. Let's leave it and it will get removed later.
+                                            }
+                                        })
+                                    } else {
+                                        //we didn't previously mount anything so no action needed.
+                                    }
+                                }                                
                             } else {
-
-                                if (!(ID in this.mountedSVGs)) {
-                                    this.mountedSVGs[ID] = {};
+                                //no patch needed, we just need to make sure we don't remove the existing element
+                                if (cachedSvg) {
+                                    
+                                    cachedSvg.forEach(svgObj =>{
+                                        var svgId = `svg-sprite-${curr.classId}-${svgObj.ID}`;
+                                        mountedSvgs[svgId] = 1;
+                                        var svgIndex = acc.findIndex(svgEl => svgEl.id === svgId);
+                                        if (svgIndex === -1) {
+                                            //this component doesn't have any svg elements. It probably just hasn't requested a patch yet.
+                                        } else {
+                                            el = final.splice(svgIndex, 1);
+                                        }
+                                    });
+                                } else {
+                                    //this component didn't have svgs anyway
                                 }
-
-                                if (!(input.ID in owner.availableSVGs)) {
-                                    owner.availableSVGs[input.ID] = 1;
-                                }
-
-                                if (!(input.ID in this.mountedSVGs[ID])) {
-                                    if (!owner.makeSVGHREF(input.ID)) debugger;
-                                    var el = parseSVG(input.SVG, owner.makeSVGHREF(input.ID));
-                                    this.SVGEl.appendChild(el);
-                                    this.mountedSVGs[ID][input.ID] = {
-                                        ID: input.ID,
-                                        el,
-                                        availableTo: []
-                                    };
-                                }
-
-                                if (!(input.ID in owner.availableSVGs)) {
-                                    this.mountedSVGs[ID][input.ID].availableTo.push(owner);
-                                }
-
-                                delete unmountedSVGs[ID];
                             }
-                        }
+                            return acc;                            
+                        }, Array.from(this.svgEl.querySelectorAll('svg.weddell-svg')));
 
-                        var processSVG = (unmountedSVGs, obj) => {
-                            [
-                                obj.component.constructor.SVG ? [obj.component.constructor.SVG, obj.component.constructor, obj.component.constructor._BaseClass._id, unmountedSVGs] : null, 
-                                obj.output ? [obj.output, obj.component, obj.component._id, unmountedSVGs] : null
-                            ].forEach(argsArr => {
-                                if (argsArr) {
-                                    processOwner.apply(this, argsArr)
-                                }
-                            })
+                        leftovers.forEach(svgEl => {
+                            delete mountedSvgs[svgEl.id];
+                            this.svgEl.removeChild(svgEl);
+                        });
 
-                            if (obj.components) {
-                                obj.components.forEach(processSVG.bind(this, unmountedSVGs));
-                            }
-
-                            return unmountedSVGs;
-                        };
-
-                        var unmountedSVGs = processSVG(Object.assign({}, this.mountedSVGs), evt);
-
-                        for (var ownerID in unmountedSVGs) {
-                            for (var SVGID in this.mountedSVGs[ownerID]) {
-                                var obj = this.mountedSVGs[ownerID][SVGID];
-
-                                obj.el.parentNode && obj.el.parentNode.removeChild(obj.el);
-
-                                obj.availableTo.forEach(owner => owner.availableSVGs = {})
-                            }
-                            delete this.mountedSVGs[ownerID];
-                        }
+                        this.component._mountedSvgs = mountedSvgs;
                     }
                 }
             }),
             Component: Mixin(function(Component){
-                var SVGComponent = class extends Component {
+                var SvgComponent = class extends Component {
+                    
+                    static get renderMethods() {
+                        return super.renderMethods.concat('renderSvg');
+                    }
 
-                    onRenderSVG() {
+                    static get tagDirectives() {
+                        return Object.assign({}, super.tagDirectives, {
+                            'svgsprite': function(vNode, content, attrs={}) {
+                                if (attrs.SVGID) {
+                                    console.warn("You are using deprecated syntax. 'SVGID' property of svgsprite has been changed to 'svgId'")
+                                }
+                                return new SvgVdomThunk({id: attrs.svgId || attrs.SVGID, component: this});
+                            }
+                        });
+                    }
+
+                    onRenderSvg() {
                         //noop
                     }
 
-                    SVG() {
+                    static get svg() {
                         return null
                     }
 
-                    get SVGPrefix() {
-                        return 'svg-sprite-' + this._id;
+                    getSvgHref(ID) {
+                        return this.reduceParents((acc, component, stopRecursion) => {
+                            var href = `svg-sprite-${component.constructor.id}-${ID}`;
+                            if (href in this.root._mountedSvgs) {
+                                stopRecursion()
+                            }
+                            return href || acc;                            
+                        }, null);
                     }
 
-                    static get SVGPrefix() {
-                        return 'svg-sprite-' + (this._BaseClass && this._BaseClass._id) || '';
+                    renderSvg() {
+                        return this.svgTemplate();
                     }
 
-                    makeSVGHREF(ID) {
-                        return ID in this.availableSVGs ? this.SVGPrefix + '-' + ID : null;
-                    }
-
-                    static makeSVGHREF(ID) {
-                        return ID in this.availableSVGs ? this.SVGPrefix + '-' + ID : null;
-                    }
-
-                    static getSVGHREF(ID) {
-                        return this.makeSVGHREF(ID);
-                    }
-
-                    renderSVGSprite(content, attrs) {
-                        var href = this.getSVGHREF(attrs.SVGID);
-                        return href ? svg('svg', [
-                            svg('use', {
-                                'xlink:href': '#' + href
-                            })
-                        ]) : null;
-                    }
-
-                    renderSVG() {
-                        return this._pipelines.svg.render()
-                            .then(output => {
-                                return Promise.all(this.getMountedChildComponents().map(instance => instance.renderSVG()))
-                                    .then(components => {
-
-                                        var evtObj = {
-                                            components,
-                                            component: this,
-                                            output: output
-                                        };
-
-                                        this.trigger('rendersvg', evtObj);
-
-                                        return  evtObj;
-                                    })                                
-                            })
-                    }
-
-                    makeComponentClass() {
-                        var newClass = super.makeComponentClass.apply(this, arguments);
-                        newClass.availableSVGs = {};
-                        return newClass;
+                    static processSvgOutput(output) {
+                        if (typeof output === 'function') {
+                            return this.processSvgOutput(output());
+                        } else {
+                            return () => {
+                                return output || null;
+                            }
+                        }                        
                     }
 
                     constructor(opts) {
@@ -169,36 +208,20 @@ module.exports = function(_Weddell){
 
                         super(opts);
 
-                        var Pipeline = this.constructor.Weddell.classes.Pipeline;
-                        var Sig = this.constructor.Weddell.classes.Sig;
+                        if (opts.isRoot) {
+                            Object.defineProperty(this, '_mountedSvgs', { value: null, writable: true });
+                        }
 
-                        this._pipelines.svg = new Pipeline({
-                            name: 'svg',
-                            store: this._locals,
-                            onRender: this.onRenderSVG.bind(this),
-                            isDynamic: true,
-                            inputFormat: new Sig(opts.SVGFormat),
-                            transforms: opts.SVGTransforms,
-                            targetRenderFormat: opts.targetSVGRenderFormat,
-                            input: this.SVG.bind(this)
-                        })
-
-                        Object.defineProperty(this, 'getSVGHREF', {
-                            value: function(ID){
-                                return this.makeSVGHREF(ID) || this.constructor.makeSVGHREF(ID) || (opts.parentComponent ? opts.parentComponent.getSVGHREF(ID) : null)
-                            }.bind(this)
-                        });
-
-                        this.availableSVGs = {};
-                        this._renderMethods.svg = 'renderSVG';
-
-                        this.addTagDirective('SVGSprite', this.renderSVGSprite.bind(this));
+                        if (this.SVG) {
+                            console.warn('You are using deprecated syntax. Please make use a static getter method "svg"')
+                        }
+                        var template = this.constructor.processSvgOutput(this.constructor.svg || this.constructor.SVG || this.SVG);
+                        
+                        this.svgTemplate = this.wrapTemplate(template, 'renderSvg');
                     }
                 }
 
-                SVGComponent.availableSVGs = {};
-
-                return SVGComponent;
+                return SvgComponent;
             })
         }
     });

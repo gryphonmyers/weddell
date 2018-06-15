@@ -3,7 +3,7 @@ const defaults = require('object.defaults/immutable');
 const generateHash = require('../utils/make-hash');
 const mix = require('mixwith-es5').mix;
 const h = require('virtual-dom/h');
-const VDOMWidget = require('./vdom-widget');
+const VdomWidget = require('./vdom-widget');
 
 function flatten(arr) {
     return [].concat(...arr);
@@ -70,7 +70,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _isInit: { writable: true, value: false},            
             _id : { value: generateHash() },
-            _tagDirectives: { value: {} },
             _componentListenerCallbacks: {value:{}, writable:true}
         });
 
@@ -334,7 +333,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             var promise = this.replaceComponentPlaceholders(vNode.children, renderedComponents)
                 .then(children => {
                     if (children.some((child, ii) => vNode.children[ii] !== child)) {
-                        return VDOMWidget.cloneVNode(vNode, flatten(children));
+                        return VdomWidget.cloneVNode(vNode, flatten(children));
                     }
                     return vNode;
                 })            
@@ -355,7 +354,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);        
                 }
 
-                return VDOMWidget.cloneVNode(vNode, null, true);
+                return VdomWidget.cloneVNode(vNode, null, true);
             });
     }
 
@@ -377,7 +376,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         return component.mount()
                             .then(didMount => {
                                 this.trigger('componentplaceholderreplaced', {component});
-                                return new VDOMWidget({component});
+                                return new VdomWidget({component});
                             });
                     });
             });
@@ -395,12 +394,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             return vNode;
         } else if (vNode.type === 'Widget') {
             if (targetComponents.includes(vNode.component)) {
-                return new VDOMWidget({component: vNode.component});
+                return new VdomWidget({component: vNode.component});
+            }
+        } else if (vNode.type === 'Thunk') {
+            if (targetComponents.includes(vNode.component)) {
+                return vNode.clone();
             }
         } else if (vNode.children) {
             var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
             if (children.some((child, ii) => child !== vNode.children[ii])) {
-                return VDOMWidget.cloneVNode(vNode, children);
+                return VdomWidget.cloneVNode(vNode, children);
             }
         }
         return vNode;
@@ -416,14 +419,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    reduceComponents(callback, initialVal, filterFunc=()=>true) {
+    reduceComponents(callback, initialVal, filterFunc=()=>true, depth=0) {
         var acc = initialVal;
         if (filterFunc(this)) {
-            acc = callback(acc, this)
+            acc = callback(acc, this, depth)
         }
         for (var componentName in this.components) {
             acc = Object.values(this._componentInstances[componentName])
-                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc), acc);
+                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc, depth + 1), acc);
         }
         return acc;
     }
@@ -431,6 +434,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     checkChangedKey(key) {
         return Object.entries(this._lastAccessedStateKeys)
             .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, {[entry[0]]:1}) : acc, null);
+    }
+
+    reduceParents(callback, initialVal) {
+        var parent = this.getParent();
+        var shouldRecurse = true;
+        initialVal = callback.call(this, initialVal, this, () => shouldRecurse = false);
+        return parent && shouldRecurse ? parent.reduceParents(callback, initialVal) : initialVal;
     }
 
     collectComponentTree() {
@@ -472,10 +482,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             .then(() => val);
     }
 
-    addTagDirective(name, directive) {
-        this._tagDirectives[name.toUpperCase()] = directive;
-    }
-
     static get generatedComponentClasses() {
         return _generatedComponentClasses;
     }
@@ -486,6 +492,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     static makeComponentClass(ComponentClass) {
         if (typeof ComponentClass === 'function' && !ComponentClass.prototype) {
+            //@TODO this is unreliable
             // We got a non-Component class function, so we assume it is a component factory function
             var str = ComponentClass.toString();
             if (str in this.generatedComponentClasses) {
@@ -741,10 +748,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this.addComponentEvents(componentName, instance, index);
 
         instance.on('requestpatch', evt => {
-            if (this.vTree) {
-                this._componentsRequestingPatch.push(instance);
-                this.trigger('requestpatch', Object.assign({}, evt));
-            }
+            this._componentsRequestingPatch.push(instance);
+            this.trigger('requestpatch', Object.assign({}, evt));
         });
 
         instance.on('componentleavedom', evt => this.trigger('componentleavedom', Object.assign({}, evt)))

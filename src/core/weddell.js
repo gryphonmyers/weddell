@@ -54,7 +54,7 @@ _Weddell.consts = {
     INDEX_ATTR_NAME: 'data-component-index'
 };
 _Weddell.deps = {};
-_Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
+_Weddell.classes = {App, Component, Store};
 Object.values(_Weddell.classes).forEach(function(commonClass){
     commonClass.Weddell = _Weddell;
 });

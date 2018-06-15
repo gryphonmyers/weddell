@@ -263,21 +263,25 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
     }
 
+    initPatchers() {
+        var el = this._elInput;
+        if (typeof el == 'string') {
+            el = document.querySelector(el);
+            if (!el) {
+                throw new Error("Could not mount an element using provided query.");
+            }
+        }
+        this._el = el;
+
+        if (this.styles) {
+            createStyleEl('weddell-app-styles').textContent = this.styles;
+        }
+    }
+
     init() {
         return DOMReady
             .then(() => {
-                var el = this._elInput;
-                if (typeof el == 'string') {
-                    el = document.querySelector(el);
-                    if (!el) {
-                        throw new Error("Could not mount an element using provided query.");
-                    }
-                }
-                this._el = el;
-
-                if (this.styles) {
-                    createStyleEl('weddell-app-styles').textContent = this.styles;
-                }
+                this.initPatchers();
 
                 this._component = this.makeComponent();
 
