@@ -117,7 +117,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
-                                this.trigger('change', {target: this, changedKey: key, newValue, oldValue});
+                                this.trigger('change', { target: this, changedKey: key, newValue, oldValue });
                             }
                         }
                     }

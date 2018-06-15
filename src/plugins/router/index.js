@@ -29,8 +29,12 @@ module.exports = function(_Weddell){
                                 var jobs = [];
                                 this.el.classList.add('routing');
                                 
+                                this.el.setAttribute('data-current-route', matches.route.name);
                                 if (matches.isRouteUpdate) {
                                     this.el.classList.add('route-update');
+                                    if (matches.keepUpdateScrollPos) {
+                                        this.el.classList.add('keep-scroll-pos');
+                                    }
                                 }
                                 this.trigger('routematched', {matches});
                                 return Promise.resolve(this.onBeforeRoute.call(this, { matches, componentNames }))
@@ -73,6 +77,7 @@ module.exports = function(_Weddell){
                                                 this.el.classList.remove('routing');
                                                 this.el.classList.remove('prerouting-finished');
                                                 this.el.classList.remove('route-update');
+                                                this.el.classList.remove('keep-scroll-pos');
                                                 this.trigger('route', {matches, results});
                                                 return results;
                                             })
