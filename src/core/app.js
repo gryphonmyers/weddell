@@ -207,6 +207,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             .forEach(el => {
                 document.head.removeChild(el);
             });
+        //@TODO could probably make this more succinct by using Virtual-dom with style elements
 
         this.trigger('patchstyles');
     }
