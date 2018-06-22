@@ -15,6 +15,8 @@ const defaultOpts = {
     childStylesFirst: true
 };
 
+const patchInterval = 33.334;
+
 function createStyleEl(id, className=null) {
     var styleEl = document.createElement('style');
     styleEl.setAttribute('type', 'text/css');
@@ -56,6 +58,8 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             component: { get: () => this._component },
             vTree: { value: h('div'), writable: true },
             el: { get: () => this._el },
+            _liveWidget: { value: null, writable: true },
+            _lastPatchStartTime: { value: Date.now(), writable: true},
             _el: { value: null, writable: true },
             _elInput: { value: opts.el },
             _patchPromise: { value: null, writable: true },
@@ -88,22 +92,18 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         if (!this.rootNode.parentNode) {
             this.el.appendChild(this.rootNode);
         }
+        
+        var newWidget = new VDOMWidget({component: this.component});
+        try {
+            if (newWidget.component.vTree.children.length) {
+                // debugger;
+            }
+        } catch (err) {}
 
-        this.component.refreshPendingWidgets();
-        var newTree = new VDOMWidget({component: this.component});
-        var diffTree = VDOMWidget.pruneNullNodes(newTree.vTree);//this.component.constructor.pruneNullNodes(newTree);
-        var patches = VDOMDiff(this.vTree, diffTree);
+        var patches = VDOMDiff(this.vTree, newWidget);
         var rootNode = VDOMPatch(this.rootNode, patches);
         this.rootNode = rootNode;
-        this.vTree = newTree;
-
-        var mountedComponents = this.component
-            .reduceComponents((acc, component) => Object.assign(acc, component._lastRenderedComponents), {})
-
-        this.component.walkComponents(component => {
-                return component.isMounted ? component.unmount() : component.mount()
-            },
-            component => component !== this.component && component.isMounted !== (component.id in mountedComponents));
+        this.vTree = newWidget;
 
         this.trigger('patchdom');
     }
@@ -225,30 +225,42 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return component
     }
 
-    queuePatch(patchRequests) {
+    queuePatch(patchRequests=[]) {
+        this._patchRequests = this._patchRequests.concat(patchRequests);
         if (!this._patchPromise) {
-            var resolveFunc;
-            this._patchPromise = new Promise((resolve) => {
-                resolveFunc = resolve;
-            })
-            .then(patchRequests => {
-                this._patchPromise = null;
-                this.constructor.patchMethods.forEach(patcher => {
-                    this[patcher](patchRequests)
-                });
-                this.trigger('patch');
-                return this.onPatch()
-            })
+            if (this._patchRequests.length) {
+                var resolveFunc;
+                this._patchPromise = new Promise((resolve) => {
+                    resolveFunc = resolve;
+                })
+                .then(currPatchRequests => {
+                    return this.constructor.patchMethods.reduce((acc, patcher) => {
+                            return acc
+                                .then(() => this[patcher](currPatchRequests))
+                        }, Promise.resolve())
+                        .then(() => {
+                            this.trigger('patch');
+                            return this.onPatch()
+                        })
+                        .then(() => {
+                            this._patchPromise = null;
+                            this.queuePatch()
+                        });
+                })
+                
+                var now = Date.now();
+                var dt = now - this._lastPatchStartTime;
+                this._lastPatchStartTime = Date.now();
 
-            this._patchRequests = [].concat(patchRequests);
-
-            requestAnimationFrame(this._RAFCallback = () =>{
-                this._RAFCallback = null;
-                resolveFunc(this._patchRequests);
-                this._patchRequests = [];
-            });
-        } else {
-            this._patchRequests = this._patchRequests.concat(patchRequests);
+                window.setTimeout(() => {
+                    requestAnimationFrame(this._RAFCallback = () =>{
+                        this._RAFCallback = null;
+                        var currPatchRequests = this._patchRequests;
+                        this._patchRequests = [];
+                        resolveFunc(currPatchRequests);
+                    });   
+                }, Math.max(0, patchInterval - dt))
+            }            
         }
     }
 
@@ -291,6 +303,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
                 this.component.on('requestpatch', evt => {
                     this.queuePatch(evt);
+                });
+                this.component.on('firstrender', evt => {
+                    this._liveWidget = new VDOMWidget({component: this.component});
                 });
 
                 Object.seal(this);

@@ -1,39 +1,85 @@
 var VDOMPatch = require('virtual-dom/patch');
 var VDOMDiff = require('virtual-dom/diff');
-var h = require('virtual-dom/h');
+
 var createElement = require('virtual-dom/create-element');
-const svg = require('virtual-dom/virtual-hyperscript/svg');
+const cloneVNode = require('../utils/clone-vnode');
 
 module.exports = class VDOMWidget {
-    constructor(opts) {
+
+    snapshot() {
+        if (!this.liveWidgetLinks) {
+            console.warn("you're trying to take a snapshot of a snapshot. that might not do what you're hoping.");
+        }
+        // debugger;
+        return new this.constructor({component: this.component, liveWidgetLinks: false});
+    }
+
+    cloneVTree(liveWidgetLinks, pruneNullNodes) {
+        return this.cloneVNode(this.vTree, liveWidgetLinks, pruneNullNodes);
+    }
+
+    cloneVNode(vNode, liveWidgetLinks=true, pruneNullNodes=true) {
+        try {
+            if (vNode.properties.attributes.class === 'wwe-site' && vNode.children.length) {
+                // debugger;
+            }
+        } catch (err) {}      
+        if (Array.isArray(vNode)) {
+            var arr = vNode.map(child => this.cloneVNode(child, liveWidgetLinks, pruneNullNodes));
+
+            if (liveWidgetLinks || pruneNullNodes) {
+                arr = arr.reduce((newArr, child, ii) => {
+                    if (child && child.type === 'Widget') {
+                        if ((!pruneNullNodes || child.vTree)) {
+                            if (liveWidgetLinks) {
+                                Object.defineProperty(newArr, ii, {
+                                    get: () => {
+                                        console.log('new child',child.timeStamp, child.component._lastRenderTimeStamps.renderVNode, child.component._lastRenderTimeStamps.renderVNode === child.timeStamp)
+                                        return child.component._lastRenderTimeStamps.renderVNode > child.timeStamp ? (child = new VdomWidget({component: child.component})) : child
+                                    },
+                                    enumerable: true
+                                })
+                            } else {
+                                newArr.push(child);
+                            }
+                        }
+                    } else if (!pruneNullNodes || child != null) {
+                        newArr.push(child);
+                    }
+                    return newArr;
+                }, []);
+            }
+            return arr;   
+         } else if (vNode.type === 'Widget') {
+            //  debugger;
+            //  if (vNode.timeStamp !== vNode.component._lastRenderTimeStamps.renderVNode) {
+            //      debugger;
+            //  }
+            return new vNode.constructor({component: vNode.component});
+            // return vNode;
+        } else if (!vNode || !vNode.tagName) {
+            return vNode;
+        } else {
+            return cloneVNode(vNode, this.cloneVNode(vNode.children, liveWidgetLinks, pruneNullNodes));
+        }
+    }
+
+    constructor({component=null, liveWidgetLinks=false, vTree=component.vTree}) {
         this.type = 'Widget';
-        this.component = opts.component;
-        this.vTree = opts.component.vTree;
-    }
-
-    static cloneVNode(vNode, newChildren=null, preserveIfUnchanged=false) {
-        return preserveIfUnchanged && !newChildren && !vNode.namespace && false ? vNode : 
-            (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
-                key: vNode.key
-            }), newChildren || vNode.children);
-    }
-
-    static pruneNullNodes(vNode) {
-        if (!vNode) {
-            throw "Can't prune null nodes from a null node!";
-        }
-
-        if (vNode.type === 'Widget') {
-            if (vNode.component.vTree == null) {
-                return null;
+        this.component = component;
+        this.timeStamp = component._lastRenderTimeStamps.renderVNode;
+        this.liveWidgetLinks = liveWidgetLinks;
+        Object.defineProperties(this, {
+            _vTree: {value: null, writable: true},
+            vTree: {
+                get: () => this._vTree,
+                set: val => {
+                    this._vTree = val ? this.cloneVNode(val, this.liveWidgetLinks, true) : null;
+                }
             }
-        } else if (vNode.children) {
-            var children = vNode.children.filter(child => this.pruneNullNodes(child));
-            if (children.length !== vNode.children.length || children.some((child, ii) => child !== vNode.children[ii])) {
-                return this.cloneVNode(vNode, children);
-            }
-        }
-        return vNode;
+        })
+
+        this.vTree = vTree;
     }
 
     init() {
@@ -42,6 +88,10 @@ module.exports = class VDOMWidget {
         }
         var el = createElement(this.vTree);
         this.component._el = el;
+
+        if (!el) {
+            debugger;
+        }
 
         this.component.onDOMCreate.call(this.component, {el});
         this.component.onDOMCreateOrChange.call(this.component, {el});
@@ -56,8 +106,8 @@ module.exports = class VDOMWidget {
 
         previousWidget.component.trigger('componentleavedom', {component: previousWidget.component});
         this.component.trigger('componententerdom', {component: this.component});
-        
-        var patches = VDOMDiff(previousWidget.vTree, this.component.vTree);
+        // console.log("dasds")
+        var patches = VDOMDiff(previousWidget.vTree, this.vTree);
         var el = VDOMPatch(prevDOMNode, patches);
 
         if (previousWidget.component !== this.component) {
@@ -67,10 +117,6 @@ module.exports = class VDOMWidget {
         }
 
         //@TODO onDOMMove?
-        if (this.component.vTree == null) {
-            debugger;
-        }
-        this.vTree = this.component.vTree;
         
         return el;
     }

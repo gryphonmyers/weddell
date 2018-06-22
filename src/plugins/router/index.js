@@ -114,8 +114,8 @@ module.exports = function(_Weddell){
 
                     static get tagDirectives() {
                         return defaults({
-                            routerview: function(vNode, content, props){
-                                return this.compileRouterView(content, props);
+                            routerview: function(vNode, content, props, renderedComponents){
+                                return this.currentState ? this.makeChildComponentWidget(this.currentState.componentName, 'router', content, props, renderedComponents) : null;
                             } 
                         }, super.tagDirectives)
                     }
@@ -158,7 +158,7 @@ module.exports = function(_Weddell){
                     }
 
                     compileRouterView(content, props, isContent=false) {
-                        return this.currentState ? this.makeChildComponentWidget(this.currentState.componentName, 'router', content, props) : null;
+                        return 
                     }
 
                     compileRouterLink(obj) {

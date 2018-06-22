@@ -195,7 +195,7 @@ module.exports = function(_Weddell){
 
                     static processSvgOutput(output) {
                         if (typeof output === 'function') {
-                            return this.processSvgOutput(output());
+                            return this.processSvgOutput(output.call(this));
                         } else {
                             return () => {
                                 return output || null;
