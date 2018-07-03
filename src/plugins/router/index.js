@@ -67,9 +67,10 @@ module.exports = function(_Weddell){
                                                 return jobs.reduce((promise, obj) => {
                                                         return promise
                                                             .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
+                                                            .then(() => obj.currentComponent.markDirty())
                                                     }, Promise.resolve())
                                                     .then(results => {
-                                                        return this.awaitPatch()
+                                                        return this.awaitNextPatch()
                                                             .then(() => results);
                                                     });
                                             }, console.warn)
@@ -106,6 +107,10 @@ module.exports = function(_Weddell){
             Component: Mixin(function(Component){
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
 
+                    onEnter() {}
+                    onExit() {}
+                    onUpdate() {}
+
                     static get state() {
                         return defaults({
                             $currentRoute: null
@@ -141,7 +146,10 @@ module.exports = function(_Weddell){
                                         var machineStateMethod = methods[0];
                                         finalObj[machineStateMethod] = (evt) => {
                                             return this.getInitComponentInstance(componentName, 'router')
-                                                .then(componentInstance => Promise.resolve(componentInstance[methods[1]] ? componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)) : null));
+                                                .then(componentInstance => {
+                                                    return Promise.resolve(componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)))
+                                                        .then(() => componentInstance);
+                                                })
                                         }
                                         return finalObj;
                                     }, {
@@ -150,15 +158,7 @@ module.exports = function(_Weddell){
                                     }));
                                     this.addState(componentName, routerState);
                                 });
-                            this.on(['enterstate', 'exitstate'], evt => {
-                                //@TODO this could be optimized to not force a render of the parent
-                                this.markDirty();
-                            });
                         })
-                    }
-
-                    compileRouterView(content, props, isContent=false) {
-                        return 
                     }
 
                     compileRouterLink(obj) {

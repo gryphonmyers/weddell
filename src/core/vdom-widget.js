@@ -5,43 +5,15 @@ var createElement = require('virtual-dom/create-element');
 const cloneVNode = require('../utils/clone-vnode');
 
 module.exports = class VDOMWidget {
-
-    snapshot() {
-        if (!this.liveWidgetLinks) {
-            console.warn("you're trying to take a snapshot of a snapshot. that might not do what you're hoping.");
-        }
-        // debugger;
-        return new this.constructor({component: this.component, liveWidgetLinks: false});
-    }
-
-    cloneVTree(liveWidgetLinks, pruneNullNodes) {
-        return this.cloneVNode(this.vTree, liveWidgetLinks, pruneNullNodes);
-    }
-
-    cloneVNode(vNode, liveWidgetLinks=true, pruneNullNodes=true) {
-        try {
-            if (vNode.properties.attributes.class === 'wwe-site' && vNode.children.length) {
-                // debugger;
-            }
-        } catch (err) {}      
+    cloneVNode(vNode, pruneNullNodes=true, childWidgets={}) {
         if (Array.isArray(vNode)) {
-            var arr = vNode.map(child => this.cloneVNode(child, liveWidgetLinks, pruneNullNodes));
+            var arr = vNode.map(child => this.cloneVNode(child, pruneNullNodes, childWidgets));
 
-            if (liveWidgetLinks || pruneNullNodes) {
+            if (pruneNullNodes) {
                 arr = arr.reduce((newArr, child, ii) => {
                     if (child && child.type === 'Widget') {
                         if ((!pruneNullNodes || child.vTree)) {
-                            if (liveWidgetLinks) {
-                                Object.defineProperty(newArr, ii, {
-                                    get: () => {
-                                        console.log('new child',child.timeStamp, child.component._lastRenderTimeStamps.renderVNode, child.component._lastRenderTimeStamps.renderVNode === child.timeStamp)
-                                        return child.component._lastRenderTimeStamps.renderVNode > child.timeStamp ? (child = new VdomWidget({component: child.component})) : child
-                                    },
-                                    enumerable: true
-                                })
-                            } else {
-                                newArr.push(child);
-                            }
+                            newArr.push(child);
                         }
                     } else if (!pruneNullNodes || child != null) {
                         newArr.push(child);
@@ -50,36 +22,22 @@ module.exports = class VDOMWidget {
                 }, []);
             }
             return arr;   
-         } else if (vNode.type === 'Widget') {
-            //  debugger;
-            //  if (vNode.timeStamp !== vNode.component._lastRenderTimeStamps.renderVNode) {
-            //      debugger;
-            //  }
-            return new vNode.constructor({component: vNode.component});
-            // return vNode;
-        } else if (!vNode || !vNode.tagName) {
+        } else if (!vNode) {
+            return vNode;
+        } else if (vNode.type === 'Widget') {
+            return (vNode.component._widgetIsDirty ? vNode.component.makeNewWidget() : vNode.component._widget)
+        } else if (!vNode.tagName) {
             return vNode;
         } else {
-            return cloneVNode(vNode, this.cloneVNode(vNode.children, liveWidgetLinks, pruneNullNodes));
+            return cloneVNode(vNode, this.cloneVNode(vNode.children, pruneNullNodes, childWidgets));
         }
     }
 
-    constructor({component=null, liveWidgetLinks=false, vTree=component.vTree}) {
+    constructor({component=null, vTree=component._vTree, childWidgets={}}) {
         this.type = 'Widget';
         this.component = component;
-        this.timeStamp = component._lastRenderTimeStamps.renderVNode;
-        this.liveWidgetLinks = liveWidgetLinks;
-        Object.defineProperties(this, {
-            _vTree: {value: null, writable: true},
-            vTree: {
-                get: () => this._vTree,
-                set: val => {
-                    this._vTree = val ? this.cloneVNode(val, this.liveWidgetLinks, true) : null;
-                }
-            }
-        })
 
-        this.vTree = vTree;
+        this.vTree = this.cloneVNode(vTree, true, childWidgets);
     }
 
     init() {
@@ -87,42 +45,41 @@ module.exports = class VDOMWidget {
             throw "Component has no VTree to init with";
         }
         var el = createElement(this.vTree);
-        this.component._el = el;
 
-        if (!el) {
-            debugger;
-        }
-
-        this.component.onDOMCreate.call(this.component, {el});
-        this.component.onDOMCreateOrChange.call(this.component, {el});
+        this.fireDomEvents(this.component.el, this.component._el = el);
 
         return el;
     }
 
-    update(previousWidget, prevDOMNode) {
-        if (Array.isArray(this.vTree)) {
-            throw "Cannot render a component with multiple nodes at root!";
-        }
+    fireDomEvents(prevEl, el) {
+        if (!prevEl) {
+            this.component.onDOMCreate.call(this.component, {el});
+            this.component.onDOMCreateOrChange.call(this.component, {newEl: el, prevEl});
+        } else if (prevEl !== el) {
+            this.component.onDOMChange.call(this.component, { newEl: el, prevEl });
+            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl });
 
-        previousWidget.component.trigger('componentleavedom', {component: previousWidget.component});
-        this.component.trigger('componententerdom', {component: this.component});
-        // console.log("dasds")
+            var positionComparison = prevEl.compareDocumentPosition(el);
+            if (positionComparison !== 0) {
+                //@TODO atm this pretty much always fires. maybe that is circumstantial, but we may need to be more selective about which bits constitute a "move"
+                this.component.onDOMMove.call(this.component, { newEl: el, prevEl });
+            }
+        }
+    }
+
+    update(previousWidget, prevDOMNode) {
         var patches = VDOMDiff(previousWidget.vTree, this.vTree);
         var el = VDOMPatch(prevDOMNode, patches);
 
-        if (previousWidget.component !== this.component) {
-            this.component._el = el;
-            this.component.onDOMChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
-            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
-        }
-
-        //@TODO onDOMMove?
+        this.fireDomEvents(this.component.el, this.component._el = el);
         
         return el;
     }
 
-    destroy(DOMNode) {
-        this.component.onDOMDestroy.call(this.component, {el: this.component._el});
-        this.component._el = null;
+    destroy(el) {
+        if (el === this.component.el) {
+            this.component._el = null;
+            this.component.onDOMDestroy.call(this.component, {el});
+        }
     }
 }

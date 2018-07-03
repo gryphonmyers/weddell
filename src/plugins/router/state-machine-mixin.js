@@ -16,6 +16,9 @@ var StateMachine = Mixin(function(superClass) {
                 states: {value: {}}
             });
         }
+        onEnterState() {}
+        onExitState() {}
+        onUpdateState() {}
 
         static checkIfIsState(state) {
             var result = hasMixin(state, MachineState);
@@ -49,28 +52,33 @@ var StateMachine = Mixin(function(superClass) {
             var promise = Promise.resolve();
             
             if (state && this.currentState === state) {
-                promise = Promise.resolve(this.currentState.updateState(Object.assign({updatedState: this.currentState}, evt)))
+                promise = Promise.all([
+                        this.currentState.updateState(Object.assign({updatedState: this.currentState}, evt)),
+                        this.onUpdateState(Object.assign({updatedState: this.currentState}, evt))
+                    ])
                     .then(() => {
                         this.trigger('updatestate', Object.assign({updatedState: this.currentState}, evt));
-                        return this.onUpdateState ? this.onUpdateState(Object.assign({updatedState: this.currentState}, evt)) : null;
-                    });
+                    })
             } else {
                 if (this.currentState) {
-                    promise = Promise.resolve(this.currentState.exitState(Object.assign({exitedState: this.currentState, enteredState: state}, evt)))
+                    this.previousState = this.currentState;
+                    this.currentState = null;
+                    promise = Promise.all([
+                            this.previousState.exitState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)),
+                            this.onExitState(Object.assign({exitedState: this.previousState, enteredState: state}, evt))
+                        ])
                         .then(() => {
-                            this.trigger('exitstate', Object.assign({exitedState: this.currentState, enteredState: state}, evt));
-                            this.previousState = this.currentState;
-                            this.currentState = null;
-                            return this.onExitState ? this.onExitState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)) : null;
+                            this.trigger('exitstate', Object.assign({exitedState: this.previousState, enteredState: state}, evt));
                         });
                 }
                 if (state) {
                     promise = promise
-                        .then(() => state.enterState(Object.assign({exitedState: this.previousState, enteredState: state}, evt)))
+                        .then(() => Promise.all([
+                            state.enterState(Object.assign({exitedState: this.previousState, enteredState: this.currentState = state}, evt)), 
+                            this.onEnterState(Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt))
+                        ]))
                         .then(() => {
-                            this.currentState = state;
                             this.trigger('enterstate', Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt));
-                            return this.onEnterState ? this.onEnterState(Object.assign({exitedState: this.previousState, enteredState: this.currentState}, evt)) : null;
                         });
                 }
             }

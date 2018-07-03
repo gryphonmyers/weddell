@@ -5,14 +5,10 @@ const EventEmitterMixin = require('./event-emitter-mixin');
 const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
-const createElement = require('virtual-dom/create-element');
-
-const VDOMWidget = require('./vdom-widget');
 
 const defaultOpts = {
-    markupTransforms: [],
-    stylesTransforms: [],
-    childStylesFirst: true
+    childStylesFirst: true,
+    verbosity: 0
 };
 
 const patchInterval = 33.334;
@@ -38,25 +34,16 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        if (opts.styles) {
-            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
-        }
         this.styles = opts.styles || this.constructor.styles;
         this.renderOrder = ['markup', 'styles'];
         this.pipelineInitMethods = opts.pipelineInitMethods;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.shouldRender = {};
-        this.renderInterval = opts.renderInterval;
-        this.stylesRenderFormat = opts.stylesRenderFormat;
-        this.markupRenderFormat = opts.markupRenderFormat;
-        this.markupTransforms = opts.markupTransforms;
-        this.stylesTransforms = opts.stylesTransforms;
-        this.childStylesFirst = opts.childStylesFirst;
+        this.childStylesFirst = opts.childStylesFirst; /*@TODO use this again*/
 
         Object.defineProperties(this, {
             Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
             component: { get: () => this._component },
-            vTree: { value: h('div'), writable: true },
             el: { get: () => this._el },
             _liveWidget: { value: null, writable: true },
             _lastPatchStartTime: { value: Date.now(), writable: true},
@@ -67,7 +54,8 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             _RAFCallback: { value: null, writable: true },
             _patchRequests: { value: [], writable: true },
             _patchPromise: { value: null, writable: true },
-            _component: { value: null, writable: true }
+            _component: { value: null, writable: true },
+            _widget: { value: h('div'), writable: true }
         })
 
         var consts = this.constructor.Weddell.consts;
@@ -83,27 +71,26 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             value: {app: this, components: {} }
         });
 
+        if (opts.verbosity > 0 && opts.styles) {
+            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
+        }
+
         Object.defineProperties(this, {
-            rootNode: { value: createElement(this.vTree), writable: true }
+            rootNode: { value: document.createElement('div'), writable: true }
         })
     }
+
+    onPatch() {}
 
     patchDOM(patchRequests) {
         if (!this.rootNode.parentNode) {
             this.el.appendChild(this.rootNode);
         }
-        
-        var newWidget = new VDOMWidget({component: this.component});
-        try {
-            if (newWidget.component.vTree.children.length) {
-                // debugger;
-            }
-        } catch (err) {}
-
-        var patches = VDOMDiff(this.vTree, newWidget);
+        this.component.refreshWidgets();
+        var patches = VDOMDiff(this._widget, this.component._widget);
         var rootNode = VDOMPatch(this.rootNode, patches);
         this.rootNode = rootNode;
-        this.vTree = newWidget;
+        this._widget = this.component._widget;
 
         this.trigger('patchdom');
     }
@@ -225,48 +212,46 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return component
     }
 
-    queuePatch(patchRequests=[]) {
-        this._patchRequests = this._patchRequests.concat(patchRequests);
-        if (!this._patchPromise) {
-            if (this._patchRequests.length) {
-                var resolveFunc;
-                this._patchPromise = new Promise((resolve) => {
-                    resolveFunc = resolve;
+    queuePatch() {
+        var resolveFunc;
+        var promise = new Promise((resolve) => {
+            resolveFunc = resolve;
+        })
+        .then(currPatchRequests => {
+            return this.constructor.patchMethods.reduce((acc, patcher) => {
+                    return acc
+                        .then(() => this[patcher](currPatchRequests))
+                }, Promise.resolve())
+                .then(() => {
+                    if (this._patchRequests.length) {
+                        return Promise.reject();
+                    }
                 })
-                .then(currPatchRequests => {
-                    return this.constructor.patchMethods.reduce((acc, patcher) => {
-                            return acc
-                                .then(() => this[patcher](currPatchRequests))
-                        }, Promise.resolve())
-                        .then(() => {
-                            this.trigger('patch');
-                            return this.onPatch()
-                        })
-                        .then(() => {
-                            this._patchPromise = null;
-                            this.queuePatch()
-                        });
+                .then(() => {
+                    this._patchPromise = null;
+                    this.trigger('patch');
+                    return this.onPatch()
+                }, () => {
+                    return this.queuePatch();
                 })
-                
-                var now = Date.now();
-                var dt = now - this._lastPatchStartTime;
-                this._lastPatchStartTime = Date.now();
+        })
+        
+        var now = Date.now();
+        var dt = now - this._lastPatchStartTime;
+        this._lastPatchStartTime = Date.now();
 
-                window.setTimeout(() => {
-                    requestAnimationFrame(this._RAFCallback = () =>{
-                        this._RAFCallback = null;
-                        var currPatchRequests = this._patchRequests;
-                        this._patchRequests = [];
-                        resolveFunc(currPatchRequests);
-                    });   
-                }, Math.max(0, patchInterval - dt))
-            }            
-        }
+        window.setTimeout(() => {
+            requestAnimationFrame(this._RAFCallback = () =>{
+                this._RAFCallback = null;
+                var currPatchRequests = this._patchRequests;
+                this._patchRequests = [];
+                resolveFunc(currPatchRequests);
+            });   
+        }, Math.max(0, patchInterval - dt))
+        
+        return promise;
     }
 
-    onPatch() {
-        //noop
-    }
 
     awaitPatch() {
         return this.patchPromise || Promise.resolve();
@@ -302,10 +287,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
                 this.component.on('requestpatch', evt => {
-                    this.queuePatch(evt);
-                });
-                this.component.on('firstrender', evt => {
-                    this._liveWidget = new VDOMWidget({component: this.component});
+                    this._patchRequests = this._patchRequests.concat(evt);
+                    if (!this._patchPromise) {
+                        this._patchPromise = this.queuePatch();
+                    }
                 });
 
                 Object.seal(this);

@@ -19,11 +19,7 @@ class SvgVdomThunk extends VdomThunk {
     }
 }
 
-const defaultComponentOpts = {
-    SVGFormat: '(locals)=>SVGString',
-    SVGTransforms: [],
-    targetSVGRenderFormat: 'SVGString'
-};
+const defaultComponentOpts = {};
 
 function parseSvg(svg, id) {
     //taken from http://stackoverflow.com/questions/3642035/jquerys-append-not-working-with-svg-element
@@ -53,22 +49,6 @@ module.exports = function(_Weddell){
                         this.svgEl = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg');
                         document.body.appendChild(this.svgEl);
                         this.svgEl.style.display = 'none';
-                    }
-
-                    static processSvg() {
-                        //@TODO be more consistent about what we expect svg to look like
-                        // else if (Array.isArray(output)) {
-                        //     return output.map(this.processSvgOutput);
-                        // } else if (output && typeof output === 'object') {
-                        //     if (output.ID || output.SVG) {
-                        //         console.warn('You are using deprecated syntax. svg assets should be strings with ids inline.')
-                        //     }
-                        //     return output;
-                        // } else {
-                        //     return () => {
-                        //         return [] || null;
-                        //     }
-                        // }  
                     }
 
                     patchSVG(patchRequests) {
@@ -163,7 +143,8 @@ module.exports = function(_Weddell){
                     static get tagDirectives() {
                         return Object.assign({}, super.tagDirectives, {
                             'svgsprite': function(vNode, content, attrs={}) {
-                                if (attrs.SVGID) {
+                                var weddellGlobals = window[this.constructor.Weddell.consts.VAR_NAME];
+                                if (weddellGlobals.verbosity > 0 && attrs.SVGID) {
                                     console.warn("You are using deprecated syntax. 'SVGID' property of svgsprite has been changed to 'svgId'")
                                 }
                                 return new SvgVdomThunk({id: attrs.svgId || attrs.SVGID, component: this});
@@ -195,7 +176,7 @@ module.exports = function(_Weddell){
 
                     static processSvgOutput(output) {
                         if (typeof output === 'function') {
-                            return this.processSvgOutput(output.call(this));
+                            return output;
                         } else {
                             return () => {
                                 return output || null;
@@ -208,14 +189,16 @@ module.exports = function(_Weddell){
 
                         super(opts);
 
+                        var weddellGlobals = window[this.constructor.Weddell.consts.VAR_NAME];
+
                         if (opts.isRoot) {
                             Object.defineProperty(this, '_mountedSvgs', { value: null, writable: true });
                         }
 
-                        if (this.SVG) {
+                        if (weddellGlobals.verbosity > 0 &&this.SVG) {
                             console.warn('You are using deprecated syntax. Please make use a static getter method "svg"')
                         }
-                        var template = this.constructor.processSvgOutput(this.constructor.svg || this.constructor.SVG || this.SVG);
+                        var template = this.constructor.processSvgOutput(this.svg || this.constructor.svg || this.constructor.SVG || this.SVG);
                         
                         this.svgTemplate = this.wrapTemplate(template, 'renderSvg');
                     }
