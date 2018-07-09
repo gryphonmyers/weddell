@@ -67,7 +67,6 @@ module.exports = function(_Weddell){
                                                 return jobs.reduce((promise, obj) => {
                                                         return promise
                                                             .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
-                                                            .then(() => obj.currentComponent.markDirty())
                                                     }, Promise.resolve())
                                                     .then(results => {
                                                         return this.awaitNextPatch()
@@ -149,6 +148,16 @@ module.exports = function(_Weddell){
                                                 .then(componentInstance => {
                                                     return Promise.resolve(componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)))
                                                         .then(() => componentInstance);
+                                                })
+                                                .then(componentInstance => {
+                                                    switch(machineStateMethod) {
+                                                        case 'onEnterState':
+                                                        case 'onExitState':
+                                                            return this.markDirty().then(() => componentInstance)
+                                                        default:
+                                                            break;
+                                                    }
+                                                    return componentInstance;
                                                 })
                                         }
                                         return finalObj;

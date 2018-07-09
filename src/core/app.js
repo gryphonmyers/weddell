@@ -96,6 +96,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     patchStyles(patchRequests) {
+        
         var results = patchRequests.reduceRight((acc, item) => {
             if (!(item.classId in acc.classes)) {
                 acc.classes[item.classId] = item;
@@ -137,6 +138,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         staticStyles.concat(instanceStyles)
             .reduce((final, obj) => {
                 var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
+
                 var styleEl;
 
                 if (!obj.needsPatch) {
@@ -155,7 +157,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
                             prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
                         }
-                        
                     }
 
                     if (styleEl) {
@@ -167,7 +168,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     styles = obj.styles || '';
 
                     if (!styles) {
-                        if (styleIndex === -1) {
+                        if (styleIndex > -1) {
                             final.splice(styleIndex, 1);
                         }
                         return final;

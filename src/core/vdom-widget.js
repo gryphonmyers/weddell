@@ -5,7 +5,7 @@ var createElement = require('virtual-dom/create-element');
 const cloneVNode = require('../utils/clone-vnode');
 
 module.exports = class VDOMWidget {
-    cloneVNode(vNode, pruneNullNodes=true, childWidgets={}) {
+    cloneVNode(vNode, pruneNullNodes=true, childWidgets=[]) {
         if (Array.isArray(vNode)) {
             var arr = vNode.map(child => this.cloneVNode(child, pruneNullNodes, childWidgets));
 
@@ -25,7 +25,9 @@ module.exports = class VDOMWidget {
         } else if (!vNode) {
             return vNode;
         } else if (vNode.type === 'Widget') {
-            return (vNode.component._widgetIsDirty ? vNode.component.makeNewWidget() : vNode.component._widget)
+            var widget = (vNode.component._widgetIsDirty ? vNode.component.makeNewWidget() : vNode.component._widget);
+            childWidgets.push(widget);
+            return widget
         } else if (!vNode.tagName) {
             return vNode;
         } else {
@@ -33,13 +35,22 @@ module.exports = class VDOMWidget {
         }
     }
 
-    constructor({component=null, vTree=component._vTree, childWidgets={}}) {
+    constructor({component=null, vTree=component._vTree}) {
         this.type = 'Widget';
         this.component = component;
-
-        this.vTree = this.cloneVNode(vTree, true, childWidgets);
+        this.childWidgets = [];
+        this._callbacks = [];
+        this.vTree = this.cloneVNode(vTree, true, this.childWidgets);
     }
 
+    bindChildren(parent) {
+        this._callbacks = this.childWidgets.map(childWidget => childWidget.component.on('widgetdirty', () => {
+            parent.markWidgetDirty()
+        }))
+    }
+    unbindChildren() {
+        this._callbacks.forEach(callback => callback());
+    }
     init() {
         if (!this.vTree) {
             throw "Component has no VTree to init with";
