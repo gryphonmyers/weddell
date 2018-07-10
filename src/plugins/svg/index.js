@@ -11,7 +11,7 @@ class SvgVdomThunk extends VdomThunk {
 
     render() {
         var href = this.component.getSvgHref(this.id);
-        return href ? svg('svg.weddell-svg', [
+        return href ? svg('svg', { attributes: { class:'weddell-svg' } }, [
             svg('use', {
                 'xlink:href': '#' + href
             })

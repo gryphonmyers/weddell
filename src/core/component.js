@@ -25,6 +25,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get renderMethods() {
         return ['renderVNode', 'renderStyles'];
     }
+
+    static get isWeddellComponent() {
+        return true;
+    }
     
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
@@ -560,7 +564,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     static makeComponentClass(ComponentClass) {
-        if (typeof ComponentClass === 'function' && !ComponentClass.prototype) {
+        if (typeof ComponentClass === 'function' && !ComponentClass.isWeddellComponent) {
             //@TODO this is unreliable
             // We got a non-Component class function, so we assume it is a component factory function
             var str = ComponentClass.toString();
@@ -571,7 +575,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }
         } else {
             return this.bootstrapComponentClass(ComponentClass);
-        }        
+        }
     }
 
     static bootstrapComponentClass(ComponentClass) {

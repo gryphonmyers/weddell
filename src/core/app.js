@@ -225,15 +225,18 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 }, Promise.resolve())
                 .then(() => {
                     if (this._patchRequests.length) {
-                        return Promise.reject();
+                        return Promise.reject('Rerender');
                     }
                 })
                 .then(() => {
                     this._patchPromise = null;
                     this.trigger('patch');
                     return this.onPatch()
-                }, () => {
-                    return this.queuePatch();
+                }, err => {
+                    if (err === 'Rerender') {
+                        return this.queuePatch();
+                    }
+                    console.error('Error patching:', err.stack)
                 })
         })
         
