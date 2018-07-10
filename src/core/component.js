@@ -174,6 +174,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     markDirty(dirtyRenderers={}) {
+        // this.markWidgetDirty();
         if (this.renderPromise || !this.isMounted) {
             this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
             return this.renderPromise;
@@ -516,13 +517,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     queryDOM(query) {
-        return this.awaitRender()
-            .then(() => document.querySelector(query));
+        return this.awaitDom()
+            .then(el => el.querySelector(query));
     }
 
     queryDOMAll(query) {
-        return this.awaitRender()
-            .then(() => document.querySelectorAll(query));
+        return this.awaitDom()
+            .then(el => el.querySelectorAll(query));
     }
 
     awaitEvent(eventName) {
@@ -539,6 +540,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     awaitMount() {
         return this.isMounted ? Promise.resolve() : this.awaitEvent('mount');
+    }
+
+    awaitDom() {
+        return this.el ? Promise.resolve(this.el) : this.awaitEvent('domcreate').then(evt => evt.el);
     }
 
     awaitRender(val) {

@@ -64,14 +64,19 @@ module.exports = class VDOMWidget {
 
     fireDomEvents(prevEl, el) {
         if (!prevEl) {
+            this.component.trigger('domcreate', {el});
             this.component.onDOMCreate.call(this.component, {el});
+            this.component.trigger('domcreateorchange', {newEl: el, prevEl});
             this.component.onDOMCreateOrChange.call(this.component, {newEl: el, prevEl});
         } else if (prevEl !== el) {
+            this.component.trigger('domchange', {el});
             this.component.onDOMChange.call(this.component, { newEl: el, prevEl });
+            this.component.trigger('domcreateorchange', {newEl: el, prevEl});
             this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl });
 
             var positionComparison = prevEl.compareDocumentPosition(el);
             if (positionComparison !== 0) {
+                this.component.trigger('dommove', );
                 //@TODO atm this pretty much always fires. maybe that is circumstantial, but we may need to be more selective about which bits constitute a "move"
                 this.component.onDOMMove.call(this.component, { newEl: el, prevEl });
             }
