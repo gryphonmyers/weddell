@@ -771,9 +771,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
             return Promise.resolve(this.onUnmount())
                 .then(() => {
-                    return Promise.all(this.reduceComponents((acc, item) => {
-                        return acc.concat(item);
-                    }, [], component => component.isMounted).map(component => component.unmount()));
+                    return Promise.all((this._lastRenderedComponents ? Object.values(this._lastRenderedComponents) : []).map(component => component.unmount()))
                 })
                 .then(() => {
                     this.markWidgetDirty()
