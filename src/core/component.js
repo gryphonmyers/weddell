@@ -542,6 +542,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return promise;
     }
 
+    awaitPatch() {
+        return this.awaitRender().then(() => (this.root || this).awaitEvent('patch'));
+    }
+
     awaitMount() {
         return this.isMounted ? Promise.resolve() : this.awaitEvent('mount');
     }

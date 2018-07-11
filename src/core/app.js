@@ -296,6 +296,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         this._patchPromise = this.queuePatch();
                     }
                 });
+                this.on('patch', () => {
+                    this.component.trigger('patch');
+                });
 
                 Object.seal(this);
 
