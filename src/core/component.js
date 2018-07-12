@@ -469,9 +469,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                 }
                             }
                         }
-                        contentComponents.forEach(contentComponent => {
-                            
-                        })
                         
                         return component.mount(this)
                             .then(didMount => {
