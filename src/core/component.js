@@ -72,7 +72,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _lastAccessedStateKeys: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _dirtyRenderers: { value: true, writable: true },
-            _contentComponents: {value: {}, writable: true },
+            _contentComponents: {value: [], writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: null},
             _lastRenderedComponents: {writable: true, value: null},
@@ -332,24 +332,22 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
 
-        var renderedComponents = {};        
+        var renderedComponents = [];        
         
         return (vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
             .then(vTree => {
                 this._prevVTree = this._vTree;
                 this._vTree = vTree;
 
-                return Promise.all(flatten(Object.values(renderedComponents)))
+                return Promise.all(renderedComponents)
                     .then(rendered => {
-                        return Promise.all(difference(this._lastRenderedComponents ? Object.values(this._lastRenderedComponents) : [], rendered).map(toUnmount => toUnmount.unmount()))
+                        return Promise.all(difference(this._lastRenderedComponents || [], rendered).map(toUnmount => toUnmount.unmount()))
                             .then(() => {
-                                this._lastRenderedComponents = rendered.reduce((acc, item) => {
-                                    return Object.assign(acc, {[item.id]: item}, {})
-                                }, {})
+                                this._lastRenderedComponents = rendered
                             })
                     })
                     .then(() => true)
-            }) : this._vTree ? Promise.all((this._lastRenderedComponents ? Object.values(this._lastRenderedComponents) : []).map(toUnmount => toUnmount.unmount()))
+            }) : this._vTree ? Promise.all((this._lastRenderedComponents || []).map(toUnmount => toUnmount.unmount()))
                 .then(() => {
                     this._prevVTree = this._vTree;
                     this._lastRenderedComponents = null;
@@ -400,7 +398,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    replaceComponentPlaceholders(vNode, renderedComponents={}) {
+    replaceComponentPlaceholders(vNode, renderedComponents=[]) {
         var components;
         var componentName;
         
@@ -432,7 +430,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             })
     }
 
-    makeChildComponentWidget(componentName, index, content, props, renderedComponents = {}) {
+    makeChildComponentWidget(componentName, index, content, props, renderedComponents = []) {
         var parent = this.reduceParents((acc, component) => {
             return acc || (componentName in component.components ? component : acc);
         }, null);
@@ -446,24 +444,35 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             renderedComponents[componentName] = [];
         }
         renderedComponents[componentName].push(prom);
-
+        renderedComponents.push(prom);
         return prom
             .then(component => {
                 renderedComponents[componentName].splice(renderedComponents[componentName].indexOf(prom), 1, component);
+                renderedComponents.splice(renderedComponents.indexOf(prom), 1, component);
                 component.assignProps(props, this);
-                var contentComponents = {};
+                var contentComponents = [];
                 return component.replaceComponentPlaceholders(content, contentComponents)
                     .then(content => {
                         component.content = content;
                         component._contentComponents = contentComponents;
 
                         for (var propName in contentComponents) {
+                            var contentComponent = contentComponents[propName];
                             if (!(propName in renderedComponents)) {
                                 renderedComponents[propName] = [];
                             }
-                            renderedComponents[propName] = uniq(renderedComponents[propName].concat(contentComponents[propName]));
+                            if (Array.isArray(contentComponents[propName])) {
+                                renderedComponents[propName] = uniq(renderedComponents[propName].concat(contentComponents[propName]));
+                            } else {
+                                if (renderedComponents.indexOf(contentComponent) === -1) {
+                                    renderedComponents.push(contentComponent);
+                                }
+                            }
                         }
-
+                        contentComponents.forEach(contentComponent => {
+                            
+                        })
+                        
                         return component.mount(this)
                             .then(didMount => {
                                 parent.trigger('componentplaceholderreplaced', {component});
@@ -775,7 +784,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
             return Promise.resolve(this.onUnmount())
                 .then(() => {
-                    return Promise.all((this._lastRenderedComponents ? Object.values(this._lastRenderedComponents) : []).map(component => component.unmount()))
+                    return Promise.all((this._lastRenderedComponents || []).map(component => component.unmount()))
                 })
                 .then(() => {
                     this.markWidgetDirty()
