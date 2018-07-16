@@ -178,7 +178,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     markDirty(dirtyRenderers={}) {
-        // this.markWidgetDirty();
+        // this.markWidgetDirty(); ? 
         if (this.renderPromise || !this.isMounted) {
             this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
             return this.renderPromise;
@@ -188,7 +188,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     render(dirtyRenderers=null) {
-        var promise = Promise.resolve()
+        var promise = (this._renderPromise ? new Promise(resolve => requestAnimationFrame(resolve)) : Promise.resolve())
             .then(() => {
                 return this.constructor.renderMethods
                     .reduce((acc, method) => {
@@ -832,10 +832,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         instance.on('requestpatch', evt => {
             this._componentsRequestingPatch.push(instance);
             this.trigger('requestpatch', Object.assign({}, evt));
-        });
-
-        instance.on('widgetdirty', evt => {
-            this.markWidgetDirty();
         });
         
         return instance;
