@@ -21,6 +21,8 @@ const defaultInitOpts = {};
 var _generatedComponentClasses = {};
 const testElement = document.createElement('div');
 
+const renderInterval = 33.333;
+
 var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get renderMethods() {
         return ['renderVNode', 'renderStyles'];
@@ -177,18 +179,29 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         weddellGlobals.components[this._id] = this;
     }
 
+    requestRender(dirtyRenderers) {
+        var now = Date.now()
+        var lastRenderTime = Object.values(this._lastRenderTimeStamps).reduce((acc, val) => isNaN(val) ? acc : Math.max(val, acc), 0)
+        var dt = now - lastRenderTime;
+        if (!this.hasRendered || dt >= renderInterval) {
+            return this.render(dirtyRenderers);
+        } else {
+            return (this._renderPromise = new Promise(resolve => setTimeout(resolve, renderInterval - dt))
+                .then(() => this.render(dirtyRenderers)));
+        }
+    }
+
     markDirty(dirtyRenderers={}) {
-        // this.markWidgetDirty(); ? 
         if (this.renderPromise || !this.isMounted) {
             this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
             return this.renderPromise;
         } else {
-            return this.render(dirtyRenderers)
-        }        
+            return this.requestRender(dirtyRenderers);
+        }
     }
 
     render(dirtyRenderers=null) {
-        var promise = (this._renderPromise ? new Promise(resolve => requestAnimationFrame(resolve)) : Promise.resolve())
+        var promise = Promise.resolve()
             .then(() => {
                 return this.constructor.renderMethods
                     .reduce((acc, method) => {
@@ -215,9 +228,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                 this._renderPromise = null;
                                 this.requestPatch(results);
                                 return results;
-                            }, dirtyRenderers => {
-                                return this.render(dirtyRenderers);
-                            })
+                            }, dirtyRenderers => this.render(dirtyRenderers))
                     }, err => {
                         throw err;
                     })
