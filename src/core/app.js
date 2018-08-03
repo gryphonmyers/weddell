@@ -306,7 +306,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     .then(() => this.component.mount())
                     .then(() => this.awaitPatch()
                         .then(() => {
-                            this.el.classList.add('first-markup-render-completen first-styles-render-completen first-render-complete');
+                            this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
                         }))
             })
     }
