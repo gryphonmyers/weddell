@@ -68,10 +68,9 @@ module.exports = function(_Weddell){
                                                         return promise
                                                             .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
                                                     }, Promise.resolve())
-                                                    .then(results => {
-                                                        return this.awaitNextPatch()
-                                                            .then(() => results);
-                                                    });
+                                                    .then(results =>
+                                                        this.awaitPatch()
+                                                            .then(() => results));
                                             }, console.warn)
                                             .then(results => {
                                                 this.el.classList.remove('routing');
