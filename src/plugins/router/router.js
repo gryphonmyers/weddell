@@ -292,9 +292,8 @@ class Router {
                 }
                 
                 window.removeEventListener('hashchange', pushState);
-                var href = (location.href.charAt(location.href.length - 1) === '#' ? location.href.slice(0, -1) : location.href).replace(location.pathname + location.hash, pathName + (hash  || ''));
                 
-                history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, href);
+                history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
                 this.setScrollPos(scrollPos, hash);
                 resolve();
             }
@@ -312,11 +311,9 @@ class Router {
         if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
         
         var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
-        
-        var href = (location.href.charAt(location.href.length - 1) === '#' ? location.href.slice(0, -1) : location.href).replace(location.pathname + location.hash, pathName + (hash  || ''))
 
         if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash) {
-            history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, href);
+            history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
         }
         
         this.setScrollPos(scrollPos, hash);
