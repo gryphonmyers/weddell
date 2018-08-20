@@ -64,9 +64,13 @@ class Router {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
                     .then(matches => {
-                        if (hash != matches.isCurrentRoute.hash) {
-                            return this.pushState(matches.fullPath, hash);
-                        }
+                        if (this.currentRoute.hash !== matches.hash) {
+                            if (shouldReplaceState) {
+                                return this.replaceState(matches.fullPath, hash);
+                            } else {
+                                return this.pushState(matches.fullPath, hash);
+                            }
+                        } 
                     });
             } else {
                 promise = Promise.all(matches.map((currMatch, key) => {
@@ -286,20 +290,27 @@ class Router {
         }
 
         return new Promise((resolve) => {
-            var pushState = () => {
-                if (!history.state) {
-                    this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
+            var setListener = false;
+            var pushState = evt => {
+                if (setListener) {
+                    window.removeEventListener('hashchange', pushState);
+                    if (!history.state) {
+                        this.replaceState(pathName, hash, scrollPos);
+                    } else {
+                        history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                        this.setScrollPos(scrollPos, hash);
+                    }
+                } else {
+                    history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                    this.setScrollPos(scrollPos, hash);
                 }
                 
-                window.removeEventListener('hashchange', pushState);
-                
-                history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
-                this.setScrollPos(scrollPos, hash);
                 resolve();
             }
             if (location.hash === hash) {
                 pushState()
             } else {
+                setListener = true;
                 window.addEventListener('hashchange', pushState);
                 location.hash = hash;
             }
@@ -343,9 +354,8 @@ class Router {
     onPopState(evt) {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
-        
         if (evt && evt.state && evt.state.isWeddellState === true) {
-            var result = this.route(evt.state.fullPath, true, evt);
+            var result = this.route(evt.state.fullPath + (evt.state.hash || ''), true, evt);
             if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result
