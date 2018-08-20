@@ -3,6 +3,8 @@ var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var compact = require('array-compact');
 var defaultOpts = {};
+var mix = require('mixwith-es5').mix;
+var EventEmitterMixin = require('../../core/event-emitter-mixin');
 
 function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     var params = [];
@@ -24,10 +26,13 @@ function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     return { params, match, fullPath: routeFullPath, pathName: routePathname, regex };
 }
 
-class Router {
+class BaseRouter {}
+
+class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
+        super(opts);
         this.currentRoute = null;
         this.routes = [];
         this.promise = null;
@@ -291,15 +296,12 @@ class Router {
 
         return new Promise((resolve) => {
             var setListener = false;
+            var off;
             var pushState = evt => {
                 if (setListener) {
-                    window.removeEventListener('hashchange', pushState);
-                    if (!history.state) {
-                        this.replaceState(pathName, hash, scrollPos);
-                    } else {
-                        history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
-                        this.setScrollPos(scrollPos, hash);
-                    }
+                    off();
+                    history.replaceState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                    this.setScrollPos(scrollPos, hash);
                 } else {
                     history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
                     this.setScrollPos(scrollPos, hash);
@@ -311,7 +313,7 @@ class Router {
                 pushState()
             } else {
                 setListener = true;
-                window.addEventListener('hashchange', pushState);
+                off = this.on('hashchange', pushState);
                 location.hash = hash;
             }
         })
@@ -334,6 +336,7 @@ class Router {
         if (!history.state) {
             this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
         }
+        this.trigger('hashchange')
     }
 
     setScrollPos(scrollPos, hash) {
@@ -354,6 +357,7 @@ class Router {
     onPopState(evt) {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
+        
         if (evt && evt.state && evt.state.isWeddellState === true) {
             var result = this.route(evt.state.fullPath + (evt.state.hash || ''), true, evt);
             if (result && evt.state.scrollPos) {
