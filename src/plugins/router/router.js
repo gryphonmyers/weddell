@@ -3,6 +3,8 @@ var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var compact = require('array-compact');
 var defaultOpts = {};
+var mix = require('mixwith-es5').mix;
+var EventEmitterMixin = require('../../core/event-emitter-mixin');
 
 function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     var params = [];
@@ -24,12 +26,16 @@ function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     return { params, match, fullPath: routeFullPath, pathName: routePathname, regex };
 }
 
-class Router {
+class BaseRouter {}
+
+class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
+        super(opts);
         this.currentRoute = null;
         this.routes = [];
+        this.promise = null;
         this.onRoute = opts.onRoute;
         this._isInit = false;
         if (opts.routes) {
@@ -63,9 +69,13 @@ class Router {
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
                     .then(matches => {
-                        if (hash != matches.isCurrentRoute.hash) {
-                            this.pushState(matches.fullPath, hash);
-                        }
+                        if (this.currentRoute.hash !== matches.hash) {
+                            if (shouldReplaceState) {
+                                return this.replaceState(matches.fullPath, hash);
+                            } else {
+                                return this.pushState(matches.fullPath, hash);
+                            }
+                        } 
                     });
             } else {
                 promise = Promise.all(matches.map((currMatch, key) => {
@@ -77,6 +87,7 @@ class Router {
                                 redirectPath = currMatch.route.redirect;
                             }
                             if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
+
                             return Promise.reject(redirectPath);
                         }
         
@@ -89,7 +100,8 @@ class Router {
                                 if (isInitialRoute || shouldReplaceState) {
                                     this.replaceState(matches.fullPath, hash);
                                 } else if (!matches.isCurrentRoute) {
-                                    this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : {x:0,y:0});
+                                    return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : {x:0,y:0})
+                                        .then(() => matches);
                                 }
                                 return matches;
                             });
@@ -98,9 +110,16 @@ class Router {
                     });
                 this.currentRoute = matches;
             }
-            return promise;                
+            return this.promise = promise.then(result => {
+                this.promise = null
+                return result;
+            });                
         }
-        return null;
+        return this.promise = null;
+    }
+
+    awaitRoute() {
+        return this.promise ? this.promise : Promise.resolve();
     }
 
     static getNamedRoute(name, routes, currPath) {
@@ -269,19 +288,47 @@ class Router {
 
     pushState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-        if (typeof hash === 'string') {
-            location.hash = hash;
-        }
-        history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, pathName + (hash  || ''));
+        if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
 
-        this.setScrollPos(scrollPos, hash);
+        if (typeof hash !== 'string') {
+            hash = '';
+        }
+
+        return new Promise((resolve) => {
+            var setListener = false;
+            var off;
+            var pushState = evt => {
+                if (setListener) {
+                    off();
+                    history.replaceState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                    this.setScrollPos(scrollPos, hash);
+                } else {
+                    history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                    this.setScrollPos(scrollPos, hash);
+                }
+                
+                resolve();
+            }
+            if (location.hash === hash) {
+                pushState()
+            } else {
+                setListener = true;
+                off = this.on('hashchange', pushState);
+                location.hash = hash;
+            }
+        })
     }
 
     replaceState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+        if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
+        
         var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
-        history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, pathName + (hash  || ''));
 
+        if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash) {
+            history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+        }
+        
         this.setScrollPos(scrollPos, hash);
     }
 
@@ -289,6 +336,7 @@ class Router {
         if (!history.state) {
             this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
         }
+        this.trigger('hashchange')
     }
 
     setScrollPos(scrollPos, hash) {
@@ -309,9 +357,9 @@ class Router {
     onPopState(evt) {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
-
+        
         if (evt && evt.state && evt.state.isWeddellState === true) {
-            var result = this.route(evt.state.fullPath, true, evt);
+            var result = this.route(evt.state.fullPath + (evt.state.hash || ''), true, evt);
             if (result && evt.state.scrollPos) {
                 if (result.then) {
                     result
