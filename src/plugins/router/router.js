@@ -49,9 +49,6 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             shouldReplaceState = false
         }
         if (typeof pathName === 'string') {
-            var hashIndex = pathName.indexOf('#');
-            var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
-            pathName = hashIndex > -1 ? pathName.slice(0, hashIndex) : pathName;
             var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
@@ -63,7 +60,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             }
         }
         if (matches) {
-            Object.assign(matches, {hash, triggeringEvent});
+            Object.assign(matches, { triggeringEvent});
             var isInitialRoute = !this.currentRoute;
             
             if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
@@ -143,6 +140,10 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
     matchRoute(pathName, routes, routePath, fullPath, parentMatched) {
         if (!routePath) routePath = [];
         var result = null;
+        var hashIndex = pathName.indexOf('#');
+        var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
+        pathName = hashIndex > -1 ? pathName.slice(0, hashIndex) : pathName;
+    
         if (typeof pathName !== 'string') {
             return null;
         }
@@ -188,6 +189,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
                 result.route = result[result.length - 1].route;
                 result.fullPath = fullPath;
+                result.hash = hash;
             }
 
             return !result;
