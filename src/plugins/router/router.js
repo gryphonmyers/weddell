@@ -60,6 +60,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             }
         }
         if (matches) {
+            var hash = matches.hash;
             Object.assign(matches, { triggeringEvent});
             var isInitialRoute = !this.currentRoute;
             
