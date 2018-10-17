@@ -4,14 +4,15 @@ var VDOMDiff = require('virtual-dom/diff');
 var createElement = require('virtual-dom/create-element');
 const cloneVNode = require('../utils/clone-vnode');
 
-module.exports = class VDOMWidget {
+module.exports = class WeddellVDOMWidget {
+
     cloneVNode(vNode, pruneNullNodes=true, childWidgets=[]) {
         if (Array.isArray(vNode)) {
             var arr = vNode.map(child => this.cloneVNode(child, pruneNullNodes, childWidgets));
 
             if (pruneNullNodes) {
                 arr = arr.reduce((newArr, child, ii) => {
-                    if (child && child.type === 'Widget') {
+                    if (child && child instanceof WeddellVDOMWidget) {
                         if ((!pruneNullNodes || child.vTree)) {
                             newArr.push(child);
                         }
@@ -21,10 +22,10 @@ module.exports = class VDOMWidget {
                     return newArr;
                 }, []);
             }
-            return arr;   
+            return arr;
         } else if (!vNode) {
             return vNode;
-        } else if (vNode.type === 'Widget') {
+        } else if (vNode instanceof WeddellVDOMWidget) {
             var widget = (vNode.component._widgetIsDirty ? vNode.component.makeNewWidget() : vNode.component._widget);
             childWidgets.push(widget);
             return widget
@@ -35,8 +36,11 @@ module.exports = class VDOMWidget {
         }
     }
 
+    get type() {
+        return 'Widget';
+    }
+
     constructor({component=null, vTree=component._vTree}) {
-        this.type = 'Widget';
         this.component = component;
         this.childWidgets = [];
         this._callbacks = [];
@@ -84,12 +88,14 @@ module.exports = class VDOMWidget {
     }
 
     update(previousWidget, prevDOMNode) {
-        var patches = VDOMDiff(previousWidget.vTree, this.vTree);
-        var el = VDOMPatch(prevDOMNode, patches);
+        if (previousWidget instanceof WeddellVDOMWidget) {
+            var patches = VDOMDiff(previousWidget.vTree, this.vTree);
+            var el = VDOMPatch(prevDOMNode, patches);
 
-        this.fireDomEvents(this.component.el, this.component._el = el);
-        
-        return el;
+            this.fireDomEvents(this.component.el, this.component._el = el);
+            return el;
+        }
+        return this.init();        
     }
 
     destroy(el) {
