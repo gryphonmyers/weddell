@@ -1,7 +1,6 @@
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
-var defaults = require('object.defaults/immutable');
-var includes = require('../utils/includes');
+var defaults = require('defaults-es6');
 var difference = require('../utils/difference');
 var mix = require('mixwith-es5').mix;
 var uniq = require('array-uniq');
@@ -23,13 +22,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
+            _initialState: { value: opts.initialState || {} },
             _cache: {value: {}, writable: true},
             _funcProps: {configurable: false,value: {}},
             _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
             _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
-            _firstGet: {writable: true, value: false},
+            _changedKeys: {configurable: false, value: []},
+            _firstGetComplete: {writable: true, value: false},
             _validators: {value: opts.validators},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
@@ -88,7 +89,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         Object.seal(this);
     }
 
-    set(key, val, isReadOnly) {
+    set(key, val, isReadOnly=false) {
         if (!(key in this)) {
             if (!isReadOnly) {
                 var setter = function(newValue) {
@@ -117,6 +118,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
+                                this._changedKeys.push(key);
                                 this.trigger('change', { target: this, changedKey: key, newValue, oldValue });
                             }
                         }
@@ -137,11 +139,44 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
 
             if (!isReadOnly) {
-                this[key] = val;
+                var initialValue = this._initialState[key];
+                if (initialValue != null) {
+                    if (this.shouldEvalFunctions && typeof val === 'function') {
+                        this[key] = val;
+                    } else {
+                        this[key] = initialValue;
+                    }
+                } else {
+                    this[key] = val;
+                }
             } else {
                 this._data[key] = val;
             }
         }
+    }
+
+    collectChangedData(includeComputed=true, computedValueFormat='verbose') {
+        return uniq(this._changedKeys).reduce((acc, curr) => {
+            if (!this.shouldEvalFunctions || includeComputed || !this._funcProps[curr]) {
+                if (this.shouldEvalFunctions && this._funcProps[curr]) {
+                    switch (computedValueFormat) {
+                        case 'verbose':
+                            return Object.assign(acc, { 
+                                [curr]: {
+                                    isComputedValue: true,
+                                    lastAccessedKeys: this._dependencyKeys[curr],
+                                    value: this._data[curr] 
+                                }
+                            });
+                        case 'simple':
+                        default:
+                            break;
+                    }
+                }
+                return Object.assign(acc, { [curr]: this._data[curr] })
+            }
+            return acc;
+        }, {})
     }
 
     getValue(key) {
@@ -151,17 +186,27 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         if (this._cache[key]) {
             return this._cache[key];
         }
-        if (this.shouldEvalFunctions && !this._firstGet) {
-            this._firstGet = true;
+        if (this.shouldEvalFunctions && !this._firstGetComplete) {
+            this._firstGetComplete = true;
             for (var propName in this._funcProps) {
                 this[propName];
             }
         }
         if (key in this._funcProps && !this._initialCalled[key]) {
             this._initialCalled[key] = true;
-            val = this[key] = this.evaluateFunctionProperty(key);
+
+            if (this._initialState[key]) {
+                if (this._initialState[key].isComputedValue) {
+                    val = this[key] = this._initialState[key].value;
+                    this._dependencyKeys[key] = this._initialState[key].lastAccessedKeys;
+                } else {
+                    val = this[key] = this._initialState[key];
+                }
+            } else {
+                val = this[key] = this.evaluateFunctionProperty(key);
+            }
             this.on('change', evt => {
-                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                if (this._dependencyKeys[key].includes(evt.changedKey)) {
                     this[key] = this.evaluateFunctionProperty(key);
                 }
             });
@@ -191,13 +236,13 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return val;
     }
 
-    assign(data) {
+    assign(data, initialState={}) {
         if (data) {
             if (Array.isArray(data)) {
                 data.forEach(key => this.set(key, null));
             } else {
                 Object.entries(data).forEach((entry) => {
-                    this.set(entry[0], entry[1])
+                    this.set(entry[0], entry[1], false, initialState[entry[0]])
                 });
             }
         }
@@ -239,7 +284,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         };
 
         var off = this.on('change', function(evt){
-            if (includes(key, evt.changedKey)) {
+            if (key.includes(evt.changedKey)) {
                 checkKeys.call(this);
             }
         });

@@ -18,6 +18,7 @@ module.exports = function(_Weddell){
         classes:  {
             App: Mixin(function(App){
                 return class extends App {
+
                     onBeforeRoute() {}
 
                     constructor(opts) {
@@ -96,9 +97,9 @@ module.exports = function(_Weddell){
                         });
                     }
 
-                    init() {
-                        return super.init()
-                            .then(() => this.router.init());
+                    initRootComponent(initObj={}) {
+                        return super.initRootComponent()
+                            .then(() => this.router.init(initObj.initialRoute))
                     }
                 }
             }),
@@ -134,6 +135,10 @@ module.exports = function(_Weddell){
                             }
                         }));
 
+                        Object.defineProperties(this, {
+                            _initialRouterStateName: { value: opts.initialRouterStateName, writable: false} 
+                        })
+
                         self = this;
 
                         this.on('init', () => {
@@ -149,10 +154,10 @@ module.exports = function(_Weddell){
                                                         .then(() => componentInstance);
                                                 })
                                                 .then(componentInstance => {
-                                                    switch(machineStateMethod) {
+                                                    switch (machineStateMethod) {
                                                         case 'onEnterState':
                                                         case 'onExitState':
-                                                            return this.markDirty().then(() => componentInstance)
+                                                            return Promise.resolve(this.markDirty()).then(() => componentInstance)
                                                         default:
                                                             break;
                                                     }

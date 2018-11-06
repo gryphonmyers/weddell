@@ -262,7 +262,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         return null;
     }
 
-    init() {
+    init(initPath) {
         if (!this._isInit && this.routes) {
             if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             this._isInit = true;
@@ -283,8 +283,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                     }
                 }
             });
-
-            return this.route(location.pathname + location.hash);
+            return this.route(initPath || (location.pathname + location.hash));
         }
         return Promise.resolve();
     }

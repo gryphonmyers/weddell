@@ -5,6 +5,8 @@ const EventEmitterMixin = require('./event-emitter-mixin');
 const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
+const debounce = require('debounce');
+const virtualize = require('vdom-virtualize');
 
 const defaultOpts = {
     childStylesFirst: true,
@@ -48,23 +50,26 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             _liveWidget: { value: null, writable: true },
             _lastPatchStartTime: { value: Date.now(), writable: true},
             _el: { value: null, writable: true },
+            _initPromise: { value: null, writable: true },
             _elInput: { value: opts.el },
             _patchPromise: { value: null, writable: true },
+            _snapshotData: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
             _RAFCallback: { value: null, writable: true },
             _patchRequests: { value: [], writable: true },
             _patchPromise: { value: null, writable: true },
             _component: { value: null, writable: true },
-            _widget: { value: h('div'), writable: true }
+            _widget: { value: null, writable: true },
+            _createdComponents: { value: [] }
         })
 
         var consts = this.constructor.Weddell.consts;
 
         if (!this.Component) {
-            throw "There is no base component set for this app. Can't mount.";
+            throw new Error(`There is no base component set for this app. Can't mount.`);
         }
         if (consts.VAR_NAME in window) {
-            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+            throw new Error(`Namespace collision for ${consts.VAR_NAME} on window object. Aborting.`);
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
@@ -76,7 +81,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
 
         Object.defineProperties(this, {
-            rootNode: { value: document.createElement('div'), writable: true }
+            rootNode: { value: null, writable: true }
         })
     }
 
@@ -93,6 +98,21 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this._widget = this.component._widget;
 
         this.trigger('patchdom');
+    }
+
+    awaitComponentMount(id) {
+        return new Promise(resolve => {            
+            Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
+                this.on('createcomponent', evt => {
+                    if (evt.component.id === id) {
+                        resolve(evt.component)
+                    }
+                })
+            }))
+            .then(component => {
+                component.awaitMount().then(() => resolve(component));
+            })
+        })
     }
 
     patchStyles(patchRequests) {
@@ -201,16 +221,57 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     makeComponent() {
-        var component = new (this.Component)({
-            isRoot: true
-        });
+        var id = this.rootNode.getAttribute('data-wdl-id');
+        var snapshot = this._snapshotData;
+        if (snapshot && id && snapshot.id !== id) {
+            throw new Error('Snapshot id does not match root element id.')
+        }
 
-        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
-            finalObj[attr.name] = attr.value;
-            return finalObj;
-        }, {}))
+        var opts = {
+            isRoot: true,
+            id,
+        };
 
-        return component
+        if (snapshot) {
+            var addElReferences = (obj, parentEl) => {
+                var el = parentEl.querySelector(`[data-wdl-id="${obj.id}"]`);
+    
+                if (el) {
+                    obj.el = el;
+
+                    if (obj.componentSnapshots) {
+                        for (var componentName in obj.componentSnapshots) {
+                            for (var index in obj.componentSnapshots[componentName]) {
+                                addElReferences(obj.componentSnapshots[componentName][index], el);
+                            }
+                        }
+                    }
+                }
+                return obj;                
+            };
+            snapshot = addElReferences(snapshot, this.el);
+            if (snapshot.state) {
+                opts.initialState = snapshot.state;
+            }
+            if (snapshot.componentSnapshots) {
+                opts.componentSnapshots = snapshot.componentSnapshots;
+            }
+            if (snapshot.el) {
+                opts.el = snapshot.el;
+            }
+        }
+        
+        var component = new (this.Component)(opts);       
+
+        component.assignProps(
+            Object.values(this.el.attributes)
+                .reduce((finalObj, attr) => {
+                    finalObj[attr.name] = attr.value;
+                    return finalObj;
+                }, {})
+        );
+
+        return component;
     }
 
     queuePatch() {
@@ -243,7 +304,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         var now = Date.now();
         var dt = now - this._lastPatchStartTime;
         this._lastPatchStartTime = Date.now();
-
+        
         window.setTimeout(() => {
             requestAnimationFrame(this._RAFCallback = () =>{
                 this._RAFCallback = null;
@@ -251,7 +312,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this._patchRequests = [];
                 resolveFunc(currPatchRequests);
             });   
-        }, Math.max(0, patchInterval - dt))
+        }, Math.max(0, patchInterval - dt))        
         
         return promise;
     }
@@ -275,39 +336,127 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
         this._el = el;
 
+        if (!(this.rootNode = this.el.firstChild)) {
+            this.rootNode = document.createElement('div');
+            this._widget = h('div');
+        } else {
+            this._widget = virtualize(this.el);
+        }
+
         if (this.styles) {
-            createStyleEl('weddell-app-styles').textContent = this.styles;
+            createStyleEl('weddell-app-styles', 'weddell-app-styles').textContent = this.styles;
         }
     }
 
+    static takeComponentStateSnapshot(component) {
+        var obj = { 
+            id: component.id,
+            state: Object.entries(component.state.collectChangedData())
+                .reduce((acc, curr) => {
+                    if (curr[0][0] !== '$') {
+                        return Object.assign(acc, { [curr[0]]: curr[1] })
+                    }
+                    return acc;
+                }, {})
+        };
+        var componentSnapshots = {};
+        for (var componentName in component._componentInstances) {
+            var components = component._componentInstances[componentName];
+            for (var componentIndex in components) {
+                if (!(componentName in componentSnapshots)) {
+                    componentSnapshots[componentName] = {};
+                }
+                componentSnapshots[componentName][componentIndex] = this.takeComponentStateSnapshot(components[componentIndex]);
+            }
+        }
+        if (Object.keys(componentSnapshots).length) {
+            obj.componentSnapshots = componentSnapshots;
+        }
+        return obj;
+    }
+
+    renderSnapshot() {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");  
+        var scriptEl = doc.createElement('script');
+        scriptEl.innerHTML = `
+            window.addEventListener('weddellinitbefore', function(evt){
+                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
+            });
+        `;
+        doc.body.appendChild(scriptEl);
+
+        return {
+            appHtml: this.component.el.outerHTML,
+            stateHtml: scriptEl.outerHTML,
+            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
+                .map(el => el.outerHTML)
+                .join('\n'),
+            fullResponse: doc.documentElement.outerHTML
+        }
+    }
+
+    initRootComponent() {
+        return this.component.init(this.componentInitOpts)
+            .then(() => this.component.mount())
+            .then(() => this.awaitPatch()
+                .then(() => {
+                    this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+                }))
+    }
+
     init() {
+        this.on('createcomponent', evt => {
+            this._createdComponents.push(evt.component);
+        })
+
         return DOMReady
             .then(() => {
+                window.dispatchEvent(
+                    new CustomEvent('weddellinitbefore', {
+                        detail: {  app: this }
+                    })
+                );
+
                 this.initPatchers();
+                this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
                 this._component = this.makeComponent();
-
+                    
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+
+                var quietCallback = debounce(() => {
+                    this.trigger('quiet');
+                }, 3000);
+
                 this.component.on('requestpatch', evt => {
                     this._patchRequests = this._patchRequests.concat(evt);
-                    if (!this._patchPromise) {
-                        this._patchPromise = this.queuePatch();
-                    }
+
+                    this._initPromise.then(() => {
+                        if (!this._patchPromise) {
+                            this._patchPromise = this.queuePatch();
+                        }
+                    })
                 });
                 this.on('patch', () => {
+                    quietCallback()
                     this.component.trigger('patch');
                 });
 
                 Object.seal(this);
 
-                return this.component.init(this.componentInitOpts)
-                    .then(() => this.component.mount())
-                    .then(() => this.awaitPatch()
-                        .then(() => {
-                            this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
-                        }))
+                return this._initPromise = this.initRootComponent();
+            })
+            .then(result => {
+                window.dispatchEvent(
+                    new CustomEvent('weddellinit', {
+                        detail: { app: this }
+                    })
+                );
+                this.el.classList.add('init-complete');
+                return result;
             })
     }
 }

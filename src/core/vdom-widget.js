@@ -60,8 +60,11 @@ module.exports = class WeddellVDOMWidget {
             throw "Component has no VTree to init with";
         }
         var el = createElement(this.vTree);
+        //@TODO we could detect when we are using a snapshot element and use that element rather than creating a new one. Early attempts at doing this proved unreliable.
 
         this.fireDomEvents(this.component.el, this.component._el = el);
+
+        el.setAttribute('data-wdl-id', this.component.id);
 
         return el;
     }
@@ -80,7 +83,7 @@ module.exports = class WeddellVDOMWidget {
 
             var positionComparison = prevEl.compareDocumentPosition(el);
             if (positionComparison !== 0) {
-                this.component.trigger('dommove', );
+                this.component.trigger('dommove');
                 //@TODO atm this pretty much always fires. maybe that is circumstantial, but we may need to be more selective about which bits constitute a "move"
                 this.component.onDOMMove.call(this.component, { newEl: el, prevEl });
             }
@@ -93,6 +96,9 @@ module.exports = class WeddellVDOMWidget {
             var el = VDOMPatch(prevDOMNode, patches);
 
             this.fireDomEvents(this.component.el, this.component._el = el);
+
+            el.setAttribute('data-wdl-id', this.component.id);
+
             return el;
         }
         return this.init();        

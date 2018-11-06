@@ -44,11 +44,22 @@ module.exports = function(_Weddell){
                         return ['patchSVG'].concat(super.patchMethods);
                     }
 
+                    renderSnapshot() {
+                        return Object.assign(super.renderSnapshot(), {
+                            svgHtml: this.svgEl.outerHTML
+                        })
+                    }
+
                     initPatchers() {
                         super.initPatchers()
-                        this.svgEl = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg');
-                        document.body.appendChild(this.svgEl);
-                        this.svgEl.style.display = 'none';
+                        var svgEl = document.querySelector('body > #weddell-svg-sprite');
+                        if (!svgEl) {
+                            svgEl = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg');
+                            svgEl.setAttribute('id', 'weddell-svg-sprite');
+                            document.body.appendChild(svgEl);
+                        }
+                        svgEl.style.display = 'none';
+                        this.svgEl = svgEl;
                     }
 
                     patchSVG(patchRequests) {
@@ -83,7 +94,7 @@ module.exports = function(_Weddell){
                                         var el = parseSvg(svgObj.SVG, svgId);
                                         if (svgIndex !== -1) {
                                             //element exists. we need to replace it with the new version.
-                                            this.svgEl.removeChild(final.splice(svgIndex, 1));   
+                                            this.svgEl.removeChild(acc.splice(svgIndex, 1)[0]);   
                                         }
                                         this.svgEl.appendChild(el);
                                         mountedSvgs[svgId] = 1;
@@ -114,7 +125,7 @@ module.exports = function(_Weddell){
                                         if (svgIndex === -1) {
                                             //this component doesn't have any svg elements. It probably just hasn't requested a patch yet.
                                         } else {
-                                            el = final.splice(svgIndex, 1);
+                                            var els = acc.splice(svgIndex, 1);
                                         }
                                     });
                                 } else {
@@ -122,7 +133,7 @@ module.exports = function(_Weddell){
                                 }
                             }
                             return acc;                            
-                        }, Array.from(this.svgEl.querySelectorAll('svg.weddell-svg')));
+                        }, Array.from(this.svgEl.children));
 
                         leftovers.forEach(svgEl => {
                             delete mountedSvgs[svgEl.id];
@@ -195,7 +206,7 @@ module.exports = function(_Weddell){
                             Object.defineProperty(this, '_mountedSvgs', { value: null, writable: true });
                         }
 
-                        if (weddellGlobals.verbosity > 0 &&this.SVG) {
+                        if (weddellGlobals.verbosity > 0 && this.SVG) {
                             console.warn('You are using deprecated syntax. Please make use a static getter method "svg"')
                         }
                         var template = this.constructor.processSvgOutput(this.svg || this.constructor.svg || this.constructor.SVG || this.SVG);

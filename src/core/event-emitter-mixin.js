@@ -1,5 +1,4 @@
 var Mixin = require('mixwith-es5').Mixin;
-var includes = require('../utils/includes');
 
 var EventEmitterMixin = Mixin(function(superClass) {
     return class extends superClass {

@@ -65,14 +65,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             root: {value: opts.isRoot ? this : opts.root },
             inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
             //@TODO inputs don't need to be stored on isntance at all
-
             renderers: { value: {} },
-
-            _el: { value: null, writable: true },
+            _el: { value: opts.el, writable: true },
             _lastRenderTimeStamps: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: null }), {}) },
             _lastAccessedStateKeys: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
+            _componentSnapshots: { value: opts.componentSnapshots || null },
             _dirtyRenderers: { value: true, writable: true },
             _contentComponents: {value: [], writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
@@ -84,15 +83,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             _hasMounted: {writable:true, value: false},
             _hasRendered: {writable:true, value: false},
             _widgetIsDirty: {writable:true, value:false},
-            _vTree: {writable: true, value: null},
+            _vTree: {writable: true, value: null },
             _prevVTree: {writable: true, value: null},
-            _widget: {writable: true, value: new VdomWidget({ component: this, childWidgets: {} })},
             _prevWidget: {writable: true, value: null},
             _dirtyWidgets: {writable: true, value: {}},
             _renderCache: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _isInit: { writable: true, value: false},            
-            _id : { value: generateHash() },
+            _id : { value: opts.id || generateHash() },
             _componentListenerCallbacks: {value:{}, writable:true}
         });
 
@@ -102,8 +100,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 final[entry[1]] = entry[0];
                 return final;
             }, {}) : {};
-            
+
         Object.defineProperties(this, {
+            _widget: {writable: true, value: new VdomWidget({ component: this, childWidgets: {} })},
             props: {
                 value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
@@ -114,10 +113,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 })
             },
             store: {
-                value: new Store(Object.assign({
+                value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
-                }, opts.store), {
+                }, this.store || {}, opts.store || {}), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
@@ -135,6 +134,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 $attributes: null,
                 $id: () => this.id
             }, state), {
+                initialState: opts.initialState,
                 overrides: [this.props],
                 proxies: [this.store]
             })
@@ -335,13 +335,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     renderVNode() {
         var vTree = this.vNodeTemplate();
+
         if (Array.isArray(vTree)) {
             if (vTree.length > 1) {
                 console.warn('Template output was truncated in', this.constructor.name, 'component. Component templates must return a single vNode!');
             }
             vTree = vTree[0];
         }
-
 
         var renderedComponents = [];        
         
@@ -384,6 +384,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (this._widgetIsDirty) {
             this.makeNewWidget();
         }
+    }
+
+    get state() {
+        return {};
     }
 
     makeNewWidget() {
@@ -465,6 +469,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 return component.replaceComponentPlaceholders(content, contentComponents)
                     .then(content => {
                         component.content = content;
+                        
+                        if ((contentComponents.length !== component._contentComponents.length) || contentComponents.some((component, ii) => component._contentComponents[ii] !== component)) {
+                            component.trigger('contentcomponentschange', { currentComponents: contentComponents, previousComponents: component._contentComponents })
+                        }
                         component._contentComponents = contentComponents;
 
                         for (var propName in contentComponents) {
@@ -686,12 +694,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Promise.resolve(this);
     }
 
-    bindEvent(funcText, opts) {
+    bindEvent(funcText, opts={}) {
         var consts = this.constructor.Weddell.consts;
-        return "(function(event){" +
-            (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
-            (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
-            funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+        return `Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){
+                window.addEventListener('weddellinitbefore', function(evt) {
+                    resolve(evt.detail.app)
+                })
+            })).then(function(app) {
+                app.awaitComponentMount('${this.id}').then(function(component) {
+                    (function() {
+                        ${opts.preventDefault ? `event.preventDefault();` : ''}
+                        ${opts.stopPropagation ? `event.stopPropagation();` : ''}
+                        ${funcText};
+                    }.bind(component))()
+                })
+            })`;
     }
 
     bindEventValue(propName, opts) {
@@ -830,14 +847,34 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this.trigger('widgetdirty');
     }
 
+    extractSnapshotOpts(snapshot) {
+        if (!snapshot || !snapshot.id) {
+            throw new Error(`Malformed snapshot: id is missing`)
+        }
+
+        return ['state', 'componentSnapshots', 'el']
+            .reduce((acc, curr) => 
+                snapshot[curr] ? Object.assign(acc, { [curr === 'state' ? 'initialState' : curr]: snapshot[curr] }) : acc, { id: snapshot.id });
+        
+    }
+
     makeComponentInstance(componentName, index) {
         componentName = componentName.toLowerCase();
-        var instance = new (this.components[componentName])({
+
+        var opts = {
             store: defaults({
                 $componentID: this.components[componentName]._id,
                 $instanceKey: index
             })
-        });
+        };
+
+        var snapshot;
+
+        if (this._componentSnapshots && this._componentSnapshots[componentName] && (snapshot = this._componentSnapshots[componentName][index])) {
+            Object.assign(opts, this.extractSnapshotOpts(snapshot));
+        }        
+
+        var instance = new (this.components[componentName])(opts);
         this.addComponentEvents(componentName, instance, index);
 
         instance.on('requestpatch', evt => {
