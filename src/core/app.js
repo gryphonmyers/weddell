@@ -10,7 +10,8 @@ const virtualize = require('vdom-virtualize');
 
 const defaultOpts = {
     childStylesFirst: true,
-    verbosity: 0
+    verbosity: 0,
+    quietInterval: 100
 };
 
 const patchInterval = 33.334;
@@ -38,6 +39,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         super(opts);
         this.styles = opts.styles || this.constructor.styles;
         this.renderOrder = ['markup', 'styles'];
+        this.quietInterval = opts.quietInterval;
         this.pipelineInitMethods = opts.pipelineInitMethods;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.shouldRender = {};
@@ -427,10 +429,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
-                var quietCallback = debounce(() => {
-                    this.trigger('quiet');
-                }, 3000);
-
                 this.component.on('requestpatch', evt => {
                     this._patchRequests = this._patchRequests.concat(evt);
 
@@ -440,10 +438,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         }
                     })
                 });
-                this.on('patch', () => {
-                    quietCallback()
-                    this.component.trigger('patch');
-                });
+                
 
                 Object.seal(this);
 
@@ -455,6 +450,22 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         detail: { app: this }
                     })
                 );
+
+                var quietCallback = debounce(() => {
+                    this.trigger('quiet');
+                }, this.quietInterval);
+                
+                var onPatch;
+                this.on('patch', onPatch = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
+                    if (isRendering) {
+                        this.awaitNextPatch()
+                            .then(onPatch)
+                    } else {
+                        quietCallback();
+                    }
+                    this.component.trigger('patch');
+                });
                 this.el.classList.add('init-complete');
                 return result;
             })
