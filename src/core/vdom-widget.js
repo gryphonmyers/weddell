@@ -3,6 +3,7 @@ var VDOMDiff = require('virtual-dom/diff');
 
 var createElement = require('virtual-dom/create-element');
 const cloneVNode = require('../utils/clone-vnode');
+const virtualize = require('vdom-virtualize');
 
 module.exports = class WeddellVDOMWidget {
 
@@ -59,12 +60,18 @@ module.exports = class WeddellVDOMWidget {
         if (!this.vTree) {
             throw "Component has no VTree to init with";
         }
-        var el = createElement(this.vTree);
+        if (this.component.el && !this.component._elWasSet) {
+            var vTree = virtualize(this.component.el, 'id');
+            var patches = VDOMDiff(vTree, this.vTree);
+            var el = VDOMPatch(this.component.el, patches);
+        } else {
+            el = createElement(this.vTree);
+        }
+        el.setAttribute('data-wdl-id', this.component.id);
         //@TODO we could detect when we are using a snapshot element and use that element rather than creating a new one. Early attempts at doing this proved unreliable.
 
         this.fireDomEvents(this.component.el, this.component._el = el);
 
-        el.setAttribute('data-wdl-id', this.component.id);
 
         return el;
     }

@@ -342,7 +342,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             this.rootNode = document.createElement('div');
             this._widget = h('div');
         } else {
-            this._widget = virtualize(this.el);
+            this._widget = virtualize(this.rootNode, 'id');
         }
 
         if (this.styles) {
