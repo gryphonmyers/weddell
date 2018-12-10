@@ -28,7 +28,7 @@
     "object.defaults": "^1.1.0",
     "path-to-regexp": "^1.7.0",
     "prescribe": "^1.1.3",
-    "vdom-virtualize": "^2.0.1-2",
+    "vdom-virtualize": "^2.0.1-3",
     "virtual-dom": "^2.1.1",
     "whatwg-fetch": "^2.0.3"
   },
