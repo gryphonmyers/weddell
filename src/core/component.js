@@ -16,7 +16,6 @@ const defaultOpts = {
     inputs: null,
     isRoot: false
 };
-
 const defaultInitOpts = {};
 var _generatedComponentClasses = {};
 const testElement = document.createElement('div');
@@ -66,15 +65,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
             //@TODO inputs don't need to be stored on isntance at all
             renderers: { value: {} },
-            _el: {
-                get: () => this._currentEl,
-                set: val => {
-                    this._elWasSet = true;
-                    this._currentEl = val;
-                }
-            },
-            _elWasSet: { value: false, writable: true },
-            _currentEl: { value: opts.el, writable: true },
+            _el: { value: null, writable: true },
             _lastRenderTimeStamps: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: null }), {}) },
             _lastAccessedStateKeys: { value: this.constructor.renderMethods
