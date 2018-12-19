@@ -17,10 +17,13 @@ const defaultOpts = {
 const patchInterval = 33.334;
 
 function createStyleEl(id, className=null) {
-    var styleEl = document.createElement('style');
-    styleEl.setAttribute('type', 'text/css');
-    document.head.appendChild(styleEl);
-    styleEl.id = id;
+    var styleEl = document.getElementById(id)
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.setAttribute('type', 'text/css');
+        document.head.appendChild(styleEl);
+        styleEl.id = id;
+    }
     styleEl.classList.add(className);
     return styleEl;
 }
@@ -294,6 +297,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 .then(() => {
                     this._patchPromise = null;
                     this.trigger('patch');
+                    this.el.classList.remove('awaiting-patch');
                     return this.onPatch()
                 }, err => {
                     if (err === 'Rerender') {
@@ -401,10 +405,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     initRootComponent() {
         return this.component.init(this.componentInitOpts)
             .then(() => this.component.mount())
-            .then(() => this.awaitPatch()
-                .then(() => {
-                    this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
-                }))
+            .then(() => {
+                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+            })
     }
 
     init() {
@@ -414,13 +417,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
         return DOMReady
             .then(() => {
-                window.dispatchEvent(
-                    new CustomEvent('weddellinitbefore', {
-                        detail: {  app: this }
-                    })
-                );
+                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: {  app: this } }));
 
                 this.initPatchers();
+
+                if (this._snapshotData) {
+                    this.el.classList.add('using-snapshot');
+                }
+                this.el.classList.add('initting');
                 this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
                 this._component = this.makeComponent();
@@ -430,6 +434,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('requestpatch', evt => {
+                    this.el.classList.add('awaiting-patch');
                     this._patchRequests = this._patchRequests.concat(evt);
 
                     this._initPromise.then(() => {
@@ -438,34 +443,24 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         }
                     })
                 });
-                
+
+                var onPatch = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
+                    if (!isRendering) {
+                        this.trigger('quiet');
+                    }
+                    this.el.classList.add('first-patch-complete');
+                    this.component.trigger('patch');
+                };
+                this.on('patch', onPatch);                
 
                 Object.seal(this);
 
                 return this._initPromise = this.initRootComponent();
             })
             .then(result => {
-                window.dispatchEvent(
-                    new CustomEvent('weddellinit', {
-                        detail: { app: this }
-                    })
-                );
-
-                var quietCallback = debounce(() => {
-                    this.trigger('quiet');
-                }, this.quietInterval);
-                
-                var onPatch;
-                this.on('patch', onPatch = () => {
-                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
-                    if (isRendering) {
-                        this.awaitNextPatch()
-                            .then(onPatch)
-                    } else {
-                        quietCallback();
-                    }
-                    this.component.trigger('patch');
-                });
+                window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
+                this.el.classList.remove('initting');
                 this.el.classList.add('init-complete');
                 return result;
             })
