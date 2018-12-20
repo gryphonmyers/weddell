@@ -695,19 +695,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     bindEvent(funcText, opts={}) {
         var consts = this.constructor.Weddell.consts;
-        return `Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){
-                window.addEventListener('weddellinitbefore', function(evt) {
-                    resolve(evt.detail.app)
-                })
-            })).then(function(app) {
-                app.awaitComponentMount('${this.id}').then(function(component) {
-                    (function() {
-                        ${opts.preventDefault ? `event.preventDefault();` : ''}
-                        ${opts.stopPropagation ? `event.stopPropagation();` : ''}
-                        ${funcText};
-                    }.bind(component))()
-                })
-            })`;
+        return `${opts.preventDefault ? `event.preventDefault();` : ''}${opts.stopPropagation ? `event.stopPropagation();` : ''}Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){ window.addEventListener('weddellinitbefore', function(evt) { resolve(evt.detail.app) }) })).then(function(app) { app.awaitComponentMount('${this.id}').then(function(component){ (function() {${funcText}}.bind(component))()})})`;
     }
 
     bindEventValue(propName, opts) {

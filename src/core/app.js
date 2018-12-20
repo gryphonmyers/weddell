@@ -78,7 +78,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
-            value: {app: this, components: {} }
+            value: {app: this, components: {}, verbosity: opts.verbosity }
         });
 
         if (opts.verbosity > 0 && opts.styles) {
@@ -439,7 +439,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
                     this._initPromise.then(() => {
                         if (!this._patchPromise) {
-                            console.log('Queueing patch. State is', this.component.currentState ? this.component.currentState.componentName : null, this.el.outerHTML);
                             this._patchPromise = this.queuePatch();
                         }
                     })
@@ -448,7 +447,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 var onPatch = () => {
                     var isRendering = this.component.reduceComponents((acc, component) =>  acc || !!component.renderPromise, false)
                     if (!isRendering) {
-                        console.log('Quiet time!', this.component.currentState ? this.component.currentState.componentName : null, this.el.outerHTML);
                         this.trigger('quiet');
                     }
                     this.el.classList.add('first-patch-complete');
@@ -459,10 +457,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 Object.seal(this);
 
                 return this._initPromise = this.initRootComponent()
-                    .then(val => {
-                        console.log('done initting root component. root component state is', this.component.currentState ? this.component.currentState.componentName : null, this.el.outerHTML)
-                        return val;
-                    })
             })
             .then(result => {
                 window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
