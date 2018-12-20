@@ -155,8 +155,6 @@ module.exports = function(_Weddell){
                                                 })
                                                 .then(componentInstance => {
                                                     switch (machineStateMethod) {
-                                                        case 'onEnter':
-                                                        case 'onExit':
                                                         case 'onEnterState':
                                                         case 'onExitState':
                                                             return Promise.resolve(this.markDirty()).then(() => componentInstance)
