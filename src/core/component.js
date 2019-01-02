@@ -160,7 +160,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             value: Object.entries(components)
                 .map(entry => [entry[0].toLowerCase(), entry[1]])
                 .reduce((final, entry) => {
-                    final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
+                    final[entry[0]] = { weddellClassInput: entry[1] };
                     return final;
                 }, {})
         })
@@ -501,7 +501,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (filterFunc(this)) {
             callback(this)
         }
-        for (var componentName in this.components) {
+        for (var componentName in this._componentInstances) {
             Object.values(this._componentInstances[componentName])
                 .forEach(instance => instance.walkComponents(callback, filterFunc))
         }
@@ -512,7 +512,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (filterFunc(this)) {
             acc = callback(acc, this, depth)
         }
-        for (var componentName in this.components) {
+        for (var componentName in this._componentInstances) {
             acc = Object.values(this._componentInstances[componentName])
                 .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc, depth + 1), acc);
         }
@@ -591,7 +591,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return _generatedComponentClasses = val;
     }
 
-    static makeComponentClass(ComponentClass) {
+    static async makeComponentClass(ComponentClass) {
+        await ComponentClass;
         if (typeof ComponentClass === 'function' && !ComponentClass.isWeddellComponent) {
             //@TODO this is unreliable
             // We got a non-Component class function, so we assume it is a component factory function
@@ -599,7 +600,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             if (str in this.generatedComponentClasses) {
                 return this.generatedComponentClasses[str];
             } else {
-                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(ComponentClass.call(this, this.Weddell.classes.Component));
+                var result = await ComponentClass.call(this, this.Weddell.classes.Component);
+                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(result);
             }
         } else {
             return this.bootstrapComponentClass(ComponentClass);
@@ -629,14 +631,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    createChildComponentClass(componentName, ChildComponent) {
+    async createChildComponentClass(componentName, ChildComponent) {
         if (Array.isArray(ChildComponent)) {
             var initOpts = ChildComponent[2];
             var inputMappings = ChildComponent[1];
             ChildComponent = ChildComponent[0];
         }
-
-        ChildComponent = this.constructor.makeComponentClass(ChildComponent);
+        ChildComponent = await this.constructor.makeComponentClass(ChildComponent);
 
         var parentComponent = this;
         var root = this.root;
@@ -845,12 +846,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         
     }
 
-    makeComponentInstance(componentName, index) {
+    async makeComponentInstance(componentName, index) {
         componentName = componentName.toLowerCase();
+
+        if (!componentName in this.components) {
+            throw new Error(`${componentName} is not a recognized component name for component type ${this.constructor.name}`);
+        }
+
+        if (this.components[componentName].weddellClassInput) {
+            this.components[componentName] = this.createChildComponentClass(componentName, this.components[componentName].weddellClassInput);
+        }
+        var ComponentClass = await this.components[componentName];
 
         var opts = {
             store: defaults({
-                $componentID: this.components[componentName]._id,
+                $componentID: ComponentClass._id,
                 $instanceKey: index
             })
         };
@@ -861,7 +871,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             Object.assign(opts, this.extractSnapshotOpts(snapshot));
         }        
 
-        var instance = new (this.components[componentName])(opts);
+        var instance = new ComponentClass(opts);
         this.addComponentEvents(componentName, instance, index);
 
         instance.on('requestpatch', evt => {
@@ -878,14 +888,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return instances[index];
     }
 
-    getInitComponentInstance(componentName, index) {
+    async getInitComponentInstance(componentName, index) {
+        componentName = componentName.toLowerCase()
         var instance = this.getComponentInstance(componentName, index);
         if (!instance) {
-            return (this._componentInstances[componentName][index] = this.makeComponentInstance(componentName, index))
+            var instance = this._componentInstances[componentName][index] = await this.makeComponentInstance(componentName, index);
+            return instance
                 .init(this.components[componentName]._initOpts);
         }
 
-        return Promise.resolve(instance);
+        return instance
     }
 
     cleanupComponentInstances() {

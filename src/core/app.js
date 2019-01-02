@@ -225,7 +225,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.trigger('patchstyles');
     }
 
-    makeComponent() {
+    async makeComponent() {
         var id = this.rootNode.getAttribute('data-wdl-id');
         var snapshot = this._snapshotData;
         if (snapshot && id && snapshot.id !== id) {
@@ -265,8 +265,8 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 opts.el = snapshot.el;
             }
         }
-        
-        var component = new (this.Component)(opts);       
+        var Component = await this.Component;
+        var component = new Component(opts);       
 
         component.assignProps(
             Object.values(this.el.attributes)
@@ -416,7 +416,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         })
 
         return DOMReady
-            .then(() => {
+            .then(async () => {
                 window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: {  app: this } }));
 
                 this.initPatchers();
@@ -427,7 +427,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.el.classList.add('initting');
                 this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
-                this._component = this.makeComponent();
+                this._component = await this.makeComponent();
                     
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
