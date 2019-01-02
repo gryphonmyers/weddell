@@ -61,14 +61,14 @@ function makeBundles(entryDir, outputDir, optsArr) {
         })
 }
 var defaultBundleOpts = {
-    es6: false,
+    es6: true,
     dev: false,
     disc: false
 };
 
 function makeBundle(entryPath, fileName, outputDir, opts) {
     opts = _.defaults(opts, defaultBundleOpts);
-
+    
     uglify = opts.es6 ? uglifyComposer(uglifyES, console) : uglify;
     uglifyOpts = opts.es6 ? {} : {};
 
@@ -138,6 +138,7 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
     if (!opts.es6) {
         bundler.transform('babelify', {
             presets:['es2015'],
+            plugins: ['transform-regenerator'],
             global: true
         });
     }
