@@ -1,4 +1,4 @@
-var mix = require('mixwith-es5').mix;
+var mix = require('mixwith').mix;
 var App = require('./app');
 var Component = require('./component');
 var Store = require('./store');

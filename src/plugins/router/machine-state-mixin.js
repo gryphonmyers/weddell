@@ -1,7 +1,5 @@
-var mix = require('mixwith-es5').mix;
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
-var DeDupe = require('mixwith-es5').DeDupe;
-var Mixin = require('mixwith-es5').Mixin;
+const { Mixin, DeDupe, mix } = require('mixwith');
 
 var MachineState = Mixin(function(superClass) {
     return class extends mix(superClass).with(DeDupe(EventEmitterMixin)) {

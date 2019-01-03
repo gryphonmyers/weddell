@@ -1,5 +1,5 @@
 var EventEmitterMixin = require('./event-emitter-mixin');
-var mix = require('mixwith-es5').mix;
+var mix = require('mixwith').mix;
 
 var inputCache = {};
 

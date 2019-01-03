@@ -1,4 +1,4 @@
-const defaults = require('object.defaults/immutable');
+const defaults = require('defaults-es6');
 
 module.exports = class VdomThunk {
     clone(opts) {

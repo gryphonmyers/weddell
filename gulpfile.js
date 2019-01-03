@@ -135,14 +135,6 @@ function makeBundle(entryPath, fileName, outputDir, opts) {
         bundler.plugin(watchify);
     }
 
-    if (!opts.es6) {
-        bundler.transform('babelify', {
-            presets:['es2015'],
-            plugins: ['transform-regenerator'],
-            global: true
-        });
-    }
-
     if (!opts.dev && !opts.es6) { //right now we skip uglify on es6 because newer uglifyify versions supporting es6 are broken
         bundler.transform(uglifyify, {global: true, ignore: ['*.css', '*.pug']});
     }

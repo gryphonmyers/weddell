@@ -1,11 +1,10 @@
 const DOMReady = require('document-ready-promise')();
-const defaults = require('object.defaults/immutable');
-const mix = require('mixwith-es5').mix;
+const defaults = require('defaults-es6');
+const mix = require('mixwith').mix;
 const EventEmitterMixin = require('./event-emitter-mixin');
 const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
-const debounce = require('debounce');
 const virtualize = require('vdom-virtualize');
 
 const defaultOpts = {

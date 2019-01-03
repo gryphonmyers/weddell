@@ -2,7 +2,7 @@ var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('defaults-es6');
 var difference = require('../utils/difference');
-var mix = require('mixwith-es5').mix;
+var mix = require('mixwith').mix;
 var uniq = require('array-uniq');
 
 var defaultOpts = {

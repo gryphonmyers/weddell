@@ -1,5 +1,5 @@
-var Mixin = require('mixwith-es5').Mixin;
-var mix = require('mixwith-es5').mix;
+var Mixin = require('mixwith').Mixin;
+var mix = require('mixwith').mix;
 var Router = require('./router');
 var StateMachineMixin = require('./state-machine-mixin');
 var MachineStateMixin = require('./machine-state-mixin');

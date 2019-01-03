@@ -1,9 +1,8 @@
-var defaults = require('object.defaults/immutable');
+var defaults = require('defaults-es6');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
-var compact = require('array-compact');
 var defaultOpts = {};
-var mix = require('mixwith-es5').mix;
+const { mix } = require('mixwith');
 var EventEmitterMixin = require('../../core/event-emitter-mixin');
 
 function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
@@ -92,7 +91,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                         return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
                     }))
                     .then(results => {
-                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
+                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, results.filter(val => val)) : null)
                             .then(() => matches)
                             .then(matches => {
                                 if (isInitialRoute || shouldReplaceState) {

@@ -196,6 +196,28 @@ function shim (obj) {
 }
 
 },{}],6:[function(require,module,exports){
+var makeDefaultsFunc = require('./make-defaults-func');
+module.exports = makeDefaultsFunc(false);
+
+},{"./make-defaults-func":7}],7:[function(require,module,exports){
+module.exports = function(deep, merge) {
+    return function defaults() {
+        return Array.from(arguments).slice(1).reduce((sourceObj, obj) => {
+            Object.entries(obj).forEach((entry) => {
+                if (typeof sourceObj[entry[0]] === 'undefined') {
+                    sourceObj[entry[0]] = entry[1];
+                } else if (deep && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && val.constructor.name === 'Object')) {
+                    sourceObj[entry[0]] = defaults(sourceObj[entry[0]], entry[1]);
+                } else if (merge && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && Array.isArray(val))) {
+                    sourceObj[entry[0]] = merge(sourceObj[entry[0]], entry[1]);
+                }
+            });
+            return sourceObj;
+        }, Object.assign({}, arguments[0]));
+    }
+};
+
+},{}],8:[function(require,module,exports){
 (function (document, promise) {
   if (typeof module !== 'undefined') module.exports = promise
   else document.ready = promise
@@ -222,12 +244,8 @@ function shim (obj) {
   })
 })
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
@@ -241,342 +259,373 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     factory(mod.exports);
     global.mixwith = mod.exports;
   }
-})(undefined, function (exports) {
+})(this, function (exports) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  var _appliedMixin = '__mixwith_appliedMixin';
 
-  var apply = exports.apply = function (superclass, mixin) {
-    var application = mixin(superclass);
-    application.prototype[_appliedMixin] = unwrap(mixin);
-    return application;
-  };
+  const _cachedApplicationRef = exports._cachedApplicationRef = Symbol('_cachedApplicationRef');
 
-  var isApplicationOf = exports.isApplicationOf = function (proto, mixin) {
-    return proto.hasOwnProperty(_appliedMixin) && proto[_appliedMixin] === unwrap(mixin);
-  };
+  const _mixinRef = exports._mixinRef = Symbol('_mixinRef');
 
-  var hasMixin = exports.hasMixin = function (o, mixin) {
-    while (o != null) {
-      if (isApplicationOf(o, mixin)) return true;
-      o = Object.getPrototypeOf(o);
-    }
-    return false;
-  };
+  const _originalMixin = exports._originalMixin = Symbol('_originalMixin');
 
-  var _wrappedMixin = '__mixwith_wrappedMixin';
-
-  var wrap = exports.wrap = function (mixin, wrapper) {
+  const wrap = exports.wrap = (mixin, wrapper) => {
     Object.setPrototypeOf(wrapper, mixin);
-    if (!mixin[_wrappedMixin]) {
-      mixin[_wrappedMixin] = mixin;
+    if (!mixin[_originalMixin]) {
+      mixin[_originalMixin] = mixin;
     }
     return wrapper;
   };
 
-  var unwrap = exports.unwrap = function (wrapper) {
-    return wrapper[_wrappedMixin] || wrapper;
-  };
+  const Cached = exports.Cached = mixin => wrap(mixin, superclass => {
+    // Get or create a symbol used to look up a previous application of mixin
+    // to the class. This symbol is unique per mixin definition, so a class will have N
+    // applicationRefs if it has had N mixins applied to it. A mixin will have
+    // exactly one _cachedApplicationRef used to store its applications.
+    let applicationRef = mixin[_cachedApplicationRef];
+    if (!applicationRef) {
+      applicationRef = mixin[_cachedApplicationRef] = Symbol(mixin.name);
+    }
+    // Look up an existing application of `mixin` to `c`, return it if found.
+    if (superclass.hasOwnProperty(applicationRef)) {
+      return superclass[applicationRef];
+    }
+    // Apply the mixin
+    let application = mixin(superclass);
+    // Cache the mixin application on the superclass
+    superclass[applicationRef] = application;
+    return application;
+  });
 
-  var _cachedApplications = '__mixwith_cachedApplications';
-
-  var Cached = exports.Cached = function (mixin) {
-    return wrap(mixin, function (superclass) {
-      // Get or create a symbol used to look up a previous application of mixin
-      // to the class. This symbol is unique per mixin definition, so a class will have N
-      // applicationRefs if it has had N mixins applied to it. A mixin will have
-      // exactly one _cachedApplicationRef used to store its applications.
-
-      var cachedApplications = superclass[_cachedApplications];
-      if (!cachedApplications) {
-        cachedApplications = superclass[_cachedApplications] = new Map();
-      }
-
-      var application = cachedApplications.get(mixin);
-      if (!application) {
-        application = mixin(superclass);
-        cachedApplications.set(mixin, application);
-      }
-
-      return application;
-    });
-  };
-
-  var DeDupe = exports.DeDupe = function (mixin) {
-    return wrap(mixin, function (superclass) {
-      return hasMixin(superclass.prototype, mixin) ? superclass : mixin(superclass);
-    });
-  };
-
-  var HasInstance = exports.HasInstance = function (mixin) {
-    if (Symbol && Symbol.hasInstance && !mixin[Symbol.hasInstance]) {
+  const HasInstance = exports.HasInstance = mixin => {
+    if (Symbol.hasInstance && !mixin.hasOwnProperty(Symbol.hasInstance)) {
       Object.defineProperty(mixin, Symbol.hasInstance, {
-        value: function value(o) {
-          return hasMixin(o, mixin);
+        value: function (o) {
+          const originalMixin = this[_originalMixin];
+          while (o != null) {
+            if (o.hasOwnProperty(_mixinRef) && o[_mixinRef] === originalMixin) {
+              return true;
+            }
+            o = Object.getPrototypeOf(o);
+          }
+          return false;
         }
       });
     }
     return mixin;
   };
 
-  var BareMixin = exports.BareMixin = function (mixin) {
-    return wrap(mixin, function (s) {
-      return apply(s, mixin);
-    });
-  };
+  const BareMixin = exports.BareMixin = mixin => wrap(mixin, superclass => {
+    // Apply the mixin
+    let application = mixin(superclass);
 
-  var Mixin = exports.Mixin = function (mixin) {
-    return DeDupe(Cached(BareMixin(mixin)));
-  };
-
-  var mix = exports.mix = function (superclass) {
-    return new MixinBuilder(superclass);
-  };
-
-  var MixinBuilder = function () {
-    function MixinBuilder(superclass) {
-      _classCallCheck(this, MixinBuilder);
-
-      this.superclass = superclass || function () {
-        function _class() {
-          _classCallCheck(this, _class);
-        }
-
-        return _class;
-      }();
-    }
-
-    _createClass(MixinBuilder, [{
-      key: 'with',
-      value: function _with() {
-        for (var _len = arguments.length, mixins = Array(_len), _key = 0; _key < _len; _key++) {
-          mixins[_key] = arguments[_key];
-        }
-
-        return mixins.reduce(function (c, m) {
-          return m(c);
-        }, this.superclass);
-      }
-    }]);
-
-    return MixinBuilder;
-  }();
-});
-
-},{}],8:[function(require,module,exports){
-'use strict';
-
-var slice = require('array-slice');
-
-var defaults = require('./mutable');
-
-/**
- * Extends an empty object with properties of one or
- * more additional `objects`
- *
- * @name .defaults.immutable
- * @param  {Object} `objects`
- * @return {Object}
- * @api public
- */
-
-module.exports = function immutableDefaults() {
-  var args = slice(arguments);
-  return defaults.apply(null, [{}].concat(args));
-};
-
-},{"./mutable":9,"array-slice":11}],9:[function(require,module,exports){
-'use strict';
-
-var each = require('array-each');
-var slice = require('array-slice');
-var forOwn = require('for-own');
-var isObject = require('isobject');
-
-/**
- * Extends the `target` object with properties of one or
- * more additional `objects`
- *
- * @name .defaults
- * @param  {Object} `target` The target object. Pass an empty object to shallow clone.
- * @param  {Object} `objects`
- * @return {Object}
- * @api public
- */
-
-module.exports = function defaults(target, objects) {
-  if (target == null) {
-    return {};
-  }
-
-  each(slice(arguments, 1), function(obj) {
-    if (isObject(obj)) {
-      forOwn(obj, function(val, key) {
-        if (target[key] == null) {
-          target[key] = val;
-        }
-      });
-    }
+    // Attach a reference from mixin applition to wrapped mixin for RTTI
+    // mixin[@@hasInstance] should use this.
+    application.prototype[_mixinRef] = mixin[_originalMixin];
+    return application;
   });
 
-  return target;
-};
+  const Mixin = exports.Mixin = mixin => Cached(HasInstance(BareMixin(mixin)));
 
-},{"array-each":10,"array-slice":11,"for-own":13,"isobject":14}],10:[function(require,module,exports){
+  const mix = exports.mix = superClass => new MixinBuilder(superClass);
+
+  class MixinBuilder {
+    constructor(superclass) {
+      this.superclass = superclass;
+    }
+
+    with() {
+      return Array.from(arguments).reduce((c, m) => m(c), this.superclass);
+    }
+
+  }
+});
+},{}],10:[function(require,module,exports){
 /*!
- * array-each <https://github.com/jonschlinkert/array-each>
- *
- * Copyright (c) 2015, 2017, Jon Schlinkert.
- * Released under the MIT License.
- */
+* vdom-virtualize
+* Copyright 2014 by Marcel Klehr <mklehr@gmx.net>
+*
+* (MIT LICENSE)
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+* THE SOFTWARE.
+*/
+var VNode = require("virtual-dom/vnode/vnode")
+  , VText = require("virtual-dom/vnode/vtext")
+  , VComment = require("./vcomment")
 
-'use strict';
+module.exports = createVNode
+
+function createVNode(domNode, keyAttribute) {
+  keyAttribute = keyAttribute || null // XXX: Leave out `key` for now... merely used for (re-)ordering
+
+  if(domNode.nodeType == 1) return createFromElement(domNode, keyAttribute)
+  if(domNode.nodeType == 3) return createFromTextNode(domNode, keyAttribute)
+  if(domNode.nodeType == 8) return createFromCommentNode(domNode, keyAttribute)
+  return
+}
+
+function createFromTextNode(tNode) {
+  return new VText(tNode.nodeValue)
+}
+
+
+function createFromCommentNode(cNode) {
+  return new VComment(cNode.nodeValue)
+}
+
+
+function createFromElement(el, keyAttribute) {
+  var tagName = el.tagName
+  , namespace = el.namespaceURI == 'http://www.w3.org/1999/xhtml'? null : el.namespaceURI
+  , properties = getElementProperties(tagName, el)
+  , children = []
+  , key = (keyAttribute && el.getAttribute(keyAttribute)) || null
+
+  for (var i = 0; i < el.childNodes.length; i++) {
+    children.push(createVNode(el.childNodes[i], keyAttribute))
+  }
+
+  return new VNode(tagName, properties, children, key, namespace)
+}
+
+
+function getElementProperties(tagName, el) {
+  var obj = {}
+
+  for(var i=0; i<props.length; i++) {
+    var propName = props[i]
+    if(!el[propName] || (elementReadOnlyProperties[tagName.toLowerCase()] && elementReadOnlyProperties[tagName.toLowerCase()].indexOf(propName) > -1)) continue
+
+    // Special case: style
+    // .style is a DOMStyleDeclaration, thus we need to iterate over all
+    // rules to create a hash of applied css properties.
+    //
+    // You can directly set a specific .style[prop] = value so patching with vdom
+    // is possible.
+    if("style" == propName) {
+      var css = {}
+        , styleProp
+      if ('undefined' !== typeof el.style.length) {
+        for(var j=0; j<el.style.length; j++) {
+          styleProp = el.style[j]
+          css[styleProp] = el.style.getPropertyValue(styleProp) // XXX: add support for "!important" via getPropertyPriority()!
+        }
+      } else { // IE8
+        for (var styleProp in el.style) {
+          if (el.style[styleProp] && el.style.hasOwnProperty(styleProp)) {
+            css[styleProp] = el.style[styleProp];
+          }
+        }
+      }
+
+      if(Object.keys(css).length) obj[propName] = css
+      continue
+    }
+
+    // https://msdn.microsoft.com/en-us/library/cc848861%28v=vs.85%29.aspx
+    // The img element does not support the HREF content attribute.
+    // In addition, the href property is read-only for the img Document Object Model (DOM) object
+    if (el.tagName.toLowerCase() === 'img' && propName === 'href') {
+      continue;
+    }
+
+    // Special case: dataset
+    // we can iterate over .dataset with a simple for..in loop.
+    // The all-time foo with data-* attribs is the dash-snake to camelCase
+    // conversion.
+    //
+    // *This is compatible with h(), but not with every browser, thus this section was removed in favor
+    // of attributes (specified below)!*
+    //
+    // .dataset properties are directly accessible as transparent getters/setters, so
+    // patching with vdom is possible.
+    /*if("dataset" == propName) {
+      var data = {}
+      for(var p in el.dataset) {
+        data[p] = el.dataset[p]
+      }
+      obj[propName] = data
+      return
+    }*/
+
+    // Special case: attributes
+    // these are a NamedNodeMap, but we can just convert them to a hash for vdom,
+    // because of https://github.com/Matt-Esch/virtual-dom/blob/master/vdom/apply-properties.js#L57
+    if("attributes" == propName){
+      var atts = Array.prototype.slice.call(el[propName]);
+      var hash = {}
+      for(var k=0; k<atts.length; k++){
+        var name = atts[k].name;
+        if(obj[name] || obj[attrBlacklist[name]]) continue;
+        hash[name] = el.getAttribute(name);
+      }
+      obj[propName] = hash;
+      continue
+    }
+    if("tabIndex" == propName && el.tabIndex === -1) continue
+
+    // Special case: contentEditable
+    // browser use 'inherit' by default on all nodes, but does not allow setting it to ''
+    // diffing virtualize dom will trigger error
+    // ref: https://github.com/Matt-Esch/virtual-dom/issues/176
+    if("contentEditable" == propName && el[propName] === 'inherit') continue
+
+    if('object' === typeof el[propName]) continue
+
+    // default: just copy the property
+    obj[propName] = el[propName]
+  }
+
+  return obj
+}
+
+var elementReadOnlyProperties = {
+  'select': [
+    'type'
+  ]
+};
 
 /**
- * Loop over each item in an array and call the given function on every element.
- *
- * ```js
- * each(['a', 'b', 'c'], function(ele) {
- *   return ele + ele;
- * });
- * //=> ['aa', 'bb', 'cc']
- *
- * each(['a', 'b', 'c'], function(ele, i) {
- *   return i + ele;
- * });
- * //=> ['0a', '1b', '2c']
- * ```
- *
- * @name each
- * @alias forEach
- * @param {Array} `array`
- * @param {Function} `fn`
- * @param {Object} `thisArg` (optional) pass a `thisArg` to be used as the context in which to call the function.
- * @return {undefined}
- * @api public
+ * DOMNode property white list
+ * Taken from https://github.com/Raynos/react/blob/dom-property-config/src/browser/ui/dom/DefaultDOMPropertyConfig.js
  */
+var props =
 
-module.exports = function each(arr, cb, thisArg) {
-  if (arr == null) return;
+module.exports.properties = [
+ "accept"
+,"accessKey"
+,"action"
+,"alt"
+,"async"
+,"autoComplete"
+,"autoPlay"
+,"cellPadding"
+,"cellSpacing"
+,"checked"
+,"className"
+,"colSpan"
+,"content"
+,"contentEditable"
+,"controls"
+,"crossOrigin"
+,"data"
+//,"dataset" removed since attributes handles data-attributes
+,"defer"
+,"dir"
+,"download"
+,"draggable"
+,"encType"
+,"formNoValidate"
+,"href"
+,"hrefLang"
+,"htmlFor"
+,"httpEquiv"
+,"icon"
+,"id"
+,"label"
+,"lang"
+,"list"
+,"loop"
+,"max"
+,"mediaGroup"
+,"method"
+,"min"
+,"multiple"
+,"muted"
+,"name"
+,"noValidate"
+,"pattern"
+,"placeholder"
+,"poster"
+,"preload"
+,"radioGroup"
+,"readOnly"
+,"rel"
+,"required"
+,"rowSpan"
+,"sandbox"
+,"scope"
+,"scrollLeft"
+,"scrolling"
+,"scrollTop"
+,"selected"
+,"span"
+,"spellCheck"
+,"src"
+,"srcDoc"
+,"srcSet"
+,"start"
+,"step"
+,"style"
+,"tabIndex"
+,"target"
+,"title"
+,"type"
+,"value"
 
-  var len = arr.length;
-  var idx = -1;
+// Non-standard Properties
+,"autoCapitalize"
+,"autoCorrect"
+,"property"
 
-  while (++idx < len) {
-    var ele = arr[idx];
-    if (cb.call(thisArg, ele, idx, arr) === false) {
-      break;
-    }
-  }
-};
+, "attributes"
+]
 
-},{}],11:[function(require,module,exports){
-/*!
- * array-slice <https://github.com/jonschlinkert/array-slice>
- *
- * Copyright (c) 2014-2015, 2017, Jon Schlinkert.
- * Released under the MIT License.
- */
+var attrBlacklist =
+module.exports.attrBlacklist = {
+  'class': 'className'
+}
 
-'use strict';
+},{"./vcomment":11,"virtual-dom/vnode/vnode":43,"virtual-dom/vnode/vtext":45}],11:[function(require,module,exports){
+module.exports = VirtualComment
 
-module.exports = function slice(arr, start, end) {
-  var len = arr.length;
-  var range = [];
+function VirtualComment(text) {
+  this.text = String(text)
+}
 
-  start = idx(arr, start);
-  end = idx(arr, end, len);
+VirtualComment.prototype.type = 'Widget'
 
-  while (start < end) {
-    range.push(arr[start++]);
-  }
-  return range;
-};
+VirtualComment.prototype.init = function() {
+  return document.createComment(this.text)
+}
 
-function idx(arr, pos, end) {
-  var len = arr.length;
-
-  if (pos == null) {
-    pos = end || 0;
-  } else if (pos < 0) {
-    pos = Math.max(len + pos, 0);
-  } else {
-    pos = Math.min(pos, len);
-  }
-
-  return pos;
+VirtualComment.prototype.update = function(previous, domNode) {
+  if(this.text === previous.text) return
+  domNode.nodeValue = this.text
 }
 
 },{}],12:[function(require,module,exports){
-/*!
- * for-in <https://github.com/jonschlinkert/for-in>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function forIn(obj, fn, thisArg) {
-  for (var key in obj) {
-    if (fn.call(thisArg, obj[key], key, obj) === false) {
-      break;
-    }
-  }
-};
-
-},{}],13:[function(require,module,exports){
-/*!
- * for-own <https://github.com/jonschlinkert/for-own>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-var forIn = require('for-in');
-var hasOwn = Object.prototype.hasOwnProperty;
-
-module.exports = function forOwn(obj, fn, thisArg) {
-  forIn(obj, function(val, key) {
-    if (hasOwn.call(obj, key)) {
-      return fn.call(thisArg, obj[key], key, obj);
-    }
-  });
-};
-
-},{"for-in":12}],14:[function(require,module,exports){
-/*!
- * isobject <https://github.com/jonschlinkert/isobject>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
-};
-
-},{}],15:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":27}],16:[function(require,module,exports){
+},{"./vdom/create-element.js":24}],13:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":50}],17:[function(require,module,exports){
+},{"./vtree/diff.js":47}],14:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":35}],18:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":32}],15:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -684,7 +733,7 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],19:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -706,7 +755,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":22}],20:[function(require,module,exports){
+},{"individual/one-version":19}],17:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -727,7 +776,7 @@ if (typeof document !== 'undefined') {
 module.exports = doccy;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":2}],21:[function(require,module,exports){
+},{"min-document":2}],18:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -750,7 +799,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],22:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -774,14 +823,14 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":21}],23:[function(require,module,exports){
+},{"./index.js":18}],20:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -791,12 +840,12 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],25:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":30}],26:[function(require,module,exports){
+},{"./vdom/patch.js":27}],23:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -895,7 +944,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":41,"is-object":23}],27:[function(require,module,exports){
+},{"../vnode/is-vhook.js":38,"is-object":20}],24:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -943,7 +992,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":39,"../vnode/is-vnode.js":42,"../vnode/is-vtext.js":43,"../vnode/is-widget.js":44,"./apply-properties":26,"global/document":20}],28:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":36,"../vnode/is-vnode.js":39,"../vnode/is-vtext.js":40,"../vnode/is-widget.js":41,"./apply-properties":23,"global/document":17}],25:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -1030,7 +1079,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],29:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -1183,7 +1232,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":44,"../vnode/vpatch.js":47,"./apply-properties":26,"./update-widget":31}],30:[function(require,module,exports){
+},{"../vnode/is-widget.js":41,"../vnode/vpatch.js":44,"./apply-properties":23,"./update-widget":28}],27:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -1265,7 +1314,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":27,"./dom-index":28,"./patch-op":29,"global/document":20,"x-is-array":24}],31:[function(require,module,exports){
+},{"./create-element":24,"./dom-index":25,"./patch-op":26,"global/document":17,"x-is-array":21}],28:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -1282,7 +1331,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":44}],32:[function(require,module,exports){
+},{"../vnode/is-widget.js":41}],29:[function(require,module,exports){
 'use strict';
 
 module.exports = AttributeHook;
@@ -1319,7 +1368,7 @@ AttributeHook.prototype.unhook = function (node, prop, next) {
 
 AttributeHook.prototype.type = 'AttributeHook';
 
-},{}],33:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -1348,7 +1397,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":19}],34:[function(require,module,exports){
+},{"ev-store":16}],31:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -1367,7 +1416,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],35:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -1506,7 +1555,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":40,"../vnode/is-vhook":41,"../vnode/is-vnode":42,"../vnode/is-vtext":43,"../vnode/is-widget":44,"../vnode/vnode.js":46,"../vnode/vtext.js":48,"./hooks/ev-hook.js":33,"./hooks/soft-set-hook.js":34,"./parse-tag.js":36,"x-is-array":24}],36:[function(require,module,exports){
+},{"../vnode/is-thunk":37,"../vnode/is-vhook":38,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vnode.js":43,"../vnode/vtext.js":45,"./hooks/ev-hook.js":30,"./hooks/soft-set-hook.js":31,"./parse-tag.js":33,"x-is-array":21}],33:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -1562,7 +1611,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":18}],37:[function(require,module,exports){
+},{"browser-split":15}],34:[function(require,module,exports){
 'use strict';
 
 var DEFAULT_NAMESPACE = null;
@@ -1877,7 +1926,7 @@ function SVGAttributeNamespace(value) {
   }
 }
 
-},{}],38:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -1941,7 +1990,7 @@ function isChildren(x) {
     return typeof x === 'string' || isArray(x);
 }
 
-},{"./hooks/attribute-hook":32,"./index.js":35,"./svg-attribute-namespace":37,"x-is-array":24}],39:[function(require,module,exports){
+},{"./hooks/attribute-hook":29,"./index.js":32,"./svg-attribute-namespace":34,"x-is-array":21}],36:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -1983,14 +2032,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":40,"./is-vnode":42,"./is-vtext":43,"./is-widget":44}],40:[function(require,module,exports){
+},{"./is-thunk":37,"./is-vnode":39,"./is-vtext":40,"./is-widget":41}],37:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],41:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -1999,7 +2048,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],42:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -2008,7 +2057,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":45}],43:[function(require,module,exports){
+},{"./version":42}],40:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -2017,17 +2066,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":45}],44:[function(require,module,exports){
+},{"./version":42}],41:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],45:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = "2"
 
-},{}],46:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -2101,7 +2150,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":40,"./is-vhook":41,"./is-vnode":42,"./is-widget":44,"./version":45}],47:[function(require,module,exports){
+},{"./is-thunk":37,"./is-vhook":38,"./is-vnode":39,"./is-widget":41,"./version":42}],44:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -2125,7 +2174,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":45}],48:[function(require,module,exports){
+},{"./version":42}],45:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -2137,7 +2186,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":45}],49:[function(require,module,exports){
+},{"./version":42}],46:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -2197,7 +2246,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":41,"is-object":23}],50:[function(require,module,exports){
+},{"../vnode/is-vhook":38,"is-object":20}],47:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -2626,29 +2675,32 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":39,"../vnode/is-thunk":40,"../vnode/is-vnode":42,"../vnode/is-vtext":43,"../vnode/is-widget":44,"../vnode/vpatch":47,"./diff-props":49,"x-is-array":24}],51:[function(require,module,exports){
+},{"../vnode/handle-thunk":36,"../vnode/is-thunk":37,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vpatch":44,"./diff-props":46,"x-is-array":21}],48:[function(require,module,exports){
 const DOMReady = require('document-ready-promise')();
-const defaults = require('object.defaults/immutable');
-const mix = require('mixwith-es5').mix;
+const defaults = require('defaults-es6');
+const mix = require('mixwith').mix;
 const EventEmitterMixin = require('./event-emitter-mixin');
 const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
-const createElement = require('virtual-dom/create-element');
-
-const VDOMWidget = require('./vdom-widget');
+const virtualize = require('vdom-virtualize');
 
 const defaultOpts = {
-    markupTransforms: [],
-    stylesTransforms: [],
-    childStylesFirst: true
+    childStylesFirst: true,
+    verbosity: 0,
+    quietInterval: 100
 };
 
+const patchInterval = 33.334;
+
 function createStyleEl(id, className=null) {
-    var styleEl = document.createElement('style');
-    styleEl.setAttribute('type', 'text/css');
-    document.head.appendChild(styleEl);
-    styleEl.id = id;
+    var styleEl = document.getElementById(id)
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.setAttribute('type', 'text/css');
+        document.head.appendChild(styleEl);
+        styleEl.id = id;
+    }
     styleEl.classList.add(className);
     return styleEl;
 }
@@ -2665,79 +2717,88 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        if (opts.styles) {
-            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
-        }
         this.styles = opts.styles || this.constructor.styles;
         this.renderOrder = ['markup', 'styles'];
+        this.quietInterval = opts.quietInterval;
         this.pipelineInitMethods = opts.pipelineInitMethods;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.shouldRender = {};
-        this.renderInterval = opts.renderInterval;
-        this.stylesRenderFormat = opts.stylesRenderFormat;
-        this.markupRenderFormat = opts.markupRenderFormat;
-        this.markupTransforms = opts.markupTransforms;
-        this.stylesTransforms = opts.stylesTransforms;
-        this.childStylesFirst = opts.childStylesFirst;
+        this.childStylesFirst = opts.childStylesFirst; /*@TODO use this again*/
 
         Object.defineProperties(this, {
             Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
             component: { get: () => this._component },
-            vTree: { value: h('div'), writable: true },
             el: { get: () => this._el },
+            _liveWidget: { value: null, writable: true },
+            _lastPatchStartTime: { value: Date.now(), writable: true},
             _el: { value: null, writable: true },
+            _initPromise: { value: null, writable: true },
             _elInput: { value: opts.el },
             _patchPromise: { value: null, writable: true },
+            _snapshotData: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
             _RAFCallback: { value: null, writable: true },
             _patchRequests: { value: [], writable: true },
             _patchPromise: { value: null, writable: true },
-            _component: { value: null, writable: true }
+            _component: { value: null, writable: true },
+            _widget: { value: null, writable: true },
+            _createdComponents: { value: [] }
         })
 
         var consts = this.constructor.Weddell.consts;
 
         if (!this.Component) {
-            throw "There is no base component set for this app. Can't mount.";
+            throw new Error(`There is no base component set for this app. Can't mount.`);
         }
         if (consts.VAR_NAME in window) {
-            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+            throw new Error(`Namespace collision for ${consts.VAR_NAME} on window object. Aborting.`);
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
-            value: {app: this, components: {} }
+            value: {app: this, components: {}, verbosity: opts.verbosity }
         });
 
+        if (opts.verbosity > 0 && opts.styles) {
+            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
+        }
+
         Object.defineProperties(this, {
-            rootNode: { value: createElement(this.vTree), writable: true }
+            rootNode: { value: null, writable: true }
         })
     }
+
+    onPatch() {}
 
     patchDOM(patchRequests) {
         if (!this.rootNode.parentNode) {
             this.el.appendChild(this.rootNode);
         }
-
-        this.component.refreshPendingWidgets();
-        var newTree = new VDOMWidget({component: this.component});
-        var diffTree = VDOMWidget.pruneNullNodes(newTree.vTree);//this.component.constructor.pruneNullNodes(newTree);
-        var patches = VDOMDiff(this.vTree, diffTree);
+        this.component.refreshWidgets();
+        var patches = VDOMDiff(this._widget, this.component._widget);
         var rootNode = VDOMPatch(this.rootNode, patches);
         this.rootNode = rootNode;
-        this.vTree = newTree;
-
-        var mountedComponents = this.component
-            .reduceComponents((acc, component) => Object.assign(acc, component._lastRenderedComponents), {})
-
-        this.component.walkComponents(component => {
-                return component.isMounted ? component.unmount() : component.mount()
-            },
-            component => component !== this.component && component.isMounted !== (component.id in mountedComponents));
+        this._widget = this.component._widget;
 
         this.trigger('patchdom');
     }
 
+    awaitComponentMount(id) {
+        return new Promise(resolve => {            
+            Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
+                this.on('createcomponent', evt => {
+                    if (evt.component.id === id) {
+                        resolve(evt.component)
+                    }
+                })
+            }))
+            .then(component => {
+                component.awaitMount().then(() => resolve(component));
+            })
+        })
+    }
+
     patchStyles(patchRequests) {
+        
         var results = patchRequests.reduceRight((acc, item) => {
             if (!(item.classId in acc.classes)) {
                 acc.classes[item.classId] = item;
@@ -2779,6 +2840,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         staticStyles.concat(instanceStyles)
             .reduce((final, obj) => {
                 var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
+
                 var styleEl;
 
                 if (!obj.needsPatch) {
@@ -2797,7 +2859,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
                             prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
                         }
-                        
                     }
 
                     if (styleEl) {
@@ -2809,7 +2870,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     styles = obj.styles || '';
 
                     if (!styles) {
-                        if (styleIndex === -1) {
+                        if (styleIndex > -1) {
                             final.splice(styleIndex, 1);
                         }
                         return final;
@@ -2836,53 +2897,109 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             .forEach(el => {
                 document.head.removeChild(el);
             });
+        //@TODO could probably make this more succinct by using Virtual-dom with style elements
 
         this.trigger('patchstyles');
     }
 
-    makeComponent() {
-        var component = new (this.Component)({
-            isRoot: true
-        });
+    async makeComponent() {
+        var id = this.rootNode.getAttribute('data-wdl-id');
+        var snapshot = this._snapshotData;
+        if (snapshot && id && snapshot.id !== id) {
+            throw new Error('Snapshot id does not match root element id.')
+        }
 
-        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
-            finalObj[attr.name] = attr.value;
-            return finalObj;
-        }, {}))
+        var opts = {
+            isRoot: true,
+            id,
+        };
 
-        return component
+        if (snapshot) {
+            var addElReferences = (obj, parentEl) => {
+                var el = parentEl.querySelector(`[data-wdl-id="${obj.id}"]`);
+    
+                if (el) {
+                    obj.el = el;
+
+                    if (obj.componentSnapshots) {
+                        for (var componentName in obj.componentSnapshots) {
+                            for (var index in obj.componentSnapshots[componentName]) {
+                                addElReferences(obj.componentSnapshots[componentName][index], el);
+                            }
+                        }
+                    }
+                }
+                return obj;                
+            };
+            snapshot = addElReferences(snapshot, this.el);
+            if (snapshot.state) {
+                opts.initialState = snapshot.state;
+            }
+            if (snapshot.componentSnapshots) {
+                opts.componentSnapshots = snapshot.componentSnapshots;
+            }
+            if (snapshot.el) {
+                opts.el = snapshot.el;
+            }
+        }
+        var Component = await this.Component;
+        var component = new Component(opts);       
+
+        component.assignProps(
+            Object.values(this.el.attributes)
+                .reduce((finalObj, attr) => {
+                    finalObj[attr.name] = attr.value;
+                    return finalObj;
+                }, {})
+        );
+
+        return component;
     }
 
-    queuePatch(patchRequests) {
-        if (!this._patchPromise) {
-            var resolveFunc;
-            this._patchPromise = new Promise((resolve) => {
-                resolveFunc = resolve;
-            })
-            .then(patchRequests => {
-                this._patchPromise = null;
-                this.constructor.patchMethods.forEach(patcher => {
-                    this[patcher](patchRequests)
-                });
-                this.trigger('patch');
-                return this.onPatch()
-            })
-
-            this._patchRequests = [].concat(patchRequests);
-
+    queuePatch() {
+        var resolveFunc;
+        var promise = new Promise((resolve) => {
+            resolveFunc = resolve;
+        })
+        .then(currPatchRequests => {
+            return this.constructor.patchMethods.reduce((acc, patcher) => {
+                    return acc
+                        .then(() => this[patcher](currPatchRequests))
+                }, Promise.resolve())
+                .then(() => {
+                    if (this._patchRequests.length) {
+                        return Promise.reject('Rerender');
+                    }
+                })
+                .then(() => {
+                    this._patchPromise = null;
+                    this.trigger('patch');
+                    this.el.classList.remove('awaiting-patch');
+                    return this.onPatch()
+                }, err => {
+                    if (err === 'Rerender') {
+                        return this.queuePatch();
+                    }
+                    console.error('Error patching:', err.stack)
+                })
+        })
+        
+        var now = Date.now();
+        var dt = now - this._lastPatchStartTime;
+        this._lastPatchStartTime = Date.now();
+        
+        window.setTimeout(() => {
             requestAnimationFrame(this._RAFCallback = () =>{
                 this._RAFCallback = null;
-                resolveFunc(this._patchRequests);
+                var currPatchRequests = this._patchRequests;
                 this._patchRequests = [];
-            });
-        } else {
-            this._patchRequests = this._patchRequests.concat(patchRequests);
-        }
+                resolveFunc(currPatchRequests);
+            });   
+        }, Math.max(0, patchInterval - dt))        
+        
+        return promise;
     }
 
-    onPatch() {
-        //noop
-    }
 
     awaitPatch() {
         return this.patchPromise || Promise.resolve();
@@ -2892,64 +3009,156 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
     }
 
-    init() {
-        return DOMReady
-            .then(() => {
-                var el = this._elInput;
-                if (typeof el == 'string') {
-                    el = document.querySelector(el);
-                    if (!el) {
-                        throw new Error("Could not mount an element using provided query.");
+    initPatchers() {
+        var el = this._elInput;
+        if (typeof el == 'string') {
+            el = document.querySelector(el);
+            if (!el) {
+                throw new Error("Could not mount an element using provided query.");
+            }
+        }
+        this._el = el;
+
+        if (!(this.rootNode = this.el.firstChild)) {
+            this.rootNode = document.createElement('div');
+            this._widget = h('div');
+        } else {
+            this._widget = virtualize(this.rootNode, 'id');
+        }
+
+        if (this.styles) {
+            createStyleEl('weddell-app-styles', 'weddell-app-styles').textContent = this.styles;
+        }
+    }
+
+    static takeComponentStateSnapshot(component) {
+        var obj = { 
+            id: component.id,
+            state: Object.entries(component.state.collectChangedData())
+                .reduce((acc, curr) => {
+                    if (curr[0][0] !== '$') {
+                        return Object.assign(acc, { [curr[0]]: curr[1] })
                     }
+                    return acc;
+                }, {})
+        };
+        var componentSnapshots = {};
+        for (var componentName in component._componentInstances) {
+            var components = component._componentInstances[componentName];
+            for (var componentIndex in components) {
+                if (!(componentName in componentSnapshots)) {
+                    componentSnapshots[componentName] = {};
                 }
-                this._el = el;
+                componentSnapshots[componentName][componentIndex] = this.takeComponentStateSnapshot(components[componentIndex]);
+            }
+        }
+        if (Object.keys(componentSnapshots).length) {
+            obj.componentSnapshots = componentSnapshots;
+        }
+        return obj;
+    }
 
-                if (this.styles) {
-                    createStyleEl('weddell-app-styles').textContent = this.styles;
+    renderSnapshot() {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");  
+        var scriptEl = doc.createElement('script');
+        scriptEl.innerHTML = `
+            window.addEventListener('weddellinitbefore', function(evt){
+                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
+            });
+        `;
+        doc.body.appendChild(scriptEl);
+
+        return {
+            appHtml: this.component.el.outerHTML,
+            stateHtml: scriptEl.outerHTML,
+            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
+                .map(el => el.outerHTML)
+                .join('\n'),
+            fullResponse: doc.documentElement.outerHTML
+        }
+    }
+
+    initRootComponent() {
+        return this.component.init(this.componentInitOpts)
+            .then(() => this.component.mount())
+            .then(() => {
+                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+            })
+    }
+
+    init() {
+        this.on('createcomponent', evt => {
+            this._createdComponents.push(evt.component);
+        })
+
+        return DOMReady
+            .then(async () => {
+                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: {  app: this } }));
+
+                this.initPatchers();
+
+                if (this._snapshotData) {
+                    this.el.classList.add('using-snapshot');
                 }
+                this.el.classList.add('initting');
+                this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
-                this._component = this.makeComponent();
-
+                this._component = await this.makeComponent();
+                    
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+
                 this.component.on('requestpatch', evt => {
-                    this.queuePatch(evt);
+                    this.el.classList.add('awaiting-patch');
+                    this._patchRequests = this._patchRequests.concat(evt);
+
+                    this._initPromise.then(() => {
+                        if (!this._patchPromise) {
+                            this._patchPromise = this.queuePatch();
+                        }
+                    })
                 });
+
+                var onPatch = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) =>  acc || !!component.renderPromise, false)
+                    if (!isRendering) {
+                        this.trigger('quiet');
+                    }
+                    this.el.classList.add('first-patch-complete');
+                    this.component.trigger('patch');
+                };
+                this.on('patch', onPatch);                
 
                 Object.seal(this);
 
-                return this.component.init(this.componentInitOpts)
-                    .then(() => this.component.mount())
-                    .then(() => this.awaitPatch()
-                        .then(() => {
-                            this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
-                        }))
+                return this._initPromise = this.initRootComponent()
+            })
+            .then(result => {
+                window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
+                this.el.classList.remove('initting');
+                this.el.classList.add('init-complete');
+                return result;
             })
     }
 }
 
 module.exports = App;
 
-},{"./event-emitter-mixin":53,"./vdom-widget":55,"document-ready-promise":6,"mixwith-es5":7,"object.defaults/immutable":8,"virtual-dom/create-element":15,"virtual-dom/diff":16,"virtual-dom/h":17,"virtual-dom/patch":25}],52:[function(require,module,exports){
+},{"./event-emitter-mixin":50,"defaults-es6":6,"document-ready-promise":8,"mixwith":9,"vdom-virtualize":10,"virtual-dom/diff":13,"virtual-dom/h":14,"virtual-dom/patch":22}],49:[function(require,module,exports){
 const EventEmitterMixin = require('./event-emitter-mixin');
-const defaults = require('object.defaults/immutable');
+const defaults = require('defaults-es6');
 const generateHash = require('../utils/make-hash');
-const mix = require('mixwith-es5').mix;
+const mix = require('mixwith').mix;
 const h = require('virtual-dom/h');
-const VDOMWidget = require('./vdom-widget');
-
-function flatten(arr) {
-    return [].concat(...arr);
-}
-
-function compact(arr) {
-    return arr.filter(item => item != null);
-}
-
-function uniq(arr) {
-    return arr.reduce((acc, item) => acc.includes(item) ? acc : acc.concat(item), []);
-}
+const VdomWidget = require('./vdom-widget');
+const deepEqual = require('deep-equal');
+const cloneVNode = require('../utils/clone-vnode');
+const flatten = require('../utils/flatten');
+const compact = require('../utils/compact');
+const uniq = require('../utils/uniq');
+const difference = require('../utils/difference');
 
 const defaultOpts = {
     store: {},
@@ -2960,25 +3169,43 @@ const defaultInitOpts = {};
 var _generatedComponentClasses = {};
 const testElement = document.createElement('div');
 
+const renderInterval = 33.333;
+
 var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get renderMethods() {
         return ['renderVNode', 'renderStyles'];
+    }
+
+    static get isWeddellComponent() {
+        return true;
     }
     
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
+        var weddellGlobals = window[this.constructor.Weddell.consts.VAR_NAME];
         var Store = this.constructor.Weddell.classes.Store;
-        if (opts.inputs) {
+        if (weddellGlobals.verbosity > 0 && opts.inputs) {
             console.warn('you are using outdated syntax! opts.inputs is deprecated in favor of static getter.')
         }
         Object.defineProperties(this, {
             id: { get: () => this._id },
             isRoot: { value: opts.isRoot },
-            content: { value: [], writable: true},
+            _content: {value: [], writable: true},
+            content: { get: () => {
+                return this._content;
+            }, set: val => {
+                var oldContent = this._content;
+                this._content = val;
+                if (!deepEqual(oldContent, val)) {
+                    this.markDirty();
+                }
+            }},
             hasMounted: {get: () => this._hasMounted},
             isMounted: { get: () => this._isMounted },
             renderPromise: {get: () => this._renderPromise},
+            childComponents: {get: () => this._childComponents},
+            contentComponents: {get: () => this._contentComponents},
             hasRendered: {get: () => this._hasRendered},
             el: {get: () => this._el},
             isInit: { get: () => this._isInit },
@@ -2986,25 +3213,32 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             root: {value: opts.isRoot ? this : opts.root },
             inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
             //@TODO inputs don't need to be stored on isntance at all
-
             renderers: { value: {} },
-
             _el: { value: null, writable: true },
+            _lastRenderTimeStamps: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: null }), {}) },
             _lastAccessedStateKeys: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
-            _dirtyRenderers: { value: false, writable: true },
+            _componentSnapshots: { value: opts.componentSnapshots || null },
+            _dirtyRenderers: { value: true, writable: true },
+            _contentComponents: {value: [], writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
             _isMounted: {writable:true, value: null},
             _lastRenderedComponents: {writable: true, value: null},
+            _childComponents: {writable: true, value: {}},
             _componentsRequestingPatch: {writable: true, value: []},
             _renderPromise: {writable: true, value: null},
             _hasMounted: {writable:true, value: false},
             _hasRendered: {writable:true, value: false},
+            _widgetIsDirty: {writable:true, value:false},
+            _vTree: {writable: true, value: null },
+            _prevVTree: {writable: true, value: null},
+            _prevWidget: {writable: true, value: null},
+            _dirtyWidgets: {writable: true, value: {}},
             _renderCache: { value: this.constructor.renderMethods
                 .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
             _isInit: { writable: true, value: false},            
-            _id : { value: generateHash() },
-            _tagDirectives: { value: {} },
+            _id : { value: opts.id || generateHash() },
             _componentListenerCallbacks: {value:{}, writable:true}
         });
 
@@ -3014,8 +3248,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 final[entry[1]] = entry[0];
                 return final;
             }, {}) : {};
-            
+
         Object.defineProperties(this, {
+            _widget: {writable: true, value: new VdomWidget({ component: this, childWidgets: {} })},
             props: {
                 value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
@@ -3026,32 +3261,34 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 })
             },
             store: {
-                value: new Store(Object.assign({
+                value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
-                }, opts.store), {
+                }, this.store || {}, opts.store || {}), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
             }
         });
 
-        if (opts.state) {
+        if (weddellGlobals.verbosity > 0 && opts.state) {
             console.warn("opts.state is deprecated in favor of static 'state' getter. Update your code!");
         }
-        var state = this.constructor.state || opts.state || {};
+
+        var state = Object.assign({}, opts.state || {}, this.constructor.state);
         
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
                 $attributes: null,
                 $id: () => this.id
             }, state), {
+                initialState: opts.initialState,
                 overrides: [this.props],
                 proxies: [this.store]
             })
         })
 
-        if (opts.components) {
+        if (weddellGlobals.verbosity > 0 && opts.components) {
             console.warn("opts.components is deprecated in favor of static 'components' getter. Please update your code.");
         }
         var components = this.constructor.components || opts.components || {};
@@ -3072,64 +3309,89 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             value: Object.entries(components)
                 .map(entry => [entry[0].toLowerCase(), entry[1]])
                 .reduce((final, entry) => {
-                    final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
+                    final[entry[0]] = { weddellClassInput: entry[1] };
                     return final;
                 }, {})
         })
 
-        // this.on('componentschange', evt => {
-        //     this.markDirty(null, 'styles');
-        // });
-
         this.getParent = () => opts.parentComponent || null;
-        if (opts.markupTemplate) {
+        if (weddellGlobals.verbosity > 0 && opts.markupTemplate) {
             console.warn("You are using deprecated syntax. 'markupTemplate' will be removed in the next major version. Use static 'markup' getter.");
         }
-        if (opts.stylesTemplate) {
+        if (weddellGlobals.verbosity > 0 && opts.stylesTemplate) {
             console.warn("You are using deprecated syntax. 'stylesTemplate' will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
         }
         this.vNodeTemplate = this.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
         this.stylesTemplate = this.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
-        this.vTree = null;
 
-        window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+        weddellGlobals.components[this._id] = this;
+    }
+
+    requestRender(dirtyRenderers) {
+        var now = Date.now()
+        var lastRenderTime = Object.values(this._lastRenderTimeStamps).reduce((acc, val) => isNaN(val) ? acc : Math.max(val, acc), 0)
+        var dt = now - lastRenderTime;
+        if (!this.hasRendered || dt >= renderInterval) {
+            return this.render(dirtyRenderers);
+        } else {
+            return (this._renderPromise = new Promise(resolve => setTimeout(resolve, renderInterval - dt))
+                .then(() => this.render(dirtyRenderers)));
+        }
+    }
+
+    markDirty(dirtyRenderers={}) {
+        if (this.renderPromise || !this.isMounted) {
+            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
+            return this.renderPromise;
+        } else {
+            return this.requestRender(dirtyRenderers);
+        }
     }
 
     render(dirtyRenderers=null) {
-        var promise = this.constructor.renderMethods
-            .reduce((acc, method) => {
-                return acc
+        var promise = Promise.resolve()
+            .then(() => {
+                return this.constructor.renderMethods
+                    .reduce((acc, method) => {
+                        return acc
+                            .then(results => {
+                                return Promise.resolve(this[method]())
+                                    .then(result => {
+                                        Object.defineProperty(results, method, { get: () => result, enumerable: true });
+                                        return results;
+                                    })
+                            })
+                    }, Promise.resolve({}))
                     .then(results => {
-                        return Promise.resolve(this[method]())
-                            .then(result => {
-                                Object.defineProperty(results, method, { get: () => result, enumerable: true });
+                        return Promise.resolve(results)
+                            .then(results => {
+                                if (this._dirtyRenderers) {
+                                    var dirtyRenderers = this._dirtyRenderers;
+                                    this._dirtyRenderers = null;
+                                    return Promise.reject(dirtyRenderers);
+                                }
                                 return results;
                             })
+                            .then(results => {
+                                this._renderPromise = null;
+                                this.requestPatch(results);
+                                return results;
+                            }, dirtyRenderers => this.render(dirtyRenderers))
+                    }, err => {
+                        throw err;
                     })
-            }, Promise.resolve({}))
-            .then(results => {
-                return Promise.resolve(results)
                     .then(results => {
-                        if (this._dirtyRenderers) {
-                            this._dirtyRenderers = null;
-                            return Promise.reject(this._dirtyRenderers);
+                        if (!this.hasRendered) {
+                            this._hasRendered = true;
+                            this.trigger('firstrender');
+                            this.trigger('render');
+                            return Promise.all([this.onRender(), this.onFirstRender()])
+                                .then(() => results)
                         }
-                        return results;
+                        this.trigger('render');
+                        return Promise.resolve(this.onRender()).then(() => results);                    
                     })
-                    .then(results => {
-                        this._renderPromise = null;
-                        this._hasRendered = true;
-                        this.requestPatch(results);
-                        return results;
-                    }, dirtyRenderers => {
-                        return this.render(dirtyRenderers);
-                    })
-            }, err => {
-                throw err;
             })
-            .then(results => Promise.resolve(this.onRender())
-                .then(() => results))
-
         return !this._renderPromise ? (this._renderPromise = promise): promise;
     }
 
@@ -3203,6 +3465,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
             var result = func.apply(this, [this.state].concat(Array.from(arguments).slice(2)));
 
+            this._lastRenderTimeStamps[renderMethodName] = Date.now();
             this._renderCache[renderMethodName] = result;
             this._lastAccessedStateKeys[renderMethodName] = accessed;
 
@@ -3224,20 +3487,66 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (Array.isArray(vTree)) {
             if (vTree.length > 1) {
                 console.warn('Template output was truncated in', this.constructor.name, 'component. Component templates must return a single vNode!');
-            }            
+            }
             vTree = vTree[0];
         }
-        var renderedComponents = {};
-        return vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
+
+        var renderedComponents = [];        
+        
+        return (vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
             .then(vTree => {
-                this.vTree = vTree;
-                return Promise.all(flatten(Object.values(renderedComponents)))
+                this._prevVTree = this._vTree;
+                this._vTree = vTree;
+
+                return Promise.all(renderedComponents)
                     .then(rendered => {
-                        this._lastRenderedComponents = rendered.reduce((acc, item) => Object.assign(acc, {[item.id]: item}, {}), {})
+                        return Promise.all(difference(this._lastRenderedComponents || [], rendered).map(toUnmount => toUnmount.unmount()))
+                            .then(() => {
+                                this._lastRenderedComponents = rendered
+                            })
                     })
+                    .then(() => true)
+            }) : this._vTree ? Promise.all((this._lastRenderedComponents || []).map(toUnmount => toUnmount.unmount()))
+                .then(() => {
+                    this._prevVTree = this._vTree;
+                    this._lastRenderedComponents = null;
+                    this.markWidgetDirty()
+                    this._vTree = null;
+
+                    return true;
+                }) : Promise.resolve(false)
+            )
+            .then(didRender => {
+                if (didRender) {
+                    var evt = {components: renderedComponents};
+                    this._childComponents = renderedComponents;
+                    this.markWidgetDirty()
+                    this.trigger('rendermarkup', evt);
+                    this.onRenderMarkup(Object.assign({}, evt));
+                }
             })
-            .then(() => this.onRenderMarkup())
-            .then(() => this.vTree) : this.vTree = null;
+            .then(() => this._vTree)
+    }
+
+    refreshWidgets() {
+        if (this._widgetIsDirty) {
+            this.makeNewWidget();
+        }
+    }
+
+    get state() {
+        return {};
+    }
+
+    makeNewWidget() {
+        this._prevWidget = this._widget;
+        var newWidget = new VdomWidget({ component: this });
+        newWidget.bindChildren(this);
+        if (this._prevWidget) {
+            this._prevWidget.unbindChildren();
+        }
+        this._widgetIsDirty = false;
+        return this._widget = newWidget;        
     }
 
     static get state() {
@@ -3246,118 +3555,115 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     static get tagDirectives() {
         return {
-            content: function() {
+            content: function(vNode, children, props, renderedComponents) {
                 return this.content;
             }
         }
     }
 
-    replaceComponentPlaceholders(vNode, renderedComponents={}) {
+    replaceComponentPlaceholders(vNode, renderedComponents=[]) {
         var components;
         var componentName;
         
         if (Array.isArray(vNode)) {
-            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)));
+            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)))
         } else if (!vNode.tagName) {
             return vNode;
         } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
-            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes));
+            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes, renderedComponents));
         }
 
-        if (vNode.children) {
-            var promise = this.replaceComponentPlaceholders(vNode.children, renderedComponents)
-                .then(children => {
-                    if (children.some((child, ii) => vNode.children[ii] !== child)) {
-                        return VDOMWidget.cloneVNode(vNode, flatten(children));
-                    }
-                    return vNode;
-                })            
-        } else {
-            promise = Promise.resolve(vNode);
-        }
-
-        return promise
-            .then(vNode => {
+        return this.replaceComponentPlaceholders(vNode.children || [], renderedComponents)
+            .then(children => {
                 if (componentName in (components = this.collectComponentTree())) {
                     var props = vNode.properties.attributes;
-                    var content = vNode.children || [];
+                    var content = children || [];
                     if (!(componentName in renderedComponents)) {
                         renderedComponents[componentName] = [];
                     }
                     var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
         
-                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);        
+                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);
                 }
 
-                return VDOMWidget.cloneVNode(vNode, null, true);
-            });
+                if (children.some((child, ii) => vNode.children[ii] !== child)) {
+                    return cloneVNode(vNode, flatten(children));
+                }
+                return cloneVNode(vNode, null, true);
+            })
     }
 
-    makeChildComponentWidget(componentName, index, content, props, renderedComponents = {}) {
-        var prom = this.getInitComponentInstance(componentName, index);
+    makeChildComponentWidget(componentName, index, content, props, renderedComponents = []) {
+        var parent = this.reduceParents((acc, component) => {
+            return acc || (componentName in component.components ? component : acc);
+        }, null);
+
+        if (!parent) {
+            throw new Error('Unrecognized component name:', componentName);
+        }
+
+        var prom = parent.getInitComponentInstance(componentName, index);
         if (!(componentName in renderedComponents)) {
             renderedComponents[componentName] = [];
         }
         renderedComponents[componentName].push(prom);
-
+        renderedComponents.push(prom);
         return prom
             .then(component => {
-                return Promise.all(content.map(contentNode => {
-                        return component.replaceComponentPlaceholders(contentNode, renderedComponents)
-                    }))
+                renderedComponents[componentName].splice(renderedComponents[componentName].indexOf(prom), 1, component);
+                renderedComponents.splice(renderedComponents.indexOf(prom), 1, component);
+                component.assignProps(props, this);
+                var contentComponents = [];
+                return component.replaceComponentPlaceholders(content, contentComponents)
                     .then(content => {
                         component.content = content;
-                        component.assignProps(props, this);
-                        return component.mount()
+                        
+                        if ((contentComponents.length !== component._contentComponents.length) || contentComponents.some((component, ii) => component._contentComponents[ii] !== component)) {
+                            component.trigger('contentcomponentschange', { currentComponents: contentComponents, previousComponents: component._contentComponents })
+                        }
+                        component._contentComponents = contentComponents;
+
+                        for (var propName in contentComponents) {
+                            var contentComponent = contentComponents[propName];
+                            if (!(propName in renderedComponents)) {
+                                renderedComponents[propName] = [];
+                            }
+                            if (Array.isArray(contentComponents[propName])) {
+                                renderedComponents[propName] = uniq(renderedComponents[propName].concat(contentComponents[propName]));
+                            } else {
+                                if (renderedComponents.indexOf(contentComponent) === -1) {
+                                    renderedComponents.push(contentComponent);
+                                }
+                            }
+                        }
+                        
+                        return component.mount(this)
                             .then(didMount => {
-                                this.trigger('componentplaceholderreplaced', {component});
-                                return new VDOMWidget({component});
-                            });
-                    });
+                                parent.trigger('componentplaceholderreplaced', {component});
+                                return component.makeNewWidget();
+                            })
+                    })
             });
-    }
-
-    refreshPendingWidgets() {
-        var componentsToRefresh = uniq(this._componentsRequestingPatch);
-        componentsToRefresh.forEach(instance => instance.refreshPendingWidgets());
-        this.vTree = this.refreshWidgets(this.vTree, componentsToRefresh);
-        this._componentsRequestingPatch = [];
-    }
-
-    refreshWidgets(vNode, targetComponents=[]) {
-        if (!vNode) {
-            return vNode;
-        } else if (vNode.type === 'Widget') {
-            if (targetComponents.includes(vNode.component)) {
-                return new VDOMWidget({component: vNode.component});
-            }
-        } else if (vNode.children) {
-            var children = vNode.children.map(child => this.refreshWidgets(child, targetComponents));
-            if (children.some((child, ii) => child !== vNode.children[ii])) {
-                return VDOMWidget.cloneVNode(vNode, children);
-            }
-        }
-        return vNode;
     }
 
     walkComponents(callback, filterFunc=()=>true) {
         if (filterFunc(this)) {
             callback(this)
         }
-        for (var componentName in this.components) {
+        for (var componentName in this._componentInstances) {
             Object.values(this._componentInstances[componentName])
                 .forEach(instance => instance.walkComponents(callback, filterFunc))
         }
     }
 
-    reduceComponents(callback, initialVal, filterFunc=()=>true) {
+    reduceComponents(callback, initialVal, filterFunc=()=>true, depth=0) {
         var acc = initialVal;
         if (filterFunc(this)) {
-            acc = callback(acc, this)
+            acc = callback(acc, this, depth)
         }
-        for (var componentName in this.components) {
+        for (var componentName in this._componentInstances) {
             acc = Object.values(this._componentInstances[componentName])
-                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc), acc);
+                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc, depth + 1), acc);
         }
         return acc;
     }
@@ -3365,6 +3671,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     checkChangedKey(key) {
         return Object.entries(this._lastAccessedStateKeys)
             .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, {[entry[0]]:1}) : acc, null);
+    }
+
+    reduceParents(callback, initialVal) {
+        var parent = this.getParent();
+        var shouldRecurse = true;
+        initialVal = callback.call(this, initialVal, this, () => shouldRecurse = false);
+        return parent && shouldRecurse ? parent.reduceParents(callback, initialVal) : initialVal;
     }
 
     collectComponentTree() {
@@ -3381,17 +3694,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     queryDOM(query) {
-        return this.awaitRender()
-            .then(() => document.querySelector(query));
+        return this.awaitDom()
+            .then(el => el.querySelector(query));
     }
 
     queryDOMAll(query) {
-        return this.awaitRender()
-            .then(() => document.querySelectorAll(query));
+        return this.awaitDom()
+            .then(el => el.querySelectorAll(query));
     }
 
-    awaitEvent(eventName, evtObjValidator) {
+    awaitEvent(eventName) {
         var resolveProm;
+        //@TODO add evt obj filter
         var promise = new Promise(function(resolve){
             resolveProm = resolve;
         });
@@ -3401,13 +3715,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return promise;
     }
 
+    awaitPatch() {
+        return this.awaitRender().then(() => (this.root || this).awaitEvent('patch'));
+    }
+
+    awaitMount() {
+        return this.isMounted ? Promise.resolve() : this.awaitEvent('mount');
+    }
+
+    awaitDom() {
+        return this.el ? Promise.resolve(this.el) : this.awaitEvent('domcreate').then(evt => evt.el);
+    }
+
     awaitRender(val) {
         return (this.renderPromise ? this.renderPromise : Promise.resolve())
             .then(() => val);
-    }
-
-    addTagDirective(name, directive) {
-        this._tagDirectives[name.toUpperCase()] = directive;
     }
 
     static get generatedComponentClasses() {
@@ -3418,18 +3740,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return _generatedComponentClasses = val;
     }
 
-    static makeComponentClass(ComponentClass) {
-        if (typeof ComponentClass === 'function' && !ComponentClass.prototype) {
+    static async makeComponentClass(ComponentClass) {
+        await ComponentClass;
+        if (typeof ComponentClass === 'function' && !ComponentClass.isWeddellComponent) {
+            //@TODO this is unreliable
             // We got a non-Component class function, so we assume it is a component factory function
             var str = ComponentClass.toString();
             if (str in this.generatedComponentClasses) {
                 return this.generatedComponentClasses[str];
             } else {
-                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(ComponentClass.call(this, this.Weddell.classes.Component));
+                var result = await ComponentClass.call(this, this.Weddell.classes.Component);
+                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(result);
             }
         } else {
             return this.bootstrapComponentClass(ComponentClass);
-        }        
+        }
     }
 
     static bootstrapComponentClass(ComponentClass) {
@@ -3455,14 +3780,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    createChildComponentClass(componentName, ChildComponent) {
+    async createChildComponentClass(componentName, ChildComponent) {
         if (Array.isArray(ChildComponent)) {
             var initOpts = ChildComponent[2];
             var inputMappings = ChildComponent[1];
             ChildComponent = ChildComponent[0];
         }
-
-        ChildComponent = this.constructor.makeComponentClass(ChildComponent);
+        ChildComponent = await this.constructor.makeComponentClass(ChildComponent);
 
         var parentComponent = this;
         var root = this.root;
@@ -3493,15 +3817,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         return obj[componentName];
     }
-    
-    markDirty(dirtyRenderers={}) {
-        //@TODO maybe also set dirtyRenderers when component isn't mounted
-        if (this.renderPromise || !this.isMounted) {
-            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
-        } else {
-            this.render(dirtyRenderers);
-        }
-    }
 
     init(opts) {
         opts = defaults(opts, this.defaultInitOpts);
@@ -3510,22 +3825,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
             ['props', 'state'].forEach((propName) => {
                 this[propName].on('change', evt => {
-                    if (evt.target === this[propName]) {
+                    // if (evt.target === this[propName]) {
                         var dirtyRenderers = this.checkChangedKey(evt.changedKey);
                         if (dirtyRenderers) {
                             this.markDirty(dirtyRenderers);
                         }
-                    }
+                    // }
                 })
             });
             
-            return this.render()
-                .then(() => {
-                    return Promise.resolve(this.onFirstRender(opts))
-                })
-                .then(() => {
-                    return Promise.resolve(this.onInit(opts))
-                })
+            return Promise.resolve(this.onInit(opts))
                 .then(() => {
                     this.trigger('init');
                     return this;
@@ -3534,12 +3843,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Promise.resolve(this);
     }
 
-    bindEvent(funcText, opts) {
+    bindEvent(funcText, opts={}) {
         var consts = this.constructor.Weddell.consts;
-        return "(function(event){" +
-            (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
-            (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
-            funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+        return `${opts.preventDefault ? `event.preventDefault();` : ''}${opts.stopPropagation ? `event.stopPropagation();` : ''}Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){ window.addEventListener('weddellinitbefore', function(evt) { resolve(evt.detail.app) }) })).then(function(app) { app.awaitComponentMount('${this.id}').then(function(component){ (function() {${funcText}}.bind(component))()})})`;
     }
 
     bindEventValue(propName, opts) {
@@ -3555,9 +3861,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     assignProps(props, parentScope) {
         if (props) {
             this.inputs.filter(input => !(input in props || input.key in props))
-            .forEach(input => {
-                this.props[input.key || input] = null;
-            });
+                .forEach(input => {
+                    this.props[input.key || input] = null;
+                });
 
             var parsedProps = Object.entries(props)
                 .reduce((acc, entry) => {
@@ -3631,60 +3937,97 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     unmount() {
-        if (this._isMounted) {
+        if (this._isMounted === true) {
             for (var eventName in this._inlineEventHandlers) {
                 this._inlineEventHandlers[eventName].off();
                 delete this._inlineEventHandlers[eventName];
             }
             this._isMounted = false;
-            this.trigger('unmount');
+
             return Promise.resolve(this.onUnmount())
-                .then(() => true);
+                .then(() => {
+                    return Promise.all((this._lastRenderedComponents || []).map(component => component.unmount()))
+                })
+                .then(() => {
+                    this.markWidgetDirty()
+                    return true;
+                });
         }
         return Promise.resolve(false);
     }
 
-    mount() {
+    mount(domParent) {
         if (!this._isMounted) {
-            this._isMounted = true;
-            this.trigger('mount');
-            var arr = ['onMount'];
-            if (!this.hasMounted) {
-                this._hasMounted = true;
-                this.trigger('firstmount');
-                arr.push('onFirstMount');
-            }
-            if (this._dirtyRenderers) {
-                this._dirtyRenderers = null;
-                return this.render()
-                    .then(() => Promise.all(arr.map(func => this[func]())));
-            }
-            return Promise.all(arr.map(func => this[func]()))
-                .then(() => true);
+            return this._isMounted = this.render()
+                .then(() => {
+                    this._isMounted = true;
+                    var hadMounted = this.hasMounted;
+                    if (!this.hasMounted) {
+                        this._hasMounted = true;
+                        this.trigger('firstmount');
+                    }
+                    this.trigger('mount');
+                    
+                    return hadMounted ? this.onMount() : Promise.all([this.onMount(), this.onFirstMount()])
+                })
+                .then(() => {
+                    this.markWidgetDirty()
+                    return true;
+                });
         }
         return Promise.resolve(false);
     }
 
-    makeComponentInstance(componentName, index, opts) {
+    markWidgetDirty() {
+        this._widgetIsDirty = true;
+        
+        this.trigger('widgetdirty');
+    }
+
+    extractSnapshotOpts(snapshot) {
+        if (!snapshot || !snapshot.id) {
+            throw new Error(`Malformed snapshot: id is missing`)
+        }
+
+        return ['state', 'componentSnapshots', 'el']
+            .reduce((acc, curr) => 
+                snapshot[curr] ? Object.assign(acc, { [curr === 'state' ? 'initialState' : curr]: snapshot[curr] }) : acc, { id: snapshot.id });
+        
+    }
+
+    async makeComponentInstance(componentName, index) {
         componentName = componentName.toLowerCase();
-        var instance = new (this.components[componentName])({
+
+        if (!componentName in this.components) {
+            throw new Error(`${componentName} is not a recognized component name for component type ${this.constructor.name}`);
+        }
+
+        if (this.components[componentName].weddellClassInput) {
+            this.components[componentName] = this.createChildComponentClass(componentName, this.components[componentName].weddellClassInput);
+        }
+        var ComponentClass = await this.components[componentName];
+
+        var opts = {
             store: defaults({
-                $componentID: this.components[componentName]._id,
+                $componentID: ComponentClass._id,
                 $instanceKey: index
             })
-        });
+        };
+
+        var snapshot;
+
+        if (this._componentSnapshots && this._componentSnapshots[componentName] && (snapshot = this._componentSnapshots[componentName][index])) {
+            Object.assign(opts, this.extractSnapshotOpts(snapshot));
+        }        
+
+        var instance = new ComponentClass(opts);
         this.addComponentEvents(componentName, instance, index);
 
         instance.on('requestpatch', evt => {
-            if (this.vTree) {
-                this._componentsRequestingPatch.push(instance);
-                this.trigger('requestpatch', Object.assign({}, evt));
-            }
+            this._componentsRequestingPatch.push(instance);
+            this.trigger('requestpatch', Object.assign({}, evt));
         });
-
-        instance.on('componentleavedom', evt => this.trigger('componentleavedom', Object.assign({}, evt)))
-        instance.on('componententerdom', evt => this.trigger('componententerdom', Object.assign({}, evt)))
-  
+        
         return instance;
     }
 
@@ -3694,14 +4037,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return instances[index];
     }
 
-    getInitComponentInstance(componentName, index) {
+    async getInitComponentInstance(componentName, index) {
+        componentName = componentName.toLowerCase()
         var instance = this.getComponentInstance(componentName, index);
         if (!instance) {
-            return (this._componentInstances[componentName][index] = this.makeComponentInstance(componentName, index))
+            var instance = this._componentInstances[componentName][index] = await this.makeComponentInstance(componentName, index);
+            return instance
                 .init(this.components[componentName]._initOpts);
         }
 
-        return Promise.resolve(instance);
+        return instance
     }
 
     cleanupComponentInstances() {
@@ -3711,9 +4056,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/make-hash":60,"./event-emitter-mixin":53,"./vdom-widget":55,"mixwith-es5":7,"object.defaults/immutable":8,"virtual-dom/h":17}],53:[function(require,module,exports){
-var Mixin = require('mixwith-es5').Mixin;
-var includes = require('../utils/includes');
+},{"../utils/clone-vnode":55,"../utils/compact":56,"../utils/difference":57,"../utils/flatten":58,"../utils/make-hash":59,"../utils/uniq":60,"./event-emitter-mixin":50,"./vdom-widget":52,"deep-equal":3,"defaults-es6":6,"mixwith":9,"virtual-dom/h":14}],50:[function(require,module,exports){
+var Mixin = require('mixwith').Mixin;
 
 var EventEmitterMixin = Mixin(function(superClass) {
     return class extends superClass {
@@ -3777,13 +4121,12 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":59,"mixwith-es5":7}],54:[function(require,module,exports){
+},{"mixwith":9}],51:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
-var defaults = require('object.defaults/immutable');
-var includes = require('../utils/includes');
+var defaults = require('defaults-es6');
 var difference = require('../utils/difference');
-var mix = require('mixwith-es5').mix;
+var mix = require('mixwith').mix;
 var uniq = require('array-uniq');
 
 var defaultOpts = {
@@ -3803,13 +4146,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
+            _initialState: { value: opts.initialState || {} },
             _cache: {value: {}, writable: true},
             _funcProps: {configurable: false,value: {}},
             _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
             _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
-            _firstGet: {writable: true, value: false},
+            _changedKeys: {configurable: false, value: []},
+            _firstGetComplete: {writable: true, value: false},
             _validators: {value: opts.validators},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
@@ -3868,7 +4213,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         Object.seal(this);
     }
 
-    set(key, val, isReadOnly) {
+    set(key, val, isReadOnly=false) {
         if (!(key in this)) {
             if (!isReadOnly) {
                 var setter = function(newValue) {
@@ -3897,7 +4242,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
-                                this.trigger('change', {target: this, changedKey: key, newValue, oldValue});
+                                this._changedKeys.push(key);
+                                this.trigger('change', { target: this, changedKey: key, newValue, oldValue });
                             }
                         }
                     }
@@ -3917,11 +4263,44 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
 
             if (!isReadOnly) {
-                this[key] = val;
+                var initialValue = this._initialState[key];
+                if (initialValue != null) {
+                    if (this.shouldEvalFunctions && typeof val === 'function') {
+                        this[key] = val;
+                    } else {
+                        this[key] = initialValue;
+                    }
+                } else {
+                    this[key] = val;
+                }
             } else {
                 this._data[key] = val;
             }
         }
+    }
+
+    collectChangedData(includeComputed=true, computedValueFormat='verbose') {
+        return uniq(this._changedKeys).reduce((acc, curr) => {
+            if (!this.shouldEvalFunctions || includeComputed || !this._funcProps[curr]) {
+                if (this.shouldEvalFunctions && this._funcProps[curr]) {
+                    switch (computedValueFormat) {
+                        case 'verbose':
+                            return Object.assign(acc, { 
+                                [curr]: {
+                                    isComputedValue: true,
+                                    lastAccessedKeys: this._dependencyKeys[curr],
+                                    value: this._data[curr] 
+                                }
+                            });
+                        case 'simple':
+                        default:
+                            break;
+                    }
+                }
+                return Object.assign(acc, { [curr]: this._data[curr] })
+            }
+            return acc;
+        }, {})
     }
 
     getValue(key) {
@@ -3931,17 +4310,27 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         if (this._cache[key]) {
             return this._cache[key];
         }
-        if (this.shouldEvalFunctions && !this._firstGet) {
-            this._firstGet = true;
+        if (this.shouldEvalFunctions && !this._firstGetComplete) {
+            this._firstGetComplete = true;
             for (var propName in this._funcProps) {
                 this[propName];
             }
         }
         if (key in this._funcProps && !this._initialCalled[key]) {
             this._initialCalled[key] = true;
-            val = this[key] = this.evaluateFunctionProperty(key);
+
+            if (this._initialState[key]) {
+                if (this._initialState[key].isComputedValue) {
+                    val = this[key] = this._initialState[key].value;
+                    this._dependencyKeys[key] = this._initialState[key].lastAccessedKeys;
+                } else {
+                    val = this[key] = this._initialState[key];
+                }
+            } else {
+                val = this[key] = this.evaluateFunctionProperty(key);
+            }
             this.on('change', evt => {
-                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                if (this._dependencyKeys[key].includes(evt.changedKey)) {
                     this[key] = this.evaluateFunctionProperty(key);
                 }
             });
@@ -3971,13 +4360,13 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return val;
     }
 
-    assign(data) {
+    assign(data, initialState={}) {
         if (data) {
             if (Array.isArray(data)) {
                 data.forEach(key => this.set(key, null));
             } else {
                 Object.entries(data).forEach((entry) => {
-                    this.set(entry[0], entry[1])
+                    this.set(entry[0], entry[1], false, initialState[entry[0]])
                 });
             }
         }
@@ -4019,7 +4408,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         };
 
         var off = this.on('change', function(evt){
-            if (includes(key, evt.changedKey)) {
+            if (key.includes(evt.changedKey)) {
                 checkKeys.call(this);
             }
         });
@@ -4032,91 +4421,120 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":58,"../utils/includes":59,"./event-emitter-mixin":53,"array-uniq":1,"deep-equal":3,"mixwith-es5":7,"object.defaults/immutable":8}],55:[function(require,module,exports){
-var VDOMPatch = require('virtual-dom/patch');
-var VDOMDiff = require('virtual-dom/diff');
-var h = require('virtual-dom/h');
-var createElement = require('virtual-dom/create-element');
-const svg = require('virtual-dom/virtual-hyperscript/svg');
+},{"../utils/difference":57,"./event-emitter-mixin":50,"array-uniq":1,"deep-equal":3,"defaults-es6":6,"mixwith":9}],52:[function(require,module,exports){
+const VDOMPatch = require('virtual-dom/patch');
+const VDOMDiff = require('virtual-dom/diff');
+const createElement = require('virtual-dom/create-element');
+const cloneVNode = require('../utils/clone-vnode');
 
-module.exports = class VDOMWidget {
-    constructor(opts) {
-        this.type = 'Widget';
-        this.component = opts.component;
-        this.vTree = opts.component.vTree;
-    }
+module.exports = class WeddellVDOMWidget {
 
-    static cloneVNode(vNode, newChildren=null, preserveIfUnchanged=false) {
-        return preserveIfUnchanged && !newChildren && !vNode.namespace && false ? vNode : 
-            (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
-                key: vNode.key
-            }), newChildren || vNode.children);
-    }
+    cloneVNode(vNode, pruneNullNodes=true, childWidgets=[]) {
+        if (Array.isArray(vNode)) {
+            var arr = vNode.map(child => this.cloneVNode(child, pruneNullNodes, childWidgets));
 
-    static pruneNullNodes(vNode) {
-        if (!vNode) {
-            throw "Can't prune null nodes from a null node!";
-        }
-
-        if (vNode.type === 'Widget') {
-            if (vNode.component.vTree == null) {
-                return null;
+            if (pruneNullNodes) {
+                arr = arr.reduce((newArr, child, ii) => {
+                    if (child && child instanceof WeddellVDOMWidget) {
+                        if ((!pruneNullNodes || child.vTree)) {
+                            newArr.push(child);
+                        }
+                    } else if (!pruneNullNodes || child != null) {
+                        newArr.push(child);
+                    }
+                    return newArr;
+                }, []);
             }
-        } else if (vNode.children) {
-            var children = vNode.children.filter(child => this.pruneNullNodes(child));
-            if (children.length !== vNode.children.length || children.some((child, ii) => child !== vNode.children[ii])) {
-                return this.cloneVNode(vNode, children);
-            }
+            return arr;
+        } else if (!vNode) {
+            return vNode;
+        } else if (vNode instanceof WeddellVDOMWidget) {
+            var widget = (vNode.component._widgetIsDirty ? vNode.component.makeNewWidget() : vNode.component._widget);
+            childWidgets.push(widget);
+            return widget
+        } else if (!vNode.tagName) {
+            return vNode;
+        } else {
+            return cloneVNode(vNode, this.cloneVNode(vNode.children, pruneNullNodes, childWidgets));
         }
-        return vNode;
     }
 
+    get type() {
+        return 'Widget';
+    }
+
+    constructor({component=null, vTree=component._vTree}) {
+        this.component = component;
+        this.childWidgets = [];
+        this._callbacks = [];
+        this.vTree = this.cloneVNode(vTree, true, this.childWidgets);
+    }
+
+    bindChildren(parent) {
+        this._callbacks = this.childWidgets.map(childWidget => childWidget.component.on('widgetdirty', () => {
+            parent.markWidgetDirty()
+        }))
+    }
+    unbindChildren() {
+        this._callbacks.forEach(callback => callback());
+    }
     init() {
         if (!this.vTree) {
             throw "Component has no VTree to init with";
         }
         var el = createElement(this.vTree);
-        this.component._el = el;
+        el.setAttribute('data-wdl-id', this.component.id);
+        //@TODO we could detect when we are using a snapshot element and use that element rather than creating a new one. Early attempts at doing this proved unreliable.
 
-        this.component.onDOMCreate.call(this.component, {el});
-        this.component.onDOMCreateOrChange.call(this.component, {el});
+        this.fireDomEvents(this.component.el, this.component._el = el);
 
         return el;
+    }
+
+    fireDomEvents(prevEl, el) {
+        if (!prevEl) {
+            this.component.trigger('domcreate', {el});
+            this.component.onDOMCreate.call(this.component, {el});
+            this.component.trigger('domcreateorchange', {newEl: el, prevEl});
+            this.component.onDOMCreateOrChange.call(this.component, {newEl: el, prevEl});
+        } else if (prevEl !== el) {
+            this.component.trigger('domchange', {el});
+            this.component.onDOMChange.call(this.component, { newEl: el, prevEl });
+            this.component.trigger('domcreateorchange', {newEl: el, prevEl});
+            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl });
+
+            var positionComparison = prevEl.compareDocumentPosition(el);
+            if (positionComparison !== 0) {
+                this.component.trigger('dommove');
+                //@TODO atm this pretty much always fires. maybe that is circumstantial, but we may need to be more selective about which bits constitute a "move"
+                this.component.onDOMMove.call(this.component, { newEl: el, prevEl });
+            }
+        }
     }
 
     update(previousWidget, prevDOMNode) {
-        if (Array.isArray(this.vTree)) {
-            throw "Cannot render a component with multiple nodes at root!";
-        }
+        if (previousWidget instanceof WeddellVDOMWidget) {
+            var patches = VDOMDiff(previousWidget.vTree, this.vTree);
+            var el = VDOMPatch(prevDOMNode, patches);
 
-        previousWidget.component.trigger('componentleavedom', {component: previousWidget.component});
-        this.component.trigger('componententerdom', {component: this.component});
-        
-        var patches = VDOMDiff(previousWidget.vTree, this.component.vTree);
-        var el = VDOMPatch(prevDOMNode, patches);
+            this.fireDomEvents(this.component.el, this.component._el = el);
 
-        if (previousWidget.component !== this.component) {
-            this.component._el = el;
-            this.component.onDOMChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
-            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl: prevDOMNode });
-        }
+            el.setAttribute('data-wdl-id', this.component.id);
 
-        //@TODO onDOMMove?
-        if (this.component.vTree == null) {
-            debugger;
+            return el;
         }
-        this.vTree = this.component.vTree;
-        
-        return el;
+        return this.init();        
     }
 
-    destroy(DOMNode) {
-        this.component.onDOMDestroy.call(this.component, {el: this.component._el});
-        this.component._el = null;
+    destroy(el) {
+        if (el === this.component.el) {
+            this.component._el = null;
+            this.component.onDOMDestroy.call(this.component, {el});
+        }
     }
 }
-},{"virtual-dom/create-element":15,"virtual-dom/diff":16,"virtual-dom/h":17,"virtual-dom/patch":25,"virtual-dom/virtual-hyperscript/svg":38}],56:[function(require,module,exports){
-var mix = require('mixwith-es5').mix;
+},{"../utils/clone-vnode":55,"virtual-dom/create-element":12,"virtual-dom/diff":13,"virtual-dom/patch":22}],53:[function(require,module,exports){
+var mix = require('mixwith').mix;
 var App = require('./app');
 var Component = require('./component');
 var Store = require('./store');
@@ -4172,26 +4590,39 @@ _Weddell.consts = {
     INDEX_ATTR_NAME: 'data-component-index'
 };
 _Weddell.deps = {};
-_Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
+_Weddell.classes = {App, Component, Store};
 Object.values(_Weddell.classes).forEach(function(commonClass){
     commonClass.Weddell = _Weddell;
 });
 module.exports = _Weddell;
 
-},{"./app":51,"./component":52,"./store":54,"mixwith-es5":7}],57:[function(require,module,exports){
+},{"./app":48,"./component":49,"./store":51,"mixwith":9}],54:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":56}],58:[function(require,module,exports){
+},{"../core/weddell":53}],55:[function(require,module,exports){
+const h = require('virtual-dom/h');
+const svg = require('virtual-dom/virtual-hyperscript/svg');
+
+module.exports = function(vNode, newChildren=null, preserveIfUnchanged=false) {
+    return preserveIfUnchanged && !newChildren && !vNode.namespace ? vNode : 
+        (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
+            key: vNode.key
+        }), newChildren || vNode.children);
+};
+},{"virtual-dom/h":14,"virtual-dom/virtual-hyperscript/svg":35}],56:[function(require,module,exports){
+module.exports = function(arr) {
+    return arr.filter(item => item != null);
+};
+},{}],57:[function(require,module,exports){
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],59:[function(require,module,exports){
-module.exports = function(arr, val){
-    return arr.some(currKey=>currKey === val);
+},{}],58:[function(require,module,exports){
+module.exports = function(arr) {
+    return [].concat(...arr);
 }
-
-},{}],60:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -4202,5 +4633,9 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[57])(57)
+},{}],60:[function(require,module,exports){
+module.exports = function(arr) {
+    return arr.reduce((acc, item) => acc.includes(item) ? acc : acc.concat(item), []);
+}
+},{}]},{},[54])(54)
 });

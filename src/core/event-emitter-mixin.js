@@ -1,4 +1,4 @@
-var Mixin = require('mixwith-es5').Mixin;
+var Mixin = require('mixwith').Mixin;
 
 var EventEmitterMixin = Mixin(function(superClass) {
     return class extends superClass {
