@@ -1,4 +1,4 @@
-var EventEmitterMixin = require('./event-emitter-mixin');
+var EventEmitterMixin = require('event-emitter-mixin');
 var mix = require('mixwith').mix;
 
 var inputCache = {};

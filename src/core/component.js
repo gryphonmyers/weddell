@@ -1,4 +1,4 @@
-const EventEmitterMixin = require('./event-emitter-mixin');
+const EventEmitterMixin = require('event-emitter-mixin');
 const defaults = require('defaults-es6');
 const generateHash = require('../utils/make-hash');
 const mix = require('mixwith').mix;

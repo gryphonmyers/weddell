@@ -1,4 +1,4 @@
-var EventEmitterMixin = require('../../core/event-emitter-mixin');
+var EventEmitterMixin = require('event-emitter-mixin');
 const { Mixin, DeDupe, mix } = require('mixwith');
 
 var MachineState = Mixin(function(superClass) {

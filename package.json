@@ -17,6 +17,7 @@
     "deep-equal": "^1.0.1",
     "defaults-es6": "^1.1.1",
     "document-ready-promise": "^3.0.1",
+    "event-emitter-mixin": "^1.1.1",
     "find-parent": "^2.0.2",
     "mixwith": "^0.1.1",
     "path-to-regexp": "^1.7.0",
