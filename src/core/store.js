@@ -9,8 +9,15 @@ var defaultOpts = {
     shouldMonitorChanges: true,
     shouldEvalFunctions: true,
     inputMappings: {},
-    validators: {}
+    validators: {},
+    requireSerializable: true
 };
+
+function isSerializable(val) {
+    return val && typeof val === 'object' ? 
+        (Array.isArray(val) || val.constructor === Object || Object.getPrototypeOf(val) === null) && Object.values(val).every(isSerializable) :
+        (val == null || typeof val === 'string' || typeof val === 'boolean' || typeof val === 'number');
+}
 
 var Store = class extends mix(Store).with(EventEmitterMixin) {
     constructor(data, opts) {
@@ -21,6 +28,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _initialCalled: {value:{}, writable:true},
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
+            requireSerializable: {value: opts.requireSerializable},
             _data: {configurable: false,value: {}},
             _initialState: { value: opts.initialState || {} },
             _cache: {value: {}, writable: true},
@@ -103,14 +111,17 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                     if (this.shouldEvalFunctions && typeof newValue === 'function') {
                         this._funcProps[key] = newValue;
                     } else {
+                        if (this.requireSerializable && !isSerializable(newValue)) {
+                            throw new Error(`Setting value for key ${key} failed. Values must be serializable.`);
+                        }
                         if (key in this._validators) {
                             var input = this._validators[key];
                             var val = newValue == null ? this.getValue(key) : newValue;
                             if (input.required && val == null) {
-                                throw `Required component input missing: ${key}`;
+                                throw new Error(`Required component input missing: ${key}`);
                             }
                             if (input.validator && !input.validator(val)) {
-                                throw `Input failed validation: ${key}. Received value: ${val}`;
+                                throw new Error(`Input failed validation: ${key}. Received value: ${val}`);
                             }
                         }
                         this._data[key] = newValue;

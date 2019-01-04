@@ -108,7 +108,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
                     inputMappings,
                     validators: this.inputs.filter(input => typeof input === 'object').reduce((final, inputObj) => Object.assign(final, {[inputObj.key]: {validator: inputObj.validator, required: inputObj.required}}), {}),
-                    shouldEvalFunctions: false
+                    shouldEvalFunctions: false,
+                    requireSerializable: false,
                 })
             },
             store: {
@@ -116,6 +117,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
                 }, this.store || {}, opts.store || {}), {
+                    requireSerializable: false,
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
@@ -731,7 +733,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             
             Object.assign(this.props, parsedProps[0]);
             this.bindInlineEventHandlers(parsedProps[1], parentScope);
-            this.state.$attributes = parsedProps[2];
+            this.state.$attributes = Object.entries(parsedProps[2])
+                .filter(entry => typeof entry[1] === 'string')
+                .reduce((acc, curr) => Object.assign(acc, { [curr[0]]: curr[1] }), {});
         }
     }
 
