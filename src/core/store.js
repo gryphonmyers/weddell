@@ -40,6 +40,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _changedKeys: {configurable: false, value: []},
             _firstGetComplete: {writable: true, value: false},
             _validators: {value: opts.validators},
+            transform: { value: opts.transform },
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
@@ -97,6 +98,10 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         Object.seal(this);
     }
 
+    transformValue(key, val) {
+        return this.transform ? this.transform(key, val) : val;
+    }
+
     set(key, val, isReadOnly=false) {
         if (!(key in this)) {
             if (!isReadOnly) {
@@ -130,7 +135,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
                             if (!deepEqual(newValue, oldValue)) {
                                 this._changedKeys.push(key);
-                                this.trigger('change', { target: this, changedKey: key, newValue, oldValue });
+                                this.trigger('change', { target: this, changedKey: key, newValue: this.transformValue(key, newValue), oldValue: this.transformValue(key, oldValue) });
                             }
                         }
                     }
@@ -142,7 +147,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 configurable: false,
                 enumerable: true,
                 get: function() {
-                    var value = this.getValue(key);
+                    var value = this.transformValue(key, this.getValue(key));
                     this.trigger('get', {key, value});
                     return value;
                 }.bind(this),

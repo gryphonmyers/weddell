@@ -137,7 +137,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }, state), {
                 initialState: opts.initialState,
                 overrides: [this.props],
-                proxies: [this.store]
+                proxies: [this.store],
+                transform: (key, value) => {
+                    return this.constructor.hydrators && this.constructor.hydrators[key] ? this.constructor.hydrators[key](value) : value;
+                }
             })
         })
 
