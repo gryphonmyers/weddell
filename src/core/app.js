@@ -27,6 +27,10 @@ function createStyleEl(id, className=null) {
     return styleEl;
 }
 
+/**
+ * An app, which owns and manages a root component in the DOM.
+ */
+
 var App = class extends mix(App).with(EventEmitterMixin) {
 
     static get patchMethods() {
@@ -35,7 +39,12 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             'patchStyles'
         ];
     }
-
+    /**
+     * 
+     * @param {Object} opts
+     * @param {String|HTMLElement} opts.el Element to mount app into
+     * 
+     */
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
@@ -427,7 +436,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
                 this._component = await this.makeComponent();
-                    
+                /**
+                 * @event Component#createcomponent
+                 * @type {object}
+                 */
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
