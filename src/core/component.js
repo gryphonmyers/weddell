@@ -30,6 +30,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get isWeddellComponent() {
         return true;
     }
+
+    static get store() {
+        return {};
+    }
     
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
@@ -116,7 +120,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
-                }, this.store || {}, opts.store || {}), {
+                }, this.constructor.store || this.store || {}, opts.store || {}), {
                     requireSerializable: false,
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
