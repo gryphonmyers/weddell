@@ -1,6 +1,6 @@
 {
   "name": "weddell",
-  "version": "3.1.0-19",
+  "version": "3.1.0-20",
   "description": "A tiny, modular, nonopinionated front-end web framework.",
   "main": "index.js",
   "scripts": {
