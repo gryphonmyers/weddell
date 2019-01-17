@@ -30,10 +30,6 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get isWeddellComponent() {
         return true;
     }
-
-    static get store() {
-        return {};
-    }
     
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
