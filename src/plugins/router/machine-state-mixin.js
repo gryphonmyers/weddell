@@ -1,5 +1,5 @@
 var EventEmitterMixin = require('@weddell/event-emitter-mixin');
-const { Mixin, DeDupe, mix } = require('mixwith');
+const { Mixin, DeDupe, mix } = require('@weddell/mixwith');
 
 var MachineState = Mixin(function(superClass) {
     return class extends mix(superClass).with(DeDupe(EventEmitterMixin)) {

@@ -1,4 +1,4 @@
-var mix = require('mixwith').mix;
+var mix = require('@weddell/mixwith').mix;
 var App = require('./app');
 var Component = require('./component');
 var Store = require('./store');

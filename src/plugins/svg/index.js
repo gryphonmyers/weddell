@@ -1,4 +1,4 @@
-const { Mixin } = require('mixwith');
+const { Mixin } = require('@weddell/mixwith');
 const defaults = require('defaults-es6/deep-merge');
 const svg = require('virtual-dom/virtual-hyperscript/svg');
 const VdomThunk = require('../../core/vdom-thunk');

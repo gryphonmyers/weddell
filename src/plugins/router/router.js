@@ -2,7 +2,7 @@ var defaults = require('defaults-es6');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var defaultOpts = {};
-const { mix } = require('mixwith');
+const { mix } = require('@weddell/mixwith');
 var EventEmitterMixin = require('@weddell/event-emitter-mixin');
 
 function matchPattern(pattern, parentMatched, pathName, fullPath, end) {

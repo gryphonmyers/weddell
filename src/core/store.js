@@ -2,7 +2,7 @@ var EventEmitterMixin = require('@weddell/event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('defaults-es6');
 var difference = require('../utils/difference');
-var mix = require('mixwith').mix;
+var mix = require('@weddell/mixwith').mix;
 var uniq = require('array-uniq');
 
 var defaultOpts = {
