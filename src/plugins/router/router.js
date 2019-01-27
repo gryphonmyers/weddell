@@ -3,7 +3,7 @@ var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
 var defaultOpts = {};
 const { mix } = require('mixwith');
-var EventEmitterMixin = require('event-emitter-mixin');
+var EventEmitterMixin = require('@weddell/event-emitter-mixin');
 
 function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     var params = [];

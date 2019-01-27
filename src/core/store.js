@@ -1,4 +1,4 @@
-var EventEmitterMixin = require('event-emitter-mixin');
+var EventEmitterMixin = require('@weddell/event-emitter-mixin');
 var deepEqual = require('deep-equal');
 var defaults = require('defaults-es6');
 var difference = require('../utils/difference');
