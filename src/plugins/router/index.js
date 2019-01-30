@@ -359,7 +359,7 @@ module.exports = function(_Weddell){
                     compileRouterLink(obj) {
                         var matches = this.router.compileRouterLink(obj);
                         if (matches && typeof matches === 'object') {
-                            return matches.fullPath;
+                            return matches.fullPath + (matches.hash ? '#' + matches.hash : '');
                         } else if (typeof matches === 'string') {
                             return matches;
                         }

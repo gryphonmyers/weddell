@@ -233,6 +233,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         
         routeName = obj.name ? obj.name : routeName;
         obj.params = Object.assign(paramDefaults, obj.params);
+        var hash = obj.hash;
        
         var route = Router.getNamedRoute(routeName, this.routes);
         
@@ -252,6 +253,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                 route,
                 match: null
             }];
+            matches.hash = hash;
             matches.route = route;
             matches.fullPath = fullPath[0] !== '/' ? '/' + fullPath : fullPath;
             return matches;

@@ -68,7 +68,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             _patchPromise: { value: null, writable: true },
             _snapshotData: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
-            _RAFCallback: { value: null, writable: true },
             _patchRequests: { value: [], writable: true },
             _patchPromise: { value: null, writable: true },
             _component: { value: null, writable: true },
@@ -320,13 +319,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this._lastPatchStartTime = Date.now();
         
         window.setTimeout(() => {
-            requestAnimationFrame(this._RAFCallback = () =>{
-                this._RAFCallback = null;
-                var currPatchRequests = this._patchRequests;
-                this._patchRequests = [];
-                resolveFunc(currPatchRequests);
-            });   
-        }, Math.max(0, patchInterval - dt))        
+            var currPatchRequests = this._patchRequests;
+            this._patchRequests = [];
+            resolveFunc(currPatchRequests);
+        }, Math.max(0, patchInterval - dt))
         
         return promise;
     }
