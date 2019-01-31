@@ -129,6 +129,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
         var state = Object.assign({}, opts.state || {}, this.constructor.state);
+        var component = this;
         
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
@@ -138,8 +139,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 initialState: opts.initialState,
                 overrides: [this.props],
                 proxies: [this.store],
-                transform: (key, value) => {
-                    return this.constructor.hydrators && this.constructor.hydrators[key] ? this.constructor.hydrators[key](value) : value;
+                transform: function(key, value) {
+                    return component.constructor.hydrators && component.constructor.hydrators[key] ? component.constructor.hydrators[key].call(this, value) : value;
                 }
             })
         })

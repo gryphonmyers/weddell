@@ -99,7 +99,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     transformValue(key, val) {
-        return this.transform ? this.transform(key, val) : val;
+        return this.transform ? this.transform.call(this, key, val) : val;
     }
 
     set(key, val, isReadOnly=false) {
@@ -108,7 +108,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 var setter = function(newValue) {
                     if (this.shouldMonitorChanges) {
                         var oldValue = this._data[key];
-                        if (oldValue && typeof oldValue === "object") {
+                        if (oldValue && typeof oldValue === "object" && !Array.isArray(oldValue)) {
                             oldValue = Object.assign({}, oldValue);
                         }
                     }

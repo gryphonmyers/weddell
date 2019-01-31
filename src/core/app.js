@@ -406,7 +406,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
     }
 
-    initRootComponent() {
+    initRootComponent(initObj) {
         return this.component.init(this.componentInitOpts)
             .then(() => this.component.mount())
             .then(() => {
@@ -414,7 +414,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             })
     }
 
-    init() {
+    init(initObj={}) {
         this.on('createcomponent', evt => {
             this._createdComponents.push(evt.component);
         })
@@ -463,7 +463,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
                 Object.seal(this);
 
-                return this._initPromise = this.initRootComponent()
+                return this._initPromise = this.initRootComponent(initObj)
             })
             .then(result => {
                 window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));

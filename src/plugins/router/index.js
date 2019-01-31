@@ -242,12 +242,12 @@ module.exports = function(_Weddell){
                      * Augments root component initialization to also initialize the app's router.
                      * 
                      * @param {object} initObj 
-                     * @property {String} [initObj.initialRoute] Path to match at initialization. Defaults to location.pathname
+                     * @property {String} [initObj.initialPath] Path to match at initialization. Defaults to location.pathname
                      */
 
-                    initRootComponent(initObj={}) {
-                        return super.initRootComponent()
-                            .then(() => this.router.init(initObj.initialRoute))
+                    initRootComponent(initObj) {
+                        return super.initRootComponent(initObj)
+                            .then(() => this.router.init(initObj.initialPath))
                     }
                 }
             }),
