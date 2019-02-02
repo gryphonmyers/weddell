@@ -63,16 +63,14 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             Object.assign(matches, { triggeringEvent});
             var isInitialRoute = !this.currentRoute;
             
-            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
+            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
                 var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
                     .then(matches => {
-                        if (this.currentRoute.hash !== matches.hash) {
-                            if (shouldReplaceState) {
-                                return this.replaceState(matches.fullPath, hash);
-                            } else {
-                                return this.pushState(matches.fullPath, hash);
-                            }
-                        } 
+                        if (shouldReplaceState) {
+                            return this.replaceState(matches.fullPath, hash);
+                        } else {
+                            return this.pushState(matches.fullPath, hash);
+                        }
                     });
             } else {
                 promise = Promise.all(matches.map((currMatch, key) => {

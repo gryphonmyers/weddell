@@ -256,7 +256,7 @@ module.exports = function(_Weddell){
                     /**
                      * Component routing hook. Fires during the routing process, when a component in the component tree has been matched to a route in the route tree. 
                      * 
-                     * The the matched route is not the current route, the current routed component is exited.
+                     * If the matched route is not the current route, the current routed component is exited.
                      * 
                      * @param {RoutingEvent}
                      * @returns {Promise} Routing may be deferred by overriding this method with one that returns a Promise.
@@ -281,6 +281,16 @@ module.exports = function(_Weddell){
                      * @returns {Promise} Routing may be deferred by returning a Promise in this method.
                      */
                     onUpdate() {}
+
+                    /**
+                     * Component routing hook. Fires during the routing process, after a component in the component tree has been matched to a route in the route tree. 
+                     * 
+                     * Whether the component is updated or entered, this hook will fire in addition to the respective primary hook.
+                     * 
+                     * @param {RoutingEvent}
+                     * @returns {Promise} Routing may be deferred by returning a Promise in this method.
+                     */
+                    onEnterOrUpdate() {}                    
 
                     /**
                      * Augments component state with routing data.
@@ -327,13 +337,20 @@ module.exports = function(_Weddell){
                             Object.entries(this.components)
                                 .forEach(entry => {
                                     var componentName = entry[0]
-                                    var routerState = new RouterState([['onEnterState', 'onEnter'], ['onExitState', 'onExit'], ['onUpdateState', 'onUpdate']].reduce((finalObj, methods) => {
+                                    var routerState = new RouterState([['onEnterState', ['onEnter', 'onEnterOrUpdate']], ['onExitState', 'onExit'], ['onUpdateState', ['onUpdate', 'onEnterOrUpdate']]].reduce((finalObj, methods) => {
                                         var machineStateMethod = methods[0];
                                         finalObj[machineStateMethod] = (evt) => {
                                             return this.getInitComponentInstance(componentName, 'router')
                                                 .then(componentInstance => {
-                                                    return Promise.resolve(componentInstance[methods[1]].call(componentInstance, Object.assign({}, evt)))
-                                                        .then(() => componentInstance);
+                                                    var methodNames = methods[1];
+                                                    if (!Array.isArray(methodNames)) {
+                                                        methodNames = [methodNames]
+                                                    }
+                                                    return Promise.all(methodNames.map(methodName => 
+                                                            componentInstance[methodName].call(componentInstance, Object.assign({}, evt))
+                                                        )
+                                                    )
+                                                    .then(() => componentInstance)                                   
                                                 })
                                                 .then(componentInstance => {
                                                     switch (machineStateMethod) {

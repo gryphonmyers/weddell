@@ -30,6 +30,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             requireSerializable: {value: opts.requireSerializable},
             _data: {configurable: false,value: {}},
+            _transformedData: {configurable: false,value: {}},
             _initialState: { value: opts.initialState || {} },
             _cache: {value: {}, writable: true},
             _funcProps: {configurable: false,value: {}},
@@ -40,7 +41,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             _changedKeys: {configurable: false, value: []},
             _firstGetComplete: {writable: true, value: false},
             _validators: {value: opts.validators},
-            transform: { value: opts.transform },
+            getTransform: { value: opts.getTransform },
+            setTransform: { value: opts.setTransform },
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
@@ -99,7 +101,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 
     transformValue(key, val) {
-        return this.transform ? this.transform.call(this, key, val) : val;
+        return this.getTransform ? this.getTransform.call(this, key, val) : val;
     }
 
     set(key, val, isReadOnly=false) {
@@ -116,6 +118,9 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                     if (this.shouldEvalFunctions && typeof newValue === 'function') {
                         this._funcProps[key] = newValue;
                     } else {
+                        if (this.setTransform) {
+                            newValue = this.setTransform.call(this, key, newValue);
+                        }
                         if (this.requireSerializable && !isSerializable(newValue)) {
                             throw new Error(`Setting value for key ${key} failed. Values must be serializable.`);
                         }
@@ -129,13 +134,20 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                                 throw new Error(`Input failed validation: ${key}. Received value: ${val}`);
                             }
                         }
+                        var oldTransformedValue = this._transformedData[key];
                         this._data[key] = newValue;
-
+                        if (this.getTransform) {
+                            this._transformedData[key] = this.getTransform.call(this, key, newValue);
+                        }
+                        
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
                                 this._changedKeys.push(key);
-                                this.trigger('change', { target: this, changedKey: key, newValue: this.transformValue(key, newValue), oldValue: this.transformValue(key, oldValue) });
+                                this.trigger('change', { target: this, changedKey: key, 
+                                    newValue: this._transformedData[key] == null ? this._data[key] : this._transformedData[key], 
+                                    oldValue: oldTransformedValue == null ? oldValue : oldTransformedValue 
+                                });
                             }
                         }
                     }
@@ -147,7 +159,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 configurable: false,
                 enumerable: true,
                 get: function() {
-                    var value = this.transformValue(key, this.getValue(key));
+                    var value = this.getValue(key);
                     this.trigger('get', {key, value});
                     return value;
                 }.bind(this),
@@ -235,7 +247,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
         i = 0;
         if (typeof val === 'undefined' || val === null) {
-            val = this._data[key];
+            val = this._transformedData[key] || this._data[key];
         }
         
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);

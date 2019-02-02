@@ -130,6 +130,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         var state = Object.assign({}, opts.state || {}, this.constructor.state);
         var component = this;
+        var serializers = component.constructor.serializers;
+        var deserializers = component.constructor.deserializers || component.constructor.hydrators;
         
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
@@ -139,8 +141,15 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 initialState: opts.initialState,
                 overrides: [this.props],
                 proxies: [this.store],
-                transform: function(key, value) {
-                    return component.constructor.hydrators && component.constructor.hydrators[key] ? component.constructor.hydrators[key].call(this, value) : value;
+                setTransform : function(key, value) {
+                    return serializers && serializers[key] 
+                        ? serializers[key].call(this, value) 
+                        : value;
+                },
+                getTransform: function(key, value) {
+                    return deserializers && deserializers[key] 
+                        ? deserializers[key].call(this, value) 
+                        : value;
                 }
             })
         })
