@@ -229,12 +229,16 @@ module.exports = function(_Weddell){
                         this.on('createcomponent', evt => {
                             this.on('routematched', routeEvt => {
                                 evt.component.state.$currentRoute = Object.assign(JSON.parse(JSON.stringify(routeEvt.matches)), { paramVals: routeEvt.matches.paramVals });
-                                evt.component.state.$pathParams = routeEvt.paramVals;
+                                evt.component.state.$pathParams = routeEvt.matches.paramVals;
                                 evt.component.state.$currentRouteName = routeEvt.matches.route.name;
                             });
                             evt.component.router = this.router;
-                            evt.component.state.$currentRoute = this.router.currentRoute ? Object.assign(JSON.parse(JSON.stringify(this.router.currentRoute)), { paramVals: this.router.currentRoute.paramVals }) : null;
-                            evt.component.state.$currentRouteName = this.router.currentRoute && this.router.currentRoute.name;
+
+                            if (this.router.currentRoute) {
+                                evt.component.state.$currentRoute = Object.assign(JSON.parse(JSON.stringify(this.router.currentRoute)), { paramVals: this.router.currentRoute.paramVals });
+                                evt.component.state.$currentRouteName = this.router.currentRoute && this.router.currentRoute.route.name;
+                                evt.component.state.$pathParams = this.router.currentRoute.paramVals;
+                            }
                         });
                     }
 
