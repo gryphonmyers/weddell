@@ -2,13 +2,14 @@
   "name": "weddell",
   "version": "3.1.0-29",
   "description": "A tiny, modular, nonopinionated front-end web framework.",
-  "main": "index.js",
+  "main": "./src/presets/weddell-ro.js",
   "scripts": {
     "start": "budo docs/app.js:static/bundle.js --dir docs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "version": "gulp build && git add dist",
     "postversion": "git push && git push --tags"
   },
+  "files": ["src"],
   "author": "Gryphon Myers",
   "license": "MIT",
   "dependencies": {
