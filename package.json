@@ -1,6 +1,6 @@
 {
   "name": "weddell",
-  "version": "3.1.0-29",
+  "version": "3.1.0-30",
   "description": "A tiny, modular, nonopinionated front-end web framework.",
   "main": "./src/presets/weddell-ro.js",
   "scripts": {
@@ -9,7 +9,9 @@
     "version": "gulp build && git add dist",
     "postversion": "git push && git push --tags"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "author": "Gryphon Myers",
   "license": "MIT",
   "dependencies": {
