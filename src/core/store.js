@@ -14,7 +14,7 @@ var defaultOpts = {
 };
 
 function isSerializable(val) {
-    return val && typeof val === 'object' ? 
+    return val && typeof val === 'object' ?
         (Array.isArray(val) || val.constructor === Object || Object.getPrototypeOf(val) === null) && Object.values(val).every(isSerializable) :
         (val == null || typeof val === 'string' || typeof val === 'boolean' || typeof val === 'number');
 }
@@ -25,22 +25,22 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         super();
 
         Object.defineProperties(this, {
-            _initialCalled: {value:{}, writable:true},
-            shouldMonitorChanges: {value: opts.shouldMonitorChanges},
-            shouldEvalFunctions: {value: opts.shouldEvalFunctions},
-            requireSerializable: {value: opts.requireSerializable},
-            _data: {configurable: false,value: {}},
-            _transformedData: {configurable: false,value: {}},
+            _initialCalled: { value: {}, writable: true },
+            shouldMonitorChanges: { value: opts.shouldMonitorChanges },
+            shouldEvalFunctions: { value: opts.shouldEvalFunctions },
+            requireSerializable: { value: opts.requireSerializable },
+            _data: { configurable: false, value: {} },
+            _transformedData: { configurable: false, value: {} },
             _initialState: { value: opts.initialState || {} },
-            _cache: {value: {}, writable: true},
-            _funcProps: {configurable: false,value: {}},
-            _funcPropHandlerRemovers: {configurable: false,value: {}},
-            _proxyObjs: {configurable: false,value: {}},
-            _dependencyKeys: {configurable: false, value: []},
-            _proxyProps: {configurable: false,value: {}},
-            _changedKeys: {configurable: false, value: []},
-            _firstGetComplete: {writable: true, value: false},
-            _validators: {value: opts.validators},
+            _cache: { value: {}, writable: true },
+            _funcProps: { configurable: false, value: {} },
+            _funcPropHandlerRemovers: { configurable: false, value: {} },
+            _proxyObjs: { configurable: false, value: {} },
+            _dependencyKeys: { configurable: false, value: [] },
+            _proxyProps: { configurable: false, value: {} },
+            _changedKeys: { configurable: false, value: [] },
+            _firstGetComplete: { writable: true, value: false },
+            _validators: { value: opts.validators },
             getTransform: { value: opts.getTransform },
             setTransform: { value: opts.setTransform },
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
@@ -58,7 +58,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         }
 
         this.extends.forEach(obj => {
-            obj.on('change', function(evt){
+            obj.on('change', function (evt) {
                 if (evt.changedKey in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.changedKey = this.inputMappings[evt.changedKey];
@@ -66,7 +66,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 }
             }.bind(this));
 
-            obj.on('get', function(evt){
+            obj.on('get', function (evt) {
                 if (evt.key in this.inputMappings) {
                     evt = Object.assign({}, evt);
                     evt.key = this.inputMappings[evt.key];
@@ -104,10 +104,10 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return this.getTransform ? this.getTransform.call(this, key, val) : val;
     }
 
-    set(key, val, isReadOnly=false) {
+    set(key, val, isReadOnly = false) {
         if (!(key in this)) {
             if (!isReadOnly) {
-                var setter = function(newValue) {
+                var setter = function (newValue) {
                     if (this.shouldMonitorChanges) {
                         var oldValue = this._data[key];
                         if (oldValue && typeof oldValue === "object" && !Array.isArray(oldValue)) {
@@ -139,14 +139,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                         if (this.getTransform) {
                             this._transformedData[key] = this.getTransform.call(this, key, newValue);
                         }
-                        
+
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
                                 this._changedKeys.push(key);
-                                this.trigger('change', { target: this, changedKey: key, 
-                                    newValue: this._transformedData[key] == null ? this._data[key] : this._transformedData[key], 
-                                    oldValue: oldTransformedValue == null ? oldValue : oldTransformedValue 
+                                this.trigger('change', {
+                                    target: this, changedKey: key,
+                                    newValue: this._transformedData[key] == null ? this._data[key] : this._transformedData[key],
+                                    oldValue: oldTransformedValue == null ? oldValue : oldTransformedValue
                                 });
                             }
                         }
@@ -158,9 +159,9 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             Object.defineProperty(this, key, {
                 configurable: false,
                 enumerable: true,
-                get: function() {
+                get: function () {
                     var value = this.getValue(key);
-                    this.trigger('get', {key, value});
+                    this.trigger('get', { key, value });
                     return value;
                 }.bind(this),
                 set: setter
@@ -183,17 +184,17 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         }
     }
 
-    collectChangedData(includeComputed=true, computedValueFormat='verbose') {
+    collectChangedData(includeComputed = true, computedValueFormat = 'verbose') {
         return uniq(this._changedKeys).reduce((acc, curr) => {
             if (!this.shouldEvalFunctions || includeComputed || !this._funcProps[curr]) {
                 if (this.shouldEvalFunctions && this._funcProps[curr]) {
                     switch (computedValueFormat) {
                         case 'verbose':
-                            return Object.assign(acc, { 
+                            return Object.assign(acc, {
                                 [curr]: {
                                     isComputedValue: true,
                                     lastAccessedKeys: this._dependencyKeys[curr],
-                                    value: this._data[curr] 
+                                    value: this._data[curr]
                                 }
                             });
                         case 'simple':
@@ -239,7 +240,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                 }
             });
         }
-        
+
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];
             i++;
@@ -249,10 +250,10 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         if (typeof val === 'undefined' || val === null) {
             val = this._transformedData[key] || this._data[key];
         }
-        
+
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
-        while(mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
+        while (mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
             val = this.extends[i][mappingEntry[0]];
             i++;
         }
@@ -264,7 +265,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return val;
     }
 
-    assign(data, initialState={}) {
+    assign(data, initialState = {}) {
         if (data) {
             if (Array.isArray(data)) {
                 data.forEach(key => this.set(key, null));
@@ -276,21 +277,15 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         }
     }
 
-    await(key) {
-        if (Array.isArray(key)) {
-            return Promise.all(key.map(subKey => this.await(subKey)));
-        }
-        return Promise.resolve(this.getValue(key) || new Promise(resolve => {
-            var off = this.watch(key, vals => {
-                off();
-                resolve(vals);
-            }, true, true);
-        }))
+    await(key, validator = true, invokeImmediately = true) {
+        return new Promise(resolve => {
+            this.watchOnce(key, resolve, validator, invokeImmediately);
+        })
     }
 
     evaluateFunctionProperty(key) {
         var dependencyKeys = [];
-        var off = this.on('get', function(evt){
+        var off = this.on('get', function (evt) {
             dependencyKeys.push(evt.key);
         });
         var result = this._funcProps[key].call(this);
@@ -299,19 +294,22 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return result;
     }
 
-    watch(key, func, shouldWaitForDefined, invokeImmediately) {
-        if (typeof shouldWaitForDefined == 'undefined') shouldWaitForDefined = true;
+    watchOnce() {
+        return this.watch.apply(this, [...Array.from(arguments), true]);
+    }
+
+    watch(key, func, validator = true, invokeImmediately = false, onlyFireOnce = false) {
         if (!Array.isArray(key)) {
             key = [key];
         }
-        var checkKeys = function(){
-            var vals = key.map(currKey=>this[currKey]);
-            if (!shouldWaitForDefined || vals.every(val=>typeof val !== 'undefined')) {
+        var checkKeys = function () {
+            var vals = key.map(currKey => this[currKey]);
+
+            if (!validator || (typeof validator === 'function' ? validator(key.length === 1 ? vals[0] : vals) : vals.every(val => typeof val !== 'undefined'))) {
                 func.apply(this, vals);
             }
         };
-
-        var off = this.on('change', function(evt){
+        var off = this[onlyFireOnce ? 'once' : 'on']('change', function (evt) {
             if (key.includes(evt.changedKey)) {
                 checkKeys.call(this);
             }
