@@ -46,17 +46,17 @@ var RouterState = mix(class {
  * @property {String} [name] Name of this route object. Required for direct routing via link generation.
  */
 
- /**
-  * Event object that is passed to a routing handler callback.
-  * 
-  * @typedef {RouterMatch[]} RoutingEvent An event object is passed to routing handlers after a successful match. Each item in the array corresponds to a tier in the route tree.
-  * @property {String} fullPath The full path that was matched to this route. 
-  * @property {String} hash Location hash at the time the route was matched.
-  * @property {Boolean} isRouteUpdate Whether or not this route matched to the same component at this point in the routing tree.
-  * @property {object} paramVals Key-pairs of all path params from route match.
-  * @property {RouteObject} route The route object that was matched.
-  * 
-  */
+/**
+ * Event object that is passed to a routing handler callback.
+ * 
+ * @typedef {RouterMatch[]} RoutingEvent An event object is passed to routing handlers after a successful match. Each item in the array corresponds to a tier in the route tree.
+ * @property {String} fullPath The full path that was matched to this route. 
+ * @property {String} hash Location hash at the time the route was matched.
+ * @property {Boolean} isRouteUpdate Whether or not this route matched to the same component at this point in the routing tree.
+ * @property {object} paramVals Key-pairs of all path params from route match.
+ * @property {RouteObject} route The route object that was matched.
+ * 
+ */
 
 /**
  * Callback that executes when a route is matched in the route tree. 
@@ -103,27 +103,27 @@ var RouterState = mix(class {
  * @property {RouterMatch[]} matches
  */
 
- /**
- * Event fired whenever the location path is matched against the component tree, after all component tree transitions have finished firing.
- * 
- * @event App#route 
- * @type {object}
- * @property {RouterMatch[]} matches
- * @property {*} results If any data was returned by the transition events fired over the course of routing, it will be available here. Usually this is null.
- */
+/**
+* Event fired whenever the location path is matched against the component tree, after all component tree transitions have finished firing.
+* 
+* @event App#route 
+* @type {object}
+* @property {RouterMatch[]} matches
+* @property {*} results If any data was returned by the transition events fired over the course of routing, it will be available here. Usually this is null.
+*/
 
- /**
- * Weddell decorator function.
- * 
- * @param {Weddell} _Weddell The Weddell class to augment.
- * @returns {Weddell} The passed Weddell class, augmented with routing functionality.
- */
+/**
+* Weddell decorator function.
+* 
+* @param {Weddell} _Weddell The Weddell class to augment.
+* @returns {Weddell} The passed Weddell class, augmented with routing functionality.
+*/
 
-module.exports = function(_Weddell){
+module.exports = function (_Weddell) {
     return _Weddell.plugin({
         id: 'router',
-        classes:  {
-            App: Mixin(function(App){
+        classes: {
+            App: Mixin(function (App) {
 
                 /**
                  * A decorated Weddell class will generate an App class with routing functionality.
@@ -139,7 +139,7 @@ module.exports = function(_Weddell){
                      * @returns {Promise} Routing may be deferred by returning a Promise in this method.
                      */
 
-                    onBeforeRoute() {}
+                    onBeforeRoute() { }
 
                     /**
                      * Augments the App constructor with new parameters and events.
@@ -163,10 +163,10 @@ module.exports = function(_Weddell){
                              * @fires App#route
                              * @returns {Promise}
                              */
-                            onRoute: function(matches, componentNames) {
+                            onRoute: function (matches, componentNames) {
                                 var jobs = [];
                                 this.el.classList.add('routing');
-                                
+
                                 this.el.setAttribute('data-current-route', matches.route.name);
                                 if (matches.isRouteUpdate) {
                                     this.el.classList.add('route-update');
@@ -174,12 +174,12 @@ module.exports = function(_Weddell){
                                         this.el.classList.add('keep-scroll-pos');
                                     }
                                 }
-                                
-                                this.trigger('routematched', {matches});
+
+                                this.trigger('routematched', { matches });
                                 return Promise.resolve(this.onBeforeRoute.call(this, { matches, componentNames }))
                                     .then(() => {
                                         this.el.classList.add('prerouting-finished');
-                                        
+
                                         return componentNames
                                             .map(componentName => componentName.toLowerCase())
                                             .reduce((promise, componentName) => {
@@ -204,11 +204,11 @@ module.exports = function(_Weddell){
                                                     componentName: null
                                                 });
                                                 return jobs.reduce((promise, obj) => {
-                                                        return promise
-                                                            .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, {matches}))
-                                                    }, Promise.resolve())
+                                                    return promise
+                                                        .then(() => obj.currentComponent.changeState.call(obj.currentComponent, obj.componentName, { matches }))
+                                                }, Promise.resolve())
                                                     .then(results =>
-                                                        this.awaitPatch()
+                                                        this.queuePatch()
                                                             .then(() => results));
                                             }, console.warn)
                                             .then(results => {
@@ -216,16 +216,16 @@ module.exports = function(_Weddell){
                                                 this.el.classList.remove('prerouting-finished');
                                                 this.el.classList.remove('route-update');
                                                 this.el.classList.remove('keep-scroll-pos');
-                                                this.trigger('route', {matches, results});
+                                                this.trigger('route', { matches, results });
                                                 return results;
                                             })
                                     })
                             }.bind(this),
-                            onHashChange: function(hash) {
+                            onHashChange: function (hash) {
                                 return hash;
                             }.bind(this)
                         });
-                        
+
                         this.on('createcomponent', evt => {
                             this.on('routematched', routeEvt => {
                                 evt.component.state.$currentRoute = Object.assign(JSON.parse(JSON.stringify(routeEvt.matches)), { paramVals: routeEvt.matches.paramVals });
@@ -255,7 +255,7 @@ module.exports = function(_Weddell){
                     }
                 }
             }),
-            Component: Mixin(function(Component){
+            Component: Mixin(function (Component) {
                 var RouterComponent = class extends mix(Component).with(StateMachineMixin) {
                     /**
                      * Component routing hook. Fires during the routing process, when a component in the component tree has been matched to a route in the route tree. 
@@ -265,7 +265,7 @@ module.exports = function(_Weddell){
                      * @param {RoutingEvent}
                      * @returns {Promise} Routing may be deferred by overriding this method with one that returns a Promise.
                      */
-                    onExit() {}
+                    onExit() { }
                     /**
                      * Component routing hook. Fires during the routing process, after a component in the component tree has been matched to a route in the route tree. 
                      * 
@@ -274,8 +274,8 @@ module.exports = function(_Weddell){
                      * @param {RoutingEvent}
                      * @returns {Promise} Routing may be deferred by returning a Promise in this method.
                      */
-                    onEnter() {}
-                    
+                    onEnter() { }
+
                     /**
                      * Component routing hook. Fires during the routing process, after a component in the component tree has been matched to a route in the route tree. 
                      * 
@@ -284,7 +284,7 @@ module.exports = function(_Weddell){
                      * @param {RoutingEvent}
                      * @returns {Promise} Routing may be deferred by returning a Promise in this method.
                      */
-                    onUpdate() {}
+                    onUpdate() { }
 
                     /**
                      * Component routing hook. Fires during the routing process, after a component in the component tree has been matched to a route in the route tree. 
@@ -294,7 +294,7 @@ module.exports = function(_Weddell){
                      * @param {RoutingEvent}
                      * @returns {Promise} Routing may be deferred by returning a Promise in this method.
                      */
-                    onEnterOrUpdate() {}                    
+                    onEnterOrUpdate() { }
 
                     /**
                      * Augments component state with routing data.
@@ -314,9 +314,9 @@ module.exports = function(_Weddell){
 
                     static get tagDirectives() {
                         return defaults({
-                            routerview: function(vNode, content, props, renderedComponents){
+                            routerview: function (vNode, content, props, renderedComponents) {
                                 return this.currentState ? this.makeChildComponentWidget(this.currentState.componentName, 'router', content, props, renderedComponents) : null;
-                            } 
+                            }
                         }, super.tagDirectives)
                     }
 
@@ -325,14 +325,14 @@ module.exports = function(_Weddell){
                         var self;
                         super(defaults(opts, {
                             store: {
-                                $routerLink: function(){
+                                $routerLink: function () {
                                     return self.compileRouterLink.apply(self, arguments);
                                 }
                             }
                         }));
 
                         Object.defineProperties(this, {
-                            _initialRouterStateName: { value: opts.initialRouterStateName, writable: false} 
+                            _initialRouterStateName: { value: opts.initialRouterStateName, writable: false }
                         })
 
                         self = this;
@@ -350,11 +350,11 @@ module.exports = function(_Weddell){
                                                     if (!Array.isArray(methodNames)) {
                                                         methodNames = [methodNames]
                                                     }
-                                                    return Promise.all(methodNames.map(methodName => 
-                                                            componentInstance[methodName].call(componentInstance, Object.assign({}, evt))
-                                                        )
+                                                    return Promise.all(methodNames.map(methodName =>
+                                                        componentInstance[methodName].call(componentInstance, Object.assign({}, evt))
                                                     )
-                                                    .then(() => componentInstance)                                   
+                                                    )
+                                                        .then(() => componentInstance)
                                                 })
                                                 .then(componentInstance => {
                                                     switch (machineStateMethod) {
@@ -369,9 +369,9 @@ module.exports = function(_Weddell){
                                         }
                                         return finalObj;
                                     }, {
-                                        Component: entry[1],
-                                        componentName
-                                    }));
+                                            Component: entry[1],
+                                            componentName
+                                        }));
                                     this.addState(componentName, routerState);
                                 });
                         })

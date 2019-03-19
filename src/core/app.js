@@ -15,7 +15,7 @@ const defaultOpts = {
 
 const patchInterval = 33.334;
 
-function createStyleEl(id, className=null) {
+function createStyleEl(id, className = null) {
     var styleEl = document.getElementById(id)
     if (!styleEl) {
         styleEl = document.createElement('style');
@@ -61,7 +61,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             component: { get: () => this._component },
             el: { get: () => this._el },
             _liveWidget: { value: null, writable: true },
-            _lastPatchStartTime: { value: Date.now(), writable: true},
+            _lastPatchStartTime: { value: Date.now(), writable: true },
             _el: { value: null, writable: true },
             _initPromise: { value: null, writable: true },
             _elInput: { value: opts.el },
@@ -69,7 +69,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             _snapshotData: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
             _patchRequests: { value: [], writable: true },
-            _patchPromise: { value: null, writable: true },
             _component: { value: null, writable: true },
             _widget: { value: null, writable: true },
             _createdComponents: { value: [] }
@@ -85,7 +84,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
-            value: {app: this, components: {}, verbosity: opts.verbosity }
+            value: { app: this, components: {}, verbosity: opts.verbosity }
         });
 
         if (opts.verbosity > 0 && opts.styles) {
@@ -97,7 +96,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         })
     }
 
-    onPatch() {}
+    onPatch() { }
 
     patchDOM(patchRequests) {
         if (!this.rootNode.parentNode) {
@@ -113,7 +112,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     awaitComponentMount(id) {
-        return new Promise(resolve => {            
+        return new Promise(resolve => {
             Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
                 this.on('createcomponent', evt => {
                     if (evt.component.id === id) {
@@ -121,14 +120,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     }
                 })
             }))
-            .then(component => {
-                component.awaitMount().then(() => resolve(component));
-            })
+                .then(component => {
+                    component.awaitMount().then(() => resolve(component));
+                })
         })
     }
 
     patchStyles(patchRequests) {
-        
+
         var results = patchRequests.reduceRight((acc, item) => {
             if (!(item.classId in acc.classes)) {
                 acc.classes[item.classId] = item;
@@ -137,7 +136,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 acc.components[item.id] = item;
             }
             return acc;
-        }, {classes:{}, components:{}});
+        }, { classes: {}, components: {} });
 
         var instanceStyles = [];
         var staticStyles = {};
@@ -146,9 +145,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             var id = component.id;
             var needsPatch = id in results.components;
             var stylesObj = needsPatch ? results.components[id].results.renderStyles : component._renderCache.renderStyles;
-            
-            var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), {id, needsPatch})
-            
+
+            var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), { id, needsPatch })
+
             instanceStyles.push(makeObj('dynamicStyles', stylesObj));
 
             id = component.constructor.id;
@@ -194,7 +193,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     if (styleEl) {
                         prevEl = styleEl;
                     }
-                    
+
                     return final;
                 } else {
                     styles = obj.styles || '';
@@ -215,12 +214,12 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         }
                     }
 
-                    prevEl = styleEl;                    
+                    prevEl = styleEl;
 
                     if (styleEl.textContent !== styles) {
                         styleEl.textContent = styles;
-                    }                    
-                }              
+                    }
+                }
 
                 return final;
             }, Array.from(document.querySelectorAll('head style.weddell-style')))
@@ -247,7 +246,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         if (snapshot) {
             var addElReferences = (obj, parentEl) => {
                 var el = parentEl.querySelector(`[data-wdl-id="${obj.id}"]`);
-    
+
                 if (el) {
                     obj.el = el;
 
@@ -259,7 +258,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                         }
                     }
                 }
-                return obj;                
+                return obj;
             };
             snapshot = addElReferences(snapshot, this.el);
             if (snapshot.state) {
@@ -273,7 +272,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             }
         }
         var Component = await this.Component;
-        var component = new Component(opts);       
+        var component = new Component(opts);
 
         component.assignProps(
             Object.values(this.el.attributes)
@@ -291,39 +290,39 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         var promise = new Promise((resolve) => {
             resolveFunc = resolve;
         })
-        .then(currPatchRequests => {
-            return this.constructor.patchMethods.reduce((acc, patcher) => {
+            .then(currPatchRequests => {
+                return this.constructor.patchMethods.reduce((acc, patcher) => {
                     return acc
                         .then(() => this[patcher](currPatchRequests))
                 }, Promise.resolve())
-                .then(() => {
-                    if (this._patchRequests.length) {
-                        return Promise.reject('Rerender');
-                    }
-                })
-                .then(() => {
-                    this._patchPromise = null;
-                    this.trigger('patch');
-                    this.el.classList.remove('awaiting-patch');
-                    return this.onPatch()
-                }, err => {
-                    if (err === 'Rerender') {
-                        return this.queuePatch();
-                    }
-                    console.error('Error patching:', err.stack)
-                })
-        })
-        
+                    .then(() => {
+                        if (this._patchRequests.length) {
+                            return Promise.reject('Rerender');
+                        }
+                    })
+                    .then(() => {
+                        this._patchPromise = null;
+                        this.trigger('patch');
+                        this.el.classList.remove('awaiting-patch');
+                        return this.onPatch()
+                    }, err => {
+                        if (err === 'Rerender') {
+                            return this.queuePatch();
+                        }
+                        console.error('Error patching:', err.stack)
+                    })
+            })
+
         var now = Date.now();
         var dt = now - this._lastPatchStartTime;
         this._lastPatchStartTime = Date.now();
-        
+
         window.setTimeout(() => {
             var currPatchRequests = this._patchRequests;
             this._patchRequests = [];
             resolveFunc(currPatchRequests);
         }, Math.max(0, patchInterval - dt))
-        
+
         return promise;
     }
 
@@ -359,7 +358,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
     }
 
     static takeComponentStateSnapshot(component) {
-        var obj = { 
+        var obj = {
             id: component.id,
             state: Object.entries(component.state.collectChangedData())
                 .reduce((acc, curr) => {
@@ -387,7 +386,7 @@ var App = class extends mix(App).with(EventEmitterMixin) {
 
     renderSnapshot() {
         var parser = new DOMParser();
-        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");  
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");
         var scriptEl = doc.createElement('script');
         scriptEl.innerHTML = `
             window.addEventListener('weddellinitbefore', function(evt){
@@ -414,14 +413,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             })
     }
 
-    init(initObj={}) {
+    init(initObj = {}) {
         this.on('createcomponent', evt => {
             this._createdComponents.push(evt.component);
         })
 
         return DOMReady
             .then(async () => {
-                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: {  app: this } }));
+                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: { app: this } }));
 
                 this.initPatchers();
 
@@ -436,8 +435,8 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                  * @event Component#createcomponent
                  * @type {object}
                  */
-                this.trigger('createcomponent', {component: this.component});
-                this.trigger('createrootcomponent', {component: this.component});
+                this.trigger('createcomponent', { component: this.component });
+                this.trigger('createrootcomponent', { component: this.component });
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
                 this.component.on('requestpatch', evt => {
@@ -452,14 +451,14 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 });
 
                 var onPatch = () => {
-                    var isRendering = this.component.reduceComponents((acc, component) =>  acc || !!component.renderPromise, false)
+                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
                     if (!isRendering) {
                         this.trigger('quiet');
                     }
                     this.el.classList.add('first-patch-complete');
                     this.component.trigger('patch');
                 };
-                this.on('patch', onPatch);                
+                this.on('patch', onPatch);
 
                 Object.seal(this);
 
