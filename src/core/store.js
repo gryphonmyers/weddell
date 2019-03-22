@@ -134,6 +134,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                                 throw new Error(`Input failed validation: ${key}. Received value: ${val}`);
                             }
                         }
+
                         var oldTransformedValue = this._transformedData[key];
                         this._data[key] = newValue;
                         if (this.getTransform) {
@@ -243,6 +244,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
         while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
             val = this.overrides[i][key];
+            val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
 
@@ -255,14 +257,16 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
         while (mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
             val = this.extends[i][mappingEntry[0]];
+            val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
         i = 0;
         while (this.proxies[i] && (typeof val === 'undefined' || val === null)) {
             val = this.proxies[i][key];
+            val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
-        return val;
+        return val
     }
 
     assign(data, initialState = {}) {
