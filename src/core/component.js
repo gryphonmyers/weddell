@@ -12,7 +12,7 @@ const uniq = require('../utils/uniq');
 const difference = require('../utils/difference');
 
 const defaultOpts = {
-    store: {},
+    consts: {},
     inputs: null,
     isRoot: false
 };
@@ -137,7 +137,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
-                }, this.constructor.store || {}, this.constructor.consts || {}, this.store || {}, opts.consts || opts.store || {}), {
+                }, this.constructor.store || {}, this.constructor.consts || {}, this.store || {}, opts.store || opts.consts || {}), {
                         requireSerializable: false,
                         shouldMonitorChanges: false,
                         shouldEvalFunctions: false
@@ -902,7 +902,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var ComponentClass = await this.components[componentName];
 
         var opts = defaults({
-            store: defaults({
+            consts: defaults({
                 $componentID: ComponentClass._id,
                 $instanceKey: index
             })
