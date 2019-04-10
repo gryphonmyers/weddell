@@ -30,7 +30,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     static get isWeddellComponent() {
         return true;
     }
-    
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
@@ -42,55 +42,63 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         Object.defineProperties(this, {
             id: { get: () => this._id },
             isRoot: { value: opts.isRoot },
-            _content: {value: [], writable: true},
-            content: { get: () => {
-                return this._content;
-            }, set: val => {
-                var oldContent = this._content;
-                this._content = val;
-                if (!deepEqual(oldContent, val)) {
-                    this.markDirty();
+            _content: { value: [], writable: true },
+            content: {
+                get: () => {
+                    return this._content;
+                }, set: val => {
+                    var oldContent = this._content;
+                    this._content = val;
+                    if (!deepEqual(oldContent, val)) {
+                        this.markDirty();
+                    }
                 }
-            }},
-            hasMounted: {get: () => this._hasMounted},
+            },
+            hasMounted: { get: () => this._hasMounted },
             isMounted: { get: () => this._isMounted },
-            renderPromise: {get: () => this._renderPromise},
-            childComponents: {get: () => this._childComponents},
-            contentComponents: {get: () => this._contentComponents},
-            hasRendered: {get: () => this._hasRendered},
-            el: {get: () => this._el},
+            renderPromise: { get: () => this._renderPromise },
+            childComponents: { get: () => this._childComponents },
+            contentComponents: { get: () => this._contentComponents },
+            hasRendered: { get: () => this._hasRendered },
+            el: { get: () => this._el },
             isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
-            root: {value: opts.isRoot ? this : opts.root },
-            inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
+            root: { value: opts.isRoot ? this : opts.root },
+            inputs: { value: compact(this.constructor.inputs || opts.inputs || []) },
             //@TODO inputs don't need to be stored on isntance at all
             renderers: { value: {} },
             _el: { value: null, writable: true },
-            _lastRenderTimeStamps: { value: this.constructor.renderMethods
-                .reduce((acc, key) => Object.assign(acc, {[key]: null }), {}) },
-            _lastAccessedStateKeys: { value: this.constructor.renderMethods
-                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
+            _lastRenderTimeStamps: {
+                value: this.constructor.renderMethods
+                    .reduce((acc, key) => Object.assign(acc, { [key]: null }), {})
+            },
+            _lastAccessedStateKeys: {
+                value: this.constructor.renderMethods
+                    .reduce((acc, key) => Object.assign(acc, { [key]: [] }), {})
+            },
             _componentSnapshots: { value: opts.componentSnapshots || null },
             _dirtyRenderers: { value: true, writable: true },
-            _contentComponents: {value: [], writable: true },
+            _contentComponents: { value: [], writable: true },
             _inlineEventHandlers: { writable: true, value: {} },
-            _isMounted: {writable:true, value: null},
-            _lastRenderedComponents: {writable: true, value: null},
-            _childComponents: {writable: true, value: {}},
-            _componentsRequestingPatch: {writable: true, value: []},
-            _renderPromise: {writable: true, value: null},
-            _hasMounted: {writable:true, value: false},
-            _hasRendered: {writable:true, value: false},
-            _widgetIsDirty: {writable:true, value:false},
-            _vTree: {writable: true, value: null },
-            _prevVTree: {writable: true, value: null},
-            _prevWidget: {writable: true, value: null},
-            _dirtyWidgets: {writable: true, value: {}},
-            _renderCache: { value: this.constructor.renderMethods
-                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
-            _isInit: { writable: true, value: false},            
-            _id : { value: opts.id || generateHash() },
-            _componentListenerCallbacks: {value:{}, writable:true}
+            _isMounted: { writable: true, value: null },
+            _lastRenderedComponents: { writable: true, value: null },
+            _childComponents: { writable: true, value: {} },
+            _componentsRequestingPatch: { writable: true, value: [] },
+            _renderPromise: { writable: true, value: null },
+            _hasMounted: { writable: true, value: false },
+            _hasRendered: { writable: true, value: false },
+            _widgetIsDirty: { writable: true, value: false },
+            _vTree: { writable: true, value: null },
+            _prevVTree: { writable: true, value: null },
+            _prevWidget: { writable: true, value: null },
+            _dirtyWidgets: { writable: true, value: {} },
+            _renderCache: {
+                value: this.constructor.renderMethods
+                    .reduce((acc, key) => Object.assign(acc, { [key]: [] }), {})
+            },
+            _isInit: { writable: true, value: false },
+            _id: { value: opts.id || generateHash() },
+            _componentListenerCallbacks: { value: {}, writable: true }
         });
 
         var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
@@ -101,13 +109,13 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }, {}) : {};
 
         Object.defineProperties(this, {
-            _widget: {writable: true, value: new VdomWidget({ component: this, childWidgets: {} })},
+            _widget: { writable: true, value: new VdomWidget({ component: this, childWidgets: {} }) },
             props: {
                 value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
                     inputMappings,
-                    validators: this.inputs.filter(input => typeof input === 'object').reduce((final, inputObj) => Object.assign(final, {[inputObj.key]: {validator: inputObj.validator, required: inputObj.required}}), {}),
+                    validators: this.inputs.filter(input => typeof input === 'object').reduce((final, inputObj) => Object.assign(final, { [inputObj.key]: { validator: inputObj.validator, required: inputObj.required } }), {}),
                     shouldEvalFunctions: false,
                     requireSerializable: false,
                 })
@@ -117,10 +125,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
                 }, this.constructor.store || this.store || {}, opts.store || {}), {
-                    requireSerializable: false,
-                    shouldMonitorChanges: false,
-                    shouldEvalFunctions: false
-                })
+                        requireSerializable: false,
+                        shouldMonitorChanges: false,
+                        shouldEvalFunctions: false
+                    })
             }
         });
 
@@ -132,43 +140,44 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         var component = this;
         var serializers = component.constructor.serializers;
         var deserializers = component.constructor.deserializers || component.constructor.hydrators;
-        
+
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
                 $attributes: null,
                 $id: () => this.id
             }, state), {
-                initialState: opts.initialState,
-                overrides: [this.props],
-                proxies: [this.store],
-                setTransform : function(key, value) {
-                    return serializers && serializers[key] 
-                        ? serializers[key].call(this, value) 
-                        : value;
-                },
-                getTransform: function(key, value) {
-                    return deserializers && deserializers[key] 
-                        ? deserializers[key].call(this, value) 
-                        : value;
-                }
-            })
+                    initialState: opts.initialState,
+                    overrides: [this.props],
+                    proxies: [this.store],
+                    setTransform: function (key, value) {
+                        return serializers && serializers[key]
+                            ? serializers[key].call(this, value)
+                            : value;
+                    },
+                    getTransform: function (key, value) {
+                        return deserializers && deserializers[key]
+                            ? deserializers[key].call(this, value)
+                            : value;
+                    }
+                })
         })
 
         if (weddellGlobals.verbosity > 0 && opts.components) {
             console.warn("opts.components is deprecated in favor of static 'components' getter. Please update your code.");
         }
         var components = this.constructor.components || opts.components || {};
-        
+
         Object.defineProperties(this, {
-            _componentInstances: { value:
-                Object.keys(components)
-                    .map(key => key.toLowerCase())
-                    .reduce((final, key) => {
-                        final[key] = {};
-                        return final;
-                    }, {})
+            _componentInstances: {
+                value:
+                    Object.keys(components)
+                        .map(key => key.toLowerCase())
+                        .reduce((final, key) => {
+                            final[key] = {};
+                            return final;
+                        }, {})
             },
-            _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
+            _locals: { value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
         });
 
         Object.defineProperty(this, 'components', {
@@ -184,11 +193,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         if (weddellGlobals.verbosity > 0 && opts.markupTemplate) {
             console.warn("You are using deprecated syntax. 'markupTemplate' will be removed in the next major version. Use static 'markup' getter.");
         }
-        if (weddellGlobals.verbosity > 0 && opts.stylesTemplate) {
-            console.warn("You are using deprecated syntax. 'stylesTemplate' will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
+        if (weddellGlobals.verbosity > 0 && (opts.stylesTemplate || this.constructor.dynamicStyles)) {
+            console.warn("You are using deprecated syntax. 'stylesTemplate' and 'dynamicStyles' static getter will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
         }
         this.vNodeTemplate = this.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
-        this.stylesTemplate = this.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
+        this.stylesTemplate = this.makeStylesTemplate(...[(this.constructor.dynamicStyles || opts.stylesTemplate)].concat(this.constructor.styles).filter(val => val));
 
         weddellGlobals.components[this._id] = this;
     }
@@ -205,7 +214,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    markDirty(dirtyRenderers={}) {
+    markDirty(dirtyRenderers = {}) {
         if (this.renderPromise || !this.isMounted) {
             this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
             return this.renderPromise;
@@ -214,7 +223,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    render(dirtyRenderers=null) {
+    render(dirtyRenderers = null) {
         var promise = Promise.resolve()
             .then(() => {
                 return this.constructor.renderMethods
@@ -255,28 +264,28 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                 .then(() => results)
                         }
                         this.trigger('render');
-                        return Promise.resolve(this.onRender()).then(() => results);                    
+                        return Promise.resolve(this.onRender()).then(() => results);
                     })
             })
-        return !this._renderPromise ? (this._renderPromise = promise): promise;
+        return !this._renderPromise ? (this._renderPromise = promise) : promise;
     }
 
-    onInit() {}
-    onFirstRender() {}
-    onRender() {}
-    onDOMCreate() {}
-    onDOMMove() {}
-    onDOMChange() {}
-    onDOMCreateOrChange() {}
-    onDOMDestroy() {}
-    onMount() {}
-    onUnmount() {}
-    onFirstMount() {}
-    onRenderMarkup() {}
-    onRenderStyles() {}
+    onInit() { }
+    onFirstRender() { }
+    onRender() { }
+    onDOMCreate() { }
+    onDOMMove() { }
+    onDOMChange() { }
+    onDOMCreateOrChange() { }
+    onDOMDestroy() { }
+    onMount() { }
+    onUnmount() { }
+    onFirstMount() { }
+    onRenderMarkup() { }
+    onRenderStyles() { }
 
     requestPatch(results) {
-        this.trigger('requestpatch', {results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
+        this.trigger('requestpatch', { results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
     }
 
     makeVNodeTemplate() {
@@ -284,7 +293,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         * Take instance and static template inputs, return a function that will generate the correct output.
         */
 
-        return Array.from(arguments).reduce((acc, curr) => {
+        return [...arguments].reduce((acc, curr) => {
             if (!acc) {
                 if (typeof curr === 'function') {
                     return this.wrapTemplate(curr, 'renderVNode', h);
@@ -297,25 +306,19 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }, null);
     }
 
-    makeStylesTemplate(dynamicStyles, staticStyles='') {
-        if (typeof dynamicStyles === 'function') {
-               
-        } else if (dynamicStyles) {
-            throw new Error(`Only functions are supported for dynamic styles for now.`);
-        }
-
-        if (typeof staticStyles !== 'string') {
-            throw new Error(`Only strings are supported for static component styles.`);
-        }
+    makeStylesTemplate() {
+        var [instanceStyleBlocks, classStyleBlocks] = [...arguments]
+            .reduce((acc, curr) =>
+                typeof curr === 'function' ? [[...acc[0], curr], acc[1]] : [acc[0], [...acc[1], curr]], [[], []]);
 
         return this.wrapTemplate((locals) => {
-            var styles = dynamicStyles ? dynamicStyles.call(this, locals) : null;
+            var instanceStyles = instanceStyleBlocks.map(styleBlock => styleBlock.call(this, locals));
             return Object.defineProperties({}, {
                 dynamicStyles: {
-                    get: () => styles
+                    get: () => instanceStyles
                 },
                 staticStyles: {
-                    get: () => staticStyles
+                    get: () => classStyleBlocks
                 }
             })
         }, 'renderStyles');
@@ -324,7 +327,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     wrapTemplate(func, renderMethodName) {
         return () => {
             var accessed = {};
-        
+
             this.state.on('get', evt => {
                 accessed[evt.key] = 1;
             });
@@ -336,7 +339,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this._lastAccessedStateKeys[renderMethodName] = accessed;
 
             return result;
-        }        
+        }
     }
 
     renderStyles() {
@@ -357,8 +360,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             vTree = vTree[0];
         }
 
-        var renderedComponents = [];        
-        
+        var renderedComponents = [];
+
         return (vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
             .then(vTree => {
                 this._prevVTree = this._vTree;
@@ -381,10 +384,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
                     return true;
                 }) : Promise.resolve(false)
-            )
+        )
             .then(didRender => {
                 if (didRender) {
-                    var evt = {components: renderedComponents};
+                    var evt = { components: renderedComponents };
                     this._childComponents = renderedComponents;
                     this.markWidgetDirty()
                     this.trigger('rendermarkup', evt);
@@ -412,7 +415,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this._prevWidget.unbindChildren();
         }
         this._widgetIsDirty = false;
-        return this._widget = newWidget;        
+        return this._widget = newWidget;
     }
 
     static get state() {
@@ -421,16 +424,16 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     static get tagDirectives() {
         return {
-            content: function(vNode, children, props, renderedComponents) {
+            content: function (vNode, children, props, renderedComponents) {
                 return this.content;
             }
         }
     }
 
-    replaceComponentPlaceholders(vNode, renderedComponents=[]) {
+    replaceComponentPlaceholders(vNode, renderedComponents = []) {
         var components;
         var componentName;
-        
+
         if (Array.isArray(vNode)) {
             return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)))
         } else if (!vNode.tagName) {
@@ -448,7 +451,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         renderedComponents[componentName] = [];
                     }
                     var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
-        
+
                     return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);
                 }
 
@@ -483,7 +486,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 return component.replaceComponentPlaceholders(content, contentComponents)
                     .then(content => {
                         component.content = content;
-                        
+
                         if ((contentComponents.length !== component._contentComponents.length) || contentComponents.some((component, ii) => component._contentComponents[ii] !== component)) {
                             component.trigger('contentcomponentschange', { currentComponents: contentComponents, previousComponents: component._contentComponents })
                         }
@@ -502,17 +505,17 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                                 }
                             }
                         }
-                        
+
                         return component.mount(this)
                             .then(didMount => {
-                                parent.trigger('componentplaceholderreplaced', {component});
+                                parent.trigger('componentplaceholderreplaced', { component });
                                 return component.makeNewWidget();
                             })
                     })
             });
     }
 
-    walkComponents(callback, filterFunc=()=>true) {
+    walkComponents(callback, filterFunc = () => true) {
         if (filterFunc(this)) {
             callback(this)
         }
@@ -522,7 +525,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
     }
 
-    reduceComponents(callback, initialVal, filterFunc=()=>true, depth=0) {
+    reduceComponents(callback, initialVal, filterFunc = () => true, depth = 0) {
         var acc = initialVal;
         if (filterFunc(this)) {
             acc = callback(acc, this, depth)
@@ -536,7 +539,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     checkChangedKey(key) {
         return Object.entries(this._lastAccessedStateKeys)
-            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, {[entry[0]]:1}) : acc, null);
+            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, { [entry[0]]: 1 }) : acc, null);
     }
 
     reduceParents(callback, initialVal) {
@@ -549,14 +552,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     collectComponentTree() {
         var parent = this.getParent();
         return Object.entries(this.components)
-                .reduce((acc, entry) => {
-                    return Object.assign(acc, {
-                        [entry[0].toLowerCase()]: {
-                            sourceInstance: this, 
-                            componentClass: entry[1]
-                        }
-                    })
-                }, parent ? parent.collectComponentTree() : {});
+            .reduce((acc, entry) => {
+                return Object.assign(acc, {
+                    [entry[0].toLowerCase()]: {
+                        sourceInstance: this,
+                        componentClass: entry[1]
+                    }
+                })
+            }, parent ? parent.collectComponentTree() : {});
     }
 
     queryDOM(query) {
@@ -572,10 +575,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     awaitEvent(eventName) {
         var resolveProm;
         //@TODO add evt obj filter
-        var promise = new Promise(function(resolve){
+        var promise = new Promise(function (resolve) {
             resolveProm = resolve;
         });
-        this.once(eventName, function(evt){
+        this.once(eventName, function (evt) {
             resolveProm(evt);
         });
         return promise;
@@ -666,7 +669,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     parentComponent,
                 }, opts))
 
-                parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
+                parentComponent.trigger('createcomponent', { component: this, parentComponent, componentName });
 
                 this.on('createcomponent', evt => {
                     parentComponent.trigger('createcomponent', Object.assign({}, evt));
@@ -692,14 +695,14 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             ['props', 'state'].forEach((propName) => {
                 this[propName].on('change', evt => {
                     // if (evt.target === this[propName]) {
-                        var dirtyRenderers = this.checkChangedKey(evt.changedKey);
-                        if (dirtyRenderers) {
-                            this.markDirty(dirtyRenderers);
-                        }
+                    var dirtyRenderers = this.checkChangedKey(evt.changedKey);
+                    if (dirtyRenderers) {
+                        this.markDirty(dirtyRenderers);
+                    }
                     // }
                 })
             });
-            
+
             return Promise.resolve(this.onInit(opts))
                 .then(() => {
                     this.trigger('init');
@@ -709,7 +712,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Promise.resolve(this);
     }
 
-    bindEvent(funcText, opts={}) {
+    bindEvent(funcText, opts = {}) {
         var consts = this.constructor.Weddell.consts;
         return `${opts.preventDefault ? `event.preventDefault();` : ''}${opts.stopPropagation ? `event.stopPropagation();` : ''}Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){ window.addEventListener('weddellinitbefore', function(evt) { resolve(evt.detail.app) }) })).then(function(app) { app.awaitComponentMount('${this.id}').then(function(component){ (function() {${funcText}}.bind(component))()})})`;
     }
@@ -719,8 +722,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     getMountedChildComponents() {
-        return this.reduceComponents((acc, component) => 
-            acc.concat(component), [], component => 
+        return this.reduceComponents((acc, component) =>
+            acc.concat(component), [], component =>
                 component !== this && component._isMounted);
     }
 
@@ -735,15 +738,15 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 .reduce((acc, entry) => {
                     if (this.inputs.some(input => input === entry[0] || input.key === entry[0])) {
                         acc[0][entry[0]] = entry[1];
-                    } else if (entry[0].slice(0,2) === 'on' && !(entry[0] in testElement)) {
+                    } else if (entry[0].slice(0, 2) === 'on' && !(entry[0] in testElement)) {
                         //TODO support more spec-compliant data- attrs
                         acc[1][entry[0]] = entry[1];
                     } else {
                         acc[2][entry[0]] = entry[1];
                     }
                     return acc;
-                }, [{},{},{}]);//first item props, second item event handlers, third item attributes
-            
+                }, [{}, {}, {}]);//first item props, second item event handlers, third item attributes
+
             Object.assign(this.props, parsedProps[0]);
             this.bindInlineEventHandlers(parsedProps[1], parentScope);
             this.state.$attributes = Object.entries(parsedProps[2])
@@ -777,7 +780,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         for (var eventName in handlersToAdd) {
             var handlerString = handlersToAdd[eventName];
-            this._inlineEventHandlers[eventName] = {handlerString};
+            this._inlineEventHandlers[eventName] = { handlerString };
             try {
                 var callback = new Function('component', 'event', handlerString).bind(scope, this)
             } catch (err) {
@@ -795,7 +798,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }
             this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[Object.keys(this.constructor.componentEventListeners)[componentKeyIndex]])
                 .map(entry => {
-                    return childComponent.on(entry[0], function() {
+                    return childComponent.on(entry[0], function () {
                         if (childComponent.isMounted) {
                             entry[1].apply(this, Array.from(arguments).concat(childComponent));
                         }
@@ -835,7 +838,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                         this.trigger('firstmount');
                     }
                     this.trigger('mount');
-                    
+
                     return hadMounted ? this.onMount() : Promise.all([this.onMount(), this.onFirstMount()])
                 })
                 .then(() => {
@@ -848,7 +851,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     markWidgetDirty() {
         this._widgetIsDirty = true;
-        
+
         this.trigger('widgetdirty');
     }
 
@@ -858,9 +861,9 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
 
         return ['state', 'componentSnapshots', 'el']
-            .reduce((acc, curr) => 
+            .reduce((acc, curr) =>
                 snapshot[curr] ? Object.assign(acc, { [curr === 'state' ? 'initialState' : curr]: snapshot[curr] }) : acc, { id: snapshot.id });
-        
+
     }
 
     async makeComponentInstance(componentName, index) {
@@ -886,7 +889,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
         if (this._componentSnapshots && this._componentSnapshots[componentName] && (snapshot = this._componentSnapshots[componentName][index])) {
             Object.assign(opts, this.extractSnapshotOpts(snapshot));
-        }        
+        }
 
         var instance = new ComponentClass(opts);
         this.addComponentEvents(componentName, instance, index);
@@ -895,7 +898,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             this._componentsRequestingPatch.push(instance);
             this.trigger('requestpatch', Object.assign({}, evt));
         });
-        
+
         return instance;
     }
 

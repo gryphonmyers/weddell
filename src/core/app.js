@@ -147,7 +147,6 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             var stylesObj = needsPatch ? results.components[id].results.renderStyles : component._renderCache.renderStyles;
 
             var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), { id, needsPatch })
-
             instanceStyles.push(makeObj('dynamicStyles', stylesObj));
 
             id = component.constructor.id;
@@ -164,64 +163,75 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         //We now have a pretty good idea what we're writing. Let's patch those styles to DOM
 
         var prevEl;
-        var styles;
 
         staticStyles.concat(instanceStyles)
             .reduce((final, obj) => {
-                var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
-
-                var styleEl;
+                if (!obj.styles) {
+                    /* this component has never rendered before. skip it */
+                    return final;
+                }
 
                 if (!obj.needsPatch) {
-                    if (styleIndex > -1) {
-                        styleEl = final.splice(styleIndex, 1)[0];
-                    } else {
-                        styles = obj.styles;
-                        if (styles) {
-                            styleEl = createStyleEl('weddell-style-' + obj.id, 'weddell-style');
-                            styleEl.textContent = obj.styles;
-                        }
-                    }
 
-                    if (prevEl && styleEl) {
-                        var comparison = prevEl.compareDocumentPosition(styleEl);
-                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
-                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
-                        }
-                    }
+                    obj.styles.forEach((styles, ii) => {
+                        var styleIndex = final.findIndex(styleEl => styleEl.id === `weddell-style-${obj.id}-${ii}`);
 
-                    if (styleEl) {
-                        prevEl = styleEl;
-                    }
+                        if (styleIndex > -1) {
+                            /* Object doesn't need a patch and it already has a style element in dom, so do nothing. */
+                            var styleEl = final.splice(styleIndex, 1)[0];
+                        } else {
+                            /* Object doesn't need a patch and it does not have a style element in dom */
+                            if (styles) {
+                                styleEl = createStyleEl(`weddell-style-${obj.id}-${ii}`, 'weddell-style');
+                                styleEl.textContent = styles;
+                            }
+                        }
+
+                        if (prevEl && styleEl) {
+                            var comparison = prevEl.compareDocumentPosition(styleEl);
+                            if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                                prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                            }
+                        }
+
+                        if (styleEl) {
+                            prevEl = styleEl;
+                        }
+                    });
 
                     return final;
                 } else {
-                    styles = obj.styles || '';
 
-                    if (!styles) {
-                        if (styleIndex > -1) {
-                            final.splice(styleIndex, 1);
+                    obj.styles.forEach((styles, ii) => {
+                        var styleIndex = final.findIndex(styleEl => styleEl.id === `weddell-style-${obj.id}-${ii}`);
+
+                        if (!styles) {
+                            if (styleIndex > -1) {
+                                final.splice(styleIndex, 1);
+                            }
+                            return final;
                         }
-                        return final;
-                    }
 
-                    styleEl = styleIndex > -1 ? final.splice(styleIndex, 1)[0] : createStyleEl('weddell-style-' + obj.id, 'weddell-style');
+                        var styleEl = styleIndex > -1 ? final.splice(styleIndex, 1)[0] : createStyleEl(`weddell-style-${obj.id}-${ii}`, 'weddell-style');
 
-                    if (prevEl) {
-                        var comparison = prevEl.compareDocumentPosition(styleEl);
-                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
-                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        if (prevEl) {
+                            var comparison = prevEl.compareDocumentPosition(styleEl);
+                            if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                                prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                            }
                         }
-                    }
 
-                    prevEl = styleEl;
+                        prevEl = styleEl;
 
-                    if (styleEl.textContent !== styles) {
-                        styleEl.textContent = styles;
-                    }
+                        if (styleEl.textContent !== styles) {
+                            styleEl.textContent = styles;
+                        }
+
+                    });
+
+                    return final;
                 }
 
-                return final;
             }, Array.from(document.querySelectorAll('head style.weddell-style')))
             .forEach(el => {
                 document.head.removeChild(el);
