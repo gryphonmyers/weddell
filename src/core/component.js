@@ -703,6 +703,11 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 })
             });
 
+            if (this.constructor.watchers) {
+                this.constructor.watchers
+                    .forEach(entry => this.state.watch(...entry))
+            }
+
             return Promise.resolve(this.onInit(opts))
                 .then(() => {
                     this.trigger('init');
@@ -866,7 +871,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
     }
 
-    async makeComponentInstance(componentName, index) {
+    async makeComponentInstance(componentName, index, componentOpts = {}) {
         componentName = componentName.toLowerCase();
 
         if (!componentName in this.components) {
@@ -878,12 +883,12 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         }
         var ComponentClass = await this.components[componentName];
 
-        var opts = {
+        var opts = defaults({
             store: defaults({
                 $componentID: ComponentClass._id,
                 $instanceKey: index
             })
-        };
+        }, componentOpts);
 
         var snapshot;
 

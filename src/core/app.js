@@ -241,17 +241,17 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.trigger('patchstyles');
     }
 
-    async makeComponent() {
+    async makeComponent(componentOpts = {}) {
         var id = this.rootNode.getAttribute('data-wdl-id');
         var snapshot = this._snapshotData;
         if (snapshot && id && snapshot.id !== id) {
             throw new Error('Snapshot id does not match root element id.')
         }
 
-        var opts = {
+        var opts = defaults({
             isRoot: true,
             id,
-        };
+        }, componentOpts);
 
         if (snapshot) {
             var addElReferences = (obj, parentEl) => {

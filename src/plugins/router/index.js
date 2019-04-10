@@ -235,7 +235,6 @@ module.exports = function (_Weddell) {
                                 evt.component.state.$pathParams = routeEvt.matches.paramVals;
                                 evt.component.state.$currentRouteName = routeEvt.matches.route.name;
                             });
-                            evt.component.router = this.router;
 
                             if (this.router.currentRoute) {
                                 evt.component.state.$currentRoute = serializeRouteMatches(this.router.currentRoute);
@@ -255,6 +254,13 @@ module.exports = function (_Weddell) {
                     initRootComponent(initObj) {
                         return super.initRootComponent(initObj)
                             .then(() => this.router.init(initObj.initialPath))
+                    }
+
+                    async makeComponent(componentOpts = {}) {
+                        componentOpts = defaults({
+                            router: this.router
+                        }, componentOpts);
+                        return super.makeComponent(componentOpts);
                     }
                 }
             }),
@@ -323,19 +329,29 @@ module.exports = function (_Weddell) {
                         }, super.tagDirectives)
                     }
 
+                    async makeComponentInstance(componentName, index, componentOpts = {}) {
+                        componentOpts = defaults({
+                            router: this.router
+                        }, componentOpts);
+                        return super.makeComponentInstance(componentName, index, componentOpts);
+                    }
+
                     constructor(opts) {
                         opts.stateClass = RouterState;
                         var self;
+
                         super(defaults(opts, {
                             store: {
                                 $routerLink: function () {
                                     return self.compileRouterLink.apply(self, arguments);
-                                }
+                                },
+                                $router: opts.router
                             }
                         }));
 
                         Object.defineProperties(this, {
-                            _initialRouterStateName: { value: opts.initialRouterStateName, writable: false }
+                            _initialRouterStateName: { value: opts.initialRouterStateName, writable: false },
+                            router: { value: opts.router }
                         })
 
                         self = this;
