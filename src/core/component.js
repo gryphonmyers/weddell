@@ -108,6 +108,19 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 return final;
             }, {}) : {};
 
+
+        if (weddellGlobals.verbosity > 0 && opts.store) {
+            console.warn("opts.store is deprecated in favor of static 'consts' getter. Update your code!");
+        }
+
+        if (weddellGlobals.verbosity > 0 && this.store) {
+            console.warn("'store' property on instance is deprecated in favor of static 'consts' getter. Update your code!");
+        }
+
+        if (weddellGlobals.verbosity > 0 && this.constructor.store) {
+            console.warn("'store' static getter on instance is deprecated in favor of static 'consts' getter. Update your code!");
+        }
+
         Object.defineProperties(this, {
             _widget: { writable: true, value: new VdomWidget({ component: this, childWidgets: {} }) },
             props: {
@@ -120,16 +133,17 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                     requireSerializable: false,
                 })
             },
-            store: {
+            consts: {
                 value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
-                }, this.constructor.store || this.store || {}, opts.store || {}), {
+                }, this.constructor.store || {}, this.constructor.consts || {}, this.store || {}, opts.consts || opts.store || {}), {
                         requireSerializable: false,
                         shouldMonitorChanges: false,
                         shouldEvalFunctions: false
                     })
-            }
+            },
+            store: { get: () => this.consts }
         });
 
         if (weddellGlobals.verbosity > 0 && opts.state) {
@@ -148,7 +162,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             }, state), {
                     initialState: opts.initialState,
                     overrides: [this.props],
-                    proxies: [this.store],
+                    proxies: [this.consts],
                     setTransform: function (key, value) {
                         return serializers && serializers[key]
                             ? serializers[key].call(this, value)
@@ -177,7 +191,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                             return final;
                         }, {})
             },
-            _locals: { value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
+            _locals: { value: new Store({}, { proxies: [this.state, this.consts], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
         });
 
         Object.defineProperty(this, 'components', {
@@ -200,6 +214,10 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         this.stylesTemplate = this.makeStylesTemplate(...[(this.constructor.dynamicStyles || opts.stylesTemplate)].concat(this.constructor.styles).filter(val => val));
 
         weddellGlobals.components[this._id] = this;
+    }
+
+    static get consts() {
+        return {};
     }
 
     requestRender(dirtyRenderers) {

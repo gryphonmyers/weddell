@@ -341,7 +341,7 @@ module.exports = function (_Weddell) {
                         var self;
 
                         super(defaults(opts, {
-                            store: {
+                            consts: {
                                 $routerLink: function () {
                                     return self.compileRouterLink.apply(self, arguments);
                                 },
