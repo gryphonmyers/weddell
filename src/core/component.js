@@ -160,6 +160,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 $attributes: null,
                 $id: () => this.id
             }, state), {
+                    propertySets: this.constructor.propertySets,
                     initialState: opts.initialState,
                     overrides: [this.props],
                     proxies: [this.consts],

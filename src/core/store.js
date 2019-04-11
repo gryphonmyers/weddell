@@ -10,6 +10,7 @@ var defaultOpts = {
     shouldEvalFunctions: true,
     inputMappings: {},
     validators: {},
+    propertySets: {},
     requireSerializable: true
 };
 
@@ -46,7 +47,8 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
-            inputMappings: { value: opts.inputMappings }
+            inputMappings: { value: opts.inputMappings },
+            propertySets: { value: opts.propertySets }
         });
 
         difference(Object.values(this.inputMappings), Object.keys(data)).forEach(key => {
@@ -242,29 +244,37 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
         }
 
-        while (this.overrides[i] && (typeof val === 'undefined' || val === null)) {
+        while (this.overrides[i] && (val == null)) {
             val = this.overrides[i][key];
             val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
 
         i = 0;
-        if (typeof val === 'undefined' || val === null) {
+        if (val == null) {
             val = this._transformedData[key] || this._data[key];
         }
 
         var mappingEntry = Object.entries(this.inputMappings).find(entry => key === entry[1]);
 
-        while (mappingEntry && this.extends[i] && (typeof val === 'undefined' || val === null)) {
+        while (mappingEntry && this.extends[i] && (val == null)) {
             val = this.extends[i][mappingEntry[0]];
             val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
         i = 0;
-        while (this.proxies[i] && (typeof val === 'undefined' || val === null)) {
+        while (this.proxies[i] && (val == null)) {
             val = this.proxies[i][key];
             val = typeof val === 'function' ? val.bind(this) : val;
             i++;
+        }
+        if (val == null && (key in this.propertySets)) {
+            var propertySet = this.propertySets[key];
+            val = {};
+            Object.defineProperties(val,
+                (Array.isArray(propertySet) ? propertySet.map(key => [key, key]) : Object.entries(propertySet))
+                    .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: { enumerable: true, get: () => this[pair[1]] } }), {})
+            )
         }
         return val
     }
