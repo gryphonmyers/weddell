@@ -13,6 +13,7 @@ const difference = require('../utils/difference');
 
 const defaultOpts = {
     consts: {},
+    store: {},
     inputs: null,
     isRoot: false
 };
@@ -137,7 +138,7 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
-                }, this.constructor.store || {}, this.constructor.consts || {}, this.store || {}, opts.store || opts.consts || {}), {
+                }, this.constructor.consts || {}, opts.consts || {}, this.constructor.store || {}, this.store || {}, opts.store || {}), {
                         requireSerializable: false,
                         shouldMonitorChanges: false,
                         shouldEvalFunctions: false
@@ -906,7 +907,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
             consts: defaults({
                 $componentID: ComponentClass._id,
                 $instanceKey: index
-            })
+            }),
+            store: {}
         }, componentOpts);
 
         var snapshot;
