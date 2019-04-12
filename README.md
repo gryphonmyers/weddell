@@ -1,74 +1,234 @@
-# Weddell
-A modular, nonopinionated Javascript framework.
+## Classes
 
-# Statement of Purpose
-Because every new web framework needs one! The front-end framework landscape is overcrowded, with a lot of great products out there. Many of the big problems of front-end web development have been solved in myriad ways, and every good framework has its strengths. Ultimately, it's up to API preference which framework you adopt. This framework was created due to a certain set of API preferences that other frameworks were not meeting.
+<dl>
+<dt><a href="#WeddellApp">WeddellApp</a></dt>
+<dd><p>An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.</p>
+</dd>
+</dl>
 
-This framework was written with the core assumptions in mind:
+## Typedefs
 
-* A framework should be incrementally adoptable. The larger the framework, the more important it is that you can only use the parts you need.
-* A framework should not reinvent the wheel nor proxy native APIs with proprietary ones. If there is a standard (W3C, ideally) way of doing something, it should be done that way.
-* A framework should be small. Yes, modern bandwidth is fast _if_ you assume all your users live in the first world and only use desktop computers. In reality, users are paying by the gigabyte for sometimes less-than-ideal bandwidth.
-* A framework should be extensible. The easier it is to make the framework do what you need it to, the better. Everyone hates black boxes.
-* A framework should make no assumptions about the environment it is developed in. Sure, Typescript has some nice features, but nobody should be forced to use it.
+<dl>
+<dt><a href="#CssString">CssString</a> : <code>String</code></dt>
+<dd><p>A string of valid CSS style declarations.</p>
+</dd>
+<dt><a href="#HtmlString">HtmlString</a> : <code>String</code></dt>
+<dd><p>A string of valid HTML.</p>
+</dd>
+<dt><a href="#WeddellAppStateSnapshot">WeddellAppStateSnapshot</a> : <code>Object</code></dt>
+<dd><p>A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.</p>
+</dd>
+</dl>
 
-# Usage
+<a name="WeddellApp"></a>
 
-## Installation
+## WeddellApp
+An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
 
-```
-npm install weddell
-```
+**Kind**: global class  
 
-Weddell uses CommonJS and is compatible with NodeJS and bundlers like Browserify. Standalone builds are also available in the `dist` folder, revealing `Weddell` to the global namespace.
+* [WeddellApp](#WeddellApp)
+    * [new WeddellApp(opts)](#new_WeddellApp_new)
+    * [.onPatch()](#WeddellApp+onPatch) ⇒ <code>Promise</code>
+    * [.awaitComponentMount(id)](#WeddellApp+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+    * [.awaitPatch()](#WeddellApp+awaitPatch) ⇒ <code>Promise</code>
+    * [.awaitNextPatch()](#WeddellApp+awaitNextPatch) ⇒ <code>Promise</code>
+    * [.renderSnapshot()](#WeddellApp+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+    * [.init(initObj)](#WeddellApp+init) ⇒ <code>Promise</code>
+    * ["createcomponent"](#WeddellApp+event_createcomponent)
+    * ["createrootcomponent"](#WeddellApp+event_createrootcomponent)
+    * ["patch"](#WeddellApp+event_patch)
 
-## Gearing up
-Weddell is customizable, with a plugin system and _many_ preset configurations of those plugins available. You can either choose a preset and run with it, or roll your own implementation, including whatever plugins you want (or writing your own!)
+<a name="new_WeddellApp_new"></a>
 
-Presets follow a two-character naming convention to indicate included plugins and other features:
+### new WeddellApp(opts)
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Default</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>opts</td><td><code>object</code></td><td></td><td></td>
+    </tr><tr>
+    <td>opts.el</td><td><code>String</code> | <code>Element</code></td><td></td><td><p>Element to mount app into, or a DOM query string that should resolve to a single element.</p>
+</td>
+    </tr><tr>
+    <td>opts.Component</td><td><code>function</code></td><td></td><td><p>A Weddell component class factory. This component will be mounted as the root into the mount point specified in the</p>
+</td>
+    </tr><tr>
+    <td>[opts.quietInterval]</td><td><code>number</code></td><td><code>100</code></td><td><p>Delay between DOM patches to wait before firing the &quot;quiet&quot; event.</p>
+</td>
+    </tr><tr>
+    <td>[opts.styles]</td><td><code><a href="#CssString">CssString</a></code></td><td></td><td><p>App styles that will be rendered to the DOM once the app initializes.</p>
+</td>
+    </tr>  </tbody>
+</table>
 
-* ro - Router.
-* fe - Module for fetching assets at runtime.
-* do - Bundled with doT, a small templating language.
-* vd - Bundled with Virtual DOM, an excellent virtual DOM implementation.
-* cv - Transforms CSS assets at runtime to allow for state vars to be used in stylesheets using CSS4 var syntax.
-* hv - Transforms HTML to VDOM, necessary if you want to use HTML syntax (or systems that output it) in combination with the VDOM module.
-* e5 - Compiles to ES5 syntax and includes necessary polyfills. Note: if you are using a JS bundler and not a standalone build, ES5 transpiling is up to you. Polyfills will be included though.
-* ad - Exposes an action dispatcher to components, allowing for Flux-like architecture.
-
-## Getting started
-A very basic CommonJS implementation would look like:
-
-`bundle.js`
-```javascript
-var App = require('weddell').classes.App;
+**Example**  
+```js
+const App = require('weddell').classes.App;
 
 var app = new App({
+    routes,
     el: '#app',
-    component: {}
+    Component: class MyWeddellComponent {},
+    styles: `
+      .my-weddell-component {
+        color: red;
+      }
+    `
 });
 
 app.init();
 ```
-`index.html`
-```html
-<!doctype html>
-<html>
-    <head><title>My App</title></head>
-    <body>
-        <div id='#app'></div>
-        <script src='bundle.js'></script>
-    </body>
-</html>
-```
+<a name="WeddellApp+onPatch"></a>
 
-Replace the `require('weddell')` with `Weddell` if you're using a standalone build.
+### weddellApp.onPatch() ⇒ <code>Promise</code>
+Hook method that may be overridden and will be executed at the end of every DOM patch.
 
-## Component interface
+**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+**Returns**: <code>Promise</code> - Subsequent patches may be deferred by returning a Promise in this method.  
+<a name="WeddellApp+awaitComponentMount"></a>
 
-Weddell uses a component-based, declarative plain object API that is similar in some ways to Vue.js. App objects have a single root component, while all other components can have any number of components held inside an object, with the key being the components identifier within the app.
+### weddellApp.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
 
-Full docs coming soon
+**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>id</td><td><code>string</code></td><td><p>Component id to wait for</p>
+</td>
+    </tr>  </tbody>
+</table>
 
-# API Documentation
-Coming soon
+<a name="WeddellApp+awaitPatch"></a>
+
+### weddellApp.awaitPatch() ⇒ <code>Promise</code>
+Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
+
+**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+<a name="WeddellApp+awaitNextPatch"></a>
+
+### weddellApp.awaitNextPatch() ⇒ <code>Promise</code>
+Returns a promise that will resolve after current pending patch or the next patch completes.
+
+**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+<a name="WeddellApp+renderSnapshot"></a>
+
+### weddellApp.renderSnapshot() ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+Dumps the current application state to a snapshot object.
+
+**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+<a name="WeddellApp+init"></a>
+
+### weddellApp.init(initObj) ⇒ <code>Promise</code>
+Initializes the app, rendering the root component and mounting it into the specified DOM element.
+
+**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+**Returns**: <code>Promise</code> - Promise that resolves once the app has fully initialized and rendered into the DOM.  
+**Emits**: <code>Window#event:weddellinit Event fired on window object once initialization completes.</code>, <code>WeddellApp#event:createcomponent Event fired on app object whenever its root component or any child components are created.</code>, <code>WeddellApp#event:createrootcomponent Event fired on app object whenever its root component is created.</code>  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>initObj</td><td><code>Object</code></td><td><p>Object with initialization options.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="WeddellApp+event_createcomponent"></a>
+
+### "createcomponent"
+**Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>component</td><td><code>WeddellComponent</code></td>
+    </tr>  </tbody>
+</table>
+
+<a name="WeddellApp+event_createrootcomponent"></a>
+
+### "createrootcomponent"
+**Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>component</td><td><code>WeddellComponent</code></td>
+    </tr>  </tbody>
+</table>
+
+<a name="WeddellApp+event_patch"></a>
+
+### "patch"
+**Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
+<a name="CssString"></a>
+
+## CssString : <code>String</code>
+A string of valid CSS style declarations.
+
+**Kind**: global typedef  
+**See**: https://developer.mozilla.org/en-US/docs/Web/CSS  
+<a name="HtmlString"></a>
+
+## HtmlString : <code>String</code>
+A string of valid HTML.
+
+**Kind**: global typedef  
+**See**: https://developer.mozilla.org/en-US/docs/Web/HTML  
+<a name="WeddellAppStateSnapshot"></a>
+
+## WeddellAppStateSnapshot : <code>Object</code>
+A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.
+
+**Kind**: global typedef  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>stateHtml</td><td><code><a href="#HtmlString">HtmlString</a></code></td><td><p>Application state, serialized to JSON with an event binding it to application init, all wrapped with a script tag, ready to be inserted into HTML files to allow for application restore.</p>
+</td>
+    </tr><tr>
+    <td>stylesHtml</td><td><code><a href="#HtmlString">HtmlString</a></code></td><td><p>All Weddell style tags grouped together in an HTML string, and ready to be inserted into HTML head.</p>
+</td>
+    </tr><tr>
+    <td>fullResponse</td><td><code><a href="#HtmlString">HtmlString</a></code></td><td><p>All HTML in document.</p>
+</td>
+    </tr><tr>
+    <td>appHtml</td><td><code><a href="#HtmlString">HtmlString</a></code></td><td><p>All HTML currently rendered into application mount point.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
