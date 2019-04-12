@@ -6,6 +6,7 @@ const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
 const virtualize = require('@weddell/vdom-virtualize');
+const WeddellComponent = require('./component');
 
 const defaultOpts = {
     childStylesFirst: true,
@@ -28,30 +29,59 @@ function createStyleEl(id, className = null) {
 }
 
 /**
- * An app, which owns and manages a root component in the DOM.
+ * @typedef {String} CssString A string of valid CSS style declarations. 
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS
  */
 
-var App = class extends mix(App).with(EventEmitterMixin) {
+/**
+ * @typedef {String} HtmlString A string of valid HTML. 
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML
+ */
 
-    static get patchMethods() {
-        return [
-            'patchDOM',
-            'patchStyles'
-        ];
-    }
+ /**
+  * @typedef {Object} WeddellAppStateSnapshot A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state. 
+  * @property {HtmlString} stateHtml Application state, serialized to JSON with an event binding it to application init, all wrapped with a script tag, ready to be inserted into HTML files to allow for application restore.
+  * @property {HtmlString} stylesHtml All Weddell style tags grouped together in an HTML string, and ready to be inserted into HTML head.
+  * @property {HtmlString} fullResponse All HTML in document.
+  * @property {HtmlString} appHtml All HTML currently rendered into application mount point.
+  */
+
+ /**
+ * An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application. 
+ * 
+ * @example 
+ * const App = require('weddell').classes.App;
+ * 
+ * var app = new App({
+ *     routes,
+ *     el: '#app',
+ *     Component: class MyWeddellComponent {},
+ *     styles: `
+ *       .my-weddell-component {
+ *         color: red;
+ *       }
+ *     `
+ * });
+ *
+ * app.init();
+ */
+
+ class WeddellApp extends mix().with(EventEmitterMixin) {
+
     /**
-     * 
-     * @param {Object} opts
-     * @param {String|HTMLElement} opts.el Element to mount app into
-     * 
+     * @param {object} opts
+     * @param {String|Element} opts.el Element to mount app into, or a DOM query string that should resolve to a single element.
+     * @param {function(new:WeddellComponent)} opts.Component A Weddell component class factory. This component will be mounted as the root into the mount point specified in the 
+     * @param {number} [opts.quietInterval=100] Delay between DOM patches to wait before firing the "quiet" event.
+     * @param {CssString} [opts.styles] App styles that will be rendered to the DOM once the app initializes. 
      */
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
         this.styles = opts.styles || this.constructor.styles;
         this.renderOrder = ['markup', 'styles'];
         this.quietInterval = opts.quietInterval;
-        this.pipelineInitMethods = opts.pipelineInitMethods;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
         this.shouldRender = {};
         this.childStylesFirst = opts.childStylesFirst; /*@TODO use this again*/
@@ -96,20 +126,21 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         })
     }
 
-    onPatch() { }
+    /**
+     * Hook method that may be overridden and will be executed at the end of every DOM patch. 
+     * 
+     * @returns {Promise} Subsequent patches may be deferred by returning a Promise in this method.
+     */
 
-    patchDOM(patchRequests) {
-        if (!this.rootNode.parentNode) {
-            this.el.appendChild(this.rootNode);
-        }
-        this.component.refreshWidgets();
-        var patches = VDOMDiff(this._widget, this.component._widget);
-        var rootNode = VDOMPatch(this.rootNode, patches);
-        this.rootNode = rootNode;
-        this._widget = this.component._widget;
+    onPatch() { }    
 
-        this.trigger('patchdom');
-    }
+    /**
+     * Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
+     * 
+     * @param {string} id Component id to wait for
+     * 
+     * @returns {Promise.<WeddellComponent>}
+     */
 
     awaitComponentMount(id) {
         return new Promise(resolve => {
@@ -125,6 +156,167 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                 })
         })
     }
+
+    /**
+     * Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
+     * 
+     * @returns {Promise}
+     */
+    awaitPatch() {
+        return this.patchPromise || Promise.resolve();
+    }
+
+    /**
+     * Returns a promise that will resolve after current pending patch or the next patch completes.
+     * 
+     * @returns {Promise}
+     */
+    awaitNextPatch() {
+        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
+    }
+
+    /**
+     * Dumps the current application state to a snapshot object. 
+     * 
+     * @returns {WeddellAppStateSnapshot}
+     */
+    renderSnapshot() {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");
+        var scriptEl = doc.createElement('script');
+        scriptEl.innerHTML = `
+            window.addEventListener('weddellinitbefore', function(evt){
+                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
+            });
+        `;
+        doc.body.appendChild(scriptEl);
+
+        return {
+            appHtml: this.component.el.outerHTML,
+            stateHtml: scriptEl.outerHTML,
+            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
+                .map(el => el.outerHTML)
+                .join('\n'),
+            fullResponse: doc.documentElement.outerHTML
+        }
+    }
+
+    
+
+    /**
+     * Initializes the app, rendering the root component and mounting it into the specified DOM element.
+     * 
+     * @param {Object} initObj Object with initialization options. 
+     * 
+     * @fires Window#weddellinit Event fired on window object once initialization completes.
+     * @fires WeddellApp#createcomponent Event fired on app object whenever its root component or any child components are created.
+     * @fires WeddellApp#createrootcomponent Event fired on app object whenever its root component is created.
+     * 
+     * @returns {Promise} Promise that resolves once the app has fully initialized and rendered into the DOM. 
+     */
+
+    init(initObj = {}) {
+        this.on('createcomponent', evt => {
+            this._createdComponents.push(evt.component);
+        })
+
+        return DOMReady
+            .then(async () => {
+                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: { app: this } }));
+
+                this.initPatchers();
+
+                if (this._snapshotData) {
+                    this.el.classList.add('using-snapshot');
+                }
+                this.el.classList.add('initting');
+                this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+
+                this._component = await this.makeComponent();
+                /**
+                 * @event WeddellApp#createcomponent
+                 * @type {Object}
+                 * @property {WeddellComponent} component 
+                 */
+                this.trigger('createcomponent', { component: this.component });
+                /**
+                 * @event WeddellApp#createrootcomponent
+                 * @type {Object}
+                 * @property {WeddellComponent} component 
+                 */
+                this.trigger('createrootcomponent', { component: this.component });
+                this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
+
+                this.component.on('requestpatch', evt => {
+                    this.el.classList.add('awaiting-patch');
+                    this._patchRequests = this._patchRequests.concat(evt);
+
+                    this._initPromise.then(() => {
+                        if (!this._patchPromise) {
+                            this._patchPromise = this.queuePatch();
+                        }
+                    })
+                });
+
+                var onPatch = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
+                    if (!isRendering) {
+                        this.trigger('quiet');
+                    }
+                    this.el.classList.add('first-patch-complete');
+                    this.component.trigger('patch');
+                };
+                this.on('patch', onPatch);
+
+                Object.seal(this);
+
+                return this._initPromise = this.initRootComponent(initObj)
+            })
+            .then(result => {
+                /**
+                 * Event fired on the window object when a Weddell app finishes initializing. 
+                 * 
+                 * @event Window#weddellinit
+                 * 
+                 * @type {CustomEvent}
+                 * @property {Object} detail
+                 * @property {WeddellApp} detail.app The app that has finished initializing.
+                 * 
+                 */
+
+                window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
+                this.el.classList.remove('initting');
+                this.el.classList.add('init-complete');
+                return result;
+            })
+    }
+
+    /**
+     * @private
+     */
+
+    static get patchMethods() {
+        return [
+            'patchDOM',
+            'patchStyles'
+        ];
+    }
+
+    /**
+     * @private
+     */
+
+    initRootComponent(initObj) {
+        return this.component.init(this.componentInitOpts)
+            .then(() => this.component.mount())
+            .then(() => {
+                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+            })
+    }
+
+    /**
+     * @private
+     */
 
     patchStyles(patchRequests) {
 
@@ -241,6 +433,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         this.trigger('patchstyles');
     }
 
+    /**
+     * @private
+     */
+
     async makeComponent(componentOpts = {}) {
         var id = this.rootNode.getAttribute('data-wdl-id');
         var snapshot = this._snapshotData;
@@ -295,6 +491,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return component;
     }
 
+    /**
+     * @private
+     */
+
     queuePatch() {
         var resolveFunc;
         var promise = new Promise((resolve) => {
@@ -312,6 +512,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
                     })
                     .then(() => {
                         this._patchPromise = null;
+                        /**
+                         * @event WeddellApp#patch
+                         */
                         this.trigger('patch');
                         this.el.classList.remove('awaiting-patch');
                         return this.onPatch()
@@ -336,14 +539,9 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return promise;
     }
 
-
-    awaitPatch() {
-        return this.patchPromise || Promise.resolve();
-    }
-
-    awaitNextPatch() {
-        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
-    }
+    /**
+     * @private
+     */
 
     initPatchers() {
         var el = this._elInput;
@@ -366,6 +564,10 @@ var App = class extends mix(App).with(EventEmitterMixin) {
             createStyleEl('weddell-app-styles', 'weddell-app-styles').textContent = this.styles;
         }
     }
+
+    /**
+     * @private
+     */
 
     static takeComponentStateSnapshot(component) {
         var obj = {
@@ -394,93 +596,22 @@ var App = class extends mix(App).with(EventEmitterMixin) {
         return obj;
     }
 
-    renderSnapshot() {
-        var parser = new DOMParser();
-        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");
-        var scriptEl = doc.createElement('script');
-        scriptEl.innerHTML = `
-            window.addEventListener('weddellinitbefore', function(evt){
-                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
-            });
-        `;
-        doc.body.appendChild(scriptEl);
+    /**
+     * @private
+     */
 
-        return {
-            appHtml: this.component.el.outerHTML,
-            stateHtml: scriptEl.outerHTML,
-            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
-                .map(el => el.outerHTML)
-                .join('\n'),
-            fullResponse: doc.documentElement.outerHTML
+    patchDOM(patchRequests) {
+        if (!this.rootNode.parentNode) {
+            this.el.appendChild(this.rootNode);
         }
-    }
+        this.component.refreshWidgets();
+        var patches = VDOMDiff(this._widget, this.component._widget);
+        var rootNode = VDOMPatch(this.rootNode, patches);
+        this.rootNode = rootNode;
+        this._widget = this.component._widget;
 
-    initRootComponent(initObj) {
-        return this.component.init(this.componentInitOpts)
-            .then(() => this.component.mount())
-            .then(() => {
-                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
-            })
-    }
-
-    init(initObj = {}) {
-        this.on('createcomponent', evt => {
-            this._createdComponents.push(evt.component);
-        })
-
-        return DOMReady
-            .then(async () => {
-                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: { app: this } }));
-
-                this.initPatchers();
-
-                if (this._snapshotData) {
-                    this.el.classList.add('using-snapshot');
-                }
-                this.el.classList.add('initting');
-                this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
-
-                this._component = await this.makeComponent();
-                /**
-                 * @event Component#createcomponent
-                 * @type {object}
-                 */
-                this.trigger('createcomponent', { component: this.component });
-                this.trigger('createrootcomponent', { component: this.component });
-                this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
-
-                this.component.on('requestpatch', evt => {
-                    this.el.classList.add('awaiting-patch');
-                    this._patchRequests = this._patchRequests.concat(evt);
-
-                    this._initPromise.then(() => {
-                        if (!this._patchPromise) {
-                            this._patchPromise = this.queuePatch();
-                        }
-                    })
-                });
-
-                var onPatch = () => {
-                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
-                    if (!isRendering) {
-                        this.trigger('quiet');
-                    }
-                    this.el.classList.add('first-patch-complete');
-                    this.component.trigger('patch');
-                };
-                this.on('patch', onPatch);
-
-                Object.seal(this);
-
-                return this._initPromise = this.initRootComponent(initObj)
-            })
-            .then(result => {
-                window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
-                this.el.classList.remove('initting');
-                this.el.classList.add('init-complete');
-                return result;
-            })
+        this.trigger('patchdom');
     }
 }
 
-module.exports = App;
+module.exports = WeddellApp;

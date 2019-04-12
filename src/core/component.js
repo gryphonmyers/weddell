@@ -23,7 +23,41 @@ const testElement = document.createElement('div');
 
 const renderInterval = 33.333;
 
-var Component = class extends mix(Component).with(EventEmitterMixin) {
+
+/**
+ * Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag. 
+ * 
+ * @example
+ * WeddellComponent => class MyComponent extends WeddellComponent {
+ * 
+ *  static get styles() {
+ *      return `
+ *          .my-component-class {
+ *              color: red;
+ *          }
+ *      `
+ *  }
+ *  static get markup() {
+ *      return (locals, h) =>
+ *          h('div.my-component-class', [
+ *              h('h1', [
+ *                  locals.myContent
+ *              ])
+ *          ])
+ *  }
+ * 
+ *  static get state() {
+ *      return {
+ *          myContent: 'foobar'
+ *      }
+ *  }
+ * 
+ * }
+ * 
+ * // Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
+ * 
+ */
+class WeddellComponent extends mix().with(EventEmitterMixin) {
     static get renderMethods() {
         return ['renderVNode', 'renderStyles'];
     }
@@ -951,4 +985,4 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 }
 
-module.exports = Component;
+module.exports = WeddellComponent;
