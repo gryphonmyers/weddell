@@ -23,9 +23,24 @@ var Component = require('./component');
  */
 var Store = require('./store');
 
+/**
+ * @typedef {object} WeddellPlugin
+ * 
+ * @property {string} id Plugin id (for deduplication and dependency purposes).
+ * @property {string[]} requires Ids of other plugins that are required for this plugin to function.
+ * @property {object[]} classes Classes to override on the base Weddell module (keys as class names, values as classes).
+ */
 
+/**
+ * @alias module:weddell
+ */
 
 class Weddell {
+    /**
+     * Extends the base Weddell class with additional functionality, as defined in a plugin object.
+     * 
+     * @param {WeddellPlugin} pluginObj A plugin object to apply to the base Weddell class.
+     */
     static plugin(pluginObj) {
         class NewWeddell extends Weddell {};
         if (!pluginObj.id) {
