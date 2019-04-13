@@ -1,11 +1,33 @@
+/**
+ * Base Weddell module.
+ * 
+ * @module weddell
+
+ */
+
 var mix = require('@weddell/mixwith').mix;
+
+/**
+ * @requires module:weddell/app
+ * @see {@link app}
+ */
 var App = require('./app');
+/**
+ * @requires module:weddell/component
+ * @see {@link component}
+ */
 var Component = require('./component');
+/**
+ * @requires module:weddell/store
+ * @see {@link store}
+ */
 var Store = require('./store');
 
-class _Weddell {
+
+
+class Weddell {
     static plugin(pluginObj) {
-        class NewWeddell extends _Weddell {};
+        class NewWeddell extends Weddell {};
         if (!pluginObj.id) {
             throw 'Got a plugin with no ID assigned. Aborting';
         }
@@ -48,14 +70,16 @@ class _Weddell {
         return NewWeddell;
     }
 }
-_Weddell.loadedPlugins = [];
-_Weddell.consts = {
+Weddell.loadedPlugins = [];
+Weddell.consts = {
     VAR_NAME: '_wdl',
     INDEX_ATTR_NAME: 'data-component-index'
 };
-_Weddell.deps = {};
-_Weddell.classes = {App, Component, Store};
-Object.values(_Weddell.classes).forEach(function(commonClass){
-    commonClass.Weddell = _Weddell;
-});
-module.exports = _Weddell;
+Weddell.deps = {};
+Weddell.classes = {App, Component, Store};
+Object.entries(Weddell.classes)
+    .forEach(([key, commonClass]) => {
+        commonClass.Weddell = Weddell;
+        Object.defineProperty(Weddell, key, { get: () => commonClass })
+    });
+module.exports = Weddell;

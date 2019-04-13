@@ -1,3 +1,17 @@
+## Modules
+
+<dl>
+<dt><a href="#module_weddell/app">weddell/app</a></dt>
+<dd><p>WeddellApp module.</p>
+</dd>
+<dt><a href="#module_weddell/component">weddell/component</a></dt>
+<dd><p>WeddellComponent module.</p>
+</dd>
+<dt><a href="#module_weddell">weddell</a></dt>
+<dd><p>Base Weddell module.</p>
+</dd>
+</dl>
+
 <a name="module_weddell/app"></a>
 
 ## weddell/app
@@ -178,3 +192,43 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
     </tr>  </tbody>
 </table>
 
+<a name="module_weddell/component"></a>
+
+## weddell/component
+WeddellComponent module.
+
+<a name="exp_module_weddell/component--WeddellComponent"></a>
+
+### WeddellComponent ⏏
+Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+
+**Kind**: Exported class  
+<a name="module_weddell"></a>
+
+## weddell
+Base Weddell module.
+
+
+* [weddell](#module_weddell)
+    * [~App](#module_weddell..App)
+    * [~Component](#module_weddell..Component)
+    * [~Store](#module_weddell..Store)
+
+<a name="module_weddell..App"></a>
+
+### weddell~App
+**Kind**: inner property of [<code>weddell</code>](#module_weddell)  
+**Requires**: [<code>weddell/app</code>](#module_weddell/app)  
+**See**: [app](app)  
+<a name="module_weddell..Component"></a>
+
+### weddell~Component
+**Kind**: inner property of [<code>weddell</code>](#module_weddell)  
+**Requires**: [<code>weddell/component</code>](#module_weddell/component)  
+**See**: [component](component)  
+<a name="module_weddell..Store"></a>
+
+### weddell~Store
+**Kind**: inner property of [<code>weddell</code>](#module_weddell)  
+**Requires**: <code>module:weddell/store</code>  
+**See**: [store](store)  
