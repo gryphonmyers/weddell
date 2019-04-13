@@ -210,25 +210,22 @@ Base Weddell module.
 
 
 * [weddell](#module_weddell)
-    * [.app](#module_weddell+app)
-    * [.component](#module_weddell+component)
-    * [.store](#module_weddell+store)
+    * [~app](#module_weddell..app)
+    * [~component](#module_weddell..component)
+    * [~store](#module_weddell..store)
 
-<a name="module_weddell+app"></a>
+<a name="module_weddell..app"></a>
 
-### weddell.app
-**Kind**: instance property of [<code>weddell</code>](#module_weddell)  
+### weddell~app
+**Kind**: inner property of [<code>weddell</code>](#module_weddell)  
 **Requires**: [<code>weddell/app</code>](#module_weddell/app)  
-**See**: [app](app)  
-<a name="module_weddell+component"></a>
+<a name="module_weddell..component"></a>
 
-### weddell.component
-**Kind**: instance property of [<code>weddell</code>](#module_weddell)  
+### weddell~component
+**Kind**: inner property of [<code>weddell</code>](#module_weddell)  
 **Requires**: [<code>weddell/component</code>](#module_weddell/component)  
-**See**: [component](component)  
-<a name="module_weddell+store"></a>
+<a name="module_weddell..store"></a>
 
-### weddell.store
-**Kind**: instance property of [<code>weddell</code>](#module_weddell)  
+### weddell~store
+**Kind**: inner property of [<code>weddell</code>](#module_weddell)  
 **Requires**: <code>module:weddell/store</code>  
-**See**: [store](store)  

@@ -9,20 +9,17 @@ var mix = require('@weddell/mixwith').mix;
 
 /**
  * @requires module:weddell/app
- * @alias module:weddell#app
- * @see {@link app}
+ * @alias module:weddell~app
  */
 var App = require('./app');
 /**
  * @requires module:weddell/component
- * @alias module:weddell#component
- * @see {@link component}
+ * @alias module:weddell~component
  */
 var Component = require('./component');
 /**
  * @requires module:weddell/store
- * @alias module:weddell#store
- * @see {@link store}
+ * @alias module:weddell~store
  */
 var Store = require('./store');
 
