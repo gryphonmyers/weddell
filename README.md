@@ -1,39 +1,31 @@
-<a name="module_weddell/src/core/app"></a>
+<a name="module_weddell/app"></a>
 
-## weddell/src/core/app
+## weddell/app
 WeddellApp module.
 
 
-* [weddell/src/core/app](#module_weddell/src/core/app)
-    * [~WeddellApp](#module_weddell/src/core/app..WeddellApp)
-        * [new WeddellApp(opts)](#new_module_weddell/src/core/app..WeddellApp_new)
-        * [.onPatch()](#module_weddell/src/core/app..WeddellApp+onPatch) ⇒ <code>Promise</code>
-        * [.awaitComponentMount(id)](#module_weddell/src/core/app..WeddellApp+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
-        * [.awaitPatch()](#module_weddell/src/core/app..WeddellApp+awaitPatch) ⇒ <code>Promise</code>
-        * [.awaitNextPatch()](#module_weddell/src/core/app..WeddellApp+awaitNextPatch) ⇒ <code>Promise</code>
-        * [.renderSnapshot()](#module_weddell/src/core/app..WeddellApp+renderSnapshot) ⇒ <code>WeddellAppStateSnapshot</code>
-        * [.init(initObj)](#module_weddell/src/core/app..WeddellApp+init) ⇒ <code>Promise</code>
-    * [~CssString](#module_weddell/src/core/app..CssString) : <code>String</code>
-    * [~HtmlString](#module_weddell/src/core/app..HtmlString) : <code>String</code>
-    * [~WeddellAppStateSnapshot](#module_weddell/src/core/app..WeddellAppStateSnapshot) : <code>Object</code>
+* [weddell/app](#module_weddell/app)
+    * [WeddellApp](#exp_module_weddell/app--WeddellApp) ⏏
+        * [new WeddellApp(opts)](#new_module_weddell/app--WeddellApp_new)
+        * _instance_
+            * [.onPatch()](#module_weddell/app--WeddellApp+onPatch) ⇒ <code>Promise</code>
+            * [.awaitComponentMount(id)](#module_weddell/app--WeddellApp+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+            * [.awaitPatch()](#module_weddell/app--WeddellApp+awaitPatch) ⇒ <code>Promise</code>
+            * [.awaitNextPatch()](#module_weddell/app--WeddellApp+awaitNextPatch) ⇒ <code>Promise</code>
+            * [.renderSnapshot()](#module_weddell/app--WeddellApp+renderSnapshot) ⇒ <code>WeddellAppStateSnapshot</code>
+            * [.init(initObj)](#module_weddell/app--WeddellApp+init) ⇒ <code>Promise</code>
+        * _inner_
+            * [~CssString](#module_weddell/app--WeddellApp..CssString) : <code>String</code>
+            * [~HtmlString](#module_weddell/app--WeddellApp..HtmlString) : <code>String</code>
+            * [~WeddellAppStateSnapshot](#module_weddell/app--WeddellApp..WeddellAppStateSnapshot) : <code>Object</code>
 
-<a name="module_weddell/src/core/app..WeddellApp"></a>
+<a name="exp_module_weddell/app--WeddellApp"></a>
 
-### weddell/src/core/app~WeddellApp
+### WeddellApp ⏏
 An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
 
-**Kind**: inner class of [<code>weddell/src/core/app</code>](#module_weddell/src/core/app)  
-
-* [~WeddellApp](#module_weddell/src/core/app..WeddellApp)
-    * [new WeddellApp(opts)](#new_module_weddell/src/core/app..WeddellApp_new)
-    * [.onPatch()](#module_weddell/src/core/app..WeddellApp+onPatch) ⇒ <code>Promise</code>
-    * [.awaitComponentMount(id)](#module_weddell/src/core/app..WeddellApp+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
-    * [.awaitPatch()](#module_weddell/src/core/app..WeddellApp+awaitPatch) ⇒ <code>Promise</code>
-    * [.awaitNextPatch()](#module_weddell/src/core/app..WeddellApp+awaitNextPatch) ⇒ <code>Promise</code>
-    * [.renderSnapshot()](#module_weddell/src/core/app..WeddellApp+renderSnapshot) ⇒ <code>WeddellAppStateSnapshot</code>
-    * [.init(initObj)](#module_weddell/src/core/app..WeddellApp+init) ⇒ <code>Promise</code>
-
-<a name="new_module_weddell/src/core/app..WeddellApp_new"></a>
+**Kind**: Exported class  
+<a name="new_module_weddell/app--WeddellApp_new"></a>
 
 #### new WeddellApp(opts)
 <table>
@@ -77,19 +69,19 @@ var app = new App({
 
 app.init();
 ```
-<a name="module_weddell/src/core/app..WeddellApp+onPatch"></a>
+<a name="module_weddell/app--WeddellApp+onPatch"></a>
 
 #### weddellApp.onPatch() ⇒ <code>Promise</code>
 Hook method that may be overridden and will be executed at the end of every DOM patch.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#module_weddell/src/core/app..WeddellApp)  
+**Kind**: instance method of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
 **Returns**: <code>Promise</code> - Subsequent patches may be deferred by returning a Promise in this method.  
-<a name="module_weddell/src/core/app..WeddellApp+awaitComponentMount"></a>
+<a name="module_weddell/app--WeddellApp+awaitComponentMount"></a>
 
 #### weddellApp.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
 Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#module_weddell/src/core/app..WeddellApp)  
+**Kind**: instance method of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
 <table>
   <thead>
     <tr>
@@ -103,30 +95,30 @@ Returns a promise the resolves with a weddell component once the component with 
     </tr>  </tbody>
 </table>
 
-<a name="module_weddell/src/core/app..WeddellApp+awaitPatch"></a>
+<a name="module_weddell/app--WeddellApp+awaitPatch"></a>
 
 #### weddellApp.awaitPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#module_weddell/src/core/app..WeddellApp)  
-<a name="module_weddell/src/core/app..WeddellApp+awaitNextPatch"></a>
+**Kind**: instance method of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
+<a name="module_weddell/app--WeddellApp+awaitNextPatch"></a>
 
 #### weddellApp.awaitNextPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve after current pending patch or the next patch completes.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#module_weddell/src/core/app..WeddellApp)  
-<a name="module_weddell/src/core/app..WeddellApp+renderSnapshot"></a>
+**Kind**: instance method of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
+<a name="module_weddell/app--WeddellApp+renderSnapshot"></a>
 
 #### weddellApp.renderSnapshot() ⇒ <code>WeddellAppStateSnapshot</code>
 Dumps the current application state to a snapshot object.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#module_weddell/src/core/app..WeddellApp)  
-<a name="module_weddell/src/core/app..WeddellApp+init"></a>
+**Kind**: instance method of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
+<a name="module_weddell/app--WeddellApp+init"></a>
 
 #### weddellApp.init(initObj) ⇒ <code>Promise</code>
 Initializes the app, rendering the root component and mounting it into the specified DOM element.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#module_weddell/src/core/app..WeddellApp)  
+**Kind**: instance method of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
 **Returns**: <code>Promise</code> - Promise that resolves once the app has fully initialized and rendered into the DOM.  
 **Emits**: <code>Window#event:weddellinit Event fired on window object once initialization completes.</code>, <code>WeddellApp#event:createcomponent Event fired on app object whenever its root component or any child components are created.</code>, <code>WeddellApp#event:createrootcomponent Event fired on app object whenever its root component is created.</code>  
 <table>
@@ -142,26 +134,26 @@ Initializes the app, rendering the root component and mounting it into the speci
     </tr>  </tbody>
 </table>
 
-<a name="module_weddell/src/core/app..CssString"></a>
+<a name="module_weddell/app--WeddellApp..CssString"></a>
 
-### weddell/src/core/app~CssString : <code>String</code>
+#### WeddellApp~CssString : <code>String</code>
 A string of valid CSS style declarations.
 
-**Kind**: inner typedef of [<code>weddell/src/core/app</code>](#module_weddell/src/core/app)  
+**Kind**: inner typedef of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
 **See**: https://developer.mozilla.org/en-US/docs/Web/CSS  
-<a name="module_weddell/src/core/app..HtmlString"></a>
+<a name="module_weddell/app--WeddellApp..HtmlString"></a>
 
-### weddell/src/core/app~HtmlString : <code>String</code>
+#### WeddellApp~HtmlString : <code>String</code>
 A string of valid HTML.
 
-**Kind**: inner typedef of [<code>weddell/src/core/app</code>](#module_weddell/src/core/app)  
+**Kind**: inner typedef of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
 **See**: https://developer.mozilla.org/en-US/docs/Web/HTML  
-<a name="module_weddell/src/core/app..WeddellAppStateSnapshot"></a>
+<a name="module_weddell/app--WeddellApp..WeddellAppStateSnapshot"></a>
 
-### weddell/src/core/app~WeddellAppStateSnapshot : <code>Object</code>
+#### WeddellApp~WeddellAppStateSnapshot : <code>Object</code>
 A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.
 
-**Kind**: inner typedef of [<code>weddell/src/core/app</code>](#module_weddell/src/core/app)  
+**Kind**: inner typedef of [<code>WeddellApp</code>](#exp_module_weddell/app--WeddellApp)  
 **Properties**
 
 <table>

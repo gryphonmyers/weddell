@@ -10,7 +10,7 @@ const virtualize = require('@weddell/vdom-virtualize');
 /**
  * WeddellApp module.
  * 
- * @module weddell/src/core/app
+ * @module weddell/app
  * 
  */
 
@@ -57,6 +57,7 @@ function createStyleEl(id, className = null) {
  /**
  * An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application. 
  * 
+ * @alias module:weddell/app
  * @example 
  * const App = require('weddell').classes.App;
  * 

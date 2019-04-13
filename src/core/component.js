@@ -27,13 +27,13 @@ const renderInterval = 33.333;
 /**
  * WeddellComponent module.
  * 
- * @module weddell/src/core/component
- * 
+ * @module weddell/component
  */
 
 /**
- * Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag. 
+ * Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
  * 
+ * @alias module:weddell/component
  * @example
  * WeddellComponent => class MyComponent extends WeddellComponent {
  * 
