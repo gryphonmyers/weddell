@@ -6,6 +6,14 @@ const VDOMPatch = require('virtual-dom/patch');
 const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
 const virtualize = require('@weddell/vdom-virtualize');
+
+/**
+ * WeddellApp module.
+ * 
+ * @module weddell/src/core/app
+ * 
+ */
+
 const WeddellComponent = require('./component');
 
 const defaultOpts = {
