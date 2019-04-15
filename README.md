@@ -1,17 +1,9 @@
-## Modules
-
-<dl>
-<dt><a href="#module_weddell">weddell</a></dt>
-<dd></dd>
-</dl>
-
 ## Classes
 
 <dl>
-<dt><a href="#WeddellApp">WeddellApp</a></dt>
-<dd></dd>
-<dt><a href="#WeddellStore">WeddellStore</a></dt>
-<dd></dd>
+<dt><a href="#Weddell">Weddell</a></dt>
+<dd><p>Weddell class</p>
+</dd>
 </dl>
 
 ## Typedefs
@@ -30,59 +22,48 @@
 <dd></dd>
 </dl>
 
-<a name="module_weddell"></a>
+<a name="Weddell"></a>
 
-## weddell
-
-* [weddell](#module_weddell)
-    * *[Weddell](#exp_module_weddell--Weddell) ⏏*
-        * *[.plugin(pluginObj)](#module_weddell--Weddell.plugin)*
-
-<a name="exp_module_weddell--Weddell"></a>
-
-### *Weddell ⏏*
+## *Weddell*
 Weddell class
 
-**Kind**: Exported class  
-<a name="module_weddell--Weddell.plugin"></a>
+**Kind**: global abstract class  
 
-#### *Weddell.plugin(pluginObj)*
-Extends the base Weddell class with additional functionality, as defined in a plugin object.
+* *[Weddell](#Weddell)*
+    * *[.App](#Weddell.App)*
+        * [new WeddellApp(opts)](#new_Weddell.App_new)
+        * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
+        * [.awaitComponentMount(id)](#Weddell.App+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+        * [.awaitPatch()](#Weddell.App+awaitPatch) ⇒ <code>Promise</code>
+        * [.awaitNextPatch()](#Weddell.App+awaitNextPatch) ⇒ <code>Promise</code>
+        * [.renderSnapshot()](#Weddell.App+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+        * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
+    * *[.Component](#Weddell.Component)*
+        * [new WeddellComponent(opts)](#new_Weddell.Component_new)
+        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+    * *[.Store](#Weddell.Store)*
+        * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
+    * *[.plugin(pluginObj)](#Weddell.plugin)*
 
-**Kind**: static method of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>pluginObj</td><td><code><a href="#WeddellPlugin">WeddellPlugin</a></code></td><td><p>A plugin object to apply to the base Weddell class.</p>
-</td>
-    </tr>  </tbody>
-</table>
+<a name="Weddell.App"></a>
 
-<a name="WeddellApp"></a>
+### *Weddell.App*
+An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
 
-## WeddellApp
-**Kind**: global class  
+**Kind**: static class of [<code>Weddell</code>](#Weddell)  
 
-* [WeddellApp](#WeddellApp)
-    * [new WeddellApp(opts)](#new_WeddellApp_new)
-    * [.onPatch()](#WeddellApp+onPatch) ⇒ <code>Promise</code>
-    * [.awaitComponentMount(id)](#WeddellApp+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
-    * [.awaitPatch()](#WeddellApp+awaitPatch) ⇒ <code>Promise</code>
-    * [.awaitNextPatch()](#WeddellApp+awaitNextPatch) ⇒ <code>Promise</code>
-    * [.renderSnapshot()](#WeddellApp+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
-    * [.init(initObj)](#WeddellApp+init) ⇒ <code>Promise</code>
-    * ["createcomponent"](#WeddellApp+event_createcomponent)
-    * ["createrootcomponent"](#WeddellApp+event_createrootcomponent)
-    * ["patch"](#WeddellApp+event_patch)
+* *[.App](#Weddell.App)*
+    * [new WeddellApp(opts)](#new_Weddell.App_new)
+    * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
+    * [.awaitComponentMount(id)](#Weddell.App+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+    * [.awaitPatch()](#Weddell.App+awaitPatch) ⇒ <code>Promise</code>
+    * [.awaitNextPatch()](#Weddell.App+awaitNextPatch) ⇒ <code>Promise</code>
+    * [.renderSnapshot()](#Weddell.App+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+    * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
 
-<a name="new_WeddellApp_new"></a>
+<a name="new_Weddell.App_new"></a>
 
-### new WeddellApp(opts)
+#### new WeddellApp(opts)
 <table>
   <thead>
     <tr>
@@ -124,19 +105,19 @@ var app = new App({
 
 app.init();
 ```
-<a name="WeddellApp+onPatch"></a>
+<a name="Weddell.App+onPatch"></a>
 
-### weddellApp.onPatch() ⇒ <code>Promise</code>
+#### app.onPatch() ⇒ <code>Promise</code>
 Hook method that may be overridden and will be executed at the end of every DOM patch.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
 **Returns**: <code>Promise</code> - Subsequent patches may be deferred by returning a Promise in this method.  
-<a name="WeddellApp+awaitComponentMount"></a>
+<a name="Weddell.App+awaitComponentMount"></a>
 
-### weddellApp.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+#### app.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
 Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
 <table>
   <thead>
     <tr>
@@ -150,30 +131,30 @@ Returns a promise the resolves with a weddell component once the component with 
     </tr>  </tbody>
 </table>
 
-<a name="WeddellApp+awaitPatch"></a>
+<a name="Weddell.App+awaitPatch"></a>
 
-### weddellApp.awaitPatch() ⇒ <code>Promise</code>
+#### app.awaitPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
-<a name="WeddellApp+awaitNextPatch"></a>
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+<a name="Weddell.App+awaitNextPatch"></a>
 
-### weddellApp.awaitNextPatch() ⇒ <code>Promise</code>
+#### app.awaitNextPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve after current pending patch or the next patch completes.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
-<a name="WeddellApp+renderSnapshot"></a>
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+<a name="Weddell.App+renderSnapshot"></a>
 
-### weddellApp.renderSnapshot() ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+#### app.renderSnapshot() ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
 Dumps the current application state to a snapshot object.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
-<a name="WeddellApp+init"></a>
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+<a name="Weddell.App+init"></a>
 
-### weddellApp.init(initObj) ⇒ <code>Promise</code>
+#### app.init(initObj) ⇒ <code>Promise</code>
 Initializes the app, rendering the root component and mounting it into the specified DOM element.
 
-**Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
 **Returns**: <code>Promise</code> - Promise that resolves once the app has fully initialized and rendered into the DOM.  
 **Emits**: <code>Window#event:weddellinit Event fired on window object once initialization completes.</code>, <code>WeddellApp#event:createcomponent Event fired on app object whenever its root component or any child components are created.</code>, <code>WeddellApp#event:createrootcomponent Event fired on app object whenever its root component is created.</code>  
 <table>
@@ -189,53 +170,82 @@ Initializes the app, rendering the root component and mounting it into the speci
     </tr>  </tbody>
 </table>
 
-<a name="WeddellApp+event_createcomponent"></a>
+<a name="Weddell.Component"></a>
 
-### "createcomponent"
-**Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
-**Properties**
+### *Weddell.Component*
+Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th><th>Type</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>component</td><td><code>WeddellComponent</code></td>
-    </tr>  </tbody>
-</table>
+**Kind**: static class of [<code>Weddell</code>](#Weddell)  
 
-<a name="WeddellApp+event_createrootcomponent"></a>
+* *[.Component](#Weddell.Component)*
+    * [new WeddellComponent(opts)](#new_Weddell.Component_new)
+    * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
 
-### "createrootcomponent"
-**Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
-**Properties**
+<a name="new_Weddell.Component_new"></a>
+
+#### new WeddellComponent(opts)
+Constructs a Weddell Component. One does not generally instantiate components directly, but rather through the use of markup tags. This information is available primarily for the purposes of plugin authorship.
 
 <table>
   <thead>
     <tr>
-      <th>Name</th><th>Type</th>
+      <th>Param</th><th>Type</th><th>Description</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>component</td><td><code>WeddellComponent</code></td>
+    <td>opts</td><td><code>object</code></td><td></td>
+    </tr><tr>
+    <td>opts.consts</td><td><code>object</code></td><td><p>Base consts object that will be merged into static store declaration.</p>
+</td>
     </tr>  </tbody>
 </table>
 
-<a name="WeddellApp+event_patch"></a>
+**Example**  
+```js
+WeddellComponent => class MyComponent extends WeddellComponent {
 
-### "patch"
-**Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
-<a name="WeddellStore"></a>
+ static get styles() {
+     return `
+         .my-component-class {
+             color: red;
+         }
+     `
+ }
+ static get markup() {
+     return (locals, h) =>
+         h('div.my-component-class', [
+             h('h1', [
+                 locals.myContent
+             ])
+         ])
+ }
 
-## WeddellStore
-**Kind**: global class  
-<a name="new_WeddellStore_new"></a>
+ static get state() {
+     return {
+         myContent: 'foobar'
+     }
+ }
 
-### new WeddellStore(data, opts)
+}
+
+// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
+```
+<a name="Weddell.Component+onFirstRender"></a>
+
+#### component.onFirstRender() ⇒ <code>Promise</code>
+Component lifecycle hook method that can be overridden. onFirstRender is called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Store"></a>
+
+### *Weddell.Store*
+Class representing a store of key/value pairs. The store class is primarily used to model application state.
+
+**Kind**: static class of [<code>Weddell</code>](#Weddell)  
+<a name="new_Weddell.Store_new"></a>
+
+#### new WeddellStore(data, opts)
 Constructs a store object. One does not generally require or implement the store module directly, but rather implicitly via the various store properties available on components.
 
 <table>
@@ -257,11 +267,11 @@ Constructs a store object. One does not generally require or implement the store
     </tr><tr>
     <td>[opts.requireSerializable]</td><td><code>boolean</code></td><td><code>true</code></td><td></td>
     </tr><tr>
-    <td>[opts.overrides]</td><td><code><a href="#WeddellStore">Array.&lt;WeddellStore&gt;</a></code></td><td></td><td></td>
+    <td>[opts.overrides]</td><td><code>Array.&lt;WeddellStore&gt;</code></td><td></td><td></td>
     </tr><tr>
-    <td>[opts.proxies]</td><td><code><a href="#WeddellStore">Array.&lt;WeddellStore&gt;</a></code></td><td></td><td></td>
+    <td>[opts.proxies]</td><td><code>Array.&lt;WeddellStore&gt;</code></td><td></td><td></td>
     </tr><tr>
-    <td>[opts.extends]</td><td><code><a href="#WeddellStore">Array.&lt;WeddellStore&gt;</a></code></td><td></td><td></td>
+    <td>[opts.extends]</td><td><code>Array.&lt;WeddellStore&gt;</code></td><td></td><td></td>
     </tr><tr>
     <td>[opts.propertySets]</td><td><code>object</code></td><td></td><td></td>
     </tr><tr>
@@ -274,6 +284,25 @@ Constructs a store object. One does not generally require or implement the store
     <td>[opts.initialState]</td><td><code>object</code></td><td></td><td></td>
     </tr><tr>
     <td>[opts.inputMappings]</td><td><code>object</code></td><td></td><td></td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.plugin"></a>
+
+### *Weddell.plugin(pluginObj)*
+Extends the base Weddell class with additional functionality, as defined in a plugin object.
+
+**Kind**: static method of [<code>Weddell</code>](#Weddell)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>pluginObj</td><td><code><a href="#WeddellPlugin">WeddellPlugin</a></code></td><td><p>A plugin object to apply to the base Weddell class.</p>
+</td>
     </tr>  </tbody>
 </table>
 
