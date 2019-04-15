@@ -18,6 +18,12 @@
 <dt><a href="#WeddellAppStateSnapshot">WeddellAppStateSnapshot</a> : <code>Object</code></dt>
 <dd><p>A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.</p>
 </dd>
+<dt><a href="#DomCreateEvtObj">DomCreateEvtObj</a> : <code>object</code></dt>
+<dd></dd>
+<dt><a href="#DomDestroyEvtObj">DomDestroyEvtObj</a> : <code>object</code></dt>
+<dd></dd>
+<dt><a href="#DomChangeEvtObj">DomChangeEvtObj</a> : <code>object</code></dt>
+<dd></dd>
 <dt><a href="#VirtualDomTemplate">VirtualDomTemplate</a> ⇒ <code><a href="#VirtualNode">VirtualNode</a></code></dt>
 <dd></dd>
 <dt><a href="#VirtualNode">VirtualNode</a> : <code>object</code></dt>
@@ -46,7 +52,16 @@ Top-level Weddell class serving as an entrypoint to various APIs.
     * *[.Component](#Weddell.Component)*
         * [new WeddellComponent(opts)](#new_Weddell.Component_new)
         * _instance_
-            * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+            * [.onInit()](#Weddell.Component+onInit) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onRender()](#Weddell.Component+onRender) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onRenderMarkup()](#Weddell.Component+onRenderMarkup) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onRenderStyles()](#Weddell.Component+onRenderStyles) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onDOMCreate(evt)](#Weddell.Component+onDOMCreate) ⇒ <code>void</code>
+            * [.onDOMMove(evt)](#Weddell.Component+onDOMMove) ⇒ <code>void</code>
+            * [.onDOMChange(evt)](#Weddell.Component+onDOMChange) ⇒ <code>void</code>
+            * [.onDOMCreateOrChange(evt)](#Weddell.Component+onDOMCreateOrChange) ⇒ <code>void</code>
+            * [.onDOMDestroy(evt)](#Weddell.Component+onDOMDestroy) ⇒ <code>void</code>
             * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
             * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
             * [.walkComponents(callback, [filterFunc])](#Weddell.Component+walkComponents)
@@ -203,7 +218,16 @@ Class representing a Weddell component. A component encapsulates some combinatio
 * *[.Component](#Weddell.Component)*
     * [new WeddellComponent(opts)](#new_Weddell.Component_new)
     * _instance_
-        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+        * [.onInit()](#Weddell.Component+onInit) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onRender()](#Weddell.Component+onRender) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onRenderMarkup()](#Weddell.Component+onRenderMarkup) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onRenderStyles()](#Weddell.Component+onRenderStyles) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onDOMCreate(evt)](#Weddell.Component+onDOMCreate) ⇒ <code>void</code>
+        * [.onDOMMove(evt)](#Weddell.Component+onDOMMove) ⇒ <code>void</code>
+        * [.onDOMChange(evt)](#Weddell.Component+onDOMChange) ⇒ <code>void</code>
+        * [.onDOMCreateOrChange(evt)](#Weddell.Component+onDOMCreateOrChange) ⇒ <code>void</code>
+        * [.onDOMDestroy(evt)](#Weddell.Component+onDOMDestroy) ⇒ <code>void</code>
         * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
         * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
         * [.walkComponents(callback, [filterFunc])](#Weddell.Component+walkComponents)
@@ -272,12 +296,126 @@ WeddellComponent => class MyComponent extends WeddellComponent {
 
 // Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
 ```
-<a name="Weddell.Component+onFirstRender"></a>
+<a name="Weddell.Component+onInit"></a>
 
-#### component.onFirstRender() ⇒ <code>Promise</code>
-Component lifecycle hook method that can be overridden. onFirstRender is called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
+#### component.onInit() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called whenever a component instance finishes initializing. Returning a promise will defer completion of the init process.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onFirstRender"></a>
+
+#### component.onFirstRender() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onRender"></a>
+
+#### component.onRender() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called after the component finishes rendering. Returning a promise will defer completion of the render process (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onRenderMarkup"></a>
+
+#### component.onRenderMarkup() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called after the component finishes rendering markup as part of its rendering process. Returning a promise will defer completion of the markup render process, and thus the render process as a whole (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onRenderStyles"></a>
+
+#### component.onRenderStyles() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called after the component finishes rendering styles as part of its rendering process. Returning a promise will defer completion of the styles render process, and thus the render process as a whole (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onDOMCreate"></a>
+
+#### component.onDOMCreate(evt) ⇒ <code>void</code>
+Component lifecycle hook method that may be overridden. Called when a DOM element is created and set to this component's 'el' property.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>evt</td><td><code><a href="#DomCreateEvtObj">DomCreateEvtObj</a></code></td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+onDOMMove"></a>
+
+#### component.onDOMMove(evt) ⇒ <code>void</code>
+Component lifecycle hook method that may be overridden. Called when the DOM element associated with this component moves to a new location in the DOM.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>evt</td><td><code><a href="#DomChangeEvtObj">DomChangeEvtObj</a></code></td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+onDOMChange"></a>
+
+#### component.onDOMChange(evt) ⇒ <code>void</code>
+Component lifecycle hook method that may be overridden. Called when the DOM element associated with this component changes.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>evt</td><td><code><a href="#DomChangeEvtObj">DomChangeEvtObj</a></code></td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+onDOMCreateOrChange"></a>
+
+#### component.onDOMCreateOrChange(evt) ⇒ <code>void</code>
+Component lifecycle hook method that may be overridden. Called either when a new DOM element is created for this component, or when the DOM element associated with it changes.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>evt</td><td><code><a href="#DomChangeEvtObj">DomChangeEvtObj</a></code></td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+onDOMDestroy"></a>
+
+#### component.onDOMDestroy(evt) ⇒ <code>void</code>
+Component lifecycle hook method that may be overridden. Called when a DOM element that was previously associated with this component is destroyed.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>evt</td><td><code><a href="#DomDestroyEvtObj">DomDestroyEvtObj</a></code></td>
+    </tr>  </tbody>
+</table>
+
 <a name="Weddell.Component+bindEvent"></a>
 
 #### component.bindEvent(funcText, opts)
@@ -713,6 +851,66 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
     </tr>  </tbody>
 </table>
 
+<a name="DomCreateEvtObj"></a>
+
+## DomCreateEvtObj : <code>object</code>
+**Kind**: global typedef  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>el</td><td><code>Element</code> | <code>null</code></td><td><p>The DOM element that was created</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="DomDestroyEvtObj"></a>
+
+## DomDestroyEvtObj : <code>object</code>
+**Kind**: global typedef  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>el</td><td><code>Element</code> | <code>null</code></td><td><p>The DOM element that was destroyed</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="DomChangeEvtObj"></a>
+
+## DomChangeEvtObj : <code>object</code>
+**Kind**: global typedef  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>newEl</td><td><code>Element</code> | <code>null</code></td><td><p>The new DOM element that was created</p>
+</td>
+    </tr><tr>
+    <td>prevEl</td><td><code>Element</code> | <code>null</code></td><td><p>The DOM element that was previously associated with this component</p>
+</td>
+    </tr>  </tbody>
+</table>
+
 <a name="VirtualDomTemplate"></a>
 
 ## VirtualDomTemplate ⇒ [<code>VirtualNode</code>](#VirtualNode)
@@ -725,7 +923,8 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
   </thead>
   <tbody>
 <tr>
-    <td>locals</td><td><code>object</code></td><td></td>
+    <td>locals</td><td><code>object</code></td><td><p>Component state + helpers</p>
+</td>
     </tr><tr>
     <td>h</td><td><code>function</code></td><td><p>hyperscript implementation</p>
 </td>
