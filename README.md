@@ -10,13 +10,6 @@
 </dd>
 </dl>
 
-## Objects
-
-<dl>
-<dt><a href="#Weddell">Weddell</a> : <code>object</code></dt>
-<dd></dd>
-</dl>
-
 ## Typedefs
 
 <dl>
@@ -255,115 +248,6 @@ Weddell class
 **Kind**: global abstract class  
 
 * *[Weddell](#Weddell)*
-    * *[.Component](#Weddell.Component)*
-        * [new WeddellComponent(opts)](#new_Weddell.Component_new)
-        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
-    * *[.App](#Weddell.App) : <code>object</code>*
-    * *[.Store](#Weddell.Store) : <code>object</code>*
-    * *[.plugin(pluginObj)](#Weddell.plugin)*
-
-<a name="Weddell.Component"></a>
-
-### *Weddell.Component*
-Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
-
-**Kind**: static class of [<code>Weddell</code>](#Weddell)  
-
-* *[.Component](#Weddell.Component)*
-    * [new WeddellComponent(opts)](#new_Weddell.Component_new)
-    * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
-
-<a name="new_Weddell.Component_new"></a>
-
-#### new WeddellComponent(opts)
-Constructs a Weddell Component. One does not generally instantiate components directly, but rather through the use of markup tags. This information is available primarily for the purposes of plugin authorship.
-
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>opts</td><td><code>object</code></td><td></td>
-    </tr><tr>
-    <td>opts.consts</td><td><code>object</code></td><td><p>Base consts object that will be merged into static store declaration.</p>
-</td>
-    </tr>  </tbody>
-</table>
-
-**Example**  
-```js
-WeddellComponent => class MyComponent extends WeddellComponent {
-
- static get styles() {
-     return `
-         .my-component-class {
-             color: red;
-         }
-     `
- }
- static get markup() {
-     return (locals, h) =>
-         h('div.my-component-class', [
-             h('h1', [
-                 locals.myContent
-             ])
-         ])
- }
-
- static get state() {
-     return {
-         myContent: 'foobar'
-     }
- }
-
-}
-
-// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
-```
-<a name="Weddell.Component+onFirstRender"></a>
-
-#### component.onFirstRender() ⇒ <code>Promise</code>
-Component lifecycle hook method that can be overridden. onFirstRender is called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
-
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
-<a name="Weddell.App"></a>
-
-### *Weddell.App : <code>object</code>*
-An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
-
-**Kind**: static namespace of [<code>Weddell</code>](#Weddell)  
-<a name="Weddell.Store"></a>
-
-### *Weddell.Store : <code>object</code>*
-**Kind**: static namespace of [<code>Weddell</code>](#Weddell)  
-<a name="Weddell.plugin"></a>
-
-### *Weddell.plugin(pluginObj)*
-Extends the base Weddell class with additional functionality, as defined in a plugin object.
-
-**Kind**: static method of [<code>Weddell</code>](#Weddell)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>pluginObj</td><td><code><a href="#WeddellPlugin">WeddellPlugin</a></code></td><td><p>A plugin object to apply to the base Weddell class.</p>
-</td>
-    </tr>  </tbody>
-</table>
-
-<a name="Weddell"></a>
-
-## Weddell : <code>object</code>
-**Kind**: global namespace  
-
-* [Weddell](#Weddell) : <code>object</code>
     * *[.Component](#Weddell.Component)*
         * [new WeddellComponent(opts)](#new_Weddell.Component_new)
         * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
