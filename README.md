@@ -2,7 +2,7 @@
 
 <dl>
 <dt><a href="#Weddell">Weddell</a></dt>
-<dd><p>Weddell class</p>
+<dd><p>Top-level Weddell class serving as an entrypoint to various APIs.</p>
 </dd>
 </dl>
 
@@ -25,7 +25,7 @@
 <a name="Weddell"></a>
 
 ## *Weddell*
-Weddell class
+Top-level Weddell class serving as an entrypoint to various APIs.
 
 **Kind**: global abstract class  
 
@@ -306,6 +306,30 @@ Extends the base Weddell class with additional functionality, as defined in a pl
     </tr>  </tbody>
 </table>
 
+**Example**  
+```js
+const Weddell = require('weddell');
+
+const WeddellWithPluginApplied = Weddell.plugin({
+ id: 'my-plugin',
+ require: ['my-other-plugin'], // will error if app is initialized without 'my-other-plugin' also applied
+ classes: {
+     Component: Component => class extends Component {
+
+         onMount() {
+             console.log(this.myNewComponentMethod());
+         }
+
+         myNewComponentMethod() {
+             this.foo = 'bar';
+         }
+     }
+ },
+
+ // Every component mounted by this app will print 'bar' to logs.
+ 
+})
+```
 <a name="CssString"></a>
 
 ## CssString : <code>String</code>
