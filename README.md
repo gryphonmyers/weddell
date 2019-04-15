@@ -218,7 +218,7 @@ Base Weddell module.
 
 ### weddell~Weddell
 **Kind**: inner class of [<code>weddell</code>](#module_weddell)  
-**Requires**: [<code>weddell/app</code>](#module_weddell/app), [<code>weddell/component</code>](#module_weddell/component), <code>module:weddell/store</code>  
+**Requires**: [<code>weddell/app</code>](#module_weddell/app), [<code>weddell/component</code>](#module_weddell/component)  
 **Properties**
 
 <table>
@@ -232,8 +232,6 @@ Base Weddell module.
     <td>App</td><td><code><a href="#module_weddell/app">weddell/app</a></code></td>
     </tr><tr>
     <td>Component</td><td><code><a href="#module_weddell/component">weddell/component</a></code></td>
-    </tr><tr>
-    <td>Store</td><td><code>module:weddell/store</code></td>
     </tr>  </tbody>
 </table>
 
