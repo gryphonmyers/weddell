@@ -50,8 +50,7 @@ Base Weddell module.
             * *[.Store](#module_weddell--Weddell.Store)*
             * *[.plugin(pluginObj)](#module_weddell--Weddell.plugin)*
         * _inner_
-            * *[~Component](#module_weddell--Weddell..Component)*
-                * [new Component()](#new_module_weddell--Weddell..Component_new)
+            * *[~Component](#module_weddell--Weddell..Component) : <code>object</code>*
             * *[~WeddellPlugin](#module_weddell--Weddell..WeddellPlugin) : <code>object</code>*
 
 <a name="exp_module_weddell--Weddell"></a>
@@ -110,13 +109,10 @@ Extends the base Weddell class with additional functionality, as defined in a pl
 
 <a name="module_weddell--Weddell..Component"></a>
 
-#### *Weddell~Component*
-**Kind**: inner class of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-<a name="new_module_weddell--Weddell..Component_new"></a>
-
-##### new Component()
+#### *Weddell~Component : <code>object</code>*
 Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
 
+**Kind**: inner namespace of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
 **Example**  
 ```js
 WeddellComponent => class MyComponent extends WeddellComponent {
