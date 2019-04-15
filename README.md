@@ -18,6 +18,11 @@
 <dt><a href="#WeddellAppStateSnapshot">WeddellAppStateSnapshot</a> : <code>Object</code></dt>
 <dd><p>A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.</p>
 </dd>
+<dt><a href="#VirtualDomTemplate">VirtualDomTemplate</a> ⇒ <code><a href="#VirtualNode">VirtualNode</a></code></dt>
+<dd></dd>
+<dt><a href="#VirtualNode">VirtualNode</a> : <code>object</code></dt>
+<dd><p>A virtual node object, as implemented by the virtual-dom library.</p>
+</dd>
 <dt><a href="#WeddellPlugin">WeddellPlugin</a> : <code>object</code></dt>
 <dd></dd>
 </dl>
@@ -44,8 +49,20 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
             * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
             * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
+            * [.walkComponents(callback, [filterFunc])](#Weddell.Component+walkComponents)
+            * [.reduceComponents(callback, initialVal, [filterFunc])](#Weddell.Component+reduceComponents) ⇒ <code>\*</code>
+            * [.reduceParents(callback, initialVal)](#Weddell.Component+reduceParents) ⇒ <code>\*</code>
+            * [.collectComponentTree()](#Weddell.Component+collectComponentTree) ⇒ <code>object</code>
             * [.getMountedChildComponents()](#Weddell.Component+getMountedChildComponents) ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+            * [.queryDOM(query)](#Weddell.Component+queryDOM) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
+            * [.queryDOMAll(query)](#Weddell.Component+queryDOMAll) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
+            * [.awaitEvent(eventName)](#Weddell.Component+awaitEvent) ⇒ <code>Promise</code>
+            * [.awaitPatch()](#Weddell.Component+awaitPatch) ⇒ <code>Promise</code>
+            * [.awaitMount()](#Weddell.Component+awaitMount) ⇒ <code>Promise</code>
+            * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
+            * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
         * _static_
+            * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
         * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
@@ -189,8 +206,20 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
         * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
         * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
+        * [.walkComponents(callback, [filterFunc])](#Weddell.Component+walkComponents)
+        * [.reduceComponents(callback, initialVal, [filterFunc])](#Weddell.Component+reduceComponents) ⇒ <code>\*</code>
+        * [.reduceParents(callback, initialVal)](#Weddell.Component+reduceParents) ⇒ <code>\*</code>
+        * [.collectComponentTree()](#Weddell.Component+collectComponentTree) ⇒ <code>object</code>
         * [.getMountedChildComponents()](#Weddell.Component+getMountedChildComponents) ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+        * [.queryDOM(query)](#Weddell.Component+queryDOM) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
+        * [.queryDOMAll(query)](#Weddell.Component+queryDOMAll) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
+        * [.awaitEvent(eventName)](#Weddell.Component+awaitEvent) ⇒ <code>Promise</code>
+        * [.awaitPatch()](#Weddell.Component+awaitPatch) ⇒ <code>Promise</code>
+        * [.awaitMount()](#Weddell.Component+awaitMount) ⇒ <code>Promise</code>
+        * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
+        * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
     * _static_
+        * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
 <a name="new_Weddell.Component_new"></a>
@@ -307,7 +336,7 @@ myComponentInstance.el.click();
 <a name="Weddell.Component+bindEventValue"></a>
 
 #### component.bindEventValue(propName, opts)
-Syntax sugar method very similar to bindEvent, but slightly less verbose for DOM elements with a value (inputs, etc) that you will like to bind to component state.
+Syntax sugar method very similar to bindEvent, but slightly less verbose for DOM elements with a value (inputs, etc) that you would like to bind to component state.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
 <table>
@@ -358,12 +387,186 @@ console.log(myComponentInstance.state.myInputValue);
 
 // Tiny Tigers
 ```
+<a name="Weddell.Component+walkComponents"></a>
+
+#### component.walkComponents(callback, [filterFunc])
+Calls the specified callback for this component and all child components.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Document callback param structure
+
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>callback</td><td><code>function</code></td><td><p>Reducer function to use.</p>
+</td>
+    </tr><tr>
+    <td>[filterFunc]</td><td><code>function</code></td><td><p>Filter function to exclude some components</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+reduceComponents"></a>
+
+#### component.reduceComponents(callback, initialVal, [filterFunc]) ⇒ <code>\*</code>
+Calls the specified reducer for this component and all child components.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Document callback param structure
+
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>callback</td><td><code>function</code></td><td><p>Reducer function to use.</p>
+</td>
+    </tr><tr>
+    <td>initialVal</td><td><code>*</code></td><td><p>The initial value to use for the reduce function.</p>
+</td>
+    </tr><tr>
+    <td>[filterFunc]</td><td><code>function</code></td><td><p>Filter function to exclude some components</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+reduceParents"></a>
+
+#### component.reduceParents(callback, initialVal) ⇒ <code>\*</code>
+Calls the specified reducer recursively for all parent components upward from this one.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>callback</td><td><code>function</code></td><td><p>Reducer function to use.</p>
+</td>
+    </tr><tr>
+    <td>initialVal</td><td><code>*</code></td><td><p>The initial value to use for the reduce function.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+collectComponentTree"></a>
+
+#### component.collectComponentTree() ⇒ <code>object</code>
+Performs a recursive scan upward from this component, to the application's root component.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Document this more thoroughly
+
 <a name="Weddell.Component+getMountedChildComponents"></a>
 
 #### component.getMountedChildComponents() ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
 Queries the component tree for components that are currently mounted (rendered and typically in DOM or soon-to-be in DOM).
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+queryDOM"></a>
+
+#### component.queryDOM(query) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
+Returns a promise that will resolve with the result of querying this component's DOM element using querySelector, once the component has a DOM element to query.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>query</td><td><code>string</code></td><td><p>A DOM query, as expected by Element#querySelector.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+queryDOMAll"></a>
+
+#### component.queryDOMAll(query) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
+Returns a promise that will resolve with the result of querying this component's DOM element using querySelectorAll, once the component has a DOM element to query.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>query</td><td><code>string</code></td><td><p>A DOM query, as expected by Element#querySelectorAll.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+awaitEvent"></a>
+
+#### component.awaitEvent(eventName) ⇒ <code>Promise</code>
+Returns a promise that will resolve once this component fires a specific event.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>eventName</td><td><code>string</code></td><td><p>The name of the event to wait for.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Component+awaitPatch"></a>
+
+#### component.awaitPatch() ⇒ <code>Promise</code>
+Returns a promise that will resolve once this component has finished rendering, and the next application patch has completed (which should mean all state changes have been propagated to the DOM).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+awaitMount"></a>
+
+#### component.awaitMount() ⇒ <code>Promise</code>
+Returns a promise that will resolve once this component mounts (or immediately, if it is already mounted). Note that mounting does not necessarily mean that application changes have been propagated to the DOM.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+awaitDom"></a>
+
+#### component.awaitDom() ⇒ <code>Promise.&lt;Element&gt;</code>
+Returns a promise that will resolve once a DOM element has been created for this component (or immediately, if it already has one). The promise is resolved with this component's DOM element.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+awaitRender"></a>
+
+#### component.awaitRender() ⇒ <code>Promise</code>
+Returns a promise that will resolve once the pending render promise has completed (or immediately, if there is no pending render promise).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component.markup"></a>
+
+#### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+Stub property. Typically, components will override the markup property to provide their application's virtual dom template function.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 <a name="Weddell.Component.isWeddellComponent"></a>
 
 #### Component.isWeddellComponent
@@ -510,6 +713,32 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
     </tr>  </tbody>
 </table>
 
+<a name="VirtualDomTemplate"></a>
+
+## VirtualDomTemplate ⇒ [<code>VirtualNode</code>](#VirtualNode)
+**Kind**: global typedef  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>locals</td><td><code>object</code></td><td></td>
+    </tr><tr>
+    <td>h</td><td><code>function</code></td><td><p>hyperscript implementation</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="VirtualNode"></a>
+
+## VirtualNode : <code>object</code>
+A virtual node object, as implemented by the virtual-dom library.
+
+**Kind**: global typedef  
+**See**: [https://github.com/Matt-Esch/virtual-dom](https://github.com/Matt-Esch/virtual-dom)  
 <a name="WeddellPlugin"></a>
 
 ## WeddellPlugin : <code>object</code>
