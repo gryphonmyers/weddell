@@ -32,15 +32,21 @@ Top-level Weddell class serving as an entrypoint to various APIs.
 * *[Weddell](#Weddell)*
     * *[.App](#Weddell.App)*
         * [new WeddellApp(opts)](#new_Weddell.App_new)
+        * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
         * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
         * [.awaitComponentMount(id)](#Weddell.App+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
         * [.awaitPatch()](#Weddell.App+awaitPatch) ⇒ <code>Promise</code>
         * [.awaitNextPatch()](#Weddell.App+awaitNextPatch) ⇒ <code>Promise</code>
         * [.renderSnapshot()](#Weddell.App+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
-        * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
     * *[.Component](#Weddell.Component)*
         * [new WeddellComponent(opts)](#new_Weddell.Component_new)
-        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+        * _instance_
+            * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+            * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
+            * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
+            * [.getMountedChildComponents()](#Weddell.Component+getMountedChildComponents) ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+        * _static_
+            * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
         * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
     * *[.plugin(pluginObj)](#Weddell.plugin)*
@@ -54,12 +60,12 @@ An app, which owns and manages a root component in the DOM. The Weddell app obje
 
 * *[.App](#Weddell.App)*
     * [new WeddellApp(opts)](#new_Weddell.App_new)
+    * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
     * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
     * [.awaitComponentMount(id)](#Weddell.App+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
     * [.awaitPatch()](#Weddell.App+awaitPatch) ⇒ <code>Promise</code>
     * [.awaitNextPatch()](#Weddell.App+awaitNextPatch) ⇒ <code>Promise</code>
     * [.renderSnapshot()](#Weddell.App+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
-    * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
 
 <a name="new_Weddell.App_new"></a>
 
@@ -105,6 +111,27 @@ var app = new App({
 
 app.init();
 ```
+<a name="Weddell.App+init"></a>
+
+#### app.init(initObj) ⇒ <code>Promise</code>
+Initializes the app, rendering the root component and mounting it into the specified DOM element.
+
+**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Returns**: <code>Promise</code> - Promise that resolves once the app has fully initialized and rendered into the DOM.  
+**Emits**: <code>Window#event:weddellinit Event fired on window object once initialization completes.</code>, <code>WeddellApp#event:createcomponent Event fired on app object whenever its root component or any child components are created.</code>, <code>WeddellApp#event:createrootcomponent Event fired on app object whenever its root component is created.</code>  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>initObj</td><td><code>Object</code></td><td><p>Object with initialization options.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
 <a name="Weddell.App+onPatch"></a>
 
 #### app.onPatch() ⇒ <code>Promise</code>
@@ -146,40 +173,25 @@ Returns a promise that will resolve after current pending patch or the next patc
 <a name="Weddell.App+renderSnapshot"></a>
 
 #### app.renderSnapshot() ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
-Dumps the current application state to a snapshot object.
+Dumps the current application state to a snapshot object, typically used for server-side rendering setups.
 
 **Kind**: instance method of [<code>App</code>](#Weddell.App)  
-<a name="Weddell.App+init"></a>
-
-#### app.init(initObj) ⇒ <code>Promise</code>
-Initializes the app, rendering the root component and mounting it into the specified DOM element.
-
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
-**Returns**: <code>Promise</code> - Promise that resolves once the app has fully initialized and rendered into the DOM.  
-**Emits**: <code>Window#event:weddellinit Event fired on window object once initialization completes.</code>, <code>WeddellApp#event:createcomponent Event fired on app object whenever its root component or any child components are created.</code>, <code>WeddellApp#event:createrootcomponent Event fired on app object whenever its root component is created.</code>  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>initObj</td><td><code>Object</code></td><td><p>Object with initialization options.</p>
-</td>
-    </tr>  </tbody>
-</table>
-
 <a name="Weddell.Component"></a>
 
 ### *Weddell.Component*
-Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+Class representing a Weddell component. A component encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
 
 **Kind**: static class of [<code>Weddell</code>](#Weddell)  
 
 * *[.Component](#Weddell.Component)*
     * [new WeddellComponent(opts)](#new_Weddell.Component_new)
-    * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+    * _instance_
+        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code>
+        * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
+        * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
+        * [.getMountedChildComponents()](#Weddell.Component+getMountedChildComponents) ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+    * _static_
+        * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
 <a name="new_Weddell.Component_new"></a>
 
@@ -237,6 +249,130 @@ WeddellComponent => class MyComponent extends WeddellComponent {
 Component lifecycle hook method that can be overridden. onFirstRender is called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+bindEvent"></a>
+
+#### component.bindEvent(funcText, opts)
+Binds a function body string to the scope of this component. This string will then typically be used in a native DOM event handler attribute.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Default</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>funcText</td><td><code>String</code></td><td></td><td></td>
+    </tr><tr>
+    <td>opts</td><td><code>object</code></td><td></td><td></td>
+    </tr><tr>
+    <td>[opts.preventDefault]</td><td><code>object</code></td><td><code>false</code></td><td><p>If true, resulting event handler will invoke event.preventDefault before executing function code.</p>
+</td>
+    </tr><tr>
+    <td>[opts.stopPropagation]</td><td><code>object</code></td><td><code>false</code></td><td><p>If true, resulting event handler will invoke event.stopPropagation before executing function code.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+**Example** *(Not a standard use case)*  
+```js
+
+component.el.onclick = component.bindEvent('console.log(this.id)');
+component.el.click();
+console.log(component.id)
+
+// myId
+// myId
+```
+**Example** *(This function is also proxied onto component state as &#x27;$bind&#x27;)*  
+```js
+
+class MyComponentClass {
+ static get markup(locals, h) {
+     return h('div', {
+         attributes: {
+             onclick: locals.$bind('console.log(this.id)')
+         }
+     });
+ }
+}
+
+//Once a component instance has been mounted, assuming we have an reference to it...
+
+myComponentInstance.el.click();
+
+// myId
+```
+<a name="Weddell.Component+bindEventValue"></a>
+
+#### component.bindEventValue(propName, opts)
+Syntax sugar method very similar to bindEvent, but slightly less verbose for DOM elements with a value (inputs, etc) that you will like to bind to component state.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>propName</td><td><code>String</code></td><td><p>Property name in component state to bind to.</p>
+</td>
+    </tr><tr>
+    <td>opts</td><td><code>object</code></td><td><p>See bindEvent opts.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+**Example** *(As with bindEvent, bindEventValue is also proxied into component state object as &#x27;$bindValue&#x27;.)*  
+```js
+
+class MyComponentClass {
+
+ static get state() {
+     return {
+         myInputValue: null
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('input', {
+         attributes: {
+             onchange: locals.$bindValue('myInputValue')
+         }
+     });
+ }
+}
+
+//Once a component instance has been mounted, assuming we have an reference to it...
+
+console.log(myComponentInstance.state.myInputValue);
+
+// null
+
+// The user enters the text 'Tiny Tigers' into the input field in browser...
+
+console.log(myComponentInstance.state.myInputValue);
+
+// Tiny Tigers
+```
+<a name="Weddell.Component+getMountedChildComponents"></a>
+
+#### component.getMountedChildComponents() ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+Queries the component tree for components that are currently mounted (rendered and typically in DOM or soon-to-be in DOM).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component.isWeddellComponent"></a>
+
+#### Component.isWeddellComponent
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+console.log(MyWeddellComponentClass.isWeddellComponent)
+// true
+```
 <a name="Weddell.Store"></a>
 
 ### *Weddell.Store*
