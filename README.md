@@ -3,6 +3,9 @@
 <dl>
 <dt><a href="#WeddellApp">WeddellApp</a></dt>
 <dd></dd>
+<dt><a href="#WeddellComponent">WeddellComponent</a></dt>
+<dd><p>Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.</p>
+</dd>
 <dt><a href="#WeddellStore">WeddellStore</a></dt>
 <dd></dd>
 <dt><a href="#Weddell">Weddell</a></dt>
@@ -41,7 +44,7 @@
 * [WeddellApp](#WeddellApp)
     * [new WeddellApp(opts)](#new_WeddellApp_new)
     * [.onPatch()](#WeddellApp+onPatch) ⇒ <code>Promise</code>
-    * [.awaitComponentMount(id)](#WeddellApp+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+    * [.awaitComponentMount(id)](#WeddellApp+awaitComponentMount) ⇒ [<code>Promise.&lt;WeddellComponent&gt;</code>](#WeddellComponent)
     * [.awaitPatch()](#WeddellApp+awaitPatch) ⇒ <code>Promise</code>
     * [.awaitNextPatch()](#WeddellApp+awaitNextPatch) ⇒ <code>Promise</code>
     * [.renderSnapshot()](#WeddellApp+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
@@ -77,6 +80,23 @@
     </tr>  </tbody>
 </table>
 
+**Example**  
+```js
+const App = require('weddell').classes.App;
+
+var app = new App({
+    routes,
+    el: '#app',
+    Component: class MyWeddellComponent {},
+    styles: `
+      .my-weddell-component {
+        color: red;
+      }
+    `
+});
+
+app.init();
+```
 <a name="WeddellApp+onPatch"></a>
 
 ### weddellApp.onPatch() ⇒ <code>Promise</code>
@@ -86,7 +106,7 @@ Hook method that may be overridden and will be executed at the end of every DOM 
 **Returns**: <code>Promise</code> - Subsequent patches may be deferred by returning a Promise in this method.  
 <a name="WeddellApp+awaitComponentMount"></a>
 
-### weddellApp.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+### weddellApp.awaitComponentMount(id) ⇒ [<code>Promise.&lt;WeddellComponent&gt;</code>](#WeddellComponent)
 Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
 
 **Kind**: instance method of [<code>WeddellApp</code>](#WeddellApp)  
@@ -156,7 +176,7 @@ Initializes the app, rendering the root component and mounting it into the speci
   </thead>
   <tbody>
 <tr>
-    <td>component</td><td><code>WeddellComponent</code></td>
+    <td>component</td><td><code><a href="#WeddellComponent">WeddellComponent</a></code></td>
     </tr>  </tbody>
 </table>
 
@@ -174,7 +194,7 @@ Initializes the app, rendering the root component and mounting it into the speci
   </thead>
   <tbody>
 <tr>
-    <td>component</td><td><code>WeddellComponent</code></td>
+    <td>component</td><td><code><a href="#WeddellComponent">WeddellComponent</a></code></td>
     </tr>  </tbody>
 </table>
 
@@ -182,6 +202,73 @@ Initializes the app, rendering the root component and mounting it into the speci
 
 ### "patch"
 **Kind**: event emitted by [<code>WeddellApp</code>](#WeddellApp)  
+<a name="WeddellComponent"></a>
+
+## WeddellComponent
+Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+
+**Kind**: global class  
+
+* [WeddellComponent](#WeddellComponent)
+    * [new WeddellComponent(opts)](#new_WeddellComponent_new)
+    * [.onFirstRender()](#WeddellComponent+onFirstRender) ⇒ <code>Promise</code>
+
+<a name="new_WeddellComponent_new"></a>
+
+### new WeddellComponent(opts)
+Constructs a Weddell Component. One does not generally instantiate components directly, but rather through the use of markup tags. This information is available primarily for the purposes of plugin authorship.
+
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>opts</td><td><code>object</code></td><td></td>
+    </tr><tr>
+    <td>opts.consts</td><td><code>object</code></td><td><p>Base consts object that will be merged into static store declaration.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+**Example**  
+```js
+WeddellComponent => class MyComponent extends WeddellComponent {
+
+ static get styles() {
+     return `
+         .my-component-class {
+             color: red;
+         }
+     `
+ }
+ static get markup() {
+     return (locals, h) =>
+         h('div.my-component-class', [
+             h('h1', [
+                 locals.myContent
+             ])
+         ])
+ }
+
+ static get state() {
+     return {
+         myContent: 'foobar'
+     }
+ }
+
+}
+
+// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
+```
+<a name="WeddellComponent+onFirstRender"></a>
+
+### weddellComponent.onFirstRender() ⇒ <code>Promise</code>
+Component lifecycle hook method that can be overridden. onFirstRender is called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>WeddellComponent</code>](#WeddellComponent)  
 <a name="WeddellStore"></a>
 
 ## WeddellStore
@@ -249,23 +336,6 @@ Weddell class
 An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
 
 **Kind**: static namespace of [<code>Weddell</code>](#Weddell)  
-**Example**  
-```js
-const App = require('weddell').classes.App;
-
-var app = new App({
-    routes,
-    el: '#app',
-    Component: class MyWeddellComponent {},
-    styles: `
-      .my-weddell-component {
-        color: red;
-      }
-    `
-});
-
-app.init();
-```
 <a name="Weddell.Component"></a>
 
 ### *Weddell.Component : <code>object</code>*
@@ -310,23 +380,6 @@ Extends the base Weddell class with additional functionality, as defined in a pl
 An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
 
 **Kind**: static namespace of [<code>Weddell</code>](#Weddell)  
-**Example**  
-```js
-const App = require('weddell').classes.App;
-
-var app = new App({
-    routes,
-    el: '#app',
-    Component: class MyWeddellComponent {},
-    styles: `
-      .my-weddell-component {
-        color: red;
-      }
-    `
-});
-
-app.init();
-```
 <a name="Weddell.Component"></a>
 
 ### *Weddell.Component : <code>object</code>*
