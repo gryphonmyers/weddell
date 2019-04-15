@@ -47,11 +47,11 @@ Base Weddell module.
         * _static_
             * *[.App](#module_weddell--Weddell.App)*
                 * [new App()](#new_module_weddell--Weddell.App_new)
-            * *[.Component](#module_weddell--Weddell.Component)*
-                * [new Component()](#new_module_weddell--Weddell.Component_new)
             * *[.Store](#module_weddell--Weddell.Store)*
             * *[.plugin(pluginObj)](#module_weddell--Weddell.plugin)*
         * _inner_
+            * *[~Component](#module_weddell--Weddell..Component)*
+                * [new Component()](#new_module_weddell--Weddell..Component_new)
             * *[~WeddellPlugin](#module_weddell--Weddell..WeddellPlugin) : <code>object</code>*
 
 <a name="exp_module_weddell--Weddell"></a>
@@ -85,11 +85,34 @@ var app = new App({
 
 app.init();
 ```
-<a name="module_weddell--Weddell.Component"></a>
+<a name="module_weddell--Weddell.Store"></a>
 
-#### *Weddell.Component*
+#### *Weddell.Store*
 **Kind**: static class of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-<a name="new_module_weddell--Weddell.Component_new"></a>
+<a name="module_weddell--Weddell.plugin"></a>
+
+#### *Weddell.plugin(pluginObj)*
+Extends the base Weddell class with additional functionality, as defined in a plugin object.
+
+**Kind**: static method of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>pluginObj</td><td><code>WeddellPlugin</code></td><td><p>A plugin object to apply to the base Weddell class.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="module_weddell--Weddell..Component"></a>
+
+#### *Weddell~Component*
+**Kind**: inner class of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
+<a name="new_module_weddell--Weddell..Component_new"></a>
 
 ##### new Component()
 Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
@@ -124,29 +147,6 @@ WeddellComponent => class MyComponent extends WeddellComponent {
 
 // Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
 ```
-<a name="module_weddell--Weddell.Store"></a>
-
-#### *Weddell.Store*
-**Kind**: static class of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-<a name="module_weddell--Weddell.plugin"></a>
-
-#### *Weddell.plugin(pluginObj)*
-Extends the base Weddell class with additional functionality, as defined in a plugin object.
-
-**Kind**: static method of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>pluginObj</td><td><code>WeddellPlugin</code></td><td><p>A plugin object to apply to the base Weddell class.</p>
-</td>
-    </tr>  </tbody>
-</table>
-
 <a name="module_weddell--Weddell..WeddellPlugin"></a>
 
 #### *Weddell~WeddellPlugin : <code>object</code>*
