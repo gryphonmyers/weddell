@@ -4,8 +4,7 @@
 <dt><a href="#WeddellApp">WeddellApp</a></dt>
 <dd></dd>
 <dt><a href="#WeddellComponent">WeddellComponent</a></dt>
-<dd><p>Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.</p>
-</dd>
+<dd></dd>
 <dt><a href="#WeddellStore">WeddellStore</a></dt>
 <dd></dd>
 <dt><a href="#Weddell">Weddell</a></dt>
@@ -205,8 +204,6 @@ Initializes the app, rendering the root component and mounting it into the speci
 <a name="WeddellComponent"></a>
 
 ## WeddellComponent
-Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
-
 **Kind**: global class  
 
 * [WeddellComponent](#WeddellComponent)
@@ -233,36 +230,6 @@ Constructs a Weddell Component. One does not generally instantiate components di
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-WeddellComponent => class MyComponent extends WeddellComponent {
-
- static get styles() {
-     return `
-         .my-component-class {
-             color: red;
-         }
-     `
- }
- static get markup() {
-     return (locals, h) =>
-         h('div.my-component-class', [
-             h('h1', [
-                 locals.myContent
-             ])
-         ])
- }
-
- static get state() {
-     return {
-         myContent: 'foobar'
-     }
- }
-
-}
-
-// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
-```
 <a name="WeddellComponent+onFirstRender"></a>
 
 ### weddellComponent.onFirstRender() ⇒ <code>Promise</code>
@@ -339,7 +306,39 @@ An app, which owns and manages a root component in the DOM. The Weddell app obje
 <a name="Weddell.Component"></a>
 
 ### *Weddell.Component : <code>object</code>*
+Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+
 **Kind**: static namespace of [<code>Weddell</code>](#Weddell)  
+**Example**  
+```js
+WeddellComponent => class MyComponent extends WeddellComponent {
+
+ static get styles() {
+     return `
+         .my-component-class {
+             color: red;
+         }
+     `
+ }
+ static get markup() {
+     return (locals, h) =>
+         h('div.my-component-class', [
+             h('h1', [
+                 locals.myContent
+             ])
+         ])
+ }
+
+ static get state() {
+     return {
+         myContent: 'foobar'
+     }
+ }
+
+}
+
+// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
+```
 <a name="Weddell.Store"></a>
 
 ### *Weddell.Store : <code>object</code>*
@@ -383,7 +382,39 @@ An app, which owns and manages a root component in the DOM. The Weddell app obje
 <a name="Weddell.Component"></a>
 
 ### *Weddell.Component : <code>object</code>*
+Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+
 **Kind**: static namespace of [<code>Weddell</code>](#Weddell)  
+**Example**  
+```js
+WeddellComponent => class MyComponent extends WeddellComponent {
+
+ static get styles() {
+     return `
+         .my-component-class {
+             color: red;
+         }
+     `
+ }
+ static get markup() {
+     return (locals, h) =>
+         h('div.my-component-class', [
+             h('h1', [
+                 locals.myContent
+             ])
+         ])
+ }
+
+ static get state() {
+     return {
+         myContent: 'foobar'
+     }
+ }
+
+}
+
+// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
+```
 <a name="Weddell.Store"></a>
 
 ### *Weddell.Store : <code>object</code>*
