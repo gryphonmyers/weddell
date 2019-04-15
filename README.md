@@ -32,6 +32,12 @@
 <a name="module_weddell/component"></a>
 
 ## weddell/component
+<a name="exp_module_weddell/component--WeddellComponent"></a>
+
+### WeddellComponent ⏏
+Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+
+**Kind**: Exported class  
 <a name="module_weddell/store"></a>
 
 ## weddell/store
@@ -48,9 +54,9 @@ Base Weddell module.
             * *[.App](#module_weddell--Weddell.App)*
                 * [new App()](#new_module_weddell--Weddell.App_new)
             * *[.Store](#module_weddell--Weddell.Store)*
+            * *[.Component](#module_weddell--Weddell.Component) : <code>object</code>*
             * *[.plugin(pluginObj)](#module_weddell--Weddell.plugin)*
         * _inner_
-            * *[~Component](#module_weddell--Weddell..Component) : <code>object</code>*
             * *[~WeddellPlugin](#module_weddell--Weddell..WeddellPlugin) : <code>object</code>*
 
 <a name="exp_module_weddell--Weddell"></a>
@@ -88,6 +94,10 @@ app.init();
 
 #### *Weddell.Store*
 **Kind**: static class of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
+<a name="module_weddell--Weddell.Component"></a>
+
+#### *Weddell.Component : <code>object</code>*
+**Kind**: static namespace of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
 <a name="module_weddell--Weddell.plugin"></a>
 
 #### *Weddell.plugin(pluginObj)*
@@ -107,42 +117,6 @@ Extends the base Weddell class with additional functionality, as defined in a pl
     </tr>  </tbody>
 </table>
 
-<a name="module_weddell--Weddell..Component"></a>
-
-#### *Weddell~Component : <code>object</code>*
-Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
-
-**Kind**: inner namespace of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-**Example**  
-```js
-WeddellComponent => class MyComponent extends WeddellComponent {
-
- static get styles() {
-     return `
-         .my-component-class {
-             color: red;
-         }
-     `
- }
- static get markup() {
-     return (locals, h) =>
-         h('div.my-component-class', [
-             h('h1', [
-                 locals.myContent
-             ])
-         ])
- }
-
- static get state() {
-     return {
-         myContent: 'foobar'
-     }
- }
-
-}
-
-// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
-```
 <a name="module_weddell--Weddell..WeddellPlugin"></a>
 
 #### *Weddell~WeddellPlugin : <code>object</code>*
