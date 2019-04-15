@@ -45,15 +45,34 @@ Base Weddell module.
         * _static_
             * [.plugin(pluginObj)](#module_weddell--Weddell.plugin)
         * _inner_
-            * [~app](#module_weddell--Weddell..app)
-            * [~component](#module_weddell--Weddell..component)
-            * [~store](#module_weddell--Weddell..store)
+            * [~App](#module_weddell--Weddell..App)
+            * [~Component](#module_weddell--Weddell..Component)
+            * [~Store](#module_weddell--Weddell..Store)
             * [~WeddellPlugin](#module_weddell--Weddell..WeddellPlugin) : <code>object</code>
 
 <a name="exp_module_weddell--Weddell"></a>
 
 ### Weddell ⏏
 **Kind**: Exported class  
+**Requires**: [<code>weddell/app</code>](#module_weddell/app), [<code>weddell/component</code>](#module_weddell/component), <code>module:weddell/store</code>  
+**Properties**
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>App</td><td><code><a href="#module_weddell/app">weddell/app</a></code></td>
+    </tr><tr>
+    <td>Component</td><td><code><a href="#module_weddell/component">weddell/component</a></code></td>
+    </tr><tr>
+    <td>Store</td><td><code>module:weddell/store</code></td>
+    </tr>  </tbody>
+</table>
+
 <a name="module_weddell--Weddell.plugin"></a>
 
 #### Weddell.plugin(pluginObj)
@@ -73,21 +92,18 @@ Extends the base Weddell class with additional functionality, as defined in a pl
     </tr>  </tbody>
 </table>
 
-<a name="module_weddell--Weddell..app"></a>
+<a name="module_weddell--Weddell..App"></a>
 
-#### Weddell~app
+#### Weddell~App
 **Kind**: inner property of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-**Requires**: [<code>weddell/app</code>](#module_weddell/app)  
-<a name="module_weddell--Weddell..component"></a>
+<a name="module_weddell--Weddell..Component"></a>
 
-#### Weddell~component
+#### Weddell~Component
 **Kind**: inner property of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-**Requires**: [<code>weddell/component</code>](#module_weddell/component)  
-<a name="module_weddell--Weddell..store"></a>
+<a name="module_weddell--Weddell..Store"></a>
 
-#### Weddell~store
+#### Weddell~Store
 **Kind**: inner property of [<code>Weddell</code>](#exp_module_weddell--Weddell)  
-**Requires**: <code>module:weddell/store</code>  
 <a name="module_weddell--Weddell..WeddellPlugin"></a>
 
 #### Weddell~WeddellPlugin : <code>object</code>
