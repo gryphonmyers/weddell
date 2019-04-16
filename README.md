@@ -84,8 +84,8 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
             * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
         * _static_
-            * [.state](#Weddell.Component.state) : <code>object</code>
             * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+            * [.state](#Weddell.Component.state) : <code>object</code>
             * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
@@ -257,8 +257,8 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
         * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
     * _static_
-        * [.state](#Weddell.Component.state) : <code>object</code>
         * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+        * [.state](#Weddell.Component.state) : <code>object</code>
         * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
@@ -735,18 +735,6 @@ Returns a promise that will resolve once a DOM element has been created for this
 Returns a promise that will resolve once the pending render promise has completed (or immediately, if there is no pending render promise).
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
-<a name="Weddell.Component.state"></a>
-
-#### Component.state : <code>object</code>
-Stub property. Typically, components override this property, returning the keys and default state values. When a component is initialized, it will use this object when creating its own local transient state object. Once initialized, subsequent changes to any key in the WeddellComponent#state object will trigger component rerenders -> DOM patches.
-
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
-**Todo**
-
-- Example showing merging values with super
-- Example showing computed functions
-- Example demonstrating serializability constraints.
-
 <a name="Weddell.Component.markup"></a>
 
 #### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
@@ -768,8 +756,8 @@ Component => class MyComponent extends Component {
  }
 }
 
-// The template function is passed both component state and the applications hyperscript implementation 
-// ('h'). See the virtual-dom docs for more info about this syntax.
+// The template function is passed both component state and the applications hyperscript 
+// implementation ('h'). See the virtual-dom docs for more info about this syntax.
 ```
 **Example** *(Hscript can be a bit clunky to work with when your display logic gets more complex. Development tools like pug-vdom can port other, perhaps more succinct syntaxes to return virtual-dom nodes.)*  
 ```js
@@ -785,8 +773,95 @@ Component => class MyComponent extends Component {
 // .my-component
 //   div(onclick="console.log('hello')") Click Me
 
-// This example would require the use of the pug-vdom dev tool. weddell-dev-tools includes pug support out of the box. Or
-// you can write your own require hook to adapt your favorite template syntax to return virtual dom nodes.
+// This example would require the use of the pug-vdom dev tool. weddell-dev-tools includes pug support 
+// out of the box. Or you can write your own require hook to adapt your favorite template syntax to 
+// return virtual dom nodes.
+```
+<a name="Weddell.Component.state"></a>
+
+#### Component.state : <code>object</code>
+Stub property. Typically, components override this property, returning the keys and default state values. When a component is initialized, it will use this object when creating its own local transient state object. Once initialized, subsequent changes to any key in the WeddellComponent#state object will trigger component rerenders -> DOM patches.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+Component => class MyComponent extends Component {
+ static get state() {
+     return {
+         myContent: 'Foobar'
+     }
+ }
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', [locals.myContent])
+ }
+}
+
+// Will render '<div class="my-component">Foobar</div>' to DOM
+```
+**Example** *(Values saved to state must be serializable (strings, numbers, plain objects, arrays, bools). Trying to save a complete data type to state will cause an error to be thrown. If you really need to save non-serializable objects to state, look at the Component.serializers and Component.deserializers properties.)*  
+```js
+
+Component => class MyComponent extends Component {
+ static get state() {
+     return {
+         myContent: new Foobar() //Don't do this!
+     }
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', [locals.myContent])
+ }
+}
+
+// Will throw an error. Instances of the Foobar class are not plain objects, and thus are not serializable.
+```
+**Example** *(There is, however, an exception allowing serializable data in state: state values declared as functions will be interpreted as &#x27;computed values&#x27;. These functions are executed in the context of the component state object, and will be recomputed when referenced state values change. Note: functions may only be specified in the initial declaration - you can NOT set a state value to a new function at runtime (that will result in an error being thrown).)*  
+```js
+
+Component => class MyComponent extends Component {
+ static get state() {
+     return {
+         numbers: [1, 2],
+         numbersDoubled: function(){
+             return this.numbers.map(num => num * 2);
+         }
+     }
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', { attributes: { onclick: locals.$bind('this.state.numbers = this.state.numbers.map(num => num + 1)') }}, locals.numbersDoubled)
+ }
+}
+
+// '<div class="my-component">2 4</div>'
+// * User clicks *
+// '<div class="my-component">4 6</div>'
+```
+**Example** *(When inheriting from a parent component class, the ES6 class spec&#x27;s super keyword makes it easy to merge with parent state.)*  
+```js
+
+Component => class MyComponent extends MyParentComponentMixin(Component) {
+ static get state() {
+     return Object.assign({}, super.state, {
+         numbersDoubledMinus1: function(){
+             return this.numbersDoubled.map(num => num - 1);
+         }
+     });
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', locals.numbersDoubledMinus1)
+ }
+}
+
+// Assuming 'MyParentComponentMixin' is the mixin from the previous example...
+// '<div class="my-component">1 3</div>'
+// * User clicks *
+// '<div class="my-component">3 5</div>'
 ```
 <a name="Weddell.Component.styles"></a>
 
