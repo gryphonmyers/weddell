@@ -18,6 +18,11 @@
 <dt><a href="#WeddellAppStateSnapshot">WeddellAppStateSnapshot</a> : <code>Object</code></dt>
 <dd><p>A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.</p>
 </dd>
+<dt><a href="#StoreWatchArgs">StoreWatchArgs</a> : <code>Array</code></dt>
+<dd><p>Arguments as passed into Store#watch (in the most basic use case, this will be an array with two items: a key and a callback function).</p>
+</dd>
+<dt><a href="#StateTransform">StateTransform</a> ⇒ <code>*</code></dt>
+<dd></dd>
 <dt><a href="#WeddellComponentMixin">WeddellComponentMixin</a> ⇒ <code>function</code></dt>
 <dd></dd>
 <dt><a href="#CssTemplate">CssTemplate</a> ⇒ <code><a href="#CssString">CssString</a></code></dt>
@@ -33,6 +38,12 @@
 <dt><a href="#VirtualNode">VirtualNode</a> : <code>object</code></dt>
 <dd><p>A virtual node object, as implemented by the virtual-dom library.</p>
 </dd>
+<dt><a href="#StoreWatchCallback">StoreWatchCallback</a> : <code>function</code></dt>
+<dd></dd>
+<dt><a href="#StoreWatchValidator">StoreWatchValidator</a> ⇒ <code>boolean</code></dt>
+<dd></dd>
+<dt><a href="#RemoveEventListenerCallback">RemoveEventListenerCallback</a> : <code>function</code></dt>
+<dd></dd>
 <dt><a href="#WeddellPlugin">WeddellPlugin</a> : <code>object</code></dt>
 <dd></dd>
 </dl>
@@ -91,9 +102,13 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
             * [.propertySets](#Weddell.Component.propertySets) : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
+            * [.deserializers](#Weddell.Component.deserializers) : <code>Object.&lt;string, StateTransform&gt;</code>
+            * [.serializers](#Weddell.Component.serializers) : <code>Object.&lt;string, StateTransform&gt;</code>
+            * [.watchers](#Weddell.Component.watchers) : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
         * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
+        * [.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce])](#Weddell.Store+watch) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
     * *[.plugin(pluginObj)](#Weddell.plugin)*
 
 <a name="Weddell.App"></a>
@@ -266,6 +281,9 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
         * [.propertySets](#Weddell.Component.propertySets) : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
+        * [.deserializers](#Weddell.Component.deserializers) : <code>Object.&lt;string, StateTransform&gt;</code>
+        * [.serializers](#Weddell.Component.serializers) : <code>Object.&lt;string, StateTransform&gt;</code>
+        * [.watchers](#Weddell.Component.watchers) : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
 <a name="new_Weddell.Component_new"></a>
@@ -1143,7 +1161,7 @@ Stub property. Typically, components with constant helper values will override t
 <a name="Weddell.Component.propertySets"></a>
 
 #### Component.propertySets : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
-Stub property. Typically, components with property sets will override this property. Property sets group other state keys together into objects, making them more portable for passing down to components in a way that avoids unnecessarily duplication.
+Stub property. Typically, components with property sets will override this property. Property sets group other state keys together into objects, making them more portable for passing down to components in a way that avoids unnecessary duplication.
 
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 **Example**  
@@ -1265,6 +1283,169 @@ Component => class MyComponent extends Component {
 
 // Will render as '<div class="foo"><div class="my-child-component">foo bar</div></div>'
 ```
+<a name="Weddell.Component.deserializers"></a>
+
+#### Component.deserializers : <code>Object.&lt;string, StateTransform&gt;</code>
+Stub property. Typically, components needing non-serializable data in state will declare functions here for transforming specific keys from serialized data to complex data types at runtime.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+class MyThing {
+ constructor(num) {
+     this.num = num;
+ }
+ repeat3() {
+     return `${this.num}${this.num}${this.num}`
+ }
+}
+
+Component => class MyComponent extends Component {
+
+ static get deserializers() {
+     return {
+         myThing: function(key, value) {
+             return new MyThing(value);
+         }
+     }
+ }
+
+ static get state() {
+     return {
+         myThing: 4
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('.foo', [this.myThing.repeat3()]);
+ }
+
+// Will render as '<div class="foo">444</div>'
+```
+<a name="Weddell.Component.serializers"></a>
+
+#### Component.serializers : <code>Object.&lt;string, StateTransform&gt;</code>
+Stub property. A companion property to deserializers - serialized values will be used when a value set directly to state is a complex data type, and will need to be serialized before committing it to state.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+class MyThing {
+ constructor(num) {
+     this.num = num;
+ }
+ repeat3() {
+     return `${this.num}${this.num}${this.num}`
+ }
+}
+
+Component => class MyComponent extends Component {
+
+ static get deserializers() {
+     return {
+         myThing: function(key, value) {
+             return new MyThing(value);
+         }
+     }
+ }
+ static get serializers() {
+     return {
+         myThing: function(key, value) {
+             return value.num
+         }
+     }
+ }
+
+ static get state() {
+     return {
+         myThing: new MyThing(4)
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('.foo', [this.myThing.repeat3()]);
+ }
+
+// Will render as '<div class="foo">444</div>'. Note that with the serializer defined, the complex
+// MyThing data type may be set directly to state.
+```
+<a name="Weddell.Component.watchers"></a>
+
+#### Component.watchers : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
+Stub property. Watch functions may be defined here, allowing for complex actions to be kicked off when component state changes. Watchers will be executed in state scope. Tip: if your watch function is really only setting other component state keys, you may be able to use a computed state propery instead (see example 3 [here](https://github.com/gryphonmyers/weddell/tree/ft-new-render#componentstate--object)).
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+Component => class MyComponent extends Component {
+
+ static get watchers() {
+     return [
+         ['watchedUrl', function (watchedUrl) {
+             if (watchedUrl) {
+                 fetch(watchedUrl)
+                     .then(res => res.json())
+                     .then(data => this.fetchedData = data)
+             }
+         }]
+     ]
+ }
+
+ static get state() {
+     return {
+         fetchedData: null,
+         watchedUrl: null
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('.foo', {
+         attributes: {
+             onclick: locals.$bind('this.state.watchedUrl = "https://mydataendpoint"')
+         }
+     }, locals.fetchedData ? 'Got data!' : 'No data yet.');
+ }
+
+// Will render as '<div class="foo">No data yet.</div>' initially.
+// * User click *
+// After the resource fetches, markup will rerender as 
+// '<div class="foo">Got data!</div>'
+```
+**Example** *(For finer-grained control over when the watcher fires, supply a validator function as well.)*  
+```js
+
+Component => class MyComponent extends Component {
+
+ static get watchers() {
+     return [
+         ['watchedUrl', function (watchedUrl) {
+             fetch(watchedUrl)
+                .then(res => res.json())
+                .then(data => this.fetchedData = data)
+         }, (watchedUrl) => watchedUrl && watchedUrl.match(/https:\/\//)]
+     ]
+ }
+
+ static get state() {
+     return {
+         fetchedData: null,
+         watchedUrl: null
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('.foo', {
+         attributes: {
+             onclick: locals.$bind('this.state.watchedUrl = Math.random() ? "hey mom" : "https://mydataendpoint"')
+         }
+     }, locals.fetchedData ? 'Got data!' : 'No data yet.');
+ }
+
+// Will render as '<div class="foo">No data yet.</div>' initially.
+// * User click *
+// Depending on result of die roll, it may or may not fetch data, then render as:
+// '<div class="foo">Got data!</div>' But the fetch call won't error!
+```
 <a name="Weddell.Component.isWeddellComponent"></a>
 
 #### Component.isWeddellComponent
@@ -1280,6 +1461,11 @@ console.log(MyWeddellComponentClass.isWeddellComponent)
 Class representing a store of key/value pairs. The store class is primarily used to model application state.
 
 **Kind**: static class of [<code>Weddell</code>](#Weddell)  
+
+* *[.Store](#Weddell.Store)*
+    * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
+    * [.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce])](#Weddell.Store+watch) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
+
 <a name="new_Weddell.Store_new"></a>
 
 #### new WeddellStore(data, opts)
@@ -1321,6 +1507,37 @@ Constructs a store object. One does not generally require or implement the store
     <td>[opts.initialState]</td><td><code>object</code></td><td></td><td></td>
     </tr><tr>
     <td>[opts.inputMappings]</td><td><code>object</code></td><td></td><td></td>
+    </tr>  </tbody>
+</table>
+
+<a name="Weddell.Store+watch"></a>
+
+#### store.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce]) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
+Watches a key or keys in the store, triggering a callback when values change.
+
+**Kind**: instance method of [<code>Store</code>](#Weddell.Store)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Default</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>key</td><td><code>Array.&lt;String&gt;</code> | <code>String</code></td><td></td><td><p>Key(s) to watch. When multiple keys are supplied, the watch event will trigger when any of their values change.</p>
+</td>
+    </tr><tr>
+    <td>func</td><td><code><a href="#StoreWatchCallback">StoreWatchCallback</a></code></td><td></td><td><p>Will be called whenever any value assigned to one of watched keys changes.</p>
+</td>
+    </tr><tr>
+    <td>[validator]</td><td><code><a href="#StoreWatchValidator">StoreWatchValidator</a></code> | <code>boolean</code></td><td><code>true</code></td><td><p>Validates the changed value(s). If a boolean is supplied instead of a callback, &#39;true&#39; is interpreted as meaning all watched keys should be defined, while &#39;false&#39; means no validation should be applied.</p>
+</td>
+    </tr><tr>
+    <td>[invokeImmediately]</td><td><code>boolean</code></td><td><code>false</code></td><td><p>Whether the callback should called immediately, or wait for the next change event.</p>
+</td>
+    </tr><tr>
+    <td>[onlyFireOnce]</td><td><code>boolean</code></td><td><code>false</code></td><td><p>Whether the callback should persist, or call once then expire.</p>
+</td>
     </tr>  </tbody>
 </table>
 
@@ -1408,6 +1625,30 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
     </tr><tr>
     <td>appHtml</td><td><code><a href="#HtmlString">HtmlString</a></code></td><td><p>All HTML currently rendered into application mount point.</p>
 </td>
+    </tr>  </tbody>
+</table>
+
+<a name="StoreWatchArgs"></a>
+
+## StoreWatchArgs : <code>Array</code>
+Arguments as passed into Store#watch (in the most basic use case, this will be an array with two items: a key and a callback function).
+
+**Kind**: global typedef  
+<a name="StateTransform"></a>
+
+## StateTransform ⇒ <code>\*</code>
+**Kind**: global typedef  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>key</td><td><code>String</code></td>
+    </tr><tr>
+    <td>value</td><td><code>*</code></td>
     </tr>  </tbody>
 </table>
 
@@ -1532,6 +1773,45 @@ A virtual node object, as implemented by the virtual-dom library.
 
 **Kind**: global typedef  
 **See**: [https://github.com/Matt-Esch/virtual-dom](https://github.com/Matt-Esch/virtual-dom)  
+<a name="StoreWatchCallback"></a>
+
+## StoreWatchCallback : <code>function</code>
+**Kind**: global typedef  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>...value</td><td><code>*</code></td><td><p>A value from a watched key.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="StoreWatchValidator"></a>
+
+## StoreWatchValidator ⇒ <code>boolean</code>
+**Kind**: global typedef  
+**Returns**: <code>boolean</code> - Returning true indicates that validation was successful and the watch callback should be executed.  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>value</td><td><code>Array</code> | <code>*</code></td><td><p>If a single key was watched, a single value will be passed in. If multiple keys were watched, all array with all watched values will be passed into the first argument.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="RemoveEventListenerCallback"></a>
+
+## RemoveEventListenerCallback : <code>function</code>
+**Kind**: global typedef  
 <a name="WeddellPlugin"></a>
 
 ## WeddellPlugin : <code>object</code>
