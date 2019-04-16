@@ -7,13 +7,6 @@ const VDOMDiff = require('virtual-dom/diff');
 const h = require('virtual-dom/h');
 const virtualize = require('@weddell/vdom-virtualize');
 
-/**
- * WeddellApp module.
- * 
- * @module weddell/app
- * 
- */
-
 const WeddellComponent = require('./component');
 
 const defaultOpts = {
@@ -55,32 +48,35 @@ function createStyleEl(id, className = null) {
   */
 
  /**
- * An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application. 
- * 
- * @alias module:weddell/app
- * @example 
- * const App = require('weddell').classes.App;
- * 
- * var app = new App({
- *     routes,
- *     el: '#app',
- *     Component: class MyWeddellComponent {},
- *     styles: `
- *       .my-weddell-component {
- *         color: red;
- *       }
- *     `
- * });
- *
- * app.init();
- */
+  * An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application. 
+  * 
+  * @alias App
+  * @static
+  * @memberOf Weddell
+  * 
+  * @example 
+  * const App = require('weddell').classes.App;
+  * 
+  * var app = new App({
+  *     routes,
+  *     el: '#app',
+  *     Component: Component => class MyWeddellComponent extends Component {},
+  *     styles: `
+  *       .my-weddell-component {
+  *         color: red;
+  *       }
+  *     `
+  * });
+  *
+  * app.init();
+  */
 
- class WeddellApp extends mix().with(EventEmitterMixin) {
+class WeddellApp extends mix().with(EventEmitterMixin) {
 
     /**
      * @param {object} opts
      * @param {String|Element} opts.el Element to mount app into, or a DOM query string that should resolve to a single element.
-     * @param {function(new:WeddellComponent)} opts.Component A Weddell component class factory. This component will be mounted as the root into the mount point specified in the 
+     * @param {WeddellComponentMixin} opts.Component A Weddell component class factory. This component will be mounted as the root into the mount point specified in the 
      * @param {number} [opts.quietInterval=100] Delay between DOM patches to wait before firing the "quiet" event.
      * @param {CssString} [opts.styles] App styles that will be rendered to the DOM once the app initializes. 
      */
@@ -134,83 +130,6 @@ function createStyleEl(id, className = null) {
             rootNode: { value: null, writable: true }
         })
     }
-
-    /**
-     * Hook method that may be overridden and will be executed at the end of every DOM patch. 
-     * 
-     * @returns {Promise} Subsequent patches may be deferred by returning a Promise in this method.
-     */
-
-    onPatch() { }    
-
-    /**
-     * Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
-     * 
-     * @param {string} id Component id to wait for
-     * 
-     * @returns {Promise.<WeddellComponent>}
-     */
-
-    awaitComponentMount(id) {
-        return new Promise(resolve => {
-            Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
-                this.on('createcomponent', evt => {
-                    if (evt.component.id === id) {
-                        resolve(evt.component)
-                    }
-                })
-            }))
-                .then(component => {
-                    component.awaitMount().then(() => resolve(component));
-                })
-        })
-    }
-
-    /**
-     * Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
-     * 
-     * @returns {Promise}
-     */
-    awaitPatch() {
-        return this.patchPromise || Promise.resolve();
-    }
-
-    /**
-     * Returns a promise that will resolve after current pending patch or the next patch completes.
-     * 
-     * @returns {Promise}
-     */
-    awaitNextPatch() {
-        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
-    }
-
-    /**
-     * Dumps the current application state to a snapshot object. 
-     * 
-     * @returns {WeddellAppStateSnapshot}
-     */
-    renderSnapshot() {
-        var parser = new DOMParser();
-        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");
-        var scriptEl = doc.createElement('script');
-        scriptEl.innerHTML = `
-            window.addEventListener('weddellinitbefore', function(evt){
-                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
-            });
-        `;
-        doc.body.appendChild(scriptEl);
-
-        return {
-            appHtml: this.component.el.outerHTML,
-            stateHtml: scriptEl.outerHTML,
-            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
-                .map(el => el.outerHTML)
-                .join('\n'),
-            fullResponse: doc.documentElement.outerHTML
-        }
-    }
-
-    
 
     /**
      * Initializes the app, rendering the root component and mounting it into the specified DOM element.
@@ -298,6 +217,83 @@ function createStyleEl(id, className = null) {
                 this.el.classList.add('init-complete');
                 return result;
             })
+    }
+
+    /**
+     * Hook method that may be overridden and will be executed at the end of every DOM patch. 
+     * 
+     * @returns {Promise} Subsequent patches may be deferred by returning a Promise in this method.
+     */
+
+    onPatch() { }    
+
+    /**
+     * Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
+     * 
+     * @param {string} id Component id to wait for
+     * 
+     * @returns {Promise.<WeddellComponent>}
+     */
+
+    awaitComponentMount(id) {
+        return new Promise(resolve => {
+            Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
+                this.on('createcomponent', evt => {
+                    if (evt.component.id === id) {
+                        resolve(evt.component)
+                    }
+                })
+            }))
+                .then(component => {
+                    component.awaitMount().then(() => resolve(component));
+                })
+        })
+    }
+
+    /**
+     * Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
+     * 
+     * @returns {Promise}
+     */
+    awaitPatch() {
+        return this.patchPromise || Promise.resolve();
+    }
+
+    /**
+     * Returns a promise that will resolve after current pending patch or the next patch completes.
+     * 
+     * @returns {Promise}
+     */
+
+    awaitNextPatch() {
+        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
+    }
+
+    /**
+     * Dumps the current application state to a snapshot object, typically used for server-side rendering setups. 
+     * 
+     * @returns {WeddellAppStateSnapshot}
+     */
+
+    renderSnapshot() {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");
+        var scriptEl = doc.createElement('script');
+        scriptEl.innerHTML = `
+            window.addEventListener('weddellinitbefore', function(evt){
+                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
+            });
+        `;
+        doc.body.appendChild(scriptEl);
+
+        return {
+            appHtml: this.component.el.outerHTML,
+            stateHtml: scriptEl.outerHTML,
+            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
+                .map(el => el.outerHTML)
+                .join('\n'),
+            fullResponse: doc.documentElement.outerHTML
+        }
     }
 
     /**

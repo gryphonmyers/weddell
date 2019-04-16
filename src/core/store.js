@@ -20,7 +20,35 @@ function isSerializable(val) {
         (val == null || typeof val === 'string' || typeof val === 'boolean' || typeof val === 'number');
 }
 
-var Store = class extends mix(Store).with(EventEmitterMixin) {
+/**
+ * Class representing a store of key/value pairs. The store class is primarily used to model application state.
+ * 
+ * @alias Store
+ * @static
+ * @memberOf Weddell
+ */
+
+class WeddellStore extends mix().with(EventEmitterMixin) {
+
+    /**
+     * Constructs a store object. One does not generally require or implement the store module directly, but rather implicitly via the various store properties available on components.
+     * 
+     * @param {object} data Data to write to store.
+     * @param {object} opts 
+     * @param {boolean} [opts.shouldEvalFunctions=true]
+     * @param {boolean} [opts.shouldMonitorChanges=true]
+     * @param {boolean} [opts.requireSerializable=true]
+     * @param {WeddellStore[]} [opts.overrides]
+     * @param {WeddellStore[]} [opts.proxies]
+     * @param {WeddellStore[]} [opts.extends]
+     * @param {object} [opts.propertySets]
+     * @param {Function} [opts.getTransform]
+     * @param {Function} [opts.setTransform]
+     * @param {object} [opts.validators]
+     * @param {object} [opts.initialState]
+     * @param {object} [opts.inputMappings]
+     */
+
     constructor(data, opts) {
         opts = defaults(opts, defaultOpts);
         super();
@@ -312,6 +340,38 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return this.watch.apply(this, [...Array.from(arguments), true]);
     }
 
+    /**
+     * @callback StoreWatchCallback
+     * 
+     * @param {...*} value A value from a watched key.
+     */
+
+     /**
+     * @callback StoreWatchValidator
+     * 
+     * @param {Array|*} value If a single key was watched, a single value will be passed in. If multiple keys were watched, an array with all watched values will be passed in as the first argument.
+     * 
+     * @returns {boolean} Returning true indicates that validation was successful and the watch callback should be executed.
+     */
+
+     /**
+      * @callback RemoveEventListenerCallback
+      * 
+      * A callback returned by an 'EventEmitter.on' invocation. Calling this callback will remove the event listener.
+      */
+
+    /**
+     * Watches a key or keys in the store, triggering a callback when values change.
+     * 
+     * @param {String[]|String} key Key(s) to watch. When multiple keys are supplied, the watch event will trigger when any of their values change.
+     * @param {StoreWatchCallback} func Will be called whenever any value assigned to one of watched keys changes. 
+     * @param {StoreWatchValidator|boolean} [validator=true] Validates the changed value(s). If a boolean is supplied instead of a callback, 'true' is interpreted as meaning all watched keys should be defined, while 'false' means no validation should be applied.
+     * @param {boolean} [invokeImmediately=false] Whether the callback should called immediately, or wait for the next change event.
+     * @param {boolean} [onlyFireOnce=false] Whether the callback should persist, or call once then expire.
+     * 
+     * @returns {RemoveEventListenerCallback}
+     */
+
     watch(key, func, validator = true, invokeImmediately = false, onlyFireOnce = false) {
         if (!Array.isArray(key)) {
             key = [key];
@@ -335,4 +395,4 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
     }
 }
 
-module.exports = Store;
+module.exports = WeddellStore;

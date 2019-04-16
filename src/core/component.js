@@ -23,56 +23,90 @@ const testElement = document.createElement('div');
 
 const renderInterval = 33.333;
 
-
 /**
- * WeddellComponent module.
+ * @typedef {Array} StoreWatchArgs
  * 
- * @module weddell/component
+ * Arguments as passed into {@link https://github.com/gryphonmyers/weddell/tree/ft-new-render#storewatchkey-func-validator-invokeimmediately-onlyfireonce--removeeventlistenercallback Store#watch} (in the most basic use case, this will be an array with two items: a key and a callback function).
  */
 
 /**
- * Class representing a Weddell component. A component represents encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+ * @callback StateTransform
  * 
- * @alias module:weddell/component
- * @example
- * WeddellComponent => class MyComponent extends WeddellComponent {
+ * @param {String} key
+ * @param {*} value
  * 
- *  static get styles() {
- *      return `
- *          .my-component-class {
- *              color: red;
- *          }
- *      `
- *  }
- *  static get markup() {
- *      return (locals, h) =>
- *          h('div.my-component-class', [
- *              h('h1', [
- *                  locals.myContent
- *              ])
- *          ])
- *  }
- * 
- *  static get state() {
- *      return {
- *          myContent: 'foobar'
- *      }
- *  }
- * 
- * }
- * 
- * // Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
- * 
+ * @returns {*}
  */
+
+/**
+ * @callback WeddellComponentMixin
+ * 
+ * @param {function(new:WeddellComponent)} Component Base WeddellComponent class.
+ * 
+ * @returns {function(new:WeddellComponent)} Extended class (typically the base class with extensions applied).
+ */
+
+ /**
+  * @callback CssTemplate
+  * 
+  * @param {object} locals
+  * 
+  * @returns {CssString}
+  */
+
+/**
+ * @typedef {object} DomCreateEvtObj
+ * 
+ * @property {Element|null} el The DOM element that was created
+ */
+
+/**
+ * @typedef {object} DomDestroyEvtObj
+ * 
+ * @property {Element|null} el The DOM element that was destroyed
+ */
+
+ /**
+ * @typedef {object} DomChangeEvtObj
+ * 
+ * @property {Element|null} newEl The new DOM element that was created
+ * @property {Element|null} prevEl The DOM element that was previously associated with this component
+ */
+
+/**
+ * @callback VirtualDomTemplate
+ * 
+ * @param {object} locals Component state + helpers
+ * @param {Function} h hyperscript implementation
+ * 
+ * @returns {VirtualNode}
+ */
+
+/**
+ * @typedef {object} VirtualNode A virtual node object, as implemented by the virtual-dom library. 
+ * 
+ * @see {@link https://github.com/Matt-Esch/virtual-dom}
+ */
+ /**
+  * Class representing a Weddell component. A component encapsulates some combination of scripts, markup and/or styles into an instantiable custom tag.
+  * 
+  * @alias Component
+  * @static
+  * @memberOf Weddell
+  */
+
 class WeddellComponent extends mix().with(EventEmitterMixin) {
-    static get renderMethods() {
-        return ['renderVNode', 'renderStyles'];
-    }
 
-    static get isWeddellComponent() {
-        return true;
-    }
-
+    /**
+     * Constructs a Weddell Component. One does not generally instantiate components directly, but rather includes them declaratively via markup tags. This information is available primarily for the purposes of plugin authorship. See the static {@link #Weddell.Component.markup markup}, {@link #Weddell.Component.state state}, and {@link #Weddell.Component.styles styles} properties for more typical component development entrypoints.
+     * 
+     * @param {object} opts
+     * @param {object} opts.consts Base consts object that will be merged into static store declaration.
+     * @param {object} opts.state Base state object that will be merged into static store declaration.
+     * @param {object} opts.components
+     * @param {object} [opts.initialState] Initial state of the component. 
+     */
+    
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
@@ -81,6 +115,8 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         if (weddellGlobals.verbosity > 0 && opts.inputs) {
             console.warn('you are using outdated syntax! opts.inputs is deprecated in favor of static getter.')
         }
+        var inputs = compact(opts.inputs && opts.inputs.length ? opts.inputs : this.constructor.inputs);
+
         Object.defineProperties(this, {
             id: { get: () => this._id },
             isRoot: { value: opts.isRoot },
@@ -106,7 +142,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
             root: { value: opts.isRoot ? this : opts.root },
-            inputs: { value: compact(this.constructor.inputs || opts.inputs || []) },
+            inputs: { value: inputs },
             //@TODO inputs don't need to be stored on isntance at all
             renderers: { value: {} },
             _el: { value: null, writable: true },
@@ -180,10 +216,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                     $bind: this.bindEvent.bind(this),
                     $bindValue: this.bindEventValue.bind(this)
                 }, this.constructor.consts || {}, opts.consts || {}, this.constructor.store || {}, this.store || {}, opts.store || {}), {
-                        requireSerializable: false,
-                        shouldMonitorChanges: false,
-                        shouldEvalFunctions: false
-                    })
+                    requireSerializable: false,
+                    shouldMonitorChanges: false,
+                    shouldEvalFunctions: false
+                })
             },
             store: { get: () => this.consts }
         });
@@ -192,10 +228,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             console.warn("opts.state is deprecated in favor of static 'state' getter. Update your code!");
         }
 
-        var state = Object.assign({}, opts.state || {}, this.constructor.state);
+        var state = { ...(opts.state || {}), ...(this.constructor.state) };
         var component = this;
         var serializers = component.constructor.serializers;
-        var deserializers = component.constructor.deserializers || component.constructor.hydrators;
+        var deserializers = component.constructor.deserializers;
 
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
@@ -222,7 +258,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         if (weddellGlobals.verbosity > 0 && opts.components) {
             console.warn("opts.components is deprecated in favor of static 'components' getter. Please update your code.");
         }
-        var components = this.constructor.components || opts.components || {};
+        var components = { ...(opts.components || {}), ...(this.constructor.components) };
 
         Object.defineProperties(this, {
             _componentInstances: {
@@ -259,95 +295,1205 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         weddellGlobals.components[this._id] = this;
     }
 
+    /**
+     * @todo Document serializers/deserializers
+     * @todo document static event handlers
+     */
+
+     /**
+     * Stub property. Typically, components will override the markup property to provide their components's virtual DOM template function. The template function is passed both component state and the application's hyperscript implementation ('h'). See the {@link https://github.com/Matt-Esch/virtual-dom virtual-dom} docs for more info about this syntax.
+     * 
+     * @type {VirtualDomTemplate}
+     * 
+     * @example
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', [
+     *             h('div', {
+     *              attributes: {
+     *                  onclick: 'console.log("hello");'
+     *              }
+     *             }, 'Click Me')
+     *          ])
+     *  }
+     * }
+     * 
+     * // Will render '<div class="my-component" onclick='console.log("hello");'>Click Me</div>' to DOM
+     * 
+     * @example <caption>Hscript can be a bit clunky to work with when your display logic gets more complex. Development tools like pug-vdom can port other, perhaps more succinct syntaxes to return virtual-dom nodes.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get markup() {
+     *      return require('./my-component.pug');
+     *  }
+     * }
+     * 
+     * // in './my-component.pug':
+     * //
+     * // .my-component
+     * //   div(onclick="console.log('hello')") Click Me
+     * 
+     * // This example would require the use of the pug-vdom dev tool. weddell-dev-tools includes pug support 
+     * // out of the box. Or you can write your own require hook to adapt your favorite template syntax to 
+     * // return virtual dom nodes.
+     */
+
+    static get markup() {
+        return null
+    }
+
+    /**
+     * Stub property. Typically, components override this property, returning the keys and default state values. When a component is initialized, it will use this object when creating its own local transient state object. Once initialized, subsequent changes to any key in the WeddellComponent#state object will trigger component rerenders -> DOM patches. 
+     * 
+     * @type {object}
+     * 
+     * @example
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myContent: 'Foobar'
+     *      }
+     *  }
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', [locals.myContent])
+     *  }
+     * }
+     * 
+     * // Will render '<div class="my-component">Foobar</div>' to DOM
+     * 
+     * @example <caption>Values saved to state must be serializable (strings, numbers, plain objects, arrays, bools). Trying to save a complete data type to state will cause an error to be thrown. If you really need to save non-serializable objects to state, look at the Component.serializers and Component.deserializers properties.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myContent: new Foobar() //Don't do this!
+     *      }
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', [locals.myContent])
+     *  }
+     * }
+     * 
+     * // Will throw an error. Instances of the Foobar class are not plain objects, and 
+     * // thus are not serializable.
+     * 
+     * @example <caption>There is, however, an exception allowing serializable data in state: state values declared as functions will be interpreted as 'computed values'. These functions are executed in the context of the component state object, and will be recomputed when referenced state values change. Note: functions may only be specified in the initial declaration - you can NOT set a state value to a new function at runtime (that will result in an error being thrown).</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          numbers: [1, 2],
+     *          numbersDoubled: function(){
+     *              return this.numbers.map(num => num * 2);
+     *          }
+     *      }
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', { attributes: { 
+     *              onclick: locals.$bind('this.state.numbers = this.state.numbers.map(num => num + 1)') }
+     *          }, locals.numbersDoubled)
+     *  }
+     * }
+     * 
+     * // '<div class="my-component">2 4</div>'
+     * // * User clicks *
+     * // '<div class="my-component">4 6</div>'
+     * 
+     * 
+     * @example <caption>When inheriting from a parent component class, the ES6 class spec's super keyword makes it easy to merge with parent state.</caption> 
+     * 
+     * Component => class MyComponent extends MyParentComponentMixin(Component) {
+     *  static get state() {
+     *      return Object.assign({}, super.state, { //Note argument order - we default to super state, override with our state.
+     *          numbersDoubledMinus1: function(){
+     *              return this.numbersDoubled.map(num => num - 1);
+     *          }
+     *      });
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', locals.numbersDoubledMinus1)
+     *  }
+     * }
+     * 
+     * // Assuming 'MyParentComponentMixin' is the mixin from the previous example...
+     * // '<div class="my-component">1 3</div>'
+     * // * User clicks *
+     * // '<div class="my-component">3 5</div>'
+     * 
+     * @example <caption>When working with objects and arrays in component state, be cognizant of the fact that you must set the state value itself in order for the necessary change events to fire, triggering DOM refresh. Getting this wrong can lead to hard-to-track-down bugs.</caption> 
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myObject: {
+     *              myValue: 1
+     *          }
+     *      }
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', {
+     *              attributes: {
+     *                  onclick: locals.$bind('this.state.myObject.myValue += 1')
+     *              }
+     *          }, locals.myObject.myValue)
+     *  }
+     * }
+     * 
+     * // '<div class="my-component">1/div>'
+     * // * User clicks *
+     * // '<div class="my-component">1</div>'
+     * // Even though our event handler was fired, the DOM did not get refreshed! Let's try this again...
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myObject: {
+     *              myValue: 1
+     *          }
+     *      }
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', {
+     *              attributes: {
+     *                  onclick: locals.$bind('this.state.myObject = { ...this.state.myObject, myValue: this.state.myObject.myValue + 1 }')
+     *              }
+     *          }, locals.myObject.myValue)
+     *  }
+     * }
+     * // '<div class="my-component">1/div>'
+     * // * User clicks *
+     * // '<div class="my-component">2</div>'
+     * // There we go! Because we set this.state.myObject itself to a new value instead of just setting 
+     * // a property on the existing value, the appropriate events got fired, and the DOM refreshed.
+     * 
+     */
+
+    static get state() {
+        return {};
+    }
+
+    /**
+     * Stub property. Typically, components with custom CSS styles will override this property. Styles returned here will be dynamically inserted into style elements in the DOM's head when needed. Strings will be applied on a per-class basis (one copy for all component instances), while functions will be executed as a style template on a per-instance basis.
+     * 
+     * @returns {Array.<CssTemplate|CssString>|CssString|CssTemplate}
+     * 
+     * @example
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get styles() {
+     *      return `
+     *          .my-component {
+     *              color: red;
+     *          }
+     *      `
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', 'Foo bar')
+     *  }
+     * }
+     * 
+     * // Once mounted and patched, the element will be rendered in DOM with red text.
+     * 
+     * @example <caption>You can also return a function instead of a string, in which case current component state is available for dynamic styling.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myImg: 'https://mywebsite.com/myimage.jpg'
+     *      }
+     *  }
+     * 
+     *  static get styles() {
+     *      return (locals) => `
+     *          .my-component {
+     *              background-image: url(${locals.myImg});
+     *          }
+     *      `
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', 'Foo bar')
+     *  }
+     * }
+     * 
+     * // Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background.
+     * 
+     * @example <caption>Be careful with CSS template functions though! Unlike string values, template functions will be executed and rendered to DOM for every component instance, which can lead to performance issues. Ideally, static, class-level styles should be returned as strings, while styles making use of component instance state, if needed, should be returned as template functions. You can mix and match by returning an array of style values.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myImg: 'https://mywebsite.com/myimage.jpg'
+     *      }
+     *  }
+     * 
+     *  static get styles() {
+     *      return [
+     *      (locals) => `
+     *            .my-component {
+     *                background-image: url(${locals.myImg});
+     *            }
+     *        `,
+     *        `
+     *            .my-component {
+     *                color: red;
+     *            }
+     *        `
+     *      ]
+     *  }
+     * 
+     *  static get markup() {
+     *      return (locals, h) =>
+     *          h('.my-component', 'Foo bar')
+     *  }
+     * }
+     * 
+     * // Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background and 
+     * // red text. Since the red text does not need component state, we return it as a string, separately 
+     * // from the background-image style - it will be more performant that way.
+     * 
+     * @example <caption>When inheriting from a parent component class, the ES6 class spec's super keyword makes it easy to extend the parent styles.</caption>
+     * 
+     * Component => class MyChildComponent extends MyParentComponentMixin(MyComponent) {
+     * 
+     *  static get styles() {
+     *      return [
+     *         `
+     *              .my-component {
+     *                  border: 2px solid red;
+     *             }
+     *          `
+     *      ].concat(super.styles);
+     *  }
+     * }
+     * 
+     * // Assuming 'MyParentComponentMixin' is the mixin from the previous example, we would get an element
+     * // rendered to DOM with 'myimage.jpg' in the background, red text, and a 2px solid red border
+     */
+
+    static get styles() {
+        return '';
+    }
+
+    /**
+     * Stub property. Typically, components with child components will override this property, supplying component mixins that can then be included in the component's markup template by the entry key. 
+     * 
+     * @type {Object.<string, WeddellComponentMixin>}
+     * 
+     * @example
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get markup(locals, h) {
+     *      return h('.foo', [
+     *          h('my-child-component')
+     *      ]);
+     *  }
+     * 
+     *  static get components() {
+     *      return {
+     *          'my-child-component': Component => class extends Component {
+     *              static get markup(locals, h) {
+     *                  return h('.bar', ['bar']);
+     *              }
+     *          }
+     *      }
+     *  }
+     * }
+     * 
+     * // will render '<div class="foo"><div class="bar">bar</div></div>' into the DOM.
+     * 
+     * @example <caption>You can pass markup down from the parent component to the child by placing the 'content' tag in the child.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get markup(locals, h) {
+     *      return h('.foo', [
+     *          h('my-child-component', [
+     *              'This is my content'
+     *          ])
+     *      ]);
+     *  }
+     * 
+     *  static get components() {
+     *      return {
+     *          'my-child-component': Component => class extends Component {
+     *              static get markup(locals, h) {
+     *                  return h('.bar', [
+     *                      h('content')
+     *                  ]);
+     *              }
+     *          }
+     *      }
+     *  }
+     * }
+     * 
+     * // Will render as '<div class="foo"><div class="my-child-component">This is my content</div></div>'
+     * 
+     * 
+     * @todo supply example demonstrating nested child tag scoping
+     * @todo example showing static parent -> child state binding
+     * @todo example showing custom event handlers
+     * 
+     */
+
+    static get components() {
+        return {};
+    }
+
+    /**
+     * Stub property. Typically, components with inputs will override this property. The inputs property flags particular keys as being expected as input data from parent components.
+     * 
+     * @type {String[]}
+     * 
+     * @example
+     * 
+     * Component => class MyComponent extends Component {
+     *  static get state() {
+     *      return {
+     *          myParentData: 'foo'
+     *      }
+     *  }
+     *  static get markup(locals, h) {
+     *      return h('.foo', [
+     *          h('my-child-component', {
+     *              attributes: {
+     *                  myChildData: locals.myParentData
+     *              }
+     *          }, [
+     *              'This is my content'
+     *          ])
+     *      ]);
+     *  }
+     * 
+     *  static get components() {
+     *      return {
+     *          'my-child-component': Component => class extends Component {
+     *              static get inputs() {
+     *                  return ['myChildData']
+     *              }
+     * 
+     *              static get state() {
+     *                  return {
+     *                      myChildData: 'bar'
+     *                  }
+     *              }
+     * 
+     *              static get markup(locals, h) {
+     *                  return h('.bar', [
+     *                      locals.myChildData
+     *                  ]);
+     *              }
+     *          }
+     *      }
+     *  }
+     * }
+     * 
+     * // Component will render as '<div class="foo"><div class="my-child-component">foo</div></div>'
+     * // But note that not that if the inputs property did not include 'myChildData', or if the parent
+     * // component did not pass 'locals.myParentData' into the child component, then it would render
+     * // '<div class="foo"><div class="my-child-component">bar</div></div>'
+     * 
+     * @todo Clean up / fix object form of inputs, then document.
+     */
+
+    static get inputs() {
+        return [];
+    }
+
+    /**
+     * Stub property. Typically, components with constant helper values will override this property. These values will be proxied onto the component instance's 'state' property.
+     * 
+     * @type {object}
+     * 
+     * @todo Example showing const availability on state object.
+     */
+
     static get consts() {
         return {};
     }
 
-    requestRender(dirtyRenderers) {
-        var now = Date.now()
-        var lastRenderTime = Object.values(this._lastRenderTimeStamps).reduce((acc, val) => isNaN(val) ? acc : Math.max(val, acc), 0)
-        var dt = now - lastRenderTime;
-        if (!this.hasRendered || dt >= renderInterval) {
-            return this.render(dirtyRenderers);
-        } else {
-            return (this._renderPromise = new Promise(resolve => setTimeout(resolve, renderInterval - dt))
-                .then(() => this.render(dirtyRenderers)));
-        }
+    /**
+     * Stub property. Typically, components with property sets will override this property. Property sets group other state keys together into objects, making them more portable for passing down to components in a way that avoids unnecessary duplication.
+     * 
+     * @type {Object.<string, Object.<string, string>|String[]>}
+     * 
+     * @example
+     * Component => class MyComponent extends Component {
+     * 
+     *  static get state() {
+     *      return {
+     *          myProperty1: 'foo',
+     *          myProperty2: 'bar',
+     *          myUnrelatedProperty: 'whoosh'
+     *      }
+     *  }
+     * 
+     *  static get propertySets() {
+     *      return {
+     *          propertiesForChild: [
+     *              'myProperty1',
+     *              'myProperty2'
+     *          ]
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('.foo', [
+     *          h('my-child-component', {
+     *              attributes: locals.propertiesForChild
+     *          })
+     *      ]);
+     *  }
+     * 
+     *  static get components() {
+     *      return {
+     *          'my-child-component': Component => class extends Component {
+     *              static get inputs() {
+     *                  return [
+     *                      'myProperty1',
+     *                      'myProperty2'
+     *                  ]   
+     *              }
+     * 
+     *              static get state() {
+     *                  return {
+     *                      myProperty1: 'whizz',
+     *                      myProperty2: 'bang'
+     *                  }
+     *              }
+     * 
+     *              static get markup(locals, h) {
+     *                  return h('.bar', [
+     *                      locals.myProperty1,
+     *                      locals.myProperty2
+     *                  ]);
+     *              }
+     *          }
+     *      }
+     *  }
+     * }
+     * 
+     * // Will render as '<div class="foo"><div class="my-child-component">foo bar</div></div>'
+     * 
+     * @example <caption>You can also specify property sets as objects, if you need to proxy the value to a different key on the set object.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     * 
+     *  static get state() {
+     *      return {
+     *          myProperty1: 'foo',
+     *          myProperty2: 'bar',
+     *          myUnrelatedProperty: 'whoosh'
+     *      }
+     *  }
+     * 
+     *  static get propertySets() {
+     *      return {
+     *          propertiesForChild: {
+     *              myProperty1: 'myChildProperty1',
+     *              myProperty2: 'myChildProperty2'
+     *          }
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('.foo', [
+     *          h('my-child-component', {
+     *              attributes: locals.propertiesForChild
+     *          })
+     *      ]);
+     *  }
+     * 
+     *  static get components() {
+     *      return {
+     *          'my-child-component': Component => class extends Component {
+     *              static get inputs() {
+     *                  return [
+     *                      'myChildProperty1',
+     *                      'myChildProperty2'
+     *                  ]   
+     *              }
+     * 
+     *              static get state() {
+     *                  return {
+     *                      myChildProperty1: 'whizz',
+     *                      myChildProperty2: 'bang'
+     *                  }
+     *              }
+     * 
+     *              static get markup(locals, h) {
+     *                  return h('.bar', [
+     *                      locals.myChildProperty1,
+     *                      locals.myChildProperty2
+     *                  ]);
+     *              }
+     *          }
+     *      }
+     *  }
+     * }
+     * 
+     * // Will render as '<div class="foo"><div class="my-child-component">foo bar</div></div>'
+     * 
+     */
+
+    static get propertySets() {
+        return {};
     }
 
-    markDirty(dirtyRenderers = {}) {
-        if (this.renderPromise || !this.isMounted) {
-            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
-            return this.renderPromise;
-        } else {
-            return this.requestRender(dirtyRenderers);
-        }
+    /**
+     * Stub property. Typically, components needing non-serializable data in state will declare functions here for transforming specific keys from serialized data to complex data types at runtime.
+     * 
+     * @type {Object.<string, StateTransform>}
+     * 
+     * @example
+     * class MyThing {
+     *  constructor(num) {
+     *      this.num = num;
+     *  }
+     *  repeat3() {
+     *      return `${this.num}${this.num}${this.num}`
+     *  }
+     * }
+     * 
+     * Component => class MyComponent extends Component {
+     * 
+     *  static get deserializers() {
+     *      return {
+     *          myThing: function(key, value) {
+     *              return new MyThing(value);
+     *          }
+     *      }
+     *  }
+     * 
+     *  static get state() {
+     *      return {
+     *          myThing: 4
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('.foo', [this.myThing.repeat3()]);
+     *  }
+     * 
+     * // Will render as '<div class="foo">444</div>'
+     *
+     */
+
+    static get deserializers() {
+        return {};
     }
 
-    render(dirtyRenderers = null) {
-        var promise = Promise.resolve()
-            .then(() => {
-                return this.constructor.renderMethods
-                    .reduce((acc, method) => {
-                        return acc
-                            .then(results => {
-                                return Promise.resolve(this[method]())
-                                    .then(result => {
-                                        Object.defineProperty(results, method, { get: () => result, enumerable: true });
-                                        return results;
-                                    })
-                            })
-                    }, Promise.resolve({}))
-                    .then(results => {
-                        return Promise.resolve(results)
-                            .then(results => {
-                                if (this._dirtyRenderers) {
-                                    var dirtyRenderers = this._dirtyRenderers;
-                                    this._dirtyRenderers = null;
-                                    return Promise.reject(dirtyRenderers);
-                                }
-                                return results;
-                            })
-                            .then(results => {
-                                this._renderPromise = null;
-                                this.requestPatch(results);
-                                return results;
-                            }, dirtyRenderers => this.render(dirtyRenderers))
-                    }, err => {
-                        throw err;
-                    })
-                    .then(results => {
-                        if (!this.hasRendered) {
-                            this._hasRendered = true;
-                            this.trigger('firstrender');
-                            this.trigger('render');
-                            return Promise.all([this.onRender(), this.onFirstRender()])
-                                .then(() => results)
-                        }
-                        this.trigger('render');
-                        return Promise.resolve(this.onRender()).then(() => results);
-                    })
-            })
-        return !this._renderPromise ? (this._renderPromise = promise) : promise;
+    static get hydrators() {
+        return this.deserializers;
     }
+
+    /**
+     * Stub property. A companion property to deserializers - serialized values will be used when a value set directly to state is a complex data type, and will need to be serialized before committing it to state.
+     * 
+     * @type {Object.<string, StateTransform>}
+     * 
+     * @example
+     * 
+     * class MyThing {
+     *  constructor(num) {
+     *      this.num = num;
+     *  }
+     *  repeat3() {
+     *      return `${this.num}${this.num}${this.num}`
+     *  }
+     * }
+     * 
+     * Component => class MyComponent extends Component {
+     * 
+     *  static get deserializers() {
+     *      return {
+     *          myThing: function(key, value) {
+     *              return new MyThing(value);
+     *          }
+     *      }
+     *  }
+     *  static get serializers() {
+     *      return {
+     *          myThing: function(key, value) {
+     *              return value.num
+     *          }
+     *      }
+     *  }
+     * 
+     *  static get state() {
+     *      return {
+     *          myThing: new MyThing(4)
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('.foo', [this.myThing.repeat3()]);
+     *  }
+     * 
+     * // Will render as '<div class="foo">444</div>'. Note that with the serializer defined, the complex
+     * // MyThing data type may be set directly to state.
+     *
+     */
+
+    static get serializers() {
+        return {};
+    }
+
+    /**
+     * Stub property. Watch functions may be defined here, allowing for complex actions to be kicked off when component state changes. Watchers will be executed in state scope. Tip: if your watch function is really only setting other component state keys, you may be able to use a computed state propery instead (see example 3 {@link https://github.com/gryphonmyers/weddell/tree/ft-new-render#componentstate--object here}).
+     * 
+     * @type {StoreWatchArgs[]}
+     * 
+     * @example
+     * 
+     * Component => class MyComponent extends Component {
+     * 
+     *  static get watchers() {
+     *      return [
+     *          ['watchedUrl', function (watchedUrl) {
+     *              if (watchedUrl) {
+     *                  fetch(watchedUrl)
+     *                      .then(res => res.json())
+     *                      .then(data => this.fetchedData = data)
+     *              }
+     *          }]
+     *      ]
+     *  }
+     * 
+     *  static get state() {
+     *      return {
+     *          fetchedData: null,
+     *          watchedUrl: null
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('.foo', {
+     *          attributes: {
+     *              onclick: locals.$bind('this.state.watchedUrl = "https://mydataendpoint"')
+     *          }
+     *      }, locals.fetchedData ? 'Got data!' : 'No data yet.');
+     *  }
+     * 
+     * // Will render as '<div class="foo">No data yet.</div>' initially.
+     * // * User click *
+     * // After the resource fetches, markup will rerender as 
+     * // '<div class="foo">Got data!</div>'
+     * 
+     * @example <caption>For finer-grained control over when the watcher fires, supply a validator function as well.</caption>
+     * 
+     * Component => class MyComponent extends Component {
+     * 
+     *  static get watchers() {
+     *      return [
+     *          ['watchedUrl', function (watchedUrl) {
+     *              fetch(watchedUrl)
+     *                 .then(res => res.json())
+     *                 .then(data => this.fetchedData = data)
+     *          }, (watchedUrl) => watchedUrl && watchedUrl.match(/https:\/\//)]
+     *      ]
+     *  }
+     * 
+     *  static get state() {
+     *      return {
+     *          fetchedData: null,
+     *          watchedUrl: null
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('.foo', {
+     *          attributes: {
+     *              onclick: locals.$bind('this.state.watchedUrl = Math.random() ? "hey mom" : "https://mydataendpoint"')
+     *          }
+     *      }, locals.fetchedData ? 'Got data!' : 'No data yet.');
+     *  }
+     * 
+     * // Will render as '<div class="foo">No data yet.</div>' initially.
+     * // * User click *
+     * // Depending on result of die roll, it may or may not fetch data, then render as:
+     * // '<div class="foo">Got data!</div>' But the fetch call won't error!
+     */
+
+    static get watchers() {
+        return [];
+    }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component.
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the mount process.
+     */
+
+    onMount() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component, but only the first time it mounts. Subsequent unmounts and mounts will not call this method again. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the mount process.
+     */
+
+    onFirstMount() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called whenever a component instance is unmounted from its parent component. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the unmount process.
+     */
+
+    onUnmount() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called whenever a component instance finishes initializing. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the init process.
+     */
 
     onInit() { }
-    onFirstRender() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called after the component finishes rendering. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the render process (not advised unless you know what you are doing).
+     */
+
     onRender() { }
-    onDOMCreate() { }
-    onDOMMove() { }
-    onDOMChange() { }
-    onDOMCreateOrChange() { }
-    onDOMDestroy() { }
-    onMount() { }
-    onUnmount() { }
-    onFirstMount() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer rendering (not advised unless you know what you are doing).
+     */
+    
+    onFirstRender() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called after the component finishes rendering markup as part of its rendering process. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the markup render process, and thus the render process as a whole (not advised unless you know what you are doing).
+     */
+
     onRenderMarkup() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called after the component finishes rendering styles as part of its rendering process. 
+     * 
+     * @returns {Promise|void} Returning a promise will defer completion of the styles render process, and thus the render process as a whole (not advised unless you know what you are doing).
+     */
+
     onRenderStyles() { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called when a DOM element is created and set to this component's 'el' property.
+     * 
+     * @param {DomCreateEvtObj} evt
+     * 
+     * @returns {void} 
+     */
+
+    onDOMCreate(evt) { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called when the DOM element associated with this component moves to a new location in the DOM.
+     * 
+     * @param {DomChangeEvtObj} evt
+     * 
+     * @returns {void} 
+     */
+
+    onDOMMove(evt) { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called when the DOM element associated with this component changes.
+     * 
+     * @param {DomChangeEvtObj} evt
+     * 
+     * @returns {void} 
+     */
+
+    onDOMChange(evt) { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called either when a new DOM element is created for this component, or when the DOM element associated with it changes.
+     * 
+     * @param {DomChangeEvtObj} evt
+     * 
+     * @returns {void} 
+     */
+    onDOMCreateOrChange(evt) { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called when a DOM element that was previously associated with this component is destroyed.
+     * 
+     * @param {DomDestroyEvtObj} evt
+     * 
+     * @returns {void} 
+     */
+
+    onDOMDestroy(evt) { }
+    
+    /**
+     * Binds a function body string to the scope of this component. This string will then typically be used in a native DOM event handler attribute. 
+     * 
+     * @param {String} funcText 
+     * @param {object} opts
+     * @param {object} [opts.preventDefault=false] If true, resulting event handler will invoke event.preventDefault before executing function code.
+     * @param {object} [opts.stopPropagation=false] If true, resulting event handler will invoke event.stopPropagation before executing function code.
+     * 
+     * @example <caption>Not a standard use case</caption>
+     * 
+     * component.el.onclick = component.bindEvent('console.log(this.id)');
+     * component.el.click();
+     * console.log(component.id)
+     * 
+     * // myId
+     * // myId
+     * @example <caption>This function is also proxied onto component state as '$bind'</caption>
+     * 
+     * class MyComponentClass {
+     *  static get markup(locals, h) {
+     *      return h('div', {
+     *          attributes: {
+     *              onclick: locals.$bind('console.log(this.id)')
+     *          }
+     *      });
+     *  }
+     * }
+     * 
+     * //Once a component instance has been mounted, assuming we have an reference to it...
+     * 
+     * myComponentInstance.el.click();
+     * 
+     * // myId
+     */
+
+    bindEvent(funcText, opts = {}) {
+        var consts = this.constructor.Weddell.consts;
+        return `${opts.preventDefault ? `event.preventDefault();` : ''}${opts.stopPropagation ? `event.stopPropagation();` : ''}Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){ window.addEventListener('weddellinitbefore', function(evt) { resolve(evt.detail.app) }) })).then(function(app) { app.awaitComponentMount('${this.id}').then(function(component){ (function() {${funcText}}.bind(component))()})})`;
+    }
+
+    /**
+     * Syntax sugar method very similar to bindEvent, but slightly less verbose for DOM elements with a value (inputs, etc) that you would like to bind to component state.
+     * 
+     * @param {String} propName Property name in component state to bind to.
+     * @param {object} opts See bindEvent opts.
+     * 
+     * @example <caption>As with bindEvent, bindEventValue is also proxied into component state object as '$bindValue'.</caption>
+     * 
+     * class MyComponentClass {
+     * 
+     *  static get state() {
+     *      return {
+     *          myInputValue: null
+     *      }
+     *  }
+     * 
+     *  static get markup(locals, h) {
+     *      return h('input', {
+     *          attributes: {
+     *              onchange: locals.$bindValue('myInputValue')
+     *          }
+     *      });
+     *  }
+     * }
+     * 
+     * //Once a component instance has been mounted, assuming we have an reference to it...
+     * 
+     * console.log(myComponentInstance.state.myInputValue);
+     * 
+     * // null
+     * 
+     * // The user enters the text 'Tiny Tigers' into the input field in browser...
+     * 
+     * console.log(myComponentInstance.state.myInputValue);
+     * 
+     * // Tiny Tigers
+     *
+     */
+
+    bindEventValue(propName, opts) {
+        return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
+    }
+    
+
+    /**
+     * Calls the specified callback for this component and all child components.
+     * 
+     * @todo Document callback param structure 
+     * 
+     * @param {Function} callback Reducer function to use. 
+     * @param {Function} [filterFunc] Filter function to exclude some components
+     */
+
+    walkComponents(callback, filterFunc = () => true) {
+        if (filterFunc(this)) {
+            callback(this)
+        }
+        for (var componentName in this._componentInstances) {
+            Object.values(this._componentInstances[componentName])
+                .forEach(instance => instance.walkComponents(callback, filterFunc))
+        }
+    }
+
+    /**
+     * Calls the specified reducer for this component and all child components.
+     * 
+     * @todo Document callback param structure 
+     * 
+     * @param {Function} callback Reducer function to use. 
+     * @param {*} initialVal The initial value to use for the reduce function.
+     * @param {Function} [filterFunc] Filter function to exclude some components
+     * @returns {*}
+     */
+
+    reduceComponents(callback, initialVal, filterFunc = () => true, depth = 0) {
+        var acc = initialVal;
+        if (filterFunc(this)) {
+            acc = callback(acc, this, depth)
+        }
+        for (var componentName in this._componentInstances) {
+            acc = Object.values(this._componentInstances[componentName])
+                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc, depth + 1), acc);
+        }
+        return acc;
+    }    
+
+    /**
+     * Calls the specified reducer recursively for all parent components upward from this one.
+     * 
+     * @param {Function} callback Reducer function to use. 
+     * @param {*} initialVal The initial value to use for the reduce function.
+     * 
+     * @returns {*}
+     */
+
+    reduceParents(callback, initialVal) {
+        var parent = this.getParent();
+        var shouldRecurse = true;
+        initialVal = callback.call(this, initialVal, this, () => shouldRecurse = false);
+        return parent && shouldRecurse ? parent.reduceParents(callback, initialVal) : initialVal;
+    }
+
+    /**
+     * Performs a recursive scan upward from this component, to the application's root component.
+     * 
+     * @todo Document this more thoroughly
+     * 
+     * @returns {object}
+     */
+
+    collectComponentTree() {
+        var parent = this.getParent();
+        return Object.entries(this.components)
+            .reduce((acc, entry) => {
+                return Object.assign(acc, {
+                    [entry[0].toLowerCase()]: {
+                        sourceInstance: this,
+                        componentClass: entry[1]
+                    }
+                })
+            }, parent ? parent.collectComponentTree() : {});
+    }
+
+    /**
+     * Queries the component tree for components that are currently mounted (rendered and typically in DOM or soon-to-be in DOM).
+     * 
+     * @returns {WeddellComponent[]}
+     */
+
+    getMountedChildComponents() {
+        return this.reduceComponents((acc, component) =>
+            acc.concat(component), [], component =>
+                component !== this && component._isMounted);
+    }
+
+    /**
+     * Returns a promise that will resolve with the result of querying this component's DOM element using querySelector, once the component has a DOM element to query. 
+     * 
+     * @param {string} query A DOM query, as expected by Element#querySelector.
+     * 
+     * @returns {Promise.<Element|null>}
+     */
+
+    queryDOM(query) {
+        return this.awaitDom()
+            .then(el => el.querySelector(query));
+    }
+
+    /**
+     * Returns a promise that will resolve with the result of querying this component's DOM element using querySelectorAll, once the component has a DOM element to query. 
+     * 
+     * @param {string} query A DOM query, as expected by Element#querySelectorAll.
+     * 
+     * @returns {Promise.<NodeListOf<Element>>}
+     */
+
+    queryDOMAll(query) {
+        return this.awaitDom()
+            .then(el => el.querySelectorAll(query));
+    }
+
+    /**
+     * Returns a promise that will resolve once this component fires a specific event. 
+     * 
+     * @param {string} eventName The name of the event to wait for. 
+     * 
+     * @returns {Promise}
+     */
+
+    awaitEvent(eventName) {
+        var resolveProm;
+        //@TODO add evt obj filter
+        var promise = new Promise(function (resolve) {
+            resolveProm = resolve;
+        });
+        this.once(eventName, function (evt) {
+            resolveProm(evt);
+        });
+        return promise;
+    }
+
+    /**
+     * Returns a promise that will resolve once this component has finished rendering, and the next application patch has completed (which should mean all state changes have been propagated to the DOM).
+     * 
+     * @returns {Promise}
+     */
+
+    awaitPatch() {
+        return this.awaitRender().then(() => (this.root || this).awaitEvent('patch'));
+    }
+
+    /**
+     * Returns a promise that will resolve once this component mounts (or immediately, if it is already mounted). Note that mounting does not necessarily mean that application changes have been propagated to the DOM.
+     * 
+     * @returns {Promise}
+     */
+
+    awaitMount() {
+        return this.isMounted ? Promise.resolve() : this.awaitEvent('mount');
+    }
+
+    /**
+     * Returns a promise that will resolve once a DOM element has been created for this component (or immediately, if it already has one). The promise is resolved with this component's DOM element.
+     * 
+     * @returns {Promise.<Element>}
+     */
+
+    awaitDom() {
+        return this.el ? Promise.resolve(this.el) : this.awaitEvent('domcreate').then(evt => evt.el);
+    }
+
+    /**
+     * Returns a promise that will resolve once the pending render promise has completed (or immediately, if there is no pending render promise).
+     * 
+     * @returns {Promise}
+     */
+
+    awaitRender(val) {
+        return (this.renderPromise ? this.renderPromise : Promise.resolve())
+            .then(() => val);
+    }
+
+    /**
+     * @example
+     * console.log(MyWeddellComponentClass.isWeddellComponent)
+     * // true
+     */
+
+    static get isWeddellComponent() {
+        return true;
+    }
+
+    /**
+     * @private
+     */
+
+    makeNewWidget() {
+        this._prevWidget = this._widget;
+        var newWidget = new VdomWidget({ component: this });
+        newWidget.bindChildren(this);
+        if (this._prevWidget) {
+            this._prevWidget.unbindChildren();
+        }
+        this._widgetIsDirty = false;
+        return this._widget = newWidget;
+    }    
+
+    /**
+     * @private
+     */
+
+    static get tagDirectives() {
+        return {
+            content: function (vNode, children, props, renderedComponents) {
+                return this.content;
+            }
+        }
+    }
+
+    /**
+     * @private
+     */
+
+    replaceComponentPlaceholders(vNode, renderedComponents = []) {
+        var components;
+        var componentName;
+
+        if (Array.isArray(vNode)) {
+            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)))
+        } else if (!vNode.tagName) {
+            return vNode;
+        } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
+            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes, renderedComponents));
+        }
+
+        return this.replaceComponentPlaceholders(vNode.children || [], renderedComponents)
+            .then(children => {
+                if (componentName in (components = this.collectComponentTree())) {
+                    var props = vNode.properties.attributes;
+                    var content = children || [];
+                    if (!(componentName in renderedComponents)) {
+                        renderedComponents[componentName] = [];
+                    }
+                    var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
+
+                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);
+                }
+
+                if (children.some((child, ii) => vNode.children[ii] !== child)) {
+                    return cloneVNode(vNode, flatten(children));
+                }
+                return cloneVNode(vNode, null, true);
+            })
+    }
+
+    /**
+     * @private
+     * @param {*} results 
+     */
 
     requestPatch(results) {
         this.trigger('requestpatch', { results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
     }
+
+    /**
+     * @private
+     */
 
     makeVNodeTemplate() {
         /*
@@ -367,6 +1513,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         }, null);
     }
 
+    /**
+     * @private
+     */
+
     makeStylesTemplate() {
         var [instanceStyleBlocks, classStyleBlocks] = [...arguments]
             .reduce((acc, curr) =>
@@ -384,6 +1534,12 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             })
         }, 'renderStyles');
     }
+
+    /**
+     * @private
+     * @param {*} func 
+     * @param {*} renderMethodName 
+     */
 
     wrapTemplate(func, renderMethodName) {
         return () => {
@@ -403,6 +1559,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         }
     }
 
+    /**
+     * @private
+     */
+
     renderStyles() {
         return Promise.resolve(this.stylesTemplate())
             .then(results => {
@@ -410,6 +1570,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                     .then(() => results);
             })
     }
+
+    /**
+     * @private
+     */
 
     renderVNode() {
         var vTree = this.vNodeTemplate();
@@ -458,70 +1622,36 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             .then(() => this._vTree)
     }
 
+    /**
+     * @private
+     */
+
     refreshWidgets() {
         if (this._widgetIsDirty) {
             this.makeNewWidget();
         }
     }
 
-    get state() {
-        return {};
+    /**
+     * @private
+     */
+
+    checkChangedKey(key) {
+        return Object.entries(this._lastAccessedStateKeys)
+            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, { [entry[0]]: 1 }) : acc, null);
     }
 
-    makeNewWidget() {
-        this._prevWidget = this._widget;
-        var newWidget = new VdomWidget({ component: this });
-        newWidget.bindChildren(this);
-        if (this._prevWidget) {
-            this._prevWidget.unbindChildren();
-        }
-        this._widgetIsDirty = false;
-        return this._widget = newWidget;
+    /**
+     * @private
+     */
+
+    static get generatedComponentClasses() {
+        return _generatedComponentClasses;
     }
 
-    static get state() {
-        return {};
-    }
-
-    static get tagDirectives() {
-        return {
-            content: function (vNode, children, props, renderedComponents) {
-                return this.content;
-            }
-        }
-    }
-
-    replaceComponentPlaceholders(vNode, renderedComponents = []) {
-        var components;
-        var componentName;
-
-        if (Array.isArray(vNode)) {
-            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)))
-        } else if (!vNode.tagName) {
-            return vNode;
-        } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
-            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes, renderedComponents));
-        }
-
-        return this.replaceComponentPlaceholders(vNode.children || [], renderedComponents)
-            .then(children => {
-                if (componentName in (components = this.collectComponentTree())) {
-                    var props = vNode.properties.attributes;
-                    var content = children || [];
-                    if (!(componentName in renderedComponents)) {
-                        renderedComponents[componentName] = [];
-                    }
-                    var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
-
-                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);
-                }
-
-                if (children.some((child, ii) => vNode.children[ii] !== child)) {
-                    return cloneVNode(vNode, flatten(children));
-                }
-                return cloneVNode(vNode, null, true);
-            })
-    }
+    /**
+     * @private
+     */
 
     makeChildComponentWidget(componentName, index, content, props, renderedComponents = []) {
         var parent = this.reduceParents((acc, component) => {
@@ -576,99 +1706,97 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             });
     }
 
-    walkComponents(callback, filterFunc = () => true) {
-        if (filterFunc(this)) {
-            callback(this)
+    /**
+     * @private
+     */
+
+    requestRender(dirtyRenderers) {
+        var now = Date.now()
+        var lastRenderTime = Object.values(this._lastRenderTimeStamps).reduce((acc, val) => isNaN(val) ? acc : Math.max(val, acc), 0)
+        var dt = now - lastRenderTime;
+        if (!this.hasRendered || dt >= renderInterval) {
+            return this.render(dirtyRenderers);
+        } else {
+            return (this._renderPromise = new Promise(resolve => setTimeout(resolve, renderInterval - dt))
+                .then(() => this.render(dirtyRenderers)));
         }
-        for (var componentName in this._componentInstances) {
-            Object.values(this._componentInstances[componentName])
-                .forEach(instance => instance.walkComponents(callback, filterFunc))
+    }
+
+    /**
+     * @private
+     */
+
+    markDirty(dirtyRenderers = {}) {
+        if (this.renderPromise || !this.isMounted) {
+            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
+            return this.renderPromise;
+        } else {
+            return this.requestRender(dirtyRenderers);
         }
     }
 
-    reduceComponents(callback, initialVal, filterFunc = () => true, depth = 0) {
-        var acc = initialVal;
-        if (filterFunc(this)) {
-            acc = callback(acc, this, depth)
-        }
-        for (var componentName in this._componentInstances) {
-            acc = Object.values(this._componentInstances[componentName])
-                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc, depth + 1), acc);
-        }
-        return acc;
+    /**
+     * @private
+     */
+
+    render(dirtyRenderers = null) {
+        var promise = Promise.resolve()
+            .then(() => {
+                return this.constructor.renderMethods
+                    .reduce((acc, method) => {
+                        return acc
+                            .then(results => {
+                                return Promise.resolve(this[method]())
+                                    .then(result => {
+                                        Object.defineProperty(results, method, { get: () => result, enumerable: true });
+                                        return results;
+                                    })
+                            })
+                    }, Promise.resolve({}))
+                    .then(results => {
+                        return Promise.resolve(results)
+                            .then(results => {
+                                if (this._dirtyRenderers) {
+                                    var dirtyRenderers = this._dirtyRenderers;
+                                    this._dirtyRenderers = null;
+                                    return Promise.reject(dirtyRenderers);
+                                }
+                                return results;
+                            })
+                            .then(results => {
+                                this._renderPromise = null;
+                                this.requestPatch(results);
+                                return results;
+                            }, dirtyRenderers => this.render(dirtyRenderers))
+                    }, err => {
+                        throw err;
+                    })
+                    .then(results => {
+                        if (!this.hasRendered) {
+                            this._hasRendered = true;
+                            this.trigger('firstrender');
+                            this.trigger('render');
+                            return Promise.all([this.onRender(), this.onFirstRender()])
+                                .then(() => results)
+                        }
+                        this.trigger('render');
+                        return Promise.resolve(this.onRender()).then(() => results);
+                    })
+            })
+        return !this._renderPromise ? (this._renderPromise = promise) : promise;
     }
 
-    checkChangedKey(key) {
-        return Object.entries(this._lastAccessedStateKeys)
-            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, { [entry[0]]: 1 }) : acc, null);
-    }
-
-    reduceParents(callback, initialVal) {
-        var parent = this.getParent();
-        var shouldRecurse = true;
-        initialVal = callback.call(this, initialVal, this, () => shouldRecurse = false);
-        return parent && shouldRecurse ? parent.reduceParents(callback, initialVal) : initialVal;
-    }
-
-    collectComponentTree() {
-        var parent = this.getParent();
-        return Object.entries(this.components)
-            .reduce((acc, entry) => {
-                return Object.assign(acc, {
-                    [entry[0].toLowerCase()]: {
-                        sourceInstance: this,
-                        componentClass: entry[1]
-                    }
-                })
-            }, parent ? parent.collectComponentTree() : {});
-    }
-
-    queryDOM(query) {
-        return this.awaitDom()
-            .then(el => el.querySelector(query));
-    }
-
-    queryDOMAll(query) {
-        return this.awaitDom()
-            .then(el => el.querySelectorAll(query));
-    }
-
-    awaitEvent(eventName) {
-        var resolveProm;
-        //@TODO add evt obj filter
-        var promise = new Promise(function (resolve) {
-            resolveProm = resolve;
-        });
-        this.once(eventName, function (evt) {
-            resolveProm(evt);
-        });
-        return promise;
-    }
-
-    awaitPatch() {
-        return this.awaitRender().then(() => (this.root || this).awaitEvent('patch'));
-    }
-
-    awaitMount() {
-        return this.isMounted ? Promise.resolve() : this.awaitEvent('mount');
-    }
-
-    awaitDom() {
-        return this.el ? Promise.resolve(this.el) : this.awaitEvent('domcreate').then(evt => evt.el);
-    }
-
-    awaitRender(val) {
-        return (this.renderPromise ? this.renderPromise : Promise.resolve())
-            .then(() => val);
-    }
-
-    static get generatedComponentClasses() {
-        return _generatedComponentClasses;
-    }
+    /**
+     * @private
+     */
 
     static set generatedComponentClasses(val) {
         return _generatedComponentClasses = val;
     }
+
+    /**
+     * @private
+     */
 
     static async makeComponentClass(ComponentClass) {
         await ComponentClass;
@@ -686,6 +1814,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             return this.bootstrapComponentClass(ComponentClass);
         }
     }
+
+    /**
+     * @private
+     */
 
     static bootstrapComponentClass(ComponentClass) {
         var WeddellComponent = this.Weddell.classes.Component;
@@ -709,6 +1841,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             throw "Unsupported component input";
         }
     }
+
+    /**
+     * @private
+     */
 
     async createChildComponentClass(componentName, ChildComponent) {
         if (Array.isArray(ChildComponent)) {
@@ -748,50 +1884,9 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         return obj[componentName];
     }
 
-    init(opts) {
-        opts = defaults(opts, this.defaultInitOpts);
-        if (!this._isInit) {
-            this._isInit = true;
-
-            ['props', 'state'].forEach((propName) => {
-                this[propName].on('change', evt => {
-                    // if (evt.target === this[propName]) {
-                    var dirtyRenderers = this.checkChangedKey(evt.changedKey);
-                    if (dirtyRenderers) {
-                        this.markDirty(dirtyRenderers);
-                    }
-                    // }
-                })
-            });
-
-            if (this.constructor.watchers) {
-                this.constructor.watchers
-                    .forEach(entry => this.state.watch(...entry))
-            }
-
-            return Promise.resolve(this.onInit(opts))
-                .then(() => {
-                    this.trigger('init');
-                    return this;
-                });
-        }
-        return Promise.resolve(this);
-    }
-
-    bindEvent(funcText, opts = {}) {
-        var consts = this.constructor.Weddell.consts;
-        return `${opts.preventDefault ? `event.preventDefault();` : ''}${opts.stopPropagation ? `event.stopPropagation();` : ''}Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){ window.addEventListener('weddellinitbefore', function(evt) { resolve(evt.detail.app) }) })).then(function(app) { app.awaitComponentMount('${this.id}').then(function(component){ (function() {${funcText}}.bind(component))()})})`;
-    }
-
-    bindEventValue(propName, opts) {
-        return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
-    }
-
-    getMountedChildComponents() {
-        return this.reduceComponents((acc, component) =>
-            acc.concat(component), [], component =>
-                component !== this && component._isMounted);
-    }
+    /**
+     * @private
+     */
 
     assignProps(props, parentScope) {
         if (props) {
@@ -820,6 +1915,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                 .reduce((acc, curr) => Object.assign(acc, { [curr[0]]: curr[1] }), {});
         }
     }
+
+    /**
+     * @private
+     */
 
     bindInlineEventHandlers(handlersObj, scope) {
         var results = Object.entries(this._inlineEventHandlers)
@@ -856,6 +1955,42 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         }
     }
 
+    /**
+     * @private
+     */
+
+    init(opts) {
+        opts = defaults(opts, this.defaultInitOpts);
+        if (!this._isInit) {
+            this._isInit = true;
+
+            ['props', 'state'].forEach((propName) => {
+                this[propName].on('change', evt => {
+                    // if (evt.target === this[propName]) {
+                    var dirtyRenderers = this.checkChangedKey(evt.changedKey);
+                    if (dirtyRenderers) {
+                        this.markDirty(dirtyRenderers);
+                    }
+                    // }
+                })
+            });
+
+            this.constructor.watchers
+                .forEach(entry => this.state.watch(...entry))
+
+            return Promise.resolve(this.onInit(opts))
+                .then(() => {
+                    this.trigger('init');
+                    return this;
+                });
+        }
+        return Promise.resolve(this);
+    }
+
+    /**
+     * @private
+     */
+
     addComponentEvents(componentName, childComponent, index) {
         var componentKeyIndex;
         if (this.constructor.componentEventListeners && (componentKeyIndex = Object.keys(this.constructor.componentEventListeners).map(key => key.toLowerCase()).indexOf(componentName)) > -1) {
@@ -872,6 +2007,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                 })
         }
     }
+
+    /**
+     * @private
+     */
 
     unmount() {
         if (this._isMounted === true) {
@@ -892,6 +2031,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         }
         return Promise.resolve(false);
     }
+
+    /**
+     * @private
+     */
 
     mount(domParent) {
         if (!this._isMounted) {
@@ -915,11 +2058,19 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         return Promise.resolve(false);
     }
 
+    /**
+     * @private
+     */
+
     markWidgetDirty() {
         this._widgetIsDirty = true;
 
         this.trigger('widgetdirty');
     }
+
+    /**
+     * @private
+     */
 
     extractSnapshotOpts(snapshot) {
         if (!snapshot || !snapshot.id) {
@@ -931,6 +2082,10 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                 snapshot[curr] ? Object.assign(acc, { [curr === 'state' ? 'initialState' : curr]: snapshot[curr] }) : acc, { id: snapshot.id });
 
     }
+
+    /**
+     * @private
+     */
 
     async makeComponentInstance(componentName, index, componentOpts = {}) {
         componentName = componentName.toLowerCase();
@@ -969,11 +2124,19 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         return instance;
     }
 
+    /**
+     * @private
+     */
+
     getComponentInstance(componentName, index) {
         componentName = componentName.toLowerCase()
         var instances = this._componentInstances[componentName];
         return instances[index];
     }
+
+    /**
+     * @private
+     */
 
     async getInitComponentInstance(componentName, index) {
         componentName = componentName.toLowerCase()
@@ -986,6 +2149,18 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
 
         return instance
     }
+
+    /**
+     * @private
+     */
+
+    static get renderMethods() {
+        return ['renderVNode', 'renderStyles'];
+    }
+
+    /**
+     * @private
+     */
 
     cleanupComponentInstances() {
         //TODO right now, if a component becomes unused, it will continue to sit in memory and possibly generate events. We should probably clean them up.

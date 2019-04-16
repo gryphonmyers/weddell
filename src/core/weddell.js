@@ -1,27 +1,10 @@
-/**
- * Base Weddell module.
- * 
- * @module weddell
 
- */
 
 var mix = require('@weddell/mixwith').mix;
 
-/**
- * @requires module:weddell/app
- * @alias module:weddell~app
- */
-var App = require('./app');
-/**
- * @requires module:weddell/component
- * @alias module:weddell~component
- */
-var Component = require('./component');
-/**
- * @requires module:weddell/store
- * @alias module:weddell~store
- */
-var Store = require('./store');
+var WeddellApp = require('./app');
+var WeddellComponent = require('./component');
+var WeddellStore = require('./store');
 
 /**
  * @typedef {object} WeddellPlugin
@@ -32,7 +15,9 @@ var Store = require('./store');
  */
 
 /**
- * @alias module:weddell
+ * Top-level Weddell class serving as an entrypoint to various APIs. 
+ * 
+ * @abstract
  */
 
 class Weddell {
@@ -40,7 +25,31 @@ class Weddell {
      * Extends the base Weddell class with additional functionality, as defined in a plugin object.
      * 
      * @param {WeddellPlugin} pluginObj A plugin object to apply to the base Weddell class.
+     * 
+     * @example
+     * const Weddell = require('weddell');
+     * 
+     * const WeddellWithPluginApplied = Weddell.plugin({
+     *  id: 'my-plugin',
+     *  require: ['my-other-plugin'], // will error if app is initialized without 'my-other-plugin' also applied
+     *  classes: {
+     *      Component: Component => class extends Component {
+     * 
+     *          onMount() {
+     *              console.log(this.myNewComponentMethod());
+     *          }
+     * 
+     *          myNewComponentMethod() {
+     *              this.foo = 'bar';
+     *          }
+     *      }
+     *  },
+     * 
+     *  // Every component mounted by this app will print 'bar' to logs.
+     *  
+     * })
      */
+
     static plugin(pluginObj) {
         class NewWeddell extends Weddell {};
         if (!pluginObj.id) {
@@ -65,7 +74,7 @@ class Weddell {
                     }
                 });
                 Object.values(NewWeddell.classes).forEach(function(commonClass){
-                    commonClass.NewWeddell = NewWeddell;
+                    commonClass.Weddell = NewWeddell;
                 });
             }
 
@@ -84,6 +93,18 @@ class Weddell {
         }
         return NewWeddell;
     }
+    
+    static get App() {
+        return this.classes.App;
+    }
+    
+    static get Store() {
+        return this.classes.Store;
+    }
+
+    static get Component() {
+        return this.classes.Component;
+    }
 }
 Weddell.loadedPlugins = [];
 Weddell.consts = {
@@ -91,10 +112,10 @@ Weddell.consts = {
     INDEX_ATTR_NAME: 'data-component-index'
 };
 Weddell.deps = {};
-Weddell.classes = {App, Component, Store};
-Object.entries(Weddell.classes)
-    .forEach(([key, commonClass]) => {
-        commonClass.Weddell = Weddell;
-        Object.defineProperty(Weddell, key, { get: () => commonClass })
-    });
+Weddell.classes = {App: WeddellApp, Component: WeddellComponent, Store: WeddellStore };
+// Object.entries(Weddell.classes)
+//     .forEach(([key, commonClass]) => {
+//         commonClass.Weddell = Weddell;
+//         Object.defineProperty(Weddell, key, { get: () => commonClass })
+//     });
 module.exports = Weddell;
