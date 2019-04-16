@@ -1,89 +1,4 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Weddell = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*!
- * array-each <https://github.com/jonschlinkert/array-each>
- *
- * Copyright (c) 2015, 2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-/**
- * Loop over each item in an array and call the given function on every element.
- *
- * ```js
- * each(['a', 'b', 'c'], function(ele) {
- *   return ele + ele;
- * });
- * //=> ['aa', 'bb', 'cc']
- *
- * each(['a', 'b', 'c'], function(ele, i) {
- *   return i + ele;
- * });
- * //=> ['0a', '1b', '2c']
- * ```
- *
- * @name each
- * @alias forEach
- * @param {Array} `array`
- * @param {Function} `fn`
- * @param {Object} `thisArg` (optional) pass a `thisArg` to be used as the context in which to call the function.
- * @return {undefined}
- * @api public
- */
-
-module.exports = function each(arr, cb, thisArg) {
-  if (arr == null) return;
-
-  var len = arr.length;
-  var idx = -1;
-
-  while (++idx < len) {
-    var ele = arr[idx];
-    if (cb.call(thisArg, ele, idx, arr) === false) {
-      break;
-    }
-  }
-};
-
-},{}],2:[function(require,module,exports){
-/*!
- * array-slice <https://github.com/jonschlinkert/array-slice>
- *
- * Copyright (c) 2014-2015, 2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function slice(arr, start, end) {
-  var len = arr.length;
-  var range = [];
-
-  start = idx(arr, start);
-  end = idx(arr, end, len);
-
-  while (start < end) {
-    range.push(arr[start++]);
-  }
-  return range;
-};
-
-function idx(arr, pos, end) {
-  var len = arr.length;
-
-  if (pos == null) {
-    pos = end || 0;
-  } else if (pos < 0) {
-    pos = Math.max(len + pos, 0);
-  } else {
-    pos = Math.min(pos, len);
-  }
-
-  return pos;
-}
-
-},{}],3:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -149,65 +64,9 @@ if ('Set' in global) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
-/**
- * Returns a function, that, as long as it continues to be invoked, will not
- * be triggered. The function will be called after it stops being called for
- * N milliseconds. If `immediate` is passed, trigger the function on the
- * leading edge, instead of the trailing. The function also has a property 'clear' 
- * that is a function which will clear the timer to prevent previously scheduled executions. 
- *
- * @source underscore.js
- * @see http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
- * @param {Function} function to wrap
- * @param {Number} timeout in ms (`100`)
- * @param {Boolean} whether to execute at the beginning (`false`)
- * @api public
- */
+},{}],2:[function(require,module,exports){
 
-module.exports = function debounce(func, wait, immediate){
-  var timeout, args, context, timestamp, result;
-  if (null == wait) wait = 100;
-
-  function later() {
-    var last = Date.now() - timestamp;
-
-    if (last < wait && last >= 0) {
-      timeout = setTimeout(later, wait - last);
-    } else {
-      timeout = null;
-      if (!immediate) {
-        result = func.apply(context, args);
-        context = args = null;
-      }
-    }
-  };
-
-  var debounced = function(){
-    context = this;
-    args = arguments;
-    timestamp = Date.now();
-    var callNow = immediate && !timeout;
-    if (!timeout) timeout = setTimeout(later, wait);
-    if (callNow) {
-      result = func.apply(context, args);
-      context = args = null;
-    }
-
-    return result;
-  };
-
-  debounced.clear = function() {
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-  };
-
-  return debounced;
-};
-
-},{}],5:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -303,7 +162,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":6,"./lib/keys.js":7}],6:[function(require,module,exports){
+},{"./lib/is_arguments.js":4,"./lib/keys.js":5}],4:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -325,7 +184,7 @@ function unsupported(object){
     false;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -335,6 +194,28 @@ function shim (obj) {
   for (var key in obj) keys.push(key);
   return keys;
 }
+
+},{}],6:[function(require,module,exports){
+var makeDefaultsFunc = require('./make-defaults-func');
+module.exports = makeDefaultsFunc(false);
+
+},{"./make-defaults-func":7}],7:[function(require,module,exports){
+module.exports = function(deep, merge) {
+    return function defaults() {
+        return Array.from(arguments).slice(1).reduce((sourceObj, obj) => {
+            Object.entries(obj).forEach((entry) => {
+                if (typeof sourceObj[entry[0]] === 'undefined') {
+                    sourceObj[entry[0]] = entry[1];
+                } else if (deep && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && val.constructor.name === 'Object')) {
+                    sourceObj[entry[0]] = defaults(sourceObj[entry[0]], entry[1]);
+                } else if (merge && [entry[1], sourceObj[entry[0]]].every(val => val && typeof val === 'object' && Array.isArray(val))) {
+                    sourceObj[entry[0]] = merge(sourceObj[entry[0]], entry[1]);
+                }
+            });
+            return sourceObj;
+        }, Object.assign({}, arguments[0]));
+    }
+};
 
 },{}],8:[function(require,module,exports){
 (function (document, promise) {
@@ -364,64 +245,7 @@ function shim (obj) {
 })
 
 },{}],9:[function(require,module,exports){
-/*!
- * for-in <https://github.com/jonschlinkert/for-in>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
 'use strict';
-
-module.exports = function forIn(obj, fn, thisArg) {
-  for (var key in obj) {
-    if (fn.call(thisArg, obj[key], key, obj) === false) {
-      break;
-    }
-  }
-};
-
-},{}],10:[function(require,module,exports){
-/*!
- * for-own <https://github.com/jonschlinkert/for-own>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-var forIn = require('for-in');
-var hasOwn = Object.prototype.hasOwnProperty;
-
-module.exports = function forOwn(obj, fn, thisArg) {
-  forIn(obj, function(val, key) {
-    if (hasOwn.call(obj, key)) {
-      return fn.call(thisArg, obj[key], key, obj);
-    }
-  });
-};
-
-},{"for-in":9}],11:[function(require,module,exports){
-/*!
- * isobject <https://github.com/jonschlinkert/isobject>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-'use strict';
-
-module.exports = function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
-};
-
-},{}],12:[function(require,module,exports){
-'use strict';
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
@@ -435,599 +259,3453 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     factory(mod.exports);
     global.mixwith = mod.exports;
   }
-})(undefined, function (exports) {
+})(this, function (exports) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  var _appliedMixin = '__mixwith_appliedMixin';
 
-  var apply = exports.apply = function (superclass, mixin) {
-    var application = mixin(superclass);
-    application.prototype[_appliedMixin] = unwrap(mixin);
-    return application;
-  };
+  const _cachedApplicationRef = exports._cachedApplicationRef = Symbol('_cachedApplicationRef');
 
-  var isApplicationOf = exports.isApplicationOf = function (proto, mixin) {
-    return proto.hasOwnProperty(_appliedMixin) && proto[_appliedMixin] === unwrap(mixin);
-  };
+  const _mixinRef = exports._mixinRef = Symbol('_mixinRef');
 
-  var hasMixin = exports.hasMixin = function (o, mixin) {
-    while (o != null) {
-      if (isApplicationOf(o, mixin)) return true;
-      o = Object.getPrototypeOf(o);
-    }
-    return false;
-  };
+  const _originalMixin = exports._originalMixin = Symbol('_originalMixin');
 
-  var _wrappedMixin = '__mixwith_wrappedMixin';
-
-  var wrap = exports.wrap = function (mixin, wrapper) {
+  const wrap = exports.wrap = (mixin, wrapper) => {
     Object.setPrototypeOf(wrapper, mixin);
-    if (!mixin[_wrappedMixin]) {
-      mixin[_wrappedMixin] = mixin;
+    if (!mixin[_originalMixin]) {
+      mixin[_originalMixin] = mixin;
     }
     return wrapper;
   };
 
-  var unwrap = exports.unwrap = function (wrapper) {
-    return wrapper[_wrappedMixin] || wrapper;
-  };
+  const Cached = exports.Cached = mixin => wrap(mixin, superclass => {
+    // Get or create a symbol used to look up a previous application of mixin
+    // to the class. This symbol is unique per mixin definition, so a class will have N
+    // applicationRefs if it has had N mixins applied to it. A mixin will have
+    // exactly one _cachedApplicationRef used to store its applications.
+    let applicationRef = mixin[_cachedApplicationRef];
+    if (!applicationRef) {
+      applicationRef = mixin[_cachedApplicationRef] = Symbol(mixin.name);
+    }
+    // Look up an existing application of `mixin` to `c`, return it if found.
+    if (superclass.hasOwnProperty(applicationRef)) {
+      return superclass[applicationRef];
+    }
+    // Apply the mixin
+    let application = mixin(superclass);
+    // Cache the mixin application on the superclass
+    superclass[applicationRef] = application;
+    return application;
+  });
 
-  var _cachedApplications = '__mixwith_cachedApplications';
-
-  var Cached = exports.Cached = function (mixin) {
-    return wrap(mixin, function (superclass) {
-      // Get or create a symbol used to look up a previous application of mixin
-      // to the class. This symbol is unique per mixin definition, so a class will have N
-      // applicationRefs if it has had N mixins applied to it. A mixin will have
-      // exactly one _cachedApplicationRef used to store its applications.
-
-      var cachedApplications = superclass[_cachedApplications];
-      if (!cachedApplications) {
-        cachedApplications = superclass[_cachedApplications] = new Map();
-      }
-
-      var application = cachedApplications.get(mixin);
-      if (!application) {
-        application = mixin(superclass);
-        cachedApplications.set(mixin, application);
-      }
-
-      return application;
-    });
-  };
-
-  var DeDupe = exports.DeDupe = function (mixin) {
-    return wrap(mixin, function (superclass) {
-      return hasMixin(superclass.prototype, mixin) ? superclass : mixin(superclass);
-    });
-  };
-
-  var HasInstance = exports.HasInstance = function (mixin) {
-    if (Symbol && Symbol.hasInstance && !mixin[Symbol.hasInstance]) {
+  const HasInstance = exports.HasInstance = mixin => {
+    if (Symbol.hasInstance && !mixin.hasOwnProperty(Symbol.hasInstance)) {
       Object.defineProperty(mixin, Symbol.hasInstance, {
-        value: function value(o) {
-          return hasMixin(o, mixin);
+        value: function (o) {
+          const originalMixin = this[_originalMixin];
+          while (o != null) {
+            if (o.hasOwnProperty(_mixinRef) && o[_mixinRef] === originalMixin) {
+              return true;
+            }
+            o = Object.getPrototypeOf(o);
+          }
+          return false;
         }
       });
     }
     return mixin;
   };
 
-  var BareMixin = exports.BareMixin = function (mixin) {
-    return wrap(mixin, function (s) {
-      return apply(s, mixin);
-    });
-  };
+  const BareMixin = exports.BareMixin = mixin => wrap(mixin, superclass => {
+    // Apply the mixin
+    let application = mixin(superclass);
 
-  var Mixin = exports.Mixin = function (mixin) {
-    return DeDupe(Cached(BareMixin(mixin)));
-  };
-
-  var mix = exports.mix = function (superclass) {
-    return new MixinBuilder(superclass);
-  };
-
-  var MixinBuilder = function () {
-    function MixinBuilder(superclass) {
-      _classCallCheck(this, MixinBuilder);
-
-      this.superclass = superclass || function () {
-        function _class() {
-          _classCallCheck(this, _class);
-        }
-
-        return _class;
-      }();
-    }
-
-    _createClass(MixinBuilder, [{
-      key: 'with',
-      value: function _with() {
-        for (var _len = arguments.length, mixins = Array(_len), _key = 0; _key < _len; _key++) {
-          mixins[_key] = arguments[_key];
-        }
-
-        return mixins.reduce(function (c, m) {
-          return m(c);
-        }, this.superclass);
-      }
-    }]);
-
-    return MixinBuilder;
-  }();
-});
-
-},{}],13:[function(require,module,exports){
-'use strict';
-
-var slice = require('array-slice');
-
-var defaults = require('./mutable');
-
-/**
- * Extends an empty object with properties of one or
- * more additional `objects`
- *
- * @name .defaults.immutable
- * @param  {Object} `objects`
- * @return {Object}
- * @api public
- */
-
-module.exports = function immutableDefaults() {
-  var args = slice(arguments);
-  return defaults.apply(null, [{}].concat(args));
-};
-
-},{"./mutable":14,"array-slice":2}],14:[function(require,module,exports){
-'use strict';
-
-var each = require('array-each');
-var slice = require('array-slice');
-var forOwn = require('for-own');
-var isObject = require('isobject');
-
-/**
- * Extends the `target` object with properties of one or
- * more additional `objects`
- *
- * @name .defaults
- * @param  {Object} `target` The target object. Pass an empty object to shallow clone.
- * @param  {Object} `objects`
- * @return {Object}
- * @api public
- */
-
-module.exports = function defaults(target, objects) {
-  if (target == null) {
-    return {};
-  }
-
-  each(slice(arguments, 1), function(obj) {
-    if (isObject(obj)) {
-      forOwn(obj, function(val, key) {
-        if (target[key] == null) {
-          target[key] = val;
-        }
-      });
-    }
+    // Attach a reference from mixin applition to wrapped mixin for RTTI
+    // mixin[@@hasInstance] should use this.
+    application.prototype[_mixinRef] = mixin[_originalMixin];
+    return application;
   });
 
-  return target;
-};
+  const Mixin = exports.Mixin = mixin => Cached(HasInstance(BareMixin(mixin)));
 
-},{"array-each":1,"array-slice":2,"for-own":10,"isobject":11}],15:[function(require,module,exports){
-var mix = require('mixwith-es5').mix;
-var EventEmitterMixin = require('./event-emitter-mixin');
-var hasMixin = require('mixwith-es5').hasMixin;
+  const mix = exports.mix = superClass => new MixinBuilder(superClass);
 
-var ActionDispatcher = class extends mix(ActionDispatcher).with(EventEmitterMixin) {
-    constructor(opts) {
-        super(opts);
-        this._dispatchees = [];
+  class MixinBuilder {
+    constructor(superclass) {
+      this.superclass = superclass;
     }
 
-    addDispatchee(dispatchee) {
-        if (!hasMixin(dispatchee, EventEmitterMixin)) {
-            console.warn("Attempted to add a non-event emitter object as a dispatchee to the action dispatcher.");
+    with() {
+      return Array.from(arguments).reduce((c, m) => m(c), this.superclass);
+    }
+
+  }
+});
+},{}],10:[function(require,module,exports){
+/*!
+* vdom-virtualize
+* Copyright 2014 by Marcel Klehr <mklehr@gmx.net>
+*
+* (MIT LICENSE)
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+* THE SOFTWARE.
+*/
+var VNode = require("virtual-dom/vnode/vnode")
+  , VText = require("virtual-dom/vnode/vtext")
+  , VComment = require("./vcomment")
+
+module.exports = createVNode
+
+function createVNode(domNode, keyAttribute) {
+  keyAttribute = keyAttribute || null // XXX: Leave out `key` for now... merely used for (re-)ordering
+
+  if(domNode.nodeType == 1) return createFromElement(domNode, keyAttribute)
+  if(domNode.nodeType == 3) return createFromTextNode(domNode, keyAttribute)
+  if(domNode.nodeType == 8) return createFromCommentNode(domNode, keyAttribute)
+  return
+}
+
+function createFromTextNode(tNode) {
+  return new VText(tNode.nodeValue)
+}
+
+
+function createFromCommentNode(cNode) {
+  return new VComment(cNode.nodeValue)
+}
+
+
+function createFromElement(el, keyAttribute) {
+  var tagName = el.tagName
+  , namespace = el.namespaceURI == 'http://www.w3.org/1999/xhtml'? null : el.namespaceURI
+  , properties = getElementProperties(tagName, el)
+  , children = []
+  , key = (keyAttribute && el.getAttribute(keyAttribute)) || null
+
+  for (var i = 0; i < el.childNodes.length; i++) {
+    children.push(createVNode(el.childNodes[i], keyAttribute))
+  }
+
+  return new VNode(tagName, properties, children, key, namespace)
+}
+
+
+function getElementProperties(tagName, el) {
+  var obj = {}
+
+  for(var i=0; i<props.length; i++) {
+    var propName = props[i]
+    if(!el[propName] || (elementReadOnlyProperties[tagName.toLowerCase()] && elementReadOnlyProperties[tagName.toLowerCase()].indexOf(propName) > -1)) continue
+
+    // Special case: style
+    // .style is a DOMStyleDeclaration, thus we need to iterate over all
+    // rules to create a hash of applied css properties.
+    //
+    // You can directly set a specific .style[prop] = value so patching with vdom
+    // is possible.
+    if("style" == propName) {
+      var css = {}
+        , styleProp
+      if ('undefined' !== typeof el.style.length) {
+        for(var j=0; j<el.style.length; j++) {
+          styleProp = el.style[j]
+          css[styleProp] = el.style.getPropertyValue(styleProp) // XXX: add support for "!important" via getPropertyPriority()!
         }
-        if (this._dispatchees.indexOf(dispatchee) === -1) {
-            this._dispatchees.push(dispatchee);
-            return this.trigger('adddispatchee', {dispatchee});
+      } else { // IE8
+        for (var styleProp in el.style) {
+          if (el.style[styleProp] && el.style.hasOwnProperty(styleProp)) {
+            css[styleProp] = el.style[styleProp];
+          }
         }
-        return false;
+      }
+
+      if(Object.keys(css).length) obj[propName] = css
+      continue
     }
 
-    dispatch(actionName, actionData) {
-        var result = this._dispatchees.map(dispatchee =>
-            dispatchee.trigger(actionName, Object.assign({}, actionData)));
-        this.trigger('dispatch', {actionName, actionData});
-        return result;
+    // https://msdn.microsoft.com/en-us/library/cc848861%28v=vs.85%29.aspx
+    // The img element does not support the HREF content attribute.
+    // In addition, the href property is read-only for the img Document Object Model (DOM) object
+    if (el.tagName.toLowerCase() === 'img' && propName === 'href') {
+      continue;
+    }
+
+    // Special case: dataset
+    // we can iterate over .dataset with a simple for..in loop.
+    // The all-time foo with data-* attribs is the dash-snake to camelCase
+    // conversion.
+    //
+    // *This is compatible with h(), but not with every browser, thus this section was removed in favor
+    // of attributes (specified below)!*
+    //
+    // .dataset properties are directly accessible as transparent getters/setters, so
+    // patching with vdom is possible.
+    /*if("dataset" == propName) {
+      var data = {}
+      for(var p in el.dataset) {
+        data[p] = el.dataset[p]
+      }
+      obj[propName] = data
+      return
+    }*/
+
+    // Special case: attributes
+    // these are a NamedNodeMap, but we can just convert them to a hash for vdom,
+    // because of https://github.com/Matt-Esch/virtual-dom/blob/master/vdom/apply-properties.js#L57
+    if("attributes" == propName){
+      var atts = Array.prototype.slice.call(el[propName]);
+      var hash = {}
+      for(var k=0; k<atts.length; k++){
+        var name = atts[k].name;
+        if(obj[name] || obj[attrBlacklist[name]]) continue;
+        hash[name] = el.getAttribute(name);
+      }
+      obj[propName] = hash;
+      continue
+    }
+    if("tabIndex" == propName && el.tabIndex === -1) continue
+
+    // Special case: contentEditable
+    // browser use 'inherit' by default on all nodes, but does not allow setting it to ''
+    // diffing virtualize dom will trigger error
+    // ref: https://github.com/Matt-Esch/virtual-dom/issues/176
+    if("contentEditable" == propName && el[propName] === 'inherit') continue
+
+    if('object' === typeof el[propName]) continue
+
+    // default: just copy the property
+    obj[propName] = el[propName]
+  }
+
+  return obj
+}
+
+var elementReadOnlyProperties = {
+  'select': [
+    'type'
+  ]
+};
+
+/**
+ * DOMNode property white list
+ * Taken from https://github.com/Raynos/react/blob/dom-property-config/src/browser/ui/dom/DefaultDOMPropertyConfig.js
+ */
+var props =
+
+module.exports.properties = [
+ "accept"
+,"accessKey"
+,"action"
+,"alt"
+,"async"
+,"autoComplete"
+,"autoPlay"
+,"cellPadding"
+,"cellSpacing"
+,"checked"
+,"className"
+,"colSpan"
+,"content"
+,"contentEditable"
+,"controls"
+,"crossOrigin"
+,"data"
+//,"dataset" removed since attributes handles data-attributes
+,"defer"
+,"dir"
+,"download"
+,"draggable"
+,"encType"
+,"formNoValidate"
+,"href"
+,"hrefLang"
+,"htmlFor"
+,"httpEquiv"
+,"icon"
+,"id"
+,"label"
+,"lang"
+,"list"
+,"loop"
+,"max"
+,"mediaGroup"
+,"method"
+,"min"
+,"multiple"
+,"muted"
+,"name"
+,"noValidate"
+,"pattern"
+,"placeholder"
+,"poster"
+,"preload"
+,"radioGroup"
+,"readOnly"
+,"rel"
+,"required"
+,"rowSpan"
+,"sandbox"
+,"scope"
+,"scrollLeft"
+,"scrolling"
+,"scrollTop"
+,"selected"
+,"span"
+,"spellCheck"
+,"src"
+,"srcDoc"
+,"srcSet"
+,"start"
+,"step"
+,"style"
+,"tabIndex"
+,"target"
+,"title"
+,"type"
+,"value"
+
+// Non-standard Properties
+,"autoCapitalize"
+,"autoCorrect"
+,"property"
+
+, "attributes"
+]
+
+var attrBlacklist =
+module.exports.attrBlacklist = {
+  'class': 'className'
+}
+
+},{"./vcomment":11,"virtual-dom/vnode/vnode":43,"virtual-dom/vnode/vtext":45}],11:[function(require,module,exports){
+module.exports = VirtualComment
+
+function VirtualComment(text) {
+  this.text = String(text)
+}
+
+VirtualComment.prototype.type = 'Widget'
+
+VirtualComment.prototype.init = function() {
+  return document.createComment(this.text)
+}
+
+VirtualComment.prototype.update = function(previous, domNode) {
+  if(this.text === previous.text) return
+  domNode.nodeValue = this.text
+}
+
+},{}],12:[function(require,module,exports){
+var createElement = require("./vdom/create-element.js")
+
+module.exports = createElement
+
+},{"./vdom/create-element.js":24}],13:[function(require,module,exports){
+var diff = require("./vtree/diff.js")
+
+module.exports = diff
+
+},{"./vtree/diff.js":47}],14:[function(require,module,exports){
+var h = require("./virtual-hyperscript/index.js")
+
+module.exports = h
+
+},{"./virtual-hyperscript/index.js":32}],15:[function(require,module,exports){
+/*!
+ * Cross-Browser Split 1.1.1
+ * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
+ * Available under the MIT License
+ * ECMAScript compliant, uniform cross-browser split method
+ */
+
+/**
+ * Splits a string into an array of strings using a regex or string separator. Matches of the
+ * separator are not included in the result array. However, if `separator` is a regex that contains
+ * capturing groups, backreferences are spliced into the result each time `separator` is matched.
+ * Fixes browser bugs compared to the native `String.prototype.split` and can be used reliably
+ * cross-browser.
+ * @param {String} str String to split.
+ * @param {RegExp|String} separator Regex or string to use for separating the string.
+ * @param {Number} [limit] Maximum number of items to include in the result array.
+ * @returns {Array} Array of substrings.
+ * @example
+ *
+ * // Basic use
+ * split('a b c d', ' ');
+ * // -> ['a', 'b', 'c', 'd']
+ *
+ * // With limit
+ * split('a b c d', ' ', 2);
+ * // -> ['a', 'b']
+ *
+ * // Backreferences in result array
+ * split('..word1 word2..', /([a-z]+)(\d+)/i);
+ * // -> ['..', 'word', '1', ' ', 'word', '2', '..']
+ */
+module.exports = (function split(undef) {
+
+  var nativeSplit = String.prototype.split,
+    compliantExecNpcg = /()??/.exec("")[1] === undef,
+    // NPCG: nonparticipating capturing group
+    self;
+
+  self = function(str, separator, limit) {
+    // If `separator` is not a regex, use `nativeSplit`
+    if (Object.prototype.toString.call(separator) !== "[object RegExp]") {
+      return nativeSplit.call(str, separator, limit);
+    }
+    var output = [],
+      flags = (separator.ignoreCase ? "i" : "") + (separator.multiline ? "m" : "") + (separator.extended ? "x" : "") + // Proposed for ES6
+      (separator.sticky ? "y" : ""),
+      // Firefox 3+
+      lastLastIndex = 0,
+      // Make `global` and avoid `lastIndex` issues by working with a copy
+      separator = new RegExp(separator.source, flags + "g"),
+      separator2, match, lastIndex, lastLength;
+    str += ""; // Type-convert
+    if (!compliantExecNpcg) {
+      // Doesn't need flags gy, but they don't hurt
+      separator2 = new RegExp("^" + separator.source + "$(?!\\s)", flags);
+    }
+    /* Values for `limit`, per the spec:
+     * If undefined: 4294967295 // Math.pow(2, 32) - 1
+     * If 0, Infinity, or NaN: 0
+     * If positive number: limit = Math.floor(limit); if (limit > 4294967295) limit -= 4294967296;
+     * If negative number: 4294967296 - Math.floor(Math.abs(limit))
+     * If other: Type-convert, then use the above rules
+     */
+    limit = limit === undef ? -1 >>> 0 : // Math.pow(2, 32) - 1
+    limit >>> 0; // ToUint32(limit)
+    while (match = separator.exec(str)) {
+      // `separator.lastIndex` is not reliable cross-browser
+      lastIndex = match.index + match[0].length;
+      if (lastIndex > lastLastIndex) {
+        output.push(str.slice(lastLastIndex, match.index));
+        // Fix browsers whose `exec` methods don't consistently return `undefined` for
+        // nonparticipating capturing groups
+        if (!compliantExecNpcg && match.length > 1) {
+          match[0].replace(separator2, function() {
+            for (var i = 1; i < arguments.length - 2; i++) {
+              if (arguments[i] === undef) {
+                match[i] = undef;
+              }
+            }
+          });
+        }
+        if (match.length > 1 && match.index < str.length) {
+          Array.prototype.push.apply(output, match.slice(1));
+        }
+        lastLength = match[0].length;
+        lastLastIndex = lastIndex;
+        if (output.length >= limit) {
+          break;
+        }
+      }
+      if (separator.lastIndex === match.index) {
+        separator.lastIndex++; // Avoid an infinite loop
+      }
+    }
+    if (lastLastIndex === str.length) {
+      if (lastLength || !separator.test("")) {
+        output.push("");
+      }
+    } else {
+      output.push(str.slice(lastLastIndex));
+    }
+    return output.length > limit ? output.slice(0, limit) : output;
+  };
+
+  return self;
+})();
+
+},{}],16:[function(require,module,exports){
+'use strict';
+
+var OneVersionConstraint = require('individual/one-version');
+
+var MY_VERSION = '7';
+OneVersionConstraint('ev-store', MY_VERSION);
+
+var hashKey = '__EV_STORE_KEY@' + MY_VERSION;
+
+module.exports = EvStore;
+
+function EvStore(elem) {
+    var hash = elem[hashKey];
+
+    if (!hash) {
+        hash = elem[hashKey] = {};
+    }
+
+    return hash;
+}
+
+},{"individual/one-version":19}],17:[function(require,module,exports){
+(function (global){
+var topLevel = typeof global !== 'undefined' ? global :
+    typeof window !== 'undefined' ? window : {}
+var minDoc = require('min-document');
+
+var doccy;
+
+if (typeof document !== 'undefined') {
+    doccy = document;
+} else {
+    doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
+
+    if (!doccy) {
+        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
+    }
+}
+
+module.exports = doccy;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"min-document":2}],18:[function(require,module,exports){
+(function (global){
+'use strict';
+
+/*global window, global*/
+
+var root = typeof window !== 'undefined' ?
+    window : typeof global !== 'undefined' ?
+    global : {};
+
+module.exports = Individual;
+
+function Individual(key, value) {
+    if (key in root) {
+        return root[key];
+    }
+
+    root[key] = value;
+
+    return value;
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],19:[function(require,module,exports){
+'use strict';
+
+var Individual = require('./index.js');
+
+module.exports = OneVersion;
+
+function OneVersion(moduleName, version, defaultValue) {
+    var key = '__INDIVIDUAL_ONE_VERSION_' + moduleName;
+    var enforceKey = key + '_ENFORCE_SINGLETON';
+
+    var versionValue = Individual(enforceKey, version);
+
+    if (versionValue !== version) {
+        throw new Error('Can only have one copy of ' +
+            moduleName + '.\n' +
+            'You already have version ' + versionValue +
+            ' installed.\n' +
+            'This means you cannot install version ' + version);
+    }
+
+    return Individual(key, defaultValue);
+}
+
+},{"./index.js":18}],20:[function(require,module,exports){
+"use strict";
+
+module.exports = function isObject(x) {
+	return typeof x === "object" && x !== null;
+};
+
+},{}],21:[function(require,module,exports){
+var nativeIsArray = Array.isArray
+var toString = Object.prototype.toString
+
+module.exports = nativeIsArray || isArray
+
+function isArray(obj) {
+    return toString.call(obj) === "[object Array]"
+}
+
+},{}],22:[function(require,module,exports){
+var patch = require("./vdom/patch.js")
+
+module.exports = patch
+
+},{"./vdom/patch.js":27}],23:[function(require,module,exports){
+var isObject = require("is-object")
+var isHook = require("../vnode/is-vhook.js")
+
+module.exports = applyProperties
+
+function applyProperties(node, props, previous) {
+    for (var propName in props) {
+        var propValue = props[propName]
+
+        if (propValue === undefined) {
+            removeProperty(node, propName, propValue, previous);
+        } else if (isHook(propValue)) {
+            removeProperty(node, propName, propValue, previous)
+            if (propValue.hook) {
+                propValue.hook(node,
+                    propName,
+                    previous ? previous[propName] : undefined)
+            }
+        } else {
+            if (isObject(propValue)) {
+                patchObject(node, props, previous, propName, propValue);
+            } else {
+                node[propName] = propValue
+            }
+        }
+    }
+}
+
+function removeProperty(node, propName, propValue, previous) {
+    if (previous) {
+        var previousValue = previous[propName]
+
+        if (!isHook(previousValue)) {
+            if (propName === "attributes") {
+                for (var attrName in previousValue) {
+                    node.removeAttribute(attrName)
+                }
+            } else if (propName === "style") {
+                for (var i in previousValue) {
+                    node.style[i] = ""
+                }
+            } else if (typeof previousValue === "string") {
+                node[propName] = ""
+            } else {
+                node[propName] = null
+            }
+        } else if (previousValue.unhook) {
+            previousValue.unhook(node, propName, propValue)
+        }
+    }
+}
+
+function patchObject(node, props, previous, propName, propValue) {
+    var previousValue = previous ? previous[propName] : undefined
+
+    // Set attributes
+    if (propName === "attributes") {
+        for (var attrName in propValue) {
+            var attrValue = propValue[attrName]
+
+            if (attrValue === undefined) {
+                node.removeAttribute(attrName)
+            } else {
+                node.setAttribute(attrName, attrValue)
+            }
+        }
+
+        return
+    }
+
+    if(previousValue && isObject(previousValue) &&
+        getPrototype(previousValue) !== getPrototype(propValue)) {
+        node[propName] = propValue
+        return
+    }
+
+    if (!isObject(node[propName])) {
+        node[propName] = {}
+    }
+
+    var replacer = propName === "style" ? "" : undefined
+
+    for (var k in propValue) {
+        var value = propValue[k]
+        node[propName][k] = (value === undefined) ? replacer : value
+    }
+}
+
+function getPrototype(value) {
+    if (Object.getPrototypeOf) {
+        return Object.getPrototypeOf(value)
+    } else if (value.__proto__) {
+        return value.__proto__
+    } else if (value.constructor) {
+        return value.constructor.prototype
+    }
+}
+
+},{"../vnode/is-vhook.js":38,"is-object":20}],24:[function(require,module,exports){
+var document = require("global/document")
+
+var applyProperties = require("./apply-properties")
+
+var isVNode = require("../vnode/is-vnode.js")
+var isVText = require("../vnode/is-vtext.js")
+var isWidget = require("../vnode/is-widget.js")
+var handleThunk = require("../vnode/handle-thunk.js")
+
+module.exports = createElement
+
+function createElement(vnode, opts) {
+    var doc = opts ? opts.document || document : document
+    var warn = opts ? opts.warn : null
+
+    vnode = handleThunk(vnode).a
+
+    if (isWidget(vnode)) {
+        return vnode.init()
+    } else if (isVText(vnode)) {
+        return doc.createTextNode(vnode.text)
+    } else if (!isVNode(vnode)) {
+        if (warn) {
+            warn("Item is not a valid virtual dom node", vnode)
+        }
+        return null
+    }
+
+    var node = (vnode.namespace === null) ?
+        doc.createElement(vnode.tagName) :
+        doc.createElementNS(vnode.namespace, vnode.tagName)
+
+    var props = vnode.properties
+    applyProperties(node, props)
+
+    var children = vnode.children
+
+    for (var i = 0; i < children.length; i++) {
+        var childNode = createElement(children[i], opts)
+        if (childNode) {
+            node.appendChild(childNode)
+        }
+    }
+
+    return node
+}
+
+},{"../vnode/handle-thunk.js":36,"../vnode/is-vnode.js":39,"../vnode/is-vtext.js":40,"../vnode/is-widget.js":41,"./apply-properties":23,"global/document":17}],25:[function(require,module,exports){
+// Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
+// We don't want to read all of the DOM nodes in the tree so we use
+// the in-order tree indexing to eliminate recursion down certain branches.
+// We only recurse into a DOM node if we know that it contains a child of
+// interest.
+
+var noChild = {}
+
+module.exports = domIndex
+
+function domIndex(rootNode, tree, indices, nodes) {
+    if (!indices || indices.length === 0) {
+        return {}
+    } else {
+        indices.sort(ascending)
+        return recurse(rootNode, tree, indices, nodes, 0)
+    }
+}
+
+function recurse(rootNode, tree, indices, nodes, rootIndex) {
+    nodes = nodes || {}
+
+
+    if (rootNode) {
+        if (indexInRange(indices, rootIndex, rootIndex)) {
+            nodes[rootIndex] = rootNode
+        }
+
+        var vChildren = tree.children
+
+        if (vChildren) {
+
+            var childNodes = rootNode.childNodes
+
+            for (var i = 0; i < tree.children.length; i++) {
+                rootIndex += 1
+
+                var vChild = vChildren[i] || noChild
+                var nextIndex = rootIndex + (vChild.count || 0)
+
+                // skip recursion down the tree if there are no nodes down here
+                if (indexInRange(indices, rootIndex, nextIndex)) {
+                    recurse(childNodes[i], vChild, indices, nodes, rootIndex)
+                }
+
+                rootIndex = nextIndex
+            }
+        }
+    }
+
+    return nodes
+}
+
+// Binary search for an index in the interval [left, right]
+function indexInRange(indices, left, right) {
+    if (indices.length === 0) {
+        return false
+    }
+
+    var minIndex = 0
+    var maxIndex = indices.length - 1
+    var currentIndex
+    var currentItem
+
+    while (minIndex <= maxIndex) {
+        currentIndex = ((maxIndex + minIndex) / 2) >> 0
+        currentItem = indices[currentIndex]
+
+        if (minIndex === maxIndex) {
+            return currentItem >= left && currentItem <= right
+        } else if (currentItem < left) {
+            minIndex = currentIndex + 1
+        } else  if (currentItem > right) {
+            maxIndex = currentIndex - 1
+        } else {
+            return true
+        }
+    }
+
+    return false;
+}
+
+function ascending(a, b) {
+    return a > b ? 1 : -1
+}
+
+},{}],26:[function(require,module,exports){
+var applyProperties = require("./apply-properties")
+
+var isWidget = require("../vnode/is-widget.js")
+var VPatch = require("../vnode/vpatch.js")
+
+var updateWidget = require("./update-widget")
+
+module.exports = applyPatch
+
+function applyPatch(vpatch, domNode, renderOptions) {
+    var type = vpatch.type
+    var vNode = vpatch.vNode
+    var patch = vpatch.patch
+
+    switch (type) {
+        case VPatch.REMOVE:
+            return removeNode(domNode, vNode)
+        case VPatch.INSERT:
+            return insertNode(domNode, patch, renderOptions)
+        case VPatch.VTEXT:
+            return stringPatch(domNode, vNode, patch, renderOptions)
+        case VPatch.WIDGET:
+            return widgetPatch(domNode, vNode, patch, renderOptions)
+        case VPatch.VNODE:
+            return vNodePatch(domNode, vNode, patch, renderOptions)
+        case VPatch.ORDER:
+            reorderChildren(domNode, patch)
+            return domNode
+        case VPatch.PROPS:
+            applyProperties(domNode, patch, vNode.properties)
+            return domNode
+        case VPatch.THUNK:
+            return replaceRoot(domNode,
+                renderOptions.patch(domNode, patch, renderOptions))
+        default:
+            return domNode
+    }
+}
+
+function removeNode(domNode, vNode) {
+    var parentNode = domNode.parentNode
+
+    if (parentNode) {
+        parentNode.removeChild(domNode)
+    }
+
+    destroyWidget(domNode, vNode);
+
+    return null
+}
+
+function insertNode(parentNode, vNode, renderOptions) {
+    var newNode = renderOptions.render(vNode, renderOptions)
+
+    if (parentNode) {
+        parentNode.appendChild(newNode)
+    }
+
+    return parentNode
+}
+
+function stringPatch(domNode, leftVNode, vText, renderOptions) {
+    var newNode
+
+    if (domNode.nodeType === 3) {
+        domNode.replaceData(0, domNode.length, vText.text)
+        newNode = domNode
+    } else {
+        var parentNode = domNode.parentNode
+        newNode = renderOptions.render(vText, renderOptions)
+
+        if (parentNode && newNode !== domNode) {
+            parentNode.replaceChild(newNode, domNode)
+        }
+    }
+
+    return newNode
+}
+
+function widgetPatch(domNode, leftVNode, widget, renderOptions) {
+    var updating = updateWidget(leftVNode, widget)
+    var newNode
+
+    if (updating) {
+        newNode = widget.update(leftVNode, domNode) || domNode
+    } else {
+        newNode = renderOptions.render(widget, renderOptions)
+    }
+
+    var parentNode = domNode.parentNode
+
+    if (parentNode && newNode !== domNode) {
+        parentNode.replaceChild(newNode, domNode)
+    }
+
+    if (!updating) {
+        destroyWidget(domNode, leftVNode)
+    }
+
+    return newNode
+}
+
+function vNodePatch(domNode, leftVNode, vNode, renderOptions) {
+    var parentNode = domNode.parentNode
+    var newNode = renderOptions.render(vNode, renderOptions)
+
+    if (parentNode && newNode !== domNode) {
+        parentNode.replaceChild(newNode, domNode)
+    }
+
+    return newNode
+}
+
+function destroyWidget(domNode, w) {
+    if (typeof w.destroy === "function" && isWidget(w)) {
+        w.destroy(domNode)
+    }
+}
+
+function reorderChildren(domNode, moves) {
+    var childNodes = domNode.childNodes
+    var keyMap = {}
+    var node
+    var remove
+    var insert
+
+    for (var i = 0; i < moves.removes.length; i++) {
+        remove = moves.removes[i]
+        node = childNodes[remove.from]
+        if (remove.key) {
+            keyMap[remove.key] = node
+        }
+        domNode.removeChild(node)
+    }
+
+    var length = childNodes.length
+    for (var j = 0; j < moves.inserts.length; j++) {
+        insert = moves.inserts[j]
+        node = keyMap[insert.key]
+        // this is the weirdest bug i've ever seen in webkit
+        domNode.insertBefore(node, insert.to >= length++ ? null : childNodes[insert.to])
+    }
+}
+
+function replaceRoot(oldRoot, newRoot) {
+    if (oldRoot && newRoot && oldRoot !== newRoot && oldRoot.parentNode) {
+        oldRoot.parentNode.replaceChild(newRoot, oldRoot)
+    }
+
+    return newRoot;
+}
+
+},{"../vnode/is-widget.js":41,"../vnode/vpatch.js":44,"./apply-properties":23,"./update-widget":28}],27:[function(require,module,exports){
+var document = require("global/document")
+var isArray = require("x-is-array")
+
+var render = require("./create-element")
+var domIndex = require("./dom-index")
+var patchOp = require("./patch-op")
+module.exports = patch
+
+function patch(rootNode, patches, renderOptions) {
+    renderOptions = renderOptions || {}
+    renderOptions.patch = renderOptions.patch && renderOptions.patch !== patch
+        ? renderOptions.patch
+        : patchRecursive
+    renderOptions.render = renderOptions.render || render
+
+    return renderOptions.patch(rootNode, patches, renderOptions)
+}
+
+function patchRecursive(rootNode, patches, renderOptions) {
+    var indices = patchIndices(patches)
+
+    if (indices.length === 0) {
+        return rootNode
+    }
+
+    var index = domIndex(rootNode, patches.a, indices)
+    var ownerDocument = rootNode.ownerDocument
+
+    if (!renderOptions.document && ownerDocument !== document) {
+        renderOptions.document = ownerDocument
+    }
+
+    for (var i = 0; i < indices.length; i++) {
+        var nodeIndex = indices[i]
+        rootNode = applyPatch(rootNode,
+            index[nodeIndex],
+            patches[nodeIndex],
+            renderOptions)
+    }
+
+    return rootNode
+}
+
+function applyPatch(rootNode, domNode, patchList, renderOptions) {
+    if (!domNode) {
+        return rootNode
+    }
+
+    var newNode
+
+    if (isArray(patchList)) {
+        for (var i = 0; i < patchList.length; i++) {
+            newNode = patchOp(patchList[i], domNode, renderOptions)
+
+            if (domNode === rootNode) {
+                rootNode = newNode
+            }
+        }
+    } else {
+        newNode = patchOp(patchList, domNode, renderOptions)
+
+        if (domNode === rootNode) {
+            rootNode = newNode
+        }
+    }
+
+    return rootNode
+}
+
+function patchIndices(patches) {
+    var indices = []
+
+    for (var key in patches) {
+        if (key !== "a") {
+            indices.push(Number(key))
+        }
+    }
+
+    return indices
+}
+
+},{"./create-element":24,"./dom-index":25,"./patch-op":26,"global/document":17,"x-is-array":21}],28:[function(require,module,exports){
+var isWidget = require("../vnode/is-widget.js")
+
+module.exports = updateWidget
+
+function updateWidget(a, b) {
+    if (isWidget(a) && isWidget(b)) {
+        if ("name" in a && "name" in b) {
+            return a.id === b.id
+        } else {
+            return a.init === b.init
+        }
+    }
+
+    return false
+}
+
+},{"../vnode/is-widget.js":41}],29:[function(require,module,exports){
+'use strict';
+
+module.exports = AttributeHook;
+
+function AttributeHook(namespace, value) {
+    if (!(this instanceof AttributeHook)) {
+        return new AttributeHook(namespace, value);
+    }
+
+    this.namespace = namespace;
+    this.value = value;
+}
+
+AttributeHook.prototype.hook = function (node, prop, prev) {
+    if (prev && prev.type === 'AttributeHook' &&
+        prev.value === this.value &&
+        prev.namespace === this.namespace) {
+        return;
+    }
+
+    node.setAttributeNS(this.namespace, prop, this.value);
+};
+
+AttributeHook.prototype.unhook = function (node, prop, next) {
+    if (next && next.type === 'AttributeHook' &&
+        next.namespace === this.namespace) {
+        return;
+    }
+
+    var colonPosition = prop.indexOf(':');
+    var localName = colonPosition > -1 ? prop.substr(colonPosition + 1) : prop;
+    node.removeAttributeNS(this.namespace, localName);
+};
+
+AttributeHook.prototype.type = 'AttributeHook';
+
+},{}],30:[function(require,module,exports){
+'use strict';
+
+var EvStore = require('ev-store');
+
+module.exports = EvHook;
+
+function EvHook(value) {
+    if (!(this instanceof EvHook)) {
+        return new EvHook(value);
+    }
+
+    this.value = value;
+}
+
+EvHook.prototype.hook = function (node, propertyName) {
+    var es = EvStore(node);
+    var propName = propertyName.substr(3);
+
+    es[propName] = this.value;
+};
+
+EvHook.prototype.unhook = function(node, propertyName) {
+    var es = EvStore(node);
+    var propName = propertyName.substr(3);
+
+    es[propName] = undefined;
+};
+
+},{"ev-store":16}],31:[function(require,module,exports){
+'use strict';
+
+module.exports = SoftSetHook;
+
+function SoftSetHook(value) {
+    if (!(this instanceof SoftSetHook)) {
+        return new SoftSetHook(value);
+    }
+
+    this.value = value;
+}
+
+SoftSetHook.prototype.hook = function (node, propertyName) {
+    if (node[propertyName] !== this.value) {
+        node[propertyName] = this.value;
     }
 };
 
-module.exports = ActionDispatcher;
+},{}],32:[function(require,module,exports){
+'use strict';
 
-},{"./event-emitter-mixin":18,"mixwith-es5":12}],16:[function(require,module,exports){
-var DOMReady = require('document-ready-promise')();
-var defaults = require('object.defaults/immutable');
-var mix = require('mixwith-es5').mix;
-var debounce = require('debounce');
-var Sig = require('./sig');
-var EventEmitterMixin = require('./event-emitter-mixin');
-var isApplicationOf = require('mixwith-es5').isApplicationOf;
-var Component = require('./component');
-var ActionDispatcher = require('./action-dispatcher');
+var isArray = require('x-is-array');
 
-Sig.addTypeAlias('CSSString', 'String');
+var VNode = require('../vnode/vnode.js');
+var VText = require('../vnode/vtext.js');
+var isVNode = require('../vnode/is-vnode');
+var isVText = require('../vnode/is-vtext');
+var isWidget = require('../vnode/is-widget');
+var isHook = require('../vnode/is-vhook');
+var isVThunk = require('../vnode/is-thunk');
 
-var defaultOpts = {
-    renderInterval: 41.6667,
-    markupRenderFormat: null,
-    stylesRenderFormat: 'CSSString',
-    markupTransforms: [],
-    stylesTransforms: [],
-    childStylesFirst: true
+var parseTag = require('./parse-tag.js');
+var softSetHook = require('./hooks/soft-set-hook.js');
+var evHook = require('./hooks/ev-hook.js');
+
+module.exports = h;
+
+function h(tagName, properties, children) {
+    var childNodes = [];
+    var tag, props, key, namespace;
+
+    if (!children && isChildren(properties)) {
+        children = properties;
+        props = {};
+    }
+
+    props = props || properties || {};
+    tag = parseTag(tagName, props);
+
+    // support keys
+    if (props.hasOwnProperty('key')) {
+        key = props.key;
+        props.key = undefined;
+    }
+
+    // support namespace
+    if (props.hasOwnProperty('namespace')) {
+        namespace = props.namespace;
+        props.namespace = undefined;
+    }
+
+    // fix cursor bug
+    if (tag === 'INPUT' &&
+        !namespace &&
+        props.hasOwnProperty('value') &&
+        props.value !== undefined &&
+        !isHook(props.value)
+    ) {
+        props.value = softSetHook(props.value);
+    }
+
+    transformProperties(props);
+
+    if (children !== undefined && children !== null) {
+        addChild(children, childNodes, tag, props);
+    }
+
+
+    return new VNode(tag, props, childNodes, key, namespace);
+}
+
+function addChild(c, childNodes, tag, props) {
+    if (typeof c === 'string') {
+        childNodes.push(new VText(c));
+    } else if (typeof c === 'number') {
+        childNodes.push(new VText(String(c)));
+    } else if (isChild(c)) {
+        childNodes.push(c);
+    } else if (isArray(c)) {
+        for (var i = 0; i < c.length; i++) {
+            addChild(c[i], childNodes, tag, props);
+        }
+    } else if (c === null || c === undefined) {
+        return;
+    } else {
+        throw UnexpectedVirtualElement({
+            foreignObject: c,
+            parentVnode: {
+                tagName: tag,
+                properties: props
+            }
+        });
+    }
+}
+
+function transformProperties(props) {
+    for (var propName in props) {
+        if (props.hasOwnProperty(propName)) {
+            var value = props[propName];
+
+            if (isHook(value)) {
+                continue;
+            }
+
+            if (propName.substr(0, 3) === 'ev-') {
+                // add ev-foo support
+                props[propName] = evHook(value);
+            }
+        }
+    }
+}
+
+function isChild(x) {
+    return isVNode(x) || isVText(x) || isWidget(x) || isVThunk(x);
+}
+
+function isChildren(x) {
+    return typeof x === 'string' || isArray(x) || isChild(x);
+}
+
+function UnexpectedVirtualElement(data) {
+    var err = new Error();
+
+    err.type = 'virtual-hyperscript.unexpected.virtual-element';
+    err.message = 'Unexpected virtual child passed to h().\n' +
+        'Expected a VNode / Vthunk / VWidget / string but:\n' +
+        'got:\n' +
+        errorString(data.foreignObject) +
+        '.\n' +
+        'The parent vnode is:\n' +
+        errorString(data.parentVnode)
+        '\n' +
+        'Suggested fix: change your `h(..., [ ... ])` callsite.';
+    err.foreignObject = data.foreignObject;
+    err.parentVnode = data.parentVnode;
+
+    return err;
+}
+
+function errorString(obj) {
+    try {
+        return JSON.stringify(obj, null, '    ');
+    } catch (e) {
+        return String(obj);
+    }
+}
+
+},{"../vnode/is-thunk":37,"../vnode/is-vhook":38,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vnode.js":43,"../vnode/vtext.js":45,"./hooks/ev-hook.js":30,"./hooks/soft-set-hook.js":31,"./parse-tag.js":33,"x-is-array":21}],33:[function(require,module,exports){
+'use strict';
+
+var split = require('browser-split');
+
+var classIdSplit = /([\.#]?[a-zA-Z0-9\u007F-\uFFFF_:-]+)/;
+var notClassId = /^\.|#/;
+
+module.exports = parseTag;
+
+function parseTag(tag, props) {
+    if (!tag) {
+        return 'DIV';
+    }
+
+    var noId = !(props.hasOwnProperty('id'));
+
+    var tagParts = split(tag, classIdSplit);
+    var tagName = null;
+
+    if (notClassId.test(tagParts[1])) {
+        tagName = 'DIV';
+    }
+
+    var classes, part, type, i;
+
+    for (i = 0; i < tagParts.length; i++) {
+        part = tagParts[i];
+
+        if (!part) {
+            continue;
+        }
+
+        type = part.charAt(0);
+
+        if (!tagName) {
+            tagName = part;
+        } else if (type === '.') {
+            classes = classes || [];
+            classes.push(part.substring(1, part.length));
+        } else if (type === '#' && noId) {
+            props.id = part.substring(1, part.length);
+        }
+    }
+
+    if (classes) {
+        if (props.className) {
+            classes.push(props.className);
+        }
+
+        props.className = classes.join(' ');
+    }
+
+    return props.namespace ? tagName : tagName.toUpperCase();
+}
+
+},{"browser-split":15}],34:[function(require,module,exports){
+'use strict';
+
+var DEFAULT_NAMESPACE = null;
+var EV_NAMESPACE = 'http://www.w3.org/2001/xml-events';
+var XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink';
+var XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
+
+// http://www.w3.org/TR/SVGTiny12/attributeTable.html
+// http://www.w3.org/TR/SVG/attindex.html
+var SVG_PROPERTIES = {
+    'about': DEFAULT_NAMESPACE,
+    'accent-height': DEFAULT_NAMESPACE,
+    'accumulate': DEFAULT_NAMESPACE,
+    'additive': DEFAULT_NAMESPACE,
+    'alignment-baseline': DEFAULT_NAMESPACE,
+    'alphabetic': DEFAULT_NAMESPACE,
+    'amplitude': DEFAULT_NAMESPACE,
+    'arabic-form': DEFAULT_NAMESPACE,
+    'ascent': DEFAULT_NAMESPACE,
+    'attributeName': DEFAULT_NAMESPACE,
+    'attributeType': DEFAULT_NAMESPACE,
+    'azimuth': DEFAULT_NAMESPACE,
+    'bandwidth': DEFAULT_NAMESPACE,
+    'baseFrequency': DEFAULT_NAMESPACE,
+    'baseProfile': DEFAULT_NAMESPACE,
+    'baseline-shift': DEFAULT_NAMESPACE,
+    'bbox': DEFAULT_NAMESPACE,
+    'begin': DEFAULT_NAMESPACE,
+    'bias': DEFAULT_NAMESPACE,
+    'by': DEFAULT_NAMESPACE,
+    'calcMode': DEFAULT_NAMESPACE,
+    'cap-height': DEFAULT_NAMESPACE,
+    'class': DEFAULT_NAMESPACE,
+    'clip': DEFAULT_NAMESPACE,
+    'clip-path': DEFAULT_NAMESPACE,
+    'clip-rule': DEFAULT_NAMESPACE,
+    'clipPathUnits': DEFAULT_NAMESPACE,
+    'color': DEFAULT_NAMESPACE,
+    'color-interpolation': DEFAULT_NAMESPACE,
+    'color-interpolation-filters': DEFAULT_NAMESPACE,
+    'color-profile': DEFAULT_NAMESPACE,
+    'color-rendering': DEFAULT_NAMESPACE,
+    'content': DEFAULT_NAMESPACE,
+    'contentScriptType': DEFAULT_NAMESPACE,
+    'contentStyleType': DEFAULT_NAMESPACE,
+    'cursor': DEFAULT_NAMESPACE,
+    'cx': DEFAULT_NAMESPACE,
+    'cy': DEFAULT_NAMESPACE,
+    'd': DEFAULT_NAMESPACE,
+    'datatype': DEFAULT_NAMESPACE,
+    'defaultAction': DEFAULT_NAMESPACE,
+    'descent': DEFAULT_NAMESPACE,
+    'diffuseConstant': DEFAULT_NAMESPACE,
+    'direction': DEFAULT_NAMESPACE,
+    'display': DEFAULT_NAMESPACE,
+    'divisor': DEFAULT_NAMESPACE,
+    'dominant-baseline': DEFAULT_NAMESPACE,
+    'dur': DEFAULT_NAMESPACE,
+    'dx': DEFAULT_NAMESPACE,
+    'dy': DEFAULT_NAMESPACE,
+    'edgeMode': DEFAULT_NAMESPACE,
+    'editable': DEFAULT_NAMESPACE,
+    'elevation': DEFAULT_NAMESPACE,
+    'enable-background': DEFAULT_NAMESPACE,
+    'end': DEFAULT_NAMESPACE,
+    'ev:event': EV_NAMESPACE,
+    'event': DEFAULT_NAMESPACE,
+    'exponent': DEFAULT_NAMESPACE,
+    'externalResourcesRequired': DEFAULT_NAMESPACE,
+    'fill': DEFAULT_NAMESPACE,
+    'fill-opacity': DEFAULT_NAMESPACE,
+    'fill-rule': DEFAULT_NAMESPACE,
+    'filter': DEFAULT_NAMESPACE,
+    'filterRes': DEFAULT_NAMESPACE,
+    'filterUnits': DEFAULT_NAMESPACE,
+    'flood-color': DEFAULT_NAMESPACE,
+    'flood-opacity': DEFAULT_NAMESPACE,
+    'focusHighlight': DEFAULT_NAMESPACE,
+    'focusable': DEFAULT_NAMESPACE,
+    'font-family': DEFAULT_NAMESPACE,
+    'font-size': DEFAULT_NAMESPACE,
+    'font-size-adjust': DEFAULT_NAMESPACE,
+    'font-stretch': DEFAULT_NAMESPACE,
+    'font-style': DEFAULT_NAMESPACE,
+    'font-variant': DEFAULT_NAMESPACE,
+    'font-weight': DEFAULT_NAMESPACE,
+    'format': DEFAULT_NAMESPACE,
+    'from': DEFAULT_NAMESPACE,
+    'fx': DEFAULT_NAMESPACE,
+    'fy': DEFAULT_NAMESPACE,
+    'g1': DEFAULT_NAMESPACE,
+    'g2': DEFAULT_NAMESPACE,
+    'glyph-name': DEFAULT_NAMESPACE,
+    'glyph-orientation-horizontal': DEFAULT_NAMESPACE,
+    'glyph-orientation-vertical': DEFAULT_NAMESPACE,
+    'glyphRef': DEFAULT_NAMESPACE,
+    'gradientTransform': DEFAULT_NAMESPACE,
+    'gradientUnits': DEFAULT_NAMESPACE,
+    'handler': DEFAULT_NAMESPACE,
+    'hanging': DEFAULT_NAMESPACE,
+    'height': DEFAULT_NAMESPACE,
+    'horiz-adv-x': DEFAULT_NAMESPACE,
+    'horiz-origin-x': DEFAULT_NAMESPACE,
+    'horiz-origin-y': DEFAULT_NAMESPACE,
+    'id': DEFAULT_NAMESPACE,
+    'ideographic': DEFAULT_NAMESPACE,
+    'image-rendering': DEFAULT_NAMESPACE,
+    'in': DEFAULT_NAMESPACE,
+    'in2': DEFAULT_NAMESPACE,
+    'initialVisibility': DEFAULT_NAMESPACE,
+    'intercept': DEFAULT_NAMESPACE,
+    'k': DEFAULT_NAMESPACE,
+    'k1': DEFAULT_NAMESPACE,
+    'k2': DEFAULT_NAMESPACE,
+    'k3': DEFAULT_NAMESPACE,
+    'k4': DEFAULT_NAMESPACE,
+    'kernelMatrix': DEFAULT_NAMESPACE,
+    'kernelUnitLength': DEFAULT_NAMESPACE,
+    'kerning': DEFAULT_NAMESPACE,
+    'keyPoints': DEFAULT_NAMESPACE,
+    'keySplines': DEFAULT_NAMESPACE,
+    'keyTimes': DEFAULT_NAMESPACE,
+    'lang': DEFAULT_NAMESPACE,
+    'lengthAdjust': DEFAULT_NAMESPACE,
+    'letter-spacing': DEFAULT_NAMESPACE,
+    'lighting-color': DEFAULT_NAMESPACE,
+    'limitingConeAngle': DEFAULT_NAMESPACE,
+    'local': DEFAULT_NAMESPACE,
+    'marker-end': DEFAULT_NAMESPACE,
+    'marker-mid': DEFAULT_NAMESPACE,
+    'marker-start': DEFAULT_NAMESPACE,
+    'markerHeight': DEFAULT_NAMESPACE,
+    'markerUnits': DEFAULT_NAMESPACE,
+    'markerWidth': DEFAULT_NAMESPACE,
+    'mask': DEFAULT_NAMESPACE,
+    'maskContentUnits': DEFAULT_NAMESPACE,
+    'maskUnits': DEFAULT_NAMESPACE,
+    'mathematical': DEFAULT_NAMESPACE,
+    'max': DEFAULT_NAMESPACE,
+    'media': DEFAULT_NAMESPACE,
+    'mediaCharacterEncoding': DEFAULT_NAMESPACE,
+    'mediaContentEncodings': DEFAULT_NAMESPACE,
+    'mediaSize': DEFAULT_NAMESPACE,
+    'mediaTime': DEFAULT_NAMESPACE,
+    'method': DEFAULT_NAMESPACE,
+    'min': DEFAULT_NAMESPACE,
+    'mode': DEFAULT_NAMESPACE,
+    'name': DEFAULT_NAMESPACE,
+    'nav-down': DEFAULT_NAMESPACE,
+    'nav-down-left': DEFAULT_NAMESPACE,
+    'nav-down-right': DEFAULT_NAMESPACE,
+    'nav-left': DEFAULT_NAMESPACE,
+    'nav-next': DEFAULT_NAMESPACE,
+    'nav-prev': DEFAULT_NAMESPACE,
+    'nav-right': DEFAULT_NAMESPACE,
+    'nav-up': DEFAULT_NAMESPACE,
+    'nav-up-left': DEFAULT_NAMESPACE,
+    'nav-up-right': DEFAULT_NAMESPACE,
+    'numOctaves': DEFAULT_NAMESPACE,
+    'observer': DEFAULT_NAMESPACE,
+    'offset': DEFAULT_NAMESPACE,
+    'opacity': DEFAULT_NAMESPACE,
+    'operator': DEFAULT_NAMESPACE,
+    'order': DEFAULT_NAMESPACE,
+    'orient': DEFAULT_NAMESPACE,
+    'orientation': DEFAULT_NAMESPACE,
+    'origin': DEFAULT_NAMESPACE,
+    'overflow': DEFAULT_NAMESPACE,
+    'overlay': DEFAULT_NAMESPACE,
+    'overline-position': DEFAULT_NAMESPACE,
+    'overline-thickness': DEFAULT_NAMESPACE,
+    'panose-1': DEFAULT_NAMESPACE,
+    'path': DEFAULT_NAMESPACE,
+    'pathLength': DEFAULT_NAMESPACE,
+    'patternContentUnits': DEFAULT_NAMESPACE,
+    'patternTransform': DEFAULT_NAMESPACE,
+    'patternUnits': DEFAULT_NAMESPACE,
+    'phase': DEFAULT_NAMESPACE,
+    'playbackOrder': DEFAULT_NAMESPACE,
+    'pointer-events': DEFAULT_NAMESPACE,
+    'points': DEFAULT_NAMESPACE,
+    'pointsAtX': DEFAULT_NAMESPACE,
+    'pointsAtY': DEFAULT_NAMESPACE,
+    'pointsAtZ': DEFAULT_NAMESPACE,
+    'preserveAlpha': DEFAULT_NAMESPACE,
+    'preserveAspectRatio': DEFAULT_NAMESPACE,
+    'primitiveUnits': DEFAULT_NAMESPACE,
+    'propagate': DEFAULT_NAMESPACE,
+    'property': DEFAULT_NAMESPACE,
+    'r': DEFAULT_NAMESPACE,
+    'radius': DEFAULT_NAMESPACE,
+    'refX': DEFAULT_NAMESPACE,
+    'refY': DEFAULT_NAMESPACE,
+    'rel': DEFAULT_NAMESPACE,
+    'rendering-intent': DEFAULT_NAMESPACE,
+    'repeatCount': DEFAULT_NAMESPACE,
+    'repeatDur': DEFAULT_NAMESPACE,
+    'requiredExtensions': DEFAULT_NAMESPACE,
+    'requiredFeatures': DEFAULT_NAMESPACE,
+    'requiredFonts': DEFAULT_NAMESPACE,
+    'requiredFormats': DEFAULT_NAMESPACE,
+    'resource': DEFAULT_NAMESPACE,
+    'restart': DEFAULT_NAMESPACE,
+    'result': DEFAULT_NAMESPACE,
+    'rev': DEFAULT_NAMESPACE,
+    'role': DEFAULT_NAMESPACE,
+    'rotate': DEFAULT_NAMESPACE,
+    'rx': DEFAULT_NAMESPACE,
+    'ry': DEFAULT_NAMESPACE,
+    'scale': DEFAULT_NAMESPACE,
+    'seed': DEFAULT_NAMESPACE,
+    'shape-rendering': DEFAULT_NAMESPACE,
+    'slope': DEFAULT_NAMESPACE,
+    'snapshotTime': DEFAULT_NAMESPACE,
+    'spacing': DEFAULT_NAMESPACE,
+    'specularConstant': DEFAULT_NAMESPACE,
+    'specularExponent': DEFAULT_NAMESPACE,
+    'spreadMethod': DEFAULT_NAMESPACE,
+    'startOffset': DEFAULT_NAMESPACE,
+    'stdDeviation': DEFAULT_NAMESPACE,
+    'stemh': DEFAULT_NAMESPACE,
+    'stemv': DEFAULT_NAMESPACE,
+    'stitchTiles': DEFAULT_NAMESPACE,
+    'stop-color': DEFAULT_NAMESPACE,
+    'stop-opacity': DEFAULT_NAMESPACE,
+    'strikethrough-position': DEFAULT_NAMESPACE,
+    'strikethrough-thickness': DEFAULT_NAMESPACE,
+    'string': DEFAULT_NAMESPACE,
+    'stroke': DEFAULT_NAMESPACE,
+    'stroke-dasharray': DEFAULT_NAMESPACE,
+    'stroke-dashoffset': DEFAULT_NAMESPACE,
+    'stroke-linecap': DEFAULT_NAMESPACE,
+    'stroke-linejoin': DEFAULT_NAMESPACE,
+    'stroke-miterlimit': DEFAULT_NAMESPACE,
+    'stroke-opacity': DEFAULT_NAMESPACE,
+    'stroke-width': DEFAULT_NAMESPACE,
+    'surfaceScale': DEFAULT_NAMESPACE,
+    'syncBehavior': DEFAULT_NAMESPACE,
+    'syncBehaviorDefault': DEFAULT_NAMESPACE,
+    'syncMaster': DEFAULT_NAMESPACE,
+    'syncTolerance': DEFAULT_NAMESPACE,
+    'syncToleranceDefault': DEFAULT_NAMESPACE,
+    'systemLanguage': DEFAULT_NAMESPACE,
+    'tableValues': DEFAULT_NAMESPACE,
+    'target': DEFAULT_NAMESPACE,
+    'targetX': DEFAULT_NAMESPACE,
+    'targetY': DEFAULT_NAMESPACE,
+    'text-anchor': DEFAULT_NAMESPACE,
+    'text-decoration': DEFAULT_NAMESPACE,
+    'text-rendering': DEFAULT_NAMESPACE,
+    'textLength': DEFAULT_NAMESPACE,
+    'timelineBegin': DEFAULT_NAMESPACE,
+    'title': DEFAULT_NAMESPACE,
+    'to': DEFAULT_NAMESPACE,
+    'transform': DEFAULT_NAMESPACE,
+    'transformBehavior': DEFAULT_NAMESPACE,
+    'type': DEFAULT_NAMESPACE,
+    'typeof': DEFAULT_NAMESPACE,
+    'u1': DEFAULT_NAMESPACE,
+    'u2': DEFAULT_NAMESPACE,
+    'underline-position': DEFAULT_NAMESPACE,
+    'underline-thickness': DEFAULT_NAMESPACE,
+    'unicode': DEFAULT_NAMESPACE,
+    'unicode-bidi': DEFAULT_NAMESPACE,
+    'unicode-range': DEFAULT_NAMESPACE,
+    'units-per-em': DEFAULT_NAMESPACE,
+    'v-alphabetic': DEFAULT_NAMESPACE,
+    'v-hanging': DEFAULT_NAMESPACE,
+    'v-ideographic': DEFAULT_NAMESPACE,
+    'v-mathematical': DEFAULT_NAMESPACE,
+    'values': DEFAULT_NAMESPACE,
+    'version': DEFAULT_NAMESPACE,
+    'vert-adv-y': DEFAULT_NAMESPACE,
+    'vert-origin-x': DEFAULT_NAMESPACE,
+    'vert-origin-y': DEFAULT_NAMESPACE,
+    'viewBox': DEFAULT_NAMESPACE,
+    'viewTarget': DEFAULT_NAMESPACE,
+    'visibility': DEFAULT_NAMESPACE,
+    'width': DEFAULT_NAMESPACE,
+    'widths': DEFAULT_NAMESPACE,
+    'word-spacing': DEFAULT_NAMESPACE,
+    'writing-mode': DEFAULT_NAMESPACE,
+    'x': DEFAULT_NAMESPACE,
+    'x-height': DEFAULT_NAMESPACE,
+    'x1': DEFAULT_NAMESPACE,
+    'x2': DEFAULT_NAMESPACE,
+    'xChannelSelector': DEFAULT_NAMESPACE,
+    'xlink:actuate': XLINK_NAMESPACE,
+    'xlink:arcrole': XLINK_NAMESPACE,
+    'xlink:href': XLINK_NAMESPACE,
+    'xlink:role': XLINK_NAMESPACE,
+    'xlink:show': XLINK_NAMESPACE,
+    'xlink:title': XLINK_NAMESPACE,
+    'xlink:type': XLINK_NAMESPACE,
+    'xml:base': XML_NAMESPACE,
+    'xml:id': XML_NAMESPACE,
+    'xml:lang': XML_NAMESPACE,
+    'xml:space': XML_NAMESPACE,
+    'y': DEFAULT_NAMESPACE,
+    'y1': DEFAULT_NAMESPACE,
+    'y2': DEFAULT_NAMESPACE,
+    'yChannelSelector': DEFAULT_NAMESPACE,
+    'z': DEFAULT_NAMESPACE,
+    'zoomAndPan': DEFAULT_NAMESPACE
 };
+
+module.exports = SVGAttributeNamespace;
+
+function SVGAttributeNamespace(value) {
+  if (SVG_PROPERTIES.hasOwnProperty(value)) {
+    return SVG_PROPERTIES[value];
+  }
+}
+
+},{}],35:[function(require,module,exports){
+'use strict';
+
+var isArray = require('x-is-array');
+
+var h = require('./index.js');
+
+
+var SVGAttributeNamespace = require('./svg-attribute-namespace');
+var attributeHook = require('./hooks/attribute-hook');
+
+var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+module.exports = svg;
+
+function svg(tagName, properties, children) {
+    if (!children && isChildren(properties)) {
+        children = properties;
+        properties = {};
+    }
+
+    properties = properties || {};
+
+    // set namespace for svg
+    properties.namespace = SVG_NAMESPACE;
+
+    var attributes = properties.attributes || (properties.attributes = {});
+
+    for (var key in properties) {
+        if (!properties.hasOwnProperty(key)) {
+            continue;
+        }
+
+        var namespace = SVGAttributeNamespace(key);
+
+        if (namespace === undefined) { // not a svg attribute
+            continue;
+        }
+
+        var value = properties[key];
+
+        if (typeof value !== 'string' &&
+            typeof value !== 'number' &&
+            typeof value !== 'boolean'
+        ) {
+            continue;
+        }
+
+        if (namespace !== null) { // namespaced attribute
+            properties[key] = attributeHook(namespace, value);
+            continue;
+        }
+
+        attributes[key] = value
+        properties[key] = undefined
+    }
+
+    return h(tagName, properties, children);
+}
+
+function isChildren(x) {
+    return typeof x === 'string' || isArray(x);
+}
+
+},{"./hooks/attribute-hook":29,"./index.js":32,"./svg-attribute-namespace":34,"x-is-array":21}],36:[function(require,module,exports){
+var isVNode = require("./is-vnode")
+var isVText = require("./is-vtext")
+var isWidget = require("./is-widget")
+var isThunk = require("./is-thunk")
+
+module.exports = handleThunk
+
+function handleThunk(a, b) {
+    var renderedA = a
+    var renderedB = b
+
+    if (isThunk(b)) {
+        renderedB = renderThunk(b, a)
+    }
+
+    if (isThunk(a)) {
+        renderedA = renderThunk(a, null)
+    }
+
+    return {
+        a: renderedA,
+        b: renderedB
+    }
+}
+
+function renderThunk(thunk, previous) {
+    var renderedThunk = thunk.vnode
+
+    if (!renderedThunk) {
+        renderedThunk = thunk.vnode = thunk.render(previous)
+    }
+
+    if (!(isVNode(renderedThunk) ||
+            isVText(renderedThunk) ||
+            isWidget(renderedThunk))) {
+        throw new Error("thunk did not return a valid node");
+    }
+
+    return renderedThunk
+}
+
+},{"./is-thunk":37,"./is-vnode":39,"./is-vtext":40,"./is-widget":41}],37:[function(require,module,exports){
+module.exports = isThunk
+
+function isThunk(t) {
+    return t && t.type === "Thunk"
+}
+
+},{}],38:[function(require,module,exports){
+module.exports = isHook
+
+function isHook(hook) {
+    return hook &&
+      (typeof hook.hook === "function" && !hook.hasOwnProperty("hook") ||
+       typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
+}
+
+},{}],39:[function(require,module,exports){
+var version = require("./version")
+
+module.exports = isVirtualNode
+
+function isVirtualNode(x) {
+    return x && x.type === "VirtualNode" && x.version === version
+}
+
+},{"./version":42}],40:[function(require,module,exports){
+var version = require("./version")
+
+module.exports = isVirtualText
+
+function isVirtualText(x) {
+    return x && x.type === "VirtualText" && x.version === version
+}
+
+},{"./version":42}],41:[function(require,module,exports){
+module.exports = isWidget
+
+function isWidget(w) {
+    return w && w.type === "Widget"
+}
+
+},{}],42:[function(require,module,exports){
+module.exports = "2"
+
+},{}],43:[function(require,module,exports){
+var version = require("./version")
+var isVNode = require("./is-vnode")
+var isWidget = require("./is-widget")
+var isThunk = require("./is-thunk")
+var isVHook = require("./is-vhook")
+
+module.exports = VirtualNode
+
+var noProperties = {}
+var noChildren = []
+
+function VirtualNode(tagName, properties, children, key, namespace) {
+    this.tagName = tagName
+    this.properties = properties || noProperties
+    this.children = children || noChildren
+    this.key = key != null ? String(key) : undefined
+    this.namespace = (typeof namespace === "string") ? namespace : null
+
+    var count = (children && children.length) || 0
+    var descendants = 0
+    var hasWidgets = false
+    var hasThunks = false
+    var descendantHooks = false
+    var hooks
+
+    for (var propName in properties) {
+        if (properties.hasOwnProperty(propName)) {
+            var property = properties[propName]
+            if (isVHook(property) && property.unhook) {
+                if (!hooks) {
+                    hooks = {}
+                }
+
+                hooks[propName] = property
+            }
+        }
+    }
+
+    for (var i = 0; i < count; i++) {
+        var child = children[i]
+        if (isVNode(child)) {
+            descendants += child.count || 0
+
+            if (!hasWidgets && child.hasWidgets) {
+                hasWidgets = true
+            }
+
+            if (!hasThunks && child.hasThunks) {
+                hasThunks = true
+            }
+
+            if (!descendantHooks && (child.hooks || child.descendantHooks)) {
+                descendantHooks = true
+            }
+        } else if (!hasWidgets && isWidget(child)) {
+            if (typeof child.destroy === "function") {
+                hasWidgets = true
+            }
+        } else if (!hasThunks && isThunk(child)) {
+            hasThunks = true;
+        }
+    }
+
+    this.count = count + descendants
+    this.hasWidgets = hasWidgets
+    this.hasThunks = hasThunks
+    this.hooks = hooks
+    this.descendantHooks = descendantHooks
+}
+
+VirtualNode.prototype.version = version
+VirtualNode.prototype.type = "VirtualNode"
+
+},{"./is-thunk":37,"./is-vhook":38,"./is-vnode":39,"./is-widget":41,"./version":42}],44:[function(require,module,exports){
+var version = require("./version")
+
+VirtualPatch.NONE = 0
+VirtualPatch.VTEXT = 1
+VirtualPatch.VNODE = 2
+VirtualPatch.WIDGET = 3
+VirtualPatch.PROPS = 4
+VirtualPatch.ORDER = 5
+VirtualPatch.INSERT = 6
+VirtualPatch.REMOVE = 7
+VirtualPatch.THUNK = 8
+
+module.exports = VirtualPatch
+
+function VirtualPatch(type, vNode, patch) {
+    this.type = Number(type)
+    this.vNode = vNode
+    this.patch = patch
+}
+
+VirtualPatch.prototype.version = version
+VirtualPatch.prototype.type = "VirtualPatch"
+
+},{"./version":42}],45:[function(require,module,exports){
+var version = require("./version")
+
+module.exports = VirtualText
+
+function VirtualText(text) {
+    this.text = String(text)
+}
+
+VirtualText.prototype.version = version
+VirtualText.prototype.type = "VirtualText"
+
+},{"./version":42}],46:[function(require,module,exports){
+var isObject = require("is-object")
+var isHook = require("../vnode/is-vhook")
+
+module.exports = diffProps
+
+function diffProps(a, b) {
+    var diff
+
+    for (var aKey in a) {
+        if (!(aKey in b)) {
+            diff = diff || {}
+            diff[aKey] = undefined
+        }
+
+        var aValue = a[aKey]
+        var bValue = b[aKey]
+
+        if (aValue === bValue) {
+            continue
+        } else if (isObject(aValue) && isObject(bValue)) {
+            if (getPrototype(bValue) !== getPrototype(aValue)) {
+                diff = diff || {}
+                diff[aKey] = bValue
+            } else if (isHook(bValue)) {
+                 diff = diff || {}
+                 diff[aKey] = bValue
+            } else {
+                var objectDiff = diffProps(aValue, bValue)
+                if (objectDiff) {
+                    diff = diff || {}
+                    diff[aKey] = objectDiff
+                }
+            }
+        } else {
+            diff = diff || {}
+            diff[aKey] = bValue
+        }
+    }
+
+    for (var bKey in b) {
+        if (!(bKey in a)) {
+            diff = diff || {}
+            diff[bKey] = b[bKey]
+        }
+    }
+
+    return diff
+}
+
+function getPrototype(value) {
+  if (Object.getPrototypeOf) {
+    return Object.getPrototypeOf(value)
+  } else if (value.__proto__) {
+    return value.__proto__
+  } else if (value.constructor) {
+    return value.constructor.prototype
+  }
+}
+
+},{"../vnode/is-vhook":38,"is-object":20}],47:[function(require,module,exports){
+var isArray = require("x-is-array")
+
+var VPatch = require("../vnode/vpatch")
+var isVNode = require("../vnode/is-vnode")
+var isVText = require("../vnode/is-vtext")
+var isWidget = require("../vnode/is-widget")
+var isThunk = require("../vnode/is-thunk")
+var handleThunk = require("../vnode/handle-thunk")
+
+var diffProps = require("./diff-props")
+
+module.exports = diff
+
+function diff(a, b) {
+    var patch = { a: a }
+    walk(a, b, patch, 0)
+    return patch
+}
+
+function walk(a, b, patch, index) {
+    if (a === b) {
+        return
+    }
+
+    var apply = patch[index]
+    var applyClear = false
+
+    if (isThunk(a) || isThunk(b)) {
+        thunks(a, b, patch, index)
+    } else if (b == null) {
+
+        // If a is a widget we will add a remove patch for it
+        // Otherwise any child widgets/hooks must be destroyed.
+        // This prevents adding two remove patches for a widget.
+        if (!isWidget(a)) {
+            clearState(a, patch, index)
+            apply = patch[index]
+        }
+
+        apply = appendPatch(apply, new VPatch(VPatch.REMOVE, a, b))
+    } else if (isVNode(b)) {
+        if (isVNode(a)) {
+            if (a.tagName === b.tagName &&
+                a.namespace === b.namespace &&
+                a.key === b.key) {
+                var propsPatch = diffProps(a.properties, b.properties)
+                if (propsPatch) {
+                    apply = appendPatch(apply,
+                        new VPatch(VPatch.PROPS, a, propsPatch))
+                }
+                apply = diffChildren(a, b, patch, apply, index)
+            } else {
+                apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
+                applyClear = true
+            }
+        } else {
+            apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
+            applyClear = true
+        }
+    } else if (isVText(b)) {
+        if (!isVText(a)) {
+            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
+            applyClear = true
+        } else if (a.text !== b.text) {
+            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
+        }
+    } else if (isWidget(b)) {
+        if (!isWidget(a)) {
+            applyClear = true
+        }
+
+        apply = appendPatch(apply, new VPatch(VPatch.WIDGET, a, b))
+    }
+
+    if (apply) {
+        patch[index] = apply
+    }
+
+    if (applyClear) {
+        clearState(a, patch, index)
+    }
+}
+
+function diffChildren(a, b, patch, apply, index) {
+    var aChildren = a.children
+    var orderedSet = reorder(aChildren, b.children)
+    var bChildren = orderedSet.children
+
+    var aLen = aChildren.length
+    var bLen = bChildren.length
+    var len = aLen > bLen ? aLen : bLen
+
+    for (var i = 0; i < len; i++) {
+        var leftNode = aChildren[i]
+        var rightNode = bChildren[i]
+        index += 1
+
+        if (!leftNode) {
+            if (rightNode) {
+                // Excess nodes in b need to be added
+                apply = appendPatch(apply,
+                    new VPatch(VPatch.INSERT, null, rightNode))
+            }
+        } else {
+            walk(leftNode, rightNode, patch, index)
+        }
+
+        if (isVNode(leftNode) && leftNode.count) {
+            index += leftNode.count
+        }
+    }
+
+    if (orderedSet.moves) {
+        // Reorder nodes last
+        apply = appendPatch(apply, new VPatch(
+            VPatch.ORDER,
+            a,
+            orderedSet.moves
+        ))
+    }
+
+    return apply
+}
+
+function clearState(vNode, patch, index) {
+    // TODO: Make this a single walk, not two
+    unhook(vNode, patch, index)
+    destroyWidgets(vNode, patch, index)
+}
+
+// Patch records for all destroyed widgets must be added because we need
+// a DOM node reference for the destroy function
+function destroyWidgets(vNode, patch, index) {
+    if (isWidget(vNode)) {
+        if (typeof vNode.destroy === "function") {
+            patch[index] = appendPatch(
+                patch[index],
+                new VPatch(VPatch.REMOVE, vNode, null)
+            )
+        }
+    } else if (isVNode(vNode) && (vNode.hasWidgets || vNode.hasThunks)) {
+        var children = vNode.children
+        var len = children.length
+        for (var i = 0; i < len; i++) {
+            var child = children[i]
+            index += 1
+
+            destroyWidgets(child, patch, index)
+
+            if (isVNode(child) && child.count) {
+                index += child.count
+            }
+        }
+    } else if (isThunk(vNode)) {
+        thunks(vNode, null, patch, index)
+    }
+}
+
+// Create a sub-patch for thunks
+function thunks(a, b, patch, index) {
+    var nodes = handleThunk(a, b)
+    var thunkPatch = diff(nodes.a, nodes.b)
+    if (hasPatches(thunkPatch)) {
+        patch[index] = new VPatch(VPatch.THUNK, null, thunkPatch)
+    }
+}
+
+function hasPatches(patch) {
+    for (var index in patch) {
+        if (index !== "a") {
+            return true
+        }
+    }
+
+    return false
+}
+
+// Execute hooks when two nodes are identical
+function unhook(vNode, patch, index) {
+    if (isVNode(vNode)) {
+        if (vNode.hooks) {
+            patch[index] = appendPatch(
+                patch[index],
+                new VPatch(
+                    VPatch.PROPS,
+                    vNode,
+                    undefinedKeys(vNode.hooks)
+                )
+            )
+        }
+
+        if (vNode.descendantHooks || vNode.hasThunks) {
+            var children = vNode.children
+            var len = children.length
+            for (var i = 0; i < len; i++) {
+                var child = children[i]
+                index += 1
+
+                unhook(child, patch, index)
+
+                if (isVNode(child) && child.count) {
+                    index += child.count
+                }
+            }
+        }
+    } else if (isThunk(vNode)) {
+        thunks(vNode, null, patch, index)
+    }
+}
+
+function undefinedKeys(obj) {
+    var result = {}
+
+    for (var key in obj) {
+        result[key] = undefined
+    }
+
+    return result
+}
+
+// List diff, naive left to right reordering
+function reorder(aChildren, bChildren) {
+    // O(M) time, O(M) memory
+    var bChildIndex = keyIndex(bChildren)
+    var bKeys = bChildIndex.keys
+    var bFree = bChildIndex.free
+
+    if (bFree.length === bChildren.length) {
+        return {
+            children: bChildren,
+            moves: null
+        }
+    }
+
+    // O(N) time, O(N) memory
+    var aChildIndex = keyIndex(aChildren)
+    var aKeys = aChildIndex.keys
+    var aFree = aChildIndex.free
+
+    if (aFree.length === aChildren.length) {
+        return {
+            children: bChildren,
+            moves: null
+        }
+    }
+
+    // O(MAX(N, M)) memory
+    var newChildren = []
+
+    var freeIndex = 0
+    var freeCount = bFree.length
+    var deletedItems = 0
+
+    // Iterate through a and match a node in b
+    // O(N) time,
+    for (var i = 0 ; i < aChildren.length; i++) {
+        var aItem = aChildren[i]
+        var itemIndex
+
+        if (aItem.key) {
+            if (bKeys.hasOwnProperty(aItem.key)) {
+                // Match up the old keys
+                itemIndex = bKeys[aItem.key]
+                newChildren.push(bChildren[itemIndex])
+
+            } else {
+                // Remove old keyed items
+                itemIndex = i - deletedItems++
+                newChildren.push(null)
+            }
+        } else {
+            // Match the item in a with the next free item in b
+            if (freeIndex < freeCount) {
+                itemIndex = bFree[freeIndex++]
+                newChildren.push(bChildren[itemIndex])
+            } else {
+                // There are no free items in b to match with
+                // the free items in a, so the extra free nodes
+                // are deleted.
+                itemIndex = i - deletedItems++
+                newChildren.push(null)
+            }
+        }
+    }
+
+    var lastFreeIndex = freeIndex >= bFree.length ?
+        bChildren.length :
+        bFree[freeIndex]
+
+    // Iterate through b and append any new keys
+    // O(M) time
+    for (var j = 0; j < bChildren.length; j++) {
+        var newItem = bChildren[j]
+
+        if (newItem.key) {
+            if (!aKeys.hasOwnProperty(newItem.key)) {
+                // Add any new keyed items
+                // We are adding new items to the end and then sorting them
+                // in place. In future we should insert new items in place.
+                newChildren.push(newItem)
+            }
+        } else if (j >= lastFreeIndex) {
+            // Add any leftover non-keyed items
+            newChildren.push(newItem)
+        }
+    }
+
+    var simulate = newChildren.slice()
+    var simulateIndex = 0
+    var removes = []
+    var inserts = []
+    var simulateItem
+
+    for (var k = 0; k < bChildren.length;) {
+        var wantedItem = bChildren[k]
+        simulateItem = simulate[simulateIndex]
+
+        // remove items
+        while (simulateItem === null && simulate.length) {
+            removes.push(remove(simulate, simulateIndex, null))
+            simulateItem = simulate[simulateIndex]
+        }
+
+        if (!simulateItem || simulateItem.key !== wantedItem.key) {
+            // if we need a key in this position...
+            if (wantedItem.key) {
+                if (simulateItem && simulateItem.key) {
+                    // if an insert doesn't put this key in place, it needs to move
+                    if (bKeys[simulateItem.key] !== k + 1) {
+                        removes.push(remove(simulate, simulateIndex, simulateItem.key))
+                        simulateItem = simulate[simulateIndex]
+                        // if the remove didn't put the wanted item in place, we need to insert it
+                        if (!simulateItem || simulateItem.key !== wantedItem.key) {
+                            inserts.push({key: wantedItem.key, to: k})
+                        }
+                        // items are matching, so skip ahead
+                        else {
+                            simulateIndex++
+                        }
+                    }
+                    else {
+                        inserts.push({key: wantedItem.key, to: k})
+                    }
+                }
+                else {
+                    inserts.push({key: wantedItem.key, to: k})
+                }
+                k++
+            }
+            // a key in simulate has no matching wanted key, remove it
+            else if (simulateItem && simulateItem.key) {
+                removes.push(remove(simulate, simulateIndex, simulateItem.key))
+            }
+        }
+        else {
+            simulateIndex++
+            k++
+        }
+    }
+
+    // remove all the remaining nodes from simulate
+    while(simulateIndex < simulate.length) {
+        simulateItem = simulate[simulateIndex]
+        removes.push(remove(simulate, simulateIndex, simulateItem && simulateItem.key))
+    }
+
+    // If the only moves we have are deletes then we can just
+    // let the delete patch remove these items.
+    if (removes.length === deletedItems && !inserts.length) {
+        return {
+            children: newChildren,
+            moves: null
+        }
+    }
+
+    return {
+        children: newChildren,
+        moves: {
+            removes: removes,
+            inserts: inserts
+        }
+    }
+}
+
+function remove(arr, index, key) {
+    arr.splice(index, 1)
+
+    return {
+        from: index,
+        key: key
+    }
+}
+
+function keyIndex(children) {
+    var keys = {}
+    var free = []
+    var length = children.length
+
+    for (var i = 0; i < length; i++) {
+        var child = children[i]
+
+        if (child.key) {
+            keys[child.key] = i
+        } else {
+            free.push(i)
+        }
+    }
+
+    return {
+        keys: keys,     // A hash of key name to index
+        free: free      // An array of unkeyed item indices
+    }
+}
+
+function appendPatch(apply, patch) {
+    if (apply) {
+        if (isArray(apply)) {
+            apply.push(patch)
+        } else {
+            apply = [apply, patch]
+        }
+
+        return apply
+    } else {
+        return patch
+    }
+}
+
+},{"../vnode/handle-thunk":36,"../vnode/is-thunk":37,"../vnode/is-vnode":39,"../vnode/is-vtext":40,"../vnode/is-widget":41,"../vnode/vpatch":44,"./diff-props":46,"x-is-array":21}],48:[function(require,module,exports){
+const DOMReady = require('document-ready-promise')();
+const defaults = require('defaults-es6');
+const mix = require('mixwith').mix;
+const EventEmitterMixin = require('./event-emitter-mixin');
+const VDOMPatch = require('virtual-dom/patch');
+const VDOMDiff = require('virtual-dom/diff');
+const h = require('virtual-dom/h');
+const virtualize = require('vdom-virtualize');
+
+const defaultOpts = {
+    childStylesFirst: true,
+    verbosity: 0,
+    quietInterval: 100
+};
+
+const patchInterval = 33.334;
+
+function createStyleEl(id, className=null) {
+    var styleEl = document.getElementById(id)
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.setAttribute('type', 'text/css');
+        document.head.appendChild(styleEl);
+        styleEl.id = id;
+    }
+    styleEl.classList.add(className);
+    return styleEl;
+}
 
 var App = class extends mix(App).with(EventEmitterMixin) {
+
+    static get patchMethods() {
+        return [
+            'patchDOM',
+            'patchStyles'
+        ];
+    }
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        this.styles = opts.styles;
-        this.el = opts.el;
-        this.styleEl = opts.styleEl;
+        this.styles = opts.styles || this.constructor.styles;
+        this.renderOrder = ['markup', 'styles'];
+        this.quietInterval = opts.quietInterval;
+        this.pipelineInitMethods = opts.pipelineInitMethods;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
-        this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
-        this.component = null;
-        this.renderInterval = opts.renderInterval;
-        this.renderPromises = {};
-        this.stylesRenderFormat = opts.stylesRenderFormat;
-        this.markupRenderFormat = opts.markupRenderFormat;
-        this.markupTransforms = opts.markupTransforms;
-        this.stylesTransforms = opts.stylesTransforms;
-        this.childStylesFirst = opts.childStylesFirst;
-        this.renderers = {};
-        var Sig = this.constructor.Weddell.classes.Sig;
+        this.shouldRender = {};
+        this.childStylesFirst = opts.childStylesFirst; /*@TODO use this again*/
+
+        Object.defineProperties(this, {
+            Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
+            component: { get: () => this._component },
+            el: { get: () => this._el },
+            _liveWidget: { value: null, writable: true },
+            _lastPatchStartTime: { value: Date.now(), writable: true},
+            _el: { value: null, writable: true },
+            _initPromise: { value: null, writable: true },
+            _elInput: { value: opts.el },
+            _patchPromise: { value: null, writable: true },
+            _snapshotData: { value: null, writable: true },
+            patchPromise: { get: () => this._patchPromise },
+            _RAFCallback: { value: null, writable: true },
+            _patchRequests: { value: [], writable: true },
+            _patchPromise: { value: null, writable: true },
+            _component: { value: null, writable: true },
+            _widget: { value: null, writable: true },
+            _createdComponents: { value: [] }
+        })
 
         var consts = this.constructor.Weddell.consts;
 
         if (!this.Component) {
-            throw "There is no base component set for this app. Can't mount.";
+            throw new Error(`There is no base component set for this app. Can't mount.`);
         }
         if (consts.VAR_NAME in window) {
-            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+            throw new Error(`Namespace collision for ${consts.VAR_NAME} on window object. Aborting.`);
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
-            value: {app: this, components: {} }
+            value: {app: this, components: {}, verbosity: opts.verbosity }
         });
 
-        Object.defineProperty(this, '_actionDispatcher', {
-            value: new ActionDispatcher
-        });
-
-        this.on('createcomponent', evt => {
-            this._actionDispatcher.addDispatchee(evt.component);
-            evt.component.on('createaction', evt => {
-                this._actionDispatcher.dispatch(evt.actionName, evt.actionData)
-            });
-        });
-    }
-
-    renderCSS(CSSString) {
-        this.styleEl.textContent = CSSString;
-    }
-
-    renderMarkup(evt) {
-        if (!(evt.renderFormat in this.renderers)) {
-            throw "No appropriate markup renderer found for format: " + evt.renderFormat;
+        if (opts.verbosity > 0 && opts.styles) {
+            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
         }
-        this.renderers[evt.renderFormat].call(this, evt.output);
-        this.el.classList.remove('rendering-markup');
-        if (!this.el.classList.contains('rendering-styles')) {
-            this.el.classList.remove('rendering');
-        }
-        this._actionDispatcher.dispatch('renderdommarkup', Object.assign({}, evt));
+
+        Object.defineProperties(this, {
+            rootNode: { value: null, writable: true }
+        })
     }
 
-    renderStyles(evt) {
-        var staticStyles = [];
-        var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles).join('\r\n') : '');
-            var styles = Array.isArray(obj) ? obj.map(flattenStyles).join('\r\n') : (obj.output ? obj.output : '');
+    onPatch() {}
 
-            if (obj.staticStyles) {
-                var staticObj = {
-                    class: obj.component.constructor,
-                    styles: obj.staticStyles
-                };
-                if (this.childStylesFirst) {
-                    staticStyles.unshift(staticObj)
-                } else {
-                    staticStyles.push(staticObj)
-                }
-            }
+    patchDOM(patchRequests) {
+        if (!this.rootNode.parentNode) {
+            this.el.appendChild(this.rootNode);
+        }
+        this.component.refreshWidgets();
+        var patches = VDOMDiff(this._widget, this.component._widget);
+        var rootNode = VDOMPatch(this.rootNode, patches);
+        this.rootNode = rootNode;
+        this._widget = this.component._widget;
 
-            return (this.childStylesFirst ? childStyles + styles : styles + childStyles).trim();
-        };
-        var instanceStyles = flattenStyles(evt);
+        this.trigger('patchdom');
+    }
+
+    awaitComponentMount(id) {
+        return new Promise(resolve => {            
+            Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
+                this.on('createcomponent', evt => {
+                    if (evt.component.id === id) {
+                        resolve(evt.component)
+                    }
+                })
+            }))
+            .then(component => {
+                component.awaitMount().then(() => resolve(component));
+            })
+        })
+    }
+
+    patchStyles(patchRequests) {
         
-        staticStyles = staticStyles.reduce((finalArr, styleObj) => {
-            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class === styleObj.class || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
-                return finalArr.concat(styleObj)
+        var results = patchRequests.reduceRight((acc, item) => {
+            if (!(item.classId in acc.classes)) {
+                acc.classes[item.classId] = item;
             }
-            return finalArr;
-        }, []).map(styleObj => typeof styleObj.styles === 'string' ? styleObj.styles : '').join('\n\r');
-        var styles = [this.styles || '', staticStyles, instanceStyles].join('\r\n').trim();
-        this.renderCSS(styles);
+            if (!(item.id in acc.components)) {
+                acc.components[item.id] = item;
+            }
+            return acc;
+        }, {classes:{}, components:{}});
 
-        this.el.classList.remove('rendering-styles');
+        var instanceStyles = [];
+        var staticStyles = {};
 
-        if (!this.el.classList.contains('rendering-markup')) {
-            this.el.classList.remove('rendering');
-        }
+        this.component.walkComponents(component => {
+            var id = component.id;
+            var needsPatch = id in results.components;
+            var stylesObj = needsPatch ? results.components[id].results.renderStyles : component._renderCache.renderStyles;
+            
+            var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), {id, needsPatch})
+            
+            instanceStyles.push(makeObj('dynamicStyles', stylesObj));
 
-        this._actionDispatcher.dispatch('renderdomstyles', Object.assign({}, evt));
+            id = component.constructor.id;
+
+            if (!(id in staticStyles)) {
+                needsPatch = id in results.classes;
+                stylesObj = needsPatch ? results.classes[id].results.renderStyles : component._renderCache.renderStyles;
+                staticStyles[id] = makeObj('staticStyles', stylesObj);
+            }
+        }, component => component.isMounted);
+
+        staticStyles = Object.values(staticStyles);
+
+        //We now have a pretty good idea what we're writing. Let's patch those styles to DOM
+
+        var prevEl;
+        var styles;
+
+        staticStyles.concat(instanceStyles)
+            .reduce((final, obj) => {
+                var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
+
+                var styleEl;
+
+                if (!obj.needsPatch) {
+                    if (styleIndex > -1) {
+                        styleEl = final.splice(styleIndex, 1)[0];
+                    } else {
+                        styles = obj.styles;
+                        if (styles) {
+                            styleEl = createStyleEl('weddell-style-' + obj.id, 'weddell-style');
+                            styleEl.textContent = obj.styles;
+                        }
+                    }
+
+                    if (prevEl && styleEl) {
+                        var comparison = prevEl.compareDocumentPosition(styleEl);
+                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        }
+                    }
+
+                    if (styleEl) {
+                        prevEl = styleEl;
+                    }
+                    
+                    return final;
+                } else {
+                    styles = obj.styles || '';
+
+                    if (!styles) {
+                        if (styleIndex > -1) {
+                            final.splice(styleIndex, 1);
+                        }
+                        return final;
+                    }
+
+                    styleEl = styleIndex > -1 ? final.splice(styleIndex, 1)[0] : createStyleEl('weddell-style-' + obj.id, 'weddell-style');
+
+                    if (prevEl) {
+                        var comparison = prevEl.compareDocumentPosition(styleEl);
+                        if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                            prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                        }
+                    }
+
+                    prevEl = styleEl;                    
+
+                    if (styleEl.textContent !== styles) {
+                        styleEl.textContent = styles;
+                    }                    
+                }              
+
+                return final;
+            }, Array.from(document.querySelectorAll('head style.weddell-style')))
+            .forEach(el => {
+                document.head.removeChild(el);
+            });
+        //@TODO could probably make this more succinct by using Virtual-dom with style elements
+
+        this.trigger('patchstyles');
     }
 
-    makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof Component || ComponentClass.prototype.constructor === Component)) {
-            if (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component) {
-                return ComponentClass;
-            }
-            throw "Component input is a class extending Component, but it does not have necessary plugins applied to it. Consider using a factory function instead.";
-        } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assuming it is a component factory function
-            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
-        } else {
-            //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
-            throw "Unsupported component input";
+    async makeComponent() {
+        var id = this.rootNode.getAttribute('data-wdl-id');
+        var snapshot = this._snapshotData;
+        if (snapshot && id && snapshot.id !== id) {
+            throw new Error('Snapshot id does not match root element id.')
         }
-    }
 
-    makeComponent() {
-        var component = new (this.Component)({
+        var opts = {
             isRoot: true,
-            targetStylesRenderFormat: this.stylesRenderFormat,
-            targetMarkupRenderFormat: this.markupRenderFormat,
-            markupTransforms: this.markupTransforms,
-            stylesTransforms: this.stylesTransforms
-        });
+            id,
+        };
 
-        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
-            finalObj[attr.name] = attr.value;
-            return finalObj;
-        }, {}))
+        if (snapshot) {
+            var addElReferences = (obj, parentEl) => {
+                var el = parentEl.querySelector(`[data-wdl-id="${obj.id}"]`);
+    
+                if (el) {
+                    obj.el = el;
 
-        return component
+                    if (obj.componentSnapshots) {
+                        for (var componentName in obj.componentSnapshots) {
+                            for (var index in obj.componentSnapshots[componentName]) {
+                                addElReferences(obj.componentSnapshots[componentName][index], el);
+                            }
+                        }
+                    }
+                }
+                return obj;                
+            };
+            snapshot = addElReferences(snapshot, this.el);
+            if (snapshot.state) {
+                opts.initialState = snapshot.state;
+            }
+            if (snapshot.componentSnapshots) {
+                opts.componentSnapshots = snapshot.componentSnapshots;
+            }
+            if (snapshot.el) {
+                opts.el = snapshot.el;
+            }
+        }
+        var Component = await this.Component;
+        var component = new Component(opts);       
+
+        component.assignProps(
+            Object.values(this.el.attributes)
+                .reduce((finalObj, attr) => {
+                    finalObj[attr.name] = attr.value;
+                    return finalObj;
+                }, {})
+        );
+
+        return component;
     }
 
-    initRenderLifecycleStyleHooks(rootComponent) {
-        this.component.once('renderdomstyles', evt => {
-            this.el.classList.add('first-styles-render-complete');
-            if (this.el.classList.contains('first-markup-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
+    queuePatch() {
+        var resolveFunc;
+        var promise = new Promise((resolve) => {
+            resolveFunc = resolve;
+        })
+        .then(currPatchRequests => {
+            return this.constructor.patchMethods.reduce((acc, patcher) => {
+                    return acc
+                        .then(() => this[patcher](currPatchRequests))
+                }, Promise.resolve())
+                .then(() => {
+                    if (this._patchRequests.length) {
+                        return Promise.reject('Rerender');
+                    }
+                })
+                .then(() => {
+                    this._patchPromise = null;
+                    this.trigger('patch');
+                    this.el.classList.remove('awaiting-patch');
+                    return this.onPatch()
+                }, err => {
+                    if (err === 'Rerender') {
+                        return this.queuePatch();
+                    }
+                    console.error('Error patching:', err.stack)
+                })
+        })
+        
+        var now = Date.now();
+        var dt = now - this._lastPatchStartTime;
+        this._lastPatchStartTime = Date.now();
+        
+        window.setTimeout(() => {
+            requestAnimationFrame(this._RAFCallback = () =>{
+                this._RAFCallback = null;
+                var currPatchRequests = this._patchRequests;
+                this._patchRequests = [];
+                resolveFunc(currPatchRequests);
+            });   
+        }, Math.max(0, patchInterval - dt))        
+        
+        return promise;
+    }
 
-        this.component.once('renderdommarkup', evt => {
-            this.el.classList.add('first-markup-render-complete');
-            if (this.el.classList.contains('first-styles-render-complete')) {
-                this.el.classList.add('first-render-complete');
+
+    awaitPatch() {
+        return this.patchPromise || Promise.resolve();
+    }
+
+    awaitNextPatch() {
+        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
+    }
+
+    initPatchers() {
+        var el = this._elInput;
+        if (typeof el == 'string') {
+            el = document.querySelector(el);
+            if (!el) {
+                throw new Error("Could not mount an element using provided query.");
             }
-        });
+        }
+        this._el = el;
+
+        if (!(this.rootNode = this.el.firstChild)) {
+            this.rootNode = document.createElement('div');
+            this._widget = h('div');
+        } else {
+            this._widget = virtualize(this.rootNode, 'id');
+        }
+
+        if (this.styles) {
+            createStyleEl('weddell-app-styles', 'weddell-app-styles').textContent = this.styles;
+        }
+    }
+
+    static takeComponentStateSnapshot(component) {
+        var obj = { 
+            id: component.id,
+            state: Object.entries(component.state.collectChangedData())
+                .reduce((acc, curr) => {
+                    if (curr[0][0] !== '$') {
+                        return Object.assign(acc, { [curr[0]]: curr[1] })
+                    }
+                    return acc;
+                }, {})
+        };
+        var componentSnapshots = {};
+        for (var componentName in component._componentInstances) {
+            var components = component._componentInstances[componentName];
+            for (var componentIndex in components) {
+                if (!(componentName in componentSnapshots)) {
+                    componentSnapshots[componentName] = {};
+                }
+                componentSnapshots[componentName][componentIndex] = this.takeComponentStateSnapshot(components[componentIndex]);
+            }
+        }
+        if (Object.keys(componentSnapshots).length) {
+            obj.componentSnapshots = componentSnapshots;
+        }
+        return obj;
+    }
+
+    renderSnapshot() {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");  
+        var scriptEl = doc.createElement('script');
+        scriptEl.innerHTML = `
+            window.addEventListener('weddellinitbefore', function(evt){
+                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
+            });
+        `;
+        doc.body.appendChild(scriptEl);
+
+        return {
+            appHtml: this.component.el.outerHTML,
+            stateHtml: scriptEl.outerHTML,
+            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
+                .map(el => el.outerHTML)
+                .join('\n'),
+            fullResponse: doc.documentElement.outerHTML
+        }
+    }
+
+    initRootComponent() {
+        return this.component.init(this.componentInitOpts)
+            .then(() => this.component.mount())
+            .then(() => {
+                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+            })
     }
 
     init() {
-        Object.seal(this);
+        this.on('createcomponent', evt => {
+            this._createdComponents.push(evt.component);
+        })
+
         return DOMReady
-            .then(() => {
-                if (typeof this.el == 'string') {
-                    this.el = document.querySelector(this.el);
-                }
+            .then(async () => {
+                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: {  app: this } }));
 
-                if (typeof this.styleEl == 'string') {
-                    this.styleEl = document.querySelector(this.styleEl);
-                } else if (!this.styleEl) {
-                    this.styleEl = document.createElement('style');
-                    this.styleEl.setAttribute('type', 'text/css');
-                    document.head.appendChild(this.styleEl);
-                }
-                var appStyles = this.styles;
-                if (appStyles) {
-                    this.renderCSS(appStyles);
-                }
+                this.initPatchers();
 
-                this.component = this.makeComponent();
+                if (this._snapshotData) {
+                    this.el.classList.add('using-snapshot');
+                }
+                this.el.classList.add('initting');
+                this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
+                this._component = await this.makeComponent();
+                    
                 this.trigger('createcomponent', {component: this.component});
                 this.trigger('createrootcomponent', {component: this.component});
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
-                this.component.on('markeddirty', evt => {
-                    this.renderPromises[evt.pipelineName] = new Promise(resolve => {
-                        requestAnimationFrame(() => {
-                            this.el.classList.add('rendering-' + evt.pipelineName);
-                            this.el.classList.add('rendering');
-                            this.component.render(evt.pipelineName)
-                                .then(results => {
-                                    this.renderPromises[evt.pipelineName] = null;
-                                    resolve(results);
-                                });
-                        });
+                this.component.on('requestpatch', evt => {
+                    this.el.classList.add('awaiting-patch');
+                    this._patchRequests = this._patchRequests.concat(evt);
+
+                    this._initPromise.then(() => {
+                        if (!this._patchPromise) {
+                            this._patchPromise = this.queuePatch();
+                        }
                     })
                 });
 
-                this.initRenderLifecycleStyleHooks(this.component);
+                var onPatch = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) =>  acc || !!component.renderPromise, false)
+                    if (!isRendering) {
+                        this.trigger('quiet');
+                    }
+                    this.el.classList.add('first-patch-complete');
+                    this.component.trigger('patch');
+                };
+                this.on('patch', onPatch);                
 
-                return this.component.init(this.componentInitOpts)
-                    .then(() => {
-                        this.component.on('rendermarkup', debounce(this.renderMarkup.bind(this), this.renderInterval));
-                        this.component.on('renderstyles', debounce(this.renderStyles.bind(this), this.renderInterval));
-                        this.component.render();
-                    })
+                Object.seal(this);
+
+                return this._initPromise = this.initRootComponent()
+            })
+            .then(result => {
+                window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
+                this.el.classList.remove('initting');
+                this.el.classList.add('init-complete');
+                return result;
             })
     }
 }
 
 module.exports = App;
 
-},{"./action-dispatcher":15,"./component":17,"./event-emitter-mixin":18,"./sig":20,"debounce":4,"document-ready-promise":8,"mixwith-es5":12,"object.defaults/immutable":13}],17:[function(require,module,exports){
-var EventEmitterMixin = require('./event-emitter-mixin');
-var defaults = require('object.defaults/immutable');
-var generateHash = require('../utils/make-hash');
-var mix = require('mixwith-es5').mix;
-var DeDupe = require('mixwith-es5').DeDupe;
-var Sig = require('./sig');
-var includes = require('../utils/includes');
+},{"./event-emitter-mixin":50,"defaults-es6":6,"document-ready-promise":8,"mixwith":9,"vdom-virtualize":10,"virtual-dom/diff":13,"virtual-dom/h":14,"virtual-dom/patch":22}],49:[function(require,module,exports){
+const EventEmitterMixin = require('./event-emitter-mixin');
+const defaults = require('defaults-es6');
+const generateHash = require('../utils/make-hash');
+const mix = require('mixwith').mix;
+const h = require('virtual-dom/h');
+const VdomWidget = require('./vdom-widget');
+const deepEqual = require('deep-equal');
+const cloneVNode = require('../utils/clone-vnode');
+const flatten = require('../utils/flatten');
+const compact = require('../utils/compact');
+const uniq = require('../utils/uniq');
+const difference = require('../utils/difference');
 
-Sig.addTypeAlias('CSSString', 'String');
-
-var defaultOpts = {
-    components: {},
+const defaultOpts = {
     store: {},
-    state: {},
-    inputs: [],
-    isRoot: false,
-    stylesFormat: 'CSSString'
+    inputs: null,
+    isRoot: false
 };
+const defaultInitOpts = {};
+var _generatedComponentClasses = {};
+const testElement = document.createElement('div');
 
-var defaultInitOpts = {};
-
-var _generatedComponentClasses = [];
+const renderInterval = 33.333;
 
 var Component = class extends mix(Component).with(EventEmitterMixin) {
+    static get renderMethods() {
+        return ['renderVNode', 'renderStyles'];
+    }
+
+    static get isWeddellComponent() {
+        return true;
+    }
+    
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        Sig = this.constructor.Weddell.classes.Sig;
-        var Pipeline = this.constructor.Weddell.classes.Pipeline;
+        var weddellGlobals = window[this.constructor.Weddell.consts.VAR_NAME];
         var Store = this.constructor.Weddell.classes.Store;
-
+        if (weddellGlobals.verbosity > 0 && opts.inputs) {
+            console.warn('you are using outdated syntax! opts.inputs is deprecated in favor of static getter.')
+        }
         Object.defineProperties(this, {
+            id: { get: () => this._id },
             isRoot: { value: opts.isRoot },
-            _isMounted: {writable:true, value: false},
-            _isInit: { writable: true, value: false},
+            _content: {value: [], writable: true},
+            content: { get: () => {
+                return this._content;
+            }, set: val => {
+                var oldContent = this._content;
+                this._content = val;
+                if (!deepEqual(oldContent, val)) {
+                    this.markDirty();
+                }
+            }},
+            hasMounted: {get: () => this._hasMounted},
+            isMounted: { get: () => this._isMounted },
+            renderPromise: {get: () => this._renderPromise},
+            childComponents: {get: () => this._childComponents},
+            contentComponents: {get: () => this._contentComponents},
+            hasRendered: {get: () => this._hasRendered},
+            el: {get: () => this._el},
+            isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
-            _id : { value: generateHash() },
-            inputs : { value: opts.inputs },
+            root: {value: opts.isRoot ? this : opts.root },
+            inputs : { value: compact(this.constructor.inputs || opts.inputs || []) },
+            //@TODO inputs don't need to be stored on isntance at all
             renderers: { value: {} },
-            _tagDirectives: { value: {} },
+            _el: { value: null, writable: true },
+            _lastRenderTimeStamps: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: null }), {}) },
+            _lastAccessedStateKeys: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
+            _componentSnapshots: { value: opts.componentSnapshots || null },
+            _dirtyRenderers: { value: true, writable: true },
+            _contentComponents: {value: [], writable: true },
+            _inlineEventHandlers: { writable: true, value: {} },
+            _isMounted: {writable:true, value: null},
+            _lastRenderedComponents: {writable: true, value: null},
+            _childComponents: {writable: true, value: {}},
+            _componentsRequestingPatch: {writable: true, value: []},
+            _renderPromise: {writable: true, value: null},
+            _hasMounted: {writable:true, value: false},
+            _hasRendered: {writable:true, value: false},
+            _widgetIsDirty: {writable:true, value:false},
+            _vTree: {writable: true, value: null },
+            _prevVTree: {writable: true, value: null},
+            _prevWidget: {writable: true, value: null},
+            _dirtyWidgets: {writable: true, value: {}},
+            _renderCache: { value: this.constructor.renderMethods
+                .reduce((acc, key) => Object.assign(acc, {[key]: []}), {}) },
+            _isInit: { writable: true, value: false},            
+            _id : { value: opts.id || generateHash() },
             _componentListenerCallbacks: {value:{}, writable:true}
         });
 
         var inputMappings = this.constructor._inputMappings ? Object.entries(this.constructor._inputMappings)
-                .filter(entry => this.inputs.find(input => input === entry[0]))
-                .reduce((final, entry) => {
-                    final[entry[1]] = entry[0];
-                    return final;
-                }, {}) : {};
+            .filter(entry => this.inputs.find(input => input === entry[0] || input.key === entry[0]))
+            .reduce((final, entry) => {
+                final[entry[1]] = entry[0];
+                return final;
+            }, {}) : {};
 
         Object.defineProperties(this, {
+            _widget: {writable: true, value: new VdomWidget({ component: this, childWidgets: {} })},
             props: {
-                value: new Store(this.inputs, {
+                value: new Store(this.inputs.map(input => typeof input === 'string' ? input : input.key ? input.key : null), {
                     shouldMonitorChanges: true,
                     extends: (opts.parentComponent ? [opts.parentComponent.props, opts.parentComponent.state, opts.parentComponent.store] : null),
                     inputMappings,
+                    validators: this.inputs.filter(input => typeof input === 'object').reduce((final, inputObj) => Object.assign(final, {[inputObj.key]: {validator: inputObj.validator, required: inputObj.required}}), {}),
                     shouldEvalFunctions: false
                 })
             },
             store: {
-                value: new Store(Object.assign({
+                value: new Store(defaults({
                     $bind: this.bindEvent.bind(this),
-                    $bindValue: this.bindEventValue.bind(this),
-                    $act: this.createAction.bind(this)
-                }, opts.store), {
+                    $bindValue: this.bindEventValue.bind(this)
+                }, this.store || {}, opts.store || {}), {
                     shouldMonitorChanges: false,
                     shouldEvalFunctions: false
                 })
             }
         });
+
+        if (weddellGlobals.verbosity > 0 && opts.state) {
+            console.warn("opts.state is deprecated in favor of static 'state' getter. Update your code!");
+        }
+
+        var state = Object.assign({}, opts.state || {}, this.constructor.state);
         
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
                 $attributes: null,
-                $id: () => this._id
-            }, opts.state), {
+                $id: () => this.id
+            }, state), {
+                initialState: opts.initialState,
                 overrides: [this.props],
                 proxies: [this.store]
             })
         })
 
+        if (weddellGlobals.verbosity > 0 && opts.components) {
+            console.warn("opts.components is deprecated in favor of static 'components' getter. Please update your code.");
+        }
+        var components = this.constructor.components || opts.components || {};
+        
         Object.defineProperties(this, {
             _componentInstances: { value:
-                Object.keys(opts.components).reduce((final, key) => {
-                    final[key] = {};
-                    return final;
-                }, {})
+                Object.keys(components)
+                    .map(key => key.toLowerCase())
+                    .reduce((final, key) => {
+                        final[key] = {};
+                        return final;
+                    }, {})
             },
             _locals: {value: new Store({}, { proxies: [this.state, this.store], shouldMonitorChanges: false, shouldEvalFunctions: false})}
         });
 
-        Object.defineProperty(this, '_pipelines', {
-            value: {
-                markup: new Pipeline({
-                    name: 'markup',
-                    store: this._locals,
-                    onRender: this.onRenderMarkup.bind(this),
-                    isDynamic: !!opts.markupTemplate,
-                    inputFormat: new Sig(opts.markupFormat),
-                    transforms: opts.markupTransforms,
-                    targetRenderFormat: opts.targetMarkupRenderFormat,
-                    input: opts.markupTemplate || opts.markup || null
-                }),
-                styles: new Pipeline({
-                    name: 'styles',
-                    store: this._locals,
-                    onRender: this.onRenderStyles.bind(this),
-                    isDynamic: !!opts.stylesTemplate,
-                    inputFormat: new Sig(opts.stylesFormat),
-                    transforms: opts.stylesTransforms,
-                    targetRenderFormat: opts.targetStylesRenderFormat,
-                    input: opts.stylesTemplate || opts.styles || ' '
-                })
-            }
-        });
-
         Object.defineProperty(this, 'components', {
-            value: Object.entries(opts.components).reduce((final, entry) => {
-                final[entry[0]] = this.createChildComponentClass(entry[0], entry[1])
-                return final;
-            }, {})
+            value: Object.entries(components)
+                .map(entry => [entry[0].toLowerCase(), entry[1]])
+                .reduce((final, entry) => {
+                    final[entry[0]] = { weddellClassInput: entry[1] };
+                    return final;
+                }, {})
         })
 
-        Object.entries(this._pipelines).forEach(entry =>
-            entry[1].on('markeddirty', evt => {
-                this.trigger('markeddirty', Object.assign({
-                    pipeline: entry[1],
-                    pipelineName: entry[0]
-                }, evt))
-            })
-        );
+        this.getParent = () => opts.parentComponent || null;
+        if (weddellGlobals.verbosity > 0 && opts.markupTemplate) {
+            console.warn("You are using deprecated syntax. 'markupTemplate' will be removed in the next major version. Use static 'markup' getter.");
+        }
+        if (weddellGlobals.verbosity > 0 && opts.stylesTemplate) {
+            console.warn("You are using deprecated syntax. 'stylesTemplate' will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
+        }
+        this.vNodeTemplate = this.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
+        this.stylesTemplate = this.makeStylesTemplate(this.constructor.dynamicStyles || opts.stylesTemplate, this.constructor.styles);
 
-        ['props', 'state'].forEach((propName) => {
-            this[propName].on('change', evt => {
-                this.markDirty(evt.changedKey);
-            })
-        });
+        weddellGlobals.components[this._id] = this;
+    }
 
-        window[this.constructor.Weddell.consts.VAR_NAME].components[this._id] = this;
+    requestRender(dirtyRenderers) {
+        var now = Date.now()
+        var lastRenderTime = Object.values(this._lastRenderTimeStamps).reduce((acc, val) => isNaN(val) ? acc : Math.max(val, acc), 0)
+        var dt = now - lastRenderTime;
+        if (!this.hasRendered || dt >= renderInterval) {
+            return this.render(dirtyRenderers);
+        } else {
+            return (this._renderPromise = new Promise(resolve => setTimeout(resolve, renderInterval - dt))
+                .then(() => this.render(dirtyRenderers)));
+        }
+    }
+
+    markDirty(dirtyRenderers={}) {
+        if (this.renderPromise || !this.isMounted) {
+            this._dirtyRenderers = Object.assign(this._dirtyRenderers || {}, dirtyRenderers)
+            return this.renderPromise;
+        } else {
+            return this.requestRender(dirtyRenderers);
+        }
+    }
+
+    render(dirtyRenderers=null) {
+        var promise = Promise.resolve()
+            .then(() => {
+                return this.constructor.renderMethods
+                    .reduce((acc, method) => {
+                        return acc
+                            .then(results => {
+                                return Promise.resolve(this[method]())
+                                    .then(result => {
+                                        Object.defineProperty(results, method, { get: () => result, enumerable: true });
+                                        return results;
+                                    })
+                            })
+                    }, Promise.resolve({}))
+                    .then(results => {
+                        return Promise.resolve(results)
+                            .then(results => {
+                                if (this._dirtyRenderers) {
+                                    var dirtyRenderers = this._dirtyRenderers;
+                                    this._dirtyRenderers = null;
+                                    return Promise.reject(dirtyRenderers);
+                                }
+                                return results;
+                            })
+                            .then(results => {
+                                this._renderPromise = null;
+                                this.requestPatch(results);
+                                return results;
+                            }, dirtyRenderers => this.render(dirtyRenderers))
+                    }, err => {
+                        throw err;
+                    })
+                    .then(results => {
+                        if (!this.hasRendered) {
+                            this._hasRendered = true;
+                            this.trigger('firstrender');
+                            this.trigger('render');
+                            return Promise.all([this.onRender(), this.onFirstRender()])
+                                .then(() => results)
+                        }
+                        this.trigger('render');
+                        return Promise.resolve(this.onRender()).then(() => results);                    
+                    })
+            })
+        return !this._renderPromise ? (this._renderPromise = promise): promise;
+    }
+
+    onInit() {}
+    onFirstRender() {}
+    onRender() {}
+    onDOMCreate() {}
+    onDOMMove() {}
+    onDOMChange() {}
+    onDOMCreateOrChange() {}
+    onDOMDestroy() {}
+    onMount() {}
+    onUnmount() {}
+    onFirstMount() {}
+    onRenderMarkup() {}
+    onRenderStyles() {}
+
+    requestPatch(results) {
+        this.trigger('requestpatch', {results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
+    }
+
+    makeVNodeTemplate() {
+        /*
+        * Take instance and static template inputs, return a function that will generate the correct output.
+        */
+
+        return Array.from(arguments).reduce((acc, curr) => {
+            if (!acc) {
+                if (typeof curr === 'function') {
+                    return this.wrapTemplate(curr, 'renderVNode', h);
+                }
+                if (typeof curr === 'string') {
+                    //TODO support template string parser;
+                }
+            }
+            return acc;
+        }, null);
+    }
+
+    makeStylesTemplate(dynamicStyles, staticStyles='') {
+        if (typeof dynamicStyles === 'function') {
+               
+        } else if (dynamicStyles) {
+            throw new Error(`Only functions are supported for dynamic styles for now.`);
+        }
+
+        if (typeof staticStyles !== 'string') {
+            throw new Error(`Only strings are supported for static component styles.`);
+        }
+
+        return this.wrapTemplate((locals) => {
+            var styles = dynamicStyles ? dynamicStyles.call(this, locals) : null;
+            return Object.defineProperties({}, {
+                dynamicStyles: {
+                    get: () => styles
+                },
+                staticStyles: {
+                    get: () => staticStyles
+                }
+            })
+        }, 'renderStyles');
+    }
+
+    wrapTemplate(func, renderMethodName) {
+        return () => {
+            var accessed = {};
+        
+            this.state.on('get', evt => {
+                accessed[evt.key] = 1;
+            });
+
+            var result = func.apply(this, [this.state].concat(Array.from(arguments).slice(2)));
+
+            this._lastRenderTimeStamps[renderMethodName] = Date.now();
+            this._renderCache[renderMethodName] = result;
+            this._lastAccessedStateKeys[renderMethodName] = accessed;
+
+            return result;
+        }        
+    }
+
+    renderStyles() {
+        return Promise.resolve(this.stylesTemplate())
+            .then(results => {
+                return Promise.resolve(this.onRenderStyles())
+                    .then(() => results);
+            })
+    }
+
+    renderVNode() {
+        var vTree = this.vNodeTemplate();
+
+        if (Array.isArray(vTree)) {
+            if (vTree.length > 1) {
+                console.warn('Template output was truncated in', this.constructor.name, 'component. Component templates must return a single vNode!');
+            }
+            vTree = vTree[0];
+        }
+
+        var renderedComponents = [];        
+        
+        return (vTree ? this.replaceComponentPlaceholders(vTree, renderedComponents)
+            .then(vTree => {
+                this._prevVTree = this._vTree;
+                this._vTree = vTree;
+
+                return Promise.all(renderedComponents)
+                    .then(rendered => {
+                        return Promise.all(difference(this._lastRenderedComponents || [], rendered).map(toUnmount => toUnmount.unmount()))
+                            .then(() => {
+                                this._lastRenderedComponents = rendered
+                            })
+                    })
+                    .then(() => true)
+            }) : this._vTree ? Promise.all((this._lastRenderedComponents || []).map(toUnmount => toUnmount.unmount()))
+                .then(() => {
+                    this._prevVTree = this._vTree;
+                    this._lastRenderedComponents = null;
+                    this.markWidgetDirty()
+                    this._vTree = null;
+
+                    return true;
+                }) : Promise.resolve(false)
+            )
+            .then(didRender => {
+                if (didRender) {
+                    var evt = {components: renderedComponents};
+                    this._childComponents = renderedComponents;
+                    this.markWidgetDirty()
+                    this.trigger('rendermarkup', evt);
+                    this.onRenderMarkup(Object.assign({}, evt));
+                }
+            })
+            .then(() => this._vTree)
+    }
+
+    refreshWidgets() {
+        if (this._widgetIsDirty) {
+            this.makeNewWidget();
+        }
+    }
+
+    get state() {
+        return {};
+    }
+
+    makeNewWidget() {
+        this._prevWidget = this._widget;
+        var newWidget = new VdomWidget({ component: this });
+        newWidget.bindChildren(this);
+        if (this._prevWidget) {
+            this._prevWidget.unbindChildren();
+        }
+        this._widgetIsDirty = false;
+        return this._widget = newWidget;        
+    }
+
+    static get state() {
+        return {};
+    }
+
+    static get tagDirectives() {
+        return {
+            content: function(vNode, children, props, renderedComponents) {
+                return this.content;
+            }
+        }
+    }
+
+    replaceComponentPlaceholders(vNode, renderedComponents=[]) {
+        var components;
+        var componentName;
+        
+        if (Array.isArray(vNode)) {
+            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)))
+        } else if (!vNode.tagName) {
+            return vNode;
+        } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
+            return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes, renderedComponents));
+        }
+
+        return this.replaceComponentPlaceholders(vNode.children || [], renderedComponents)
+            .then(children => {
+                if (componentName in (components = this.collectComponentTree())) {
+                    var props = vNode.properties.attributes;
+                    var content = children || [];
+                    if (!(componentName in renderedComponents)) {
+                        renderedComponents[componentName] = [];
+                    }
+                    var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
+        
+                    return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);
+                }
+
+                if (children.some((child, ii) => vNode.children[ii] !== child)) {
+                    return cloneVNode(vNode, flatten(children));
+                }
+                return cloneVNode(vNode, null, true);
+            })
+    }
+
+    makeChildComponentWidget(componentName, index, content, props, renderedComponents = []) {
+        var parent = this.reduceParents((acc, component) => {
+            return acc || (componentName in component.components ? component : acc);
+        }, null);
+
+        if (!parent) {
+            throw new Error('Unrecognized component name:', componentName);
+        }
+
+        var prom = parent.getInitComponentInstance(componentName, index);
+        if (!(componentName in renderedComponents)) {
+            renderedComponents[componentName] = [];
+        }
+        renderedComponents[componentName].push(prom);
+        renderedComponents.push(prom);
+        return prom
+            .then(component => {
+                renderedComponents[componentName].splice(renderedComponents[componentName].indexOf(prom), 1, component);
+                renderedComponents.splice(renderedComponents.indexOf(prom), 1, component);
+                component.assignProps(props, this);
+                var contentComponents = [];
+                return component.replaceComponentPlaceholders(content, contentComponents)
+                    .then(content => {
+                        component.content = content;
+                        
+                        if ((contentComponents.length !== component._contentComponents.length) || contentComponents.some((component, ii) => component._contentComponents[ii] !== component)) {
+                            component.trigger('contentcomponentschange', { currentComponents: contentComponents, previousComponents: component._contentComponents })
+                        }
+                        component._contentComponents = contentComponents;
+
+                        for (var propName in contentComponents) {
+                            var contentComponent = contentComponents[propName];
+                            if (!(propName in renderedComponents)) {
+                                renderedComponents[propName] = [];
+                            }
+                            if (Array.isArray(contentComponents[propName])) {
+                                renderedComponents[propName] = uniq(renderedComponents[propName].concat(contentComponents[propName]));
+                            } else {
+                                if (renderedComponents.indexOf(contentComponent) === -1) {
+                                    renderedComponents.push(contentComponent);
+                                }
+                            }
+                        }
+                        
+                        return component.mount(this)
+                            .then(didMount => {
+                                parent.trigger('componentplaceholderreplaced', {component});
+                                return component.makeNewWidget();
+                            })
+                    })
+            });
+    }
+
+    walkComponents(callback, filterFunc=()=>true) {
+        if (filterFunc(this)) {
+            callback(this)
+        }
+        for (var componentName in this._componentInstances) {
+            Object.values(this._componentInstances[componentName])
+                .forEach(instance => instance.walkComponents(callback, filterFunc))
+        }
+    }
+
+    reduceComponents(callback, initialVal, filterFunc=()=>true, depth=0) {
+        var acc = initialVal;
+        if (filterFunc(this)) {
+            acc = callback(acc, this, depth)
+        }
+        for (var componentName in this._componentInstances) {
+            acc = Object.values(this._componentInstances[componentName])
+                .reduce((acc, instance) => instance.reduceComponents(callback, acc, filterFunc, depth + 1), acc);
+        }
+        return acc;
+    }
+
+    checkChangedKey(key) {
+        return Object.entries(this._lastAccessedStateKeys)
+            .reduce((acc, entry) => key in entry[1] ? Object.assign(acc || {}, {[entry[0]]:1}) : acc, null);
+    }
+
+    reduceParents(callback, initialVal) {
+        var parent = this.getParent();
+        var shouldRecurse = true;
+        initialVal = callback.call(this, initialVal, this, () => shouldRecurse = false);
+        return parent && shouldRecurse ? parent.reduceParents(callback, initialVal) : initialVal;
+    }
+
+    collectComponentTree() {
+        var parent = this.getParent();
+        return Object.entries(this.components)
+                .reduce((acc, entry) => {
+                    return Object.assign(acc, {
+                        [entry[0].toLowerCase()]: {
+                            sourceInstance: this, 
+                            componentClass: entry[1]
+                        }
+                    })
+                }, parent ? parent.collectComponentTree() : {});
     }
 
     queryDOM(query) {
-        return this.awaitRender()
-            .then(() => document.querySelector(query));
+        return this.awaitDom()
+            .then(el => el.querySelector(query));
     }
 
     queryDOMAll(query) {
-        return this.awaitRender()
-            .then(() => document.querySelectorAll(query));
+        return this.awaitDom()
+            .then(el => el.querySelectorAll(query));
     }
 
-    awaitEvent(eventName, evtObjValidator) {
+    awaitEvent(eventName) {
         var resolveProm;
+        //@TODO add evt obj filter
         var promise = new Promise(function(resolve){
             resolveProm = resolve;
         });
@@ -1037,29 +3715,21 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return promise;
     }
 
+    awaitPatch() {
+        return this.awaitRender().then(() => (this.root || this).awaitEvent('patch'));
+    }
+
+    awaitMount() {
+        return this.isMounted ? Promise.resolve() : this.awaitEvent('mount');
+    }
+
+    awaitDom() {
+        return this.el ? Promise.resolve(this.el) : this.awaitEvent('domcreate').then(evt => evt.el);
+    }
+
     awaitRender(val) {
-        return this.awaitEvent('renderdommarkup')
+        return (this.renderPromise ? this.renderPromise : Promise.resolve())
             .then(() => val);
-    }
-
-    createAction(actionName, actionData) {
-        this.trigger('createaction', {actionName, actionData});
-    }
-
-    onInit() {
-        //Default event handler, noop
-    }
-
-    onRenderMarkup() {
-        //Default event handler, noop
-    }
-
-    onRenderStyles() {
-        //Default event handler, noop
-    }
-
-    addTagDirective(name, directive) {
-        this._tagDirectives[name.toUpperCase()] = directive;
     }
 
     static get generatedComponentClasses() {
@@ -1070,53 +3740,64 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return _generatedComponentClasses = val;
     }
 
-    makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component)) {
-            return ComponentClass;
-        } else if (typeof ComponentClass === 'function') {
+    static async makeComponentClass(ComponentClass) {
+        await ComponentClass;
+        if (typeof ComponentClass === 'function' && !ComponentClass.isWeddellComponent) {
+            //@TODO this is unreliable
             // We got a non-Component class function, so we assume it is a component factory function
-            var match = this.constructor.generatedComponentClasses.find(compClass => compClass.func === ComponentClass);
-            if (match) {
-                return match.class;
+            var str = ComponentClass.toString();
+            if (str in this.generatedComponentClasses) {
+                return this.generatedComponentClasses[str];
             } else {
-                var newClass = ComponentClass.call(this, this.constructor.Weddell.classes.Component)
-                this.constructor.generatedComponentClasses.push({
-                    func: ComponentClass,
-                    class: newClass
-                });
-                return newClass;
+                var result = await ComponentClass.call(this, this.Weddell.classes.Component);
+                return this.generatedComponentClasses[str] = this.bootstrapComponentClass(result);
             }
+        } else {
+            return this.bootstrapComponentClass(ComponentClass);
+        }
+    }
+
+    static bootstrapComponentClass(ComponentClass) {
+        var WeddellComponent = this.Weddell.classes.Component;
+        if (ComponentClass.prototype && (ComponentClass.prototype instanceof WeddellComponent || ComponentClass.prototype.constructor === WeddellComponent)) {
+            if (!ComponentClass.id) {
+                var id = generateHash();
+                var BaseClass = ComponentClass;
+                ComponentClass = class Component extends BaseClass {
+                    static get id() {
+                        return id;
+                    }
+
+                    static get BaseClass() {
+                        return BaseClass;
+                    }
+                }
+            }
+            return ComponentClass;
         } else {
             //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
             throw "Unsupported component input";
         }
     }
 
-    createChildComponentClass(componentName, ChildComponent) {
+    async createChildComponentClass(componentName, ChildComponent) {
         if (Array.isArray(ChildComponent)) {
             var initOpts = ChildComponent[2];
             var inputMappings = ChildComponent[1];
             ChildComponent = ChildComponent[0];
         }
-
-        ChildComponent = this.makeComponentClass(ChildComponent);
+        ChildComponent = await this.constructor.makeComponentClass(ChildComponent);
 
         var parentComponent = this;
-        var targetMarkupRenderFormat = this._pipelines.markup.inputFormat.parsed.returns || this._pipelines.markup.inputFormat.parsed.type;
-        var targetStylesRenderFormat = this._pipelines.styles.inputFormat.parsed.returns || this._pipelines.styles.inputFormat.parsed.type;
-        var markupTransforms = this._pipelines.markup.transforms;
-        var stylesTransforms = this._pipelines.styles.transforms;;
+        var root = this.root;
 
         var obj = {};
 
         obj[componentName] = class extends ChildComponent {
             constructor(opts) {
                 super(defaults({
+                    root,
                     parentComponent,
-                    targetMarkupRenderFormat,
-                    targetStylesRenderFormat,
-                    markupTransforms,
-                    stylesTransforms
                 }, opts))
 
                 parentComponent.trigger('createcomponent', {component: this, parentComponent, componentName});
@@ -1124,18 +3805,15 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
                 this.on('createcomponent', evt => {
                     parentComponent.trigger('createcomponent', Object.assign({}, evt));
                 });
-
-                this.on('markeddirty', evt => {
-                    parentComponent.markDirty();
-                });
             }
         }
 
         this.trigger('createcomponentclass', { ComponentClass: obj[componentName] });
-        obj[componentName]._BaseClass = ChildComponent;
-        obj[componentName]._initOpts = initOpts;
-        obj[componentName]._inputMappings = inputMappings;
-        obj[componentName]._id = generateHash();
+
+        Object.defineProperties(obj[componentName], {
+            _initOpts: { value: initOpts },
+            _inputMappings: { value: inputMappings }
+        })
 
         return obj[componentName];
     }
@@ -1144,6 +3822,18 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         opts = defaults(opts, this.defaultInitOpts);
         if (!this._isInit) {
             this._isInit = true;
+
+            ['props', 'state'].forEach((propName) => {
+                this[propName].on('change', evt => {
+                    // if (evt.target === this[propName]) {
+                        var dirtyRenderers = this.checkChangedKey(evt.changedKey);
+                        if (dirtyRenderers) {
+                            this.markDirty(dirtyRenderers);
+                        }
+                    // }
+                })
+            });
+            
             return Promise.resolve(this.onInit(opts))
                 .then(() => {
                     this.trigger('init');
@@ -1153,165 +3843,93 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
         return Promise.resolve(this);
     }
 
-    bindEvent(funcText, opts) {
+    bindEvent(funcText, opts={}) {
         var consts = this.constructor.Weddell.consts;
-        return "(function(event){" +
-            (opts && opts.preventDefault ? 'event.preventDefault();' : '') +
-            (opts && opts.stopPropagation ? 'event.stopPropagation();' : '') +
-            funcText + ";}.bind(window['" + consts.VAR_NAME + "'].components['" + this._id + "'], event)())";
+        return `${opts.preventDefault ? `event.preventDefault();` : ''}${opts.stopPropagation ? `event.stopPropagation();` : ''}Promise.resolve((window['${consts.VAR_NAME}'] && window['${consts.VAR_NAME}'].app) || new Promise(function(resolve){ window.addEventListener('weddellinitbefore', function(evt) { resolve(evt.detail.app) }) })).then(function(app) { app.awaitComponentMount('${this.id}').then(function(component){ (function() {${funcText}}.bind(component))()})})`;
     }
 
     bindEventValue(propName, opts) {
         return this.bindEvent("this.state['" + propName + "'] = event.target.value", opts);
     }
 
-    markDirty(changedKey) {
-        return Object.values(this._pipelines).forEach((pipeline, pipelineType) => {
-            pipeline.markDirty(changedKey);
-        });
+    getMountedChildComponents() {
+        return this.reduceComponents((acc, component) => 
+            acc.concat(component), [], component => 
+                component !== this && component._isMounted);
     }
 
-    renderStyles() {
-        this.trigger('beforerenderstyles');
-
-        return this._pipelines.styles.render()
-            .then(output => {
-                return Promise.all(Object.entries(this.components).map(entry => {
-                        var mountedComponents = Object.values(this._componentInstances[entry[0]]).filter(instance => instance._isMounted);
-
-                        return Promise.all(mountedComponents.map(instance => instance.renderStyles()));
-                    }))
-                    .then(components => {
-                        var evtObj = {
-                            output,
-                            staticStyles: this.constructor.styles || null,
-                            component: this,
-                            components,
-                            wasRendered: true,
-                            renderFormat: this._pipelines.styles.targetRenderFormat
-                        };
-
-                        this.trigger('renderstyles', Object.assign({}, evtObj));
-
-                        return evtObj;
-                    });
-            });
-    }
-
-    render(pipelineType) {
-        this.trigger('beforerender');
-
-        if (!pipelineType) {
-            return Promise.all(Object.keys(this._pipelines).map(pipelineType => this.render.call(this, pipelineType)));
-        }
-        var pipeline = this._pipelines[pipelineType];
-        var args =  Array.from(arguments).slice(1);
-
-        switch(pipelineType) {
-            case 'markup':
-                var output = this.renderMarkup.apply(this, args);
-                break;
-            case 'styles':
-                output = this.renderStyles.apply(this, args);
-                break;
-            default:
-        }
-
-        return Promise.resolve(output)
-            .then(evt => {
-                this.trigger('render', Object.assign({}, evt));
-                return evt;
-            });
-    }
-
-    assignProps(props) {
-        Object.assign(this.props, Object.entries(props)
-            .filter(entry => includes(this.inputs, entry[0]))
-            .reduce((finalObj, entry) => {
-                finalObj[entry[0]] = entry[1]
-                return finalObj
-            }, {}));
-
-        this.state.$attributes = Object.entries(props)
-            .filter(entry => !includes(this.inputs, entry[0]))
-            .reduce((finalObj, entry) => {
-                finalObj[entry[0]] = entry[1]
-                return finalObj
-            }, {});
-    }
-
-    renderMarkup(content, props, targetFormat) {
-        this.trigger('beforerendermarkup');
-
-        var pipeline = this._pipelines.markup;
-
-        if (!targetFormat) {
-            targetFormat = pipeline.targetRenderFormat;
-        }
-
+    assignProps(props, parentScope) {
         if (props) {
-            this.assignProps(props)
+            this.inputs.filter(input => !(input in props || input.key in props))
+                .forEach(input => {
+                    this.props[input.key || input] = null;
+                });
+
+            var parsedProps = Object.entries(props)
+                .reduce((acc, entry) => {
+                    if (this.inputs.some(input => input === entry[0] || input.key === entry[0])) {
+                        acc[0][entry[0]] = entry[1];
+                    } else if (entry[0].slice(0,2) === 'on' && !(entry[0] in testElement)) {
+                        //TODO support more spec-compliant data- attrs
+                        acc[1][entry[0]] = entry[1];
+                    } else {
+                        acc[2][entry[0]] = entry[1];
+                    }
+                    return acc;
+                }, [{},{},{}]);//first item props, second item event handlers, third item attributes
+            
+            Object.assign(this.props, parsedProps[0]);
+            this.bindInlineEventHandlers(parsedProps[1], parentScope);
+            this.state.$attributes = parsedProps[2];
         }
+    }
 
-        var components = [];
-        var off = this.on('rendercomponent', componentResult => {
-            if (!(componentResult.componentName in components)) {
-                components[componentResult.componentName] = [];
-            }
-            components[componentResult.componentName].push(componentResult)
-            components.push(componentResult);
-        });
-        return Promise.resolve((!this._isMounted && this.onMount) ? this.onMount.call(this) : null)
-            .then(() => {
-                if (!this._isMounted) this._isMounted = true;
-                return pipeline.render(targetFormat);
-            })
-            .then(output => {
-                var renderFormat = targetFormat.val;
-                if (!(renderFormat in this.renderers)) {
-                    throw "No appropriate component markup renderer found for format: " + renderFormat;
+    bindInlineEventHandlers(handlersObj, scope) {
+        var results = Object.entries(this._inlineEventHandlers)
+            .reduce((acc, currHandlerEntry) => {
+                if (currHandlerEntry[0] in acc[1]) {
+                    if (currHandlerEntry[1].handlerString !== handlersObj[currHandlerEntry[0]]) {
+                        //there is a new handler for this event, and it does not match existing handler. replace
+                        acc[0].push(currHandlerEntry);
+                    } else {
+                        //there is a new handler for this event and it does match existing handler. Do nothing
+                        delete acc[1][currHandlerEntry[0]];
+                    }
                 }
-                return this.renderers[renderFormat].call(this, output, content)
-                    .then(output => {
-                        off();
-                        var evObj = {
-                            output,
-                            component: this,
-                            id: this._id,
-                            components,
-                            renderFormat
-                        };
+                return acc;
+            }, [[], Object.assign({}, handlersObj)]); //arr[0] handlers to remove, arr[1] events to add
 
-                        return Promise.all(
-                                Object.entries(this._componentInstances)
-                                    .reduce((finalArr, entry) => {
-                                        var componentInstances = Object.values(entry[1]);
-                                        var componentName = entry[0];
-                                        var renderedComponents = (components[componentName] || components[componentName.toUpperCase()] || []);
-                                        return finalArr.concat(componentInstances.filter(instance => renderedComponents.every(renderedComponent => {
-                                            return renderedComponent.componentOutput.component !== instance
-                                        })));
-                                    }, [])
-                                    .map(unrenderedComponent => unrenderedComponent.unmount())
-                            )
-                            .then(() => {
-                                this.trigger('rendermarkup', Object.assign({}, evObj));
-                                return evObj;
-                            });
-                    });
-            });
+        var handlerEntriesToRemove = results[0];
+        var handlersToAdd = results[1];
+
+        handlerEntriesToRemove.forEach(handlerEntry => {
+            handlerEntry[1].off()
+            delete this._inlineEventHandlers[handlerEntry[0]];
+        });
+
+        for (var eventName in handlersToAdd) {
+            var handlerString = handlersToAdd[eventName];
+            this._inlineEventHandlers[eventName] = {handlerString};
+            try {
+                var callback = new Function('component', 'event', handlerString).bind(scope, this)
+            } catch (err) {
+                throw "Failed parsing event handler for component: " + err.stack;
+            }
+            this._inlineEventHandlers[eventName].off = this.on(eventName.slice(2), callback);
+        }
     }
 
     addComponentEvents(componentName, childComponent, index) {
-        if (this.constructor.componentEventListeners && this.constructor.componentEventListeners[componentName]) {
+        var componentKeyIndex;
+        if (this.constructor.componentEventListeners && (componentKeyIndex = Object.keys(this.constructor.componentEventListeners).map(key => key.toLowerCase()).indexOf(componentName)) > -1) {
             if (!(componentName in this._componentListenerCallbacks)) {
                 this._componentListenerCallbacks[componentName] = {}
             }
-            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[componentName])
+            this._componentListenerCallbacks[componentName][index] = Object.entries(this.constructor.componentEventListeners[Object.keys(this.constructor.componentEventListeners)[componentKeyIndex]])
                 .map(entry => {
                     return childComponent.on(entry[0], function() {
-                        if (childComponent._isMounted) {
-                            entry[1].apply(this, arguments);
+                        if (childComponent.isMounted) {
+                            entry[1].apply(this, Array.from(arguments).concat(childComponent));
                         }
                     }.bind(this))
                 })
@@ -1319,43 +3937,116 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
     }
 
     unmount() {
-        return Promise.all(
-                Object.values(this._componentInstances)
-                    .reduce((finalArr, components) => {
-                        return finalArr.concat(Object.values(components));
-                    }, [])
-                    .map(component => component.unmount())
-            )
-            .then(() => {
-                if (this._isMounted) {
-                    this._isMounted = false;
-                    this.trigger('unmount');
-                    if (this.onUnmount) {
-                        return this.onUnmount.call(this);
-                    }
-                }
-            })
+        if (this._isMounted === true) {
+            for (var eventName in this._inlineEventHandlers) {
+                this._inlineEventHandlers[eventName].off();
+                delete this._inlineEventHandlers[eventName];
+            }
+            this._isMounted = false;
+
+            return Promise.resolve(this.onUnmount())
+                .then(() => {
+                    return Promise.all((this._lastRenderedComponents || []).map(component => component.unmount()))
+                })
+                .then(() => {
+                    this.markWidgetDirty()
+                    return true;
+                });
+        }
+        return Promise.resolve(false);
     }
 
-    makeComponentInstance(componentName, index, opts) {
-        var instance = new (this.components[componentName])({
+    mount(domParent) {
+        if (!this._isMounted) {
+            return this._isMounted = this.render()
+                .then(() => {
+                    this._isMounted = true;
+                    var hadMounted = this.hasMounted;
+                    if (!this.hasMounted) {
+                        this._hasMounted = true;
+                        this.trigger('firstmount');
+                    }
+                    this.trigger('mount');
+                    
+                    return hadMounted ? this.onMount() : Promise.all([this.onMount(), this.onFirstMount()])
+                })
+                .then(() => {
+                    this.markWidgetDirty()
+                    return true;
+                });
+        }
+        return Promise.resolve(false);
+    }
+
+    markWidgetDirty() {
+        this._widgetIsDirty = true;
+        
+        this.trigger('widgetdirty');
+    }
+
+    extractSnapshotOpts(snapshot) {
+        if (!snapshot || !snapshot.id) {
+            throw new Error(`Malformed snapshot: id is missing`)
+        }
+
+        return ['state', 'componentSnapshots', 'el']
+            .reduce((acc, curr) => 
+                snapshot[curr] ? Object.assign(acc, { [curr === 'state' ? 'initialState' : curr]: snapshot[curr] }) : acc, { id: snapshot.id });
+        
+    }
+
+    async makeComponentInstance(componentName, index) {
+        componentName = componentName.toLowerCase();
+
+        if (!componentName in this.components) {
+            throw new Error(`${componentName} is not a recognized component name for component type ${this.constructor.name}`);
+        }
+
+        if (this.components[componentName].weddellClassInput) {
+            this.components[componentName] = this.createChildComponentClass(componentName, this.components[componentName].weddellClassInput);
+        }
+        var ComponentClass = await this.components[componentName];
+
+        var opts = {
             store: defaults({
-                $componentID: this.components[componentName]._id,
+                $componentID: ComponentClass._id,
                 $instanceKey: index
             })
-        });
+        };
+
+        var snapshot;
+
+        if (this._componentSnapshots && this._componentSnapshots[componentName] && (snapshot = this._componentSnapshots[componentName][index])) {
+            Object.assign(opts, this.extractSnapshotOpts(snapshot));
+        }        
+
+        var instance = new ComponentClass(opts);
         this.addComponentEvents(componentName, instance, index);
+
+        instance.on('requestpatch', evt => {
+            this._componentsRequestingPatch.push(instance);
+            this.trigger('requestpatch', Object.assign({}, evt));
+        });
+        
         return instance;
     }
 
     getComponentInstance(componentName, index) {
-        var instances = this._componentInstances[componentName]
-        if (instances && !(index in instances)) {
-            this.markDirty(); //TODO right now we just assume that if the desired component instance doesn't exist that we should mark the whole component dirty. There is a possible optimization in here somewhere.
+        componentName = componentName.toLowerCase()
+        var instances = this._componentInstances[componentName];
+        return instances[index];
+    }
 
-            return (instances[index] = this.makeComponentInstance(componentName, index)).init(this.components[componentName]._initOpts);
+    async getInitComponentInstance(componentName, index) {
+        componentName = componentName.toLowerCase()
+        var instance = this.getComponentInstance(componentName, index);
+        if (!instance) {
+            var instance = this._componentInstances[componentName][index] = await this.makeComponentInstance(componentName, index);
+            return instance
+                .init(this.components[componentName]._initOpts);
         }
-        return Promise.resolve(instances ? instances[index] : null);
+
+        return instance
     }
 
     cleanupComponentInstances() {
@@ -1365,9 +4056,8 @@ var Component = class extends mix(Component).with(EventEmitterMixin) {
 
 module.exports = Component;
 
-},{"../utils/includes":26,"../utils/make-hash":27,"./event-emitter-mixin":18,"./sig":20,"mixwith-es5":12,"object.defaults/immutable":13}],18:[function(require,module,exports){
-var Mixin = require('mixwith-es5').Mixin;
-var includes = require('../utils/includes');
+},{"../utils/clone-vnode":55,"../utils/compact":56,"../utils/difference":57,"../utils/flatten":58,"../utils/make-hash":59,"../utils/uniq":60,"./event-emitter-mixin":50,"./vdom-widget":52,"deep-equal":3,"defaults-es6":6,"mixwith":9,"virtual-dom/h":14}],50:[function(require,module,exports){
+var Mixin = require('mixwith').Mixin;
 
 var EventEmitterMixin = Mixin(function(superClass) {
     return class extends superClass {
@@ -1431,290 +4121,19 @@ var EventEmitterMixin = Mixin(function(superClass) {
 
 module.exports = EventEmitterMixin;
 
-},{"../utils/includes":26,"mixwith-es5":12}],19:[function(require,module,exports){
-var EventEmitterMixin = require('./event-emitter-mixin');
-var mix = require('mixwith-es5').mix;
-
-var Pipeline = class extends mix(Pipeline).with(EventEmitterMixin) {
-    constructor(opts) {
-        super(opts);
-        var Sig = this.constructor.Weddell.classes.Sig;
-        Object.defineProperties(this, {
-            isDirty: {value: false, writable: true},
-            name: {value: opts.name},
-            template: {value: null, writable: true},
-            input: {value: opts.input, writable: true},
-            static: {value: null, writable: true},
-            onRender: {value: opts.onRender},
-            _store: {value: opts.store},
-            _cache: {value: null, writable: true},
-            _watchedProperties: {value: {}, writable: true},
-            _promise: {value: Promise.resolve(), writable: true},
-            _requestHandle: {value: null, writable: true},
-            _currentResolve: {value: null, writable: true},
-            inputFormat: { value: new Sig(opts.inputFormat) },
-            _isDynamic: { value: opts.isDynamic, writable: true },
-            transforms: { value: opts.transforms, writable: true },
-            targetRenderFormat: { value: new Sig(opts.targetRenderFormat) },
-            _instances: { value: {}, writable: true },
-            _isInit: { value: false, writable: true }
-        });
-    }
-
-    init() {
-        if (!this._isInit) {
-            if (this.input) {
-                this.template = this.processInput(this.targetRenderFormat);
-            }
-            this._isInit = true;
-        }
-    }
-
-    processInput(targetRenderFormat) {
-        var input = this.input;
-        var Transform = this.constructor.Weddell.classes.Transform;
-        var Sig = this.constructor.Weddell.classes.Sig;
-        var transforms;
-        var inputFormat = this.inputFormat;
-        var template;
-        //TODO clean up this mess of a function
-        if (this._isDynamic && inputFormat.parsed.type !== 'function') {
-            var transforms = Transform.getMatchingTransforms(this.transforms, inputFormat, '(locals:Object, ...Any)=>Any')
-            if (!transforms) {
-                throw "Could not find appropriate transform to turn " + this.inputFormat + " into a template function.";
-            }
-            var templateTransform;
-            transforms = transforms
-                .reduce((finalVal, transform) => {
-                    if (!finalVal) {
-                        var returnType = new Sig(transform.to.parsed.returns);
-                        var result = Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
-                        if (result) {
-                            templateTransform = transform;
-                        }
-                    }
-                    return finalVal || result;
-                }, null);
-            if (!transforms) {
-                throw "Could not find a tranform path from " + this.inputFormat.validated + ' to ' + targetRenderFormat.validated;
-            }
-            template = Transform.compose(templateTransform.applyTransform(input), transforms);
-        } else if (this._isDynamic && inputFormat.parsed.type === 'function') {
-            var returnType = new Sig(this.inputFormat.parsed.returns);
-            transforms = this.transforms
-                .reduce((finalVal, transform) => {
-                    return finalVal || Transform.getTransformPath(this.transforms, returnType, targetRenderFormat);
-                }, null);
-
-            if (!targetRenderFormat.checkIfMatch(returnType)) {
-                if (!transforms) {
-                    throw "Could not find a tranform path from " + returnType.validated + ' to ' + targetRenderFormat.validated;
-                }
-                template = Transform.compose(input, transforms);
-            } else {
-                template = input;
-            }
-        } else {
-            transforms = Transform.getTransformPath(this.transforms, this.inputFormat, targetRenderFormat);
-
-            if (!transforms){
-                throw "Could not find appropriate transform for " + this.inputFormat.validated + " to " + targetRenderFormat.validated;
-            }
-
-            template = function(){ return Transform.applyTransforms(input, transforms) };
-        }
-
-        return template;
-    }
-
-    markDirty(changedKey) {
-        if (!this.isDirty && (!changedKey || (changedKey in this._watchedProperties))) {
-            this.isDirty = true;
-            this.trigger('markeddirty', {changedKey});
-            return true;
-        }
-        return false;
-    }
-
-    callTemplate(locals, template) {
-        return template.call(this, locals);
-    }
-
-    render(targetFormat) {
-        if (!this._isInit) {
-            this.init();
-        }
-        if (this.isDirty || !this._cache) {
-            var Sig = this.constructor.Weddell.classes.Sig;
-            var template = this.template;
-            if (targetFormat) {
-                targetFormat = new Sig(targetFormat);
-                //TODO cache processed input formats so we don't run into cases where processInput is running every time state changes. We could probably also remove the initialization process and have this only happen lazily
-                template = !targetFormat.checkIfMatch(this.targetRenderFormat) ? this.processInput(targetFormat) : this.template;
-            }
-            var accessed = {};
-            var off = this._store.on('get', function(evt){
-                accessed[evt.key] = 1;
-            });
-            var output = template ? this.callTemplate(this._store, template) : this.static;
-            //TODO this could potentially miss some changed keys if they are accessed inside a promise callback within the template. We can't turn the event listener off later though, because then we might catch some keys accessed by other processes. a solution might be to come up with a way to only listen for keys accessed by THIS context
-            off();
-            this._watchedProperties = accessed;
-
-            return Promise.resolve(output ? Promise.resolve(this.onRender ? this.onRender.call(this, output) : output)
-                .then(() => {
-                    this.isDirty = false;
-                    this._cache = output
-                    this.trigger('render', {output});
-                    return output;
-                }) : null);
-        }
-        return Promise.resolve(this._cache);
-    }
-}
-
-module.exports = Pipeline;
-
-},{"./event-emitter-mixin":18,"mixwith-es5":12}],20:[function(require,module,exports){
-class Sig {
-    constructor(str) {
-        if (typeof str === 'object' && str.constructor === this.constructor) {
-            Object.defineProperties(this, Object.getOwnPropertyDescriptors(str));
-        } else {
-            this.val = typeof str === 'object' ? this.constructor.format(str) : str;
-            Object.defineProperties(this, {
-                _parsed: { value: null, writable: true },
-                _validated: { value: null, writable: true },
-                parsed: {
-                    get: () => this._parsed ? this._parsed : this._parsed = this.constructor.parse(this.val)
-                },
-                validated: {
-                    get: () => this._validated ? this._validated : this._validated = this.constructor.format(this.parsed)
-                }
-            });
-        }
-    }
-
-    static parseArgs(str) {
-        return str ? str.split(',').map(arg => {
-            var rest = arg.split('...');
-            if (rest.length > 1) {
-                arg = rest[1];
-                return this.parseVal(arg, true);
-            }
-            return this.parseVal(arg);
-        }) : [];
-    }
-
-    static parse(str) {
-        var arr;
-        var formatted = {};
-        var arr = new RegExp(this.pattern).exec(str);
-        if (arr) {
-            if (arr[1] || arr[2] || arr[3]) {
-                //func arguments and body
-                return {
-                    type: 'function',
-                    name: arr[1],
-                    args: this.parseArgs(arr[2]),
-                    returns: this.parse(arr[3])
-                }
-            } else if (arr[4]) {
-                //not func
-                return this.parseVal(arr[4]);
-            }
-        }
-        console.warn("No matches for signature:", str, "Please ensure it is valid");
-    }
-
-    static parseVal(str, variadic) {
-        var parsed = str.split(':').map(str => str.trim());
-        return {name: parsed[1] ? parsed[0] : undefined, type: parsed[1] || parsed[0], variadic};
-    }
-
-    static formatVal(obj) {
-        return obj.name ? obj.name + ':' + obj.type : obj.type;
-    }
-
-    static formatArgs(args) {
-        return args.map(arg => {
-            return ((arg.variadic && '...') || '') + this.formatVal(arg);
-        }).join(',');
-    }
-
-    static formatFunc(obj) {
-        return (obj.name ? obj.name + ':' : '') + '(' + this.formatArgs(obj.args) + ')=>' + this.format(obj.returns)
-    }
-
-    static format(obj) {
-        if (obj.type === 'function') {
-            return this.formatFunc(obj);
-        } else {
-            return this.formatVal(obj);
-        }
-    }
-
-    static compare(obj1, obj2, strict) {
-        return obj1 && obj2 &&
-            this.compareTypes(obj1.type, obj2.type, strict) &&
-            (!obj1.name || !obj2.name || obj1.name === obj2.name) &&
-            obj1.variadic === obj1.variadic &&
-            ((obj1.type !== 'function' && obj2.type !== 'function') ||
-            this.compare(obj1.returns, obj2.returns));        
-    }
-
-    static compareTypes(type1, type2, strict) {
-        return type1 === 'Any' ||
-            type2 === 'Any' ||
-            type1 === type2 ||
-            (strict ? false : this.checkTypeAliases(type1, type2));
-    }
-
-    static checkTypeAliases(type1, type2) {
-        //TODO recursive check to get inherited aliases
-        return this.customTypes.filter((typeObj) => typeObj.alias === type1)
-            .some((typeObj) => typeObj.type === type2) ||
-            this.customTypes.filter((typeObj) => typeObj.alias === type2)
-                .some((typeObj) => typeObj.type === type1)
-    }
-
-    static addTypeAlias(alias, type) {
-        if (alias === 'Any') throw "Cannot alias a type to 'Any'";
-        this.customTypes.push({type, alias});
-    }
-
-    checkIfMatch(sig, strict) {
-        if (typeof sig === 'string') {
-            sig = new this.constructor(sig);
-        }
-        return sig.validated === this.validated ||
-            this.constructor.compare(this.parsed, sig.parsed, strict);
-    }
-
-    wrap(funcName, args) {
-        return new this.constructor((funcName ? funcName + ':' : '') + '(' + (args ? args.join(',') : '') + ')=>' + this.val);
-    }
-}
-
-Sig.pattern = /(?:(?:(?:([^\(]*):)*\(([^\(]+)\)=>(.*))|(.+))/;
-Sig.customTypes = [];
-
-module.exports = Sig;
-
-},{}],21:[function(require,module,exports){
+},{"mixwith":9}],51:[function(require,module,exports){
 var EventEmitterMixin = require('./event-emitter-mixin');
 var deepEqual = require('deep-equal');
-var defaults = require('object.defaults/immutable');
-var includes = require('../utils/includes');
+var defaults = require('defaults-es6');
 var difference = require('../utils/difference');
-var generateHash = require('../utils/make-hash');
-var mix = require('mixwith-es5').mix;
+var mix = require('mixwith').mix;
 var uniq = require('array-uniq');
 
 var defaultOpts = {
     shouldMonitorChanges: true,
     shouldEvalFunctions: true,
-    inputMappings: {}
+    inputMappings: {},
+    validators: {}
 };
 
 var Store = class extends mix(Store).with(EventEmitterMixin) {
@@ -1727,12 +4146,16 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             shouldMonitorChanges: {value: opts.shouldMonitorChanges},
             shouldEvalFunctions: {value: opts.shouldEvalFunctions},
             _data: {configurable: false,value: {}},
+            _initialState: { value: opts.initialState || {} },
             _cache: {value: {}, writable: true},
             _funcProps: {configurable: false,value: {}},
             _funcPropHandlerRemovers: {configurable: false,value: {}},
             _proxyObjs: {configurable: false,value: {}},
             _dependencyKeys: {configurable: false, value: []},
             _proxyProps: {configurable: false,value: {}},
+            _changedKeys: {configurable: false, value: []},
+            _firstGetComplete: {writable: true, value: false},
+            _validators: {value: opts.validators},
             overrides: { value: Array.isArray(opts.overrides) ? opts.overrides : opts.overrides ? [opts.overrides] : [] },
             proxies: { value: Array.isArray(opts.proxies) ? opts.proxies : opts.proxies ? [opts.proxies] : [] },
             extends: { value: Array.isArray(opts.extends) ? opts.extends : opts.extends ? [opts.extends] : [] },
@@ -1786,9 +4209,11 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         this.on('change', evt => {
             delete this._cache[evt.changedKey];
         });
+
+        Object.seal(this);
     }
 
-    set(key, val, isReadOnly) {
+    set(key, val, isReadOnly=false) {
         if (!(key in this)) {
             if (!isReadOnly) {
                 var setter = function(newValue) {
@@ -1802,12 +4227,23 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
                     if (this.shouldEvalFunctions && typeof newValue === 'function') {
                         this._funcProps[key] = newValue;
                     } else {
+                        if (key in this._validators) {
+                            var input = this._validators[key];
+                            var val = newValue == null ? this.getValue(key) : newValue;
+                            if (input.required && val == null) {
+                                throw `Required component input missing: ${key}`;
+                            }
+                            if (input.validator && !input.validator(val)) {
+                                throw `Input failed validation: ${key}. Received value: ${val}`;
+                            }
+                        }
                         this._data[key] = newValue;
 
                         if (this.shouldMonitorChanges) {
 
                             if (!deepEqual(newValue, oldValue)) {
-                                this.trigger('change', {changedKey: key, newValue, oldValue});
+                                this._changedKeys.push(key);
+                                this.trigger('change', { target: this, changedKey: key, newValue, oldValue });
                             }
                         }
                     }
@@ -1827,11 +4263,44 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
             });
 
             if (!isReadOnly) {
-                this[key] = val;
+                var initialValue = this._initialState[key];
+                if (initialValue != null) {
+                    if (this.shouldEvalFunctions && typeof val === 'function') {
+                        this[key] = val;
+                    } else {
+                        this[key] = initialValue;
+                    }
+                } else {
+                    this[key] = val;
+                }
             } else {
                 this._data[key] = val;
             }
         }
+    }
+
+    collectChangedData(includeComputed=true, computedValueFormat='verbose') {
+        return uniq(this._changedKeys).reduce((acc, curr) => {
+            if (!this.shouldEvalFunctions || includeComputed || !this._funcProps[curr]) {
+                if (this.shouldEvalFunctions && this._funcProps[curr]) {
+                    switch (computedValueFormat) {
+                        case 'verbose':
+                            return Object.assign(acc, { 
+                                [curr]: {
+                                    isComputedValue: true,
+                                    lastAccessedKeys: this._dependencyKeys[curr],
+                                    value: this._data[curr] 
+                                }
+                            });
+                        case 'simple':
+                        default:
+                            break;
+                    }
+                }
+                return Object.assign(acc, { [curr]: this._data[curr] })
+            }
+            return acc;
+        }, {})
     }
 
     getValue(key) {
@@ -1841,12 +4310,27 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         if (this._cache[key]) {
             return this._cache[key];
         }
-
+        if (this.shouldEvalFunctions && !this._firstGetComplete) {
+            this._firstGetComplete = true;
+            for (var propName in this._funcProps) {
+                this[propName];
+            }
+        }
         if (key in this._funcProps && !this._initialCalled[key]) {
             this._initialCalled[key] = true;
-            val = this[key] = this.evaluateFunctionProperty(key);
+
+            if (this._initialState[key]) {
+                if (this._initialState[key].isComputedValue) {
+                    val = this[key] = this._initialState[key].value;
+                    this._dependencyKeys[key] = this._initialState[key].lastAccessedKeys;
+                } else {
+                    val = this[key] = this._initialState[key];
+                }
+            } else {
+                val = this[key] = this.evaluateFunctionProperty(key);
+            }
             this.on('change', evt => {
-                if (includes(this._dependencyKeys[key], evt.changedKey)) {
+                if (this._dependencyKeys[key].includes(evt.changedKey)) {
                     this[key] = this.evaluateFunctionProperty(key);
                 }
             });
@@ -1876,25 +4360,28 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         return val;
     }
 
-    assign(data) {
+    assign(data, initialState={}) {
         if (data) {
             if (Array.isArray(data)) {
                 data.forEach(key => this.set(key, null));
             } else {
                 Object.entries(data).forEach((entry) => {
-                    this.set(entry[0], entry[1])
+                    this.set(entry[0], entry[1], false, initialState[entry[0]])
                 });
             }
         }
     }
 
     await(key) {
+        if (Array.isArray(key)) {
+            return Promise.all(key.map(subKey => this.await(subKey)));
+        }
         return Promise.resolve(this.getValue(key) || new Promise(resolve => {
             var off = this.watch(key, vals => {
                 off();
                 resolve(vals);
-            });
-        }));
+            }, true, true);
+        }))
     }
 
     evaluateFunctionProperty(key) {
@@ -1921,7 +4408,7 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
         };
 
         var off = this.on('change', function(evt){
-            if (includes(key, evt.changedKey)) {
+            if (key.includes(evt.changedKey)) {
                 checkKeys.call(this);
             }
         });
@@ -1934,66 +4421,123 @@ var Store = class extends mix(Store).with(EventEmitterMixin) {
 
 module.exports = Store;
 
-},{"../utils/difference":25,"../utils/includes":26,"../utils/make-hash":27,"./event-emitter-mixin":18,"array-uniq":3,"deep-equal":5,"mixwith-es5":12,"object.defaults/immutable":13}],22:[function(require,module,exports){
-class Transform {
-    constructor(opts) {
-        var Sig = this.constructor.Weddell.classes.Sig;
-        this.func = opts.func;
-        this.from = new Sig(opts.from);
-        this.to = new Sig(opts.to);
-    }
+},{"../utils/difference":57,"./event-emitter-mixin":50,"array-uniq":1,"deep-equal":3,"defaults-es6":6,"mixwith":9}],52:[function(require,module,exports){
+const VDOMPatch = require('virtual-dom/patch');
+const VDOMDiff = require('virtual-dom/diff');
+const createElement = require('virtual-dom/create-element');
+const cloneVNode = require('../utils/clone-vnode');
 
-    applyTransform(input) {
-        return this.func(input);
-    }
+module.exports = class WeddellVDOMWidget {
 
-    static applyTransforms(input, transforms) {
-        return transforms.reduce((finalVal, transform) => {
-            return Array.isArray(transform) ? this.applyTransforms(finalVal, transform) : transform.applyTransform(finalVal);
-        }, input);
-    }
+    cloneVNode(vNode, pruneNullNodes=true, childWidgets=[]) {
+        if (Array.isArray(vNode)) {
+            var arr = vNode.map(child => this.cloneVNode(child, pruneNullNodes, childWidgets));
 
-    static getMatchingTransforms(transforms, from, to) {
-        return transforms.filter(transform => {
-            return (!to || transform.to.checkIfMatch(to)) && (!from || transform.from.checkIfMatch(from));
-        });
-    }
-
-    static compose(func, transforms) {
-        return transforms.reduce((composed, transform) => {
-            return function(){
-                return transform.applyTransform(composed.apply(this, arguments));
+            if (pruneNullNodes) {
+                arr = arr.reduce((newArr, child, ii) => {
+                    if (child && child instanceof WeddellVDOMWidget) {
+                        if ((!pruneNullNodes || child.vTree)) {
+                            newArr.push(child);
+                        }
+                    } else if (!pruneNullNodes || child != null) {
+                        newArr.push(child);
+                    }
+                    return newArr;
+                }, []);
             }
-        }, func);
+            return arr;
+        } else if (!vNode) {
+            return vNode;
+        } else if (vNode instanceof WeddellVDOMWidget) {
+            var widget = (vNode.component._widgetIsDirty ? vNode.component.makeNewWidget() : vNode.component._widget);
+            childWidgets.push(widget);
+            return widget
+        } else if (!vNode.tagName) {
+            return vNode;
+        } else {
+            return cloneVNode(vNode, this.cloneVNode(vNode.children, pruneNullNodes, childWidgets));
+        }
     }
 
-    static getTransformPath(transforms, from, to, _soFar) {
-        //TODO add heuristics to make this process faster
-        if (!_soFar) _soFar = [];
-        if (from.checkIfMatch(to)) {
-            return _soFar;
+    get type() {
+        return 'Widget';
+    }
+
+    constructor({component=null, vTree=component._vTree}) {
+        this.component = component;
+        this.childWidgets = [];
+        this._callbacks = [];
+        this.vTree = this.cloneVNode(vTree, true, this.childWidgets);
+    }
+
+    bindChildren(parent) {
+        this._callbacks = this.childWidgets.map(childWidget => childWidget.component.on('widgetdirty', () => {
+            parent.markWidgetDirty()
+        }))
+    }
+    unbindChildren() {
+        this._callbacks.forEach(callback => callback());
+    }
+    init() {
+        if (!this.vTree) {
+            throw "Component has no VTree to init with";
         }
-        return transforms.filter(transform => {
-            return transform.from.checkIfMatch(from, true);
-        }).reduce((finalVal, transform) => {
-            return finalVal || this.getTransformPath(transforms, transform.to, to, _soFar.concat(transform));
-        }, null);
+        var el = createElement(this.vTree);
+        el.setAttribute('data-wdl-id', this.component.id);
+        //@TODO we could detect when we are using a snapshot element and use that element rather than creating a new one. Early attempts at doing this proved unreliable.
+
+        this.fireDomEvents(this.component.el, this.component._el = el);
+
+        return el;
+    }
+
+    fireDomEvents(prevEl, el) {
+        if (!prevEl) {
+            this.component.trigger('domcreate', {el});
+            this.component.onDOMCreate.call(this.component, {el});
+            this.component.trigger('domcreateorchange', {newEl: el, prevEl});
+            this.component.onDOMCreateOrChange.call(this.component, {newEl: el, prevEl});
+        } else if (prevEl !== el) {
+            this.component.trigger('domchange', {el});
+            this.component.onDOMChange.call(this.component, { newEl: el, prevEl });
+            this.component.trigger('domcreateorchange', {newEl: el, prevEl});
+            this.component.onDOMCreateOrChange.call(this.component, { newEl: el, prevEl });
+
+            var positionComparison = prevEl.compareDocumentPosition(el);
+            if (positionComparison !== 0) {
+                this.component.trigger('dommove');
+                //@TODO atm this pretty much always fires. maybe that is circumstantial, but we may need to be more selective about which bits constitute a "move"
+                this.component.onDOMMove.call(this.component, { newEl: el, prevEl });
+            }
+        }
+    }
+
+    update(previousWidget, prevDOMNode) {
+        if (previousWidget instanceof WeddellVDOMWidget) {
+            var patches = VDOMDiff(previousWidget.vTree, this.vTree);
+            var el = VDOMPatch(prevDOMNode, patches);
+
+            this.fireDomEvents(this.component.el, this.component._el = el);
+
+            el.setAttribute('data-wdl-id', this.component.id);
+
+            return el;
+        }
+        return this.init();        
+    }
+
+    destroy(el) {
+        if (el === this.component.el) {
+            this.component._el = null;
+            this.component.onDOMDestroy.call(this.component, {el});
+        }
     }
 }
-
-Transform.heuristics = {};
-
-module.exports = Transform;
-
-},{}],23:[function(require,module,exports){
-var mix = require('mixwith-es5').mix;
+},{"../utils/clone-vnode":55,"virtual-dom/create-element":12,"virtual-dom/diff":13,"virtual-dom/patch":22}],53:[function(require,module,exports){
+var mix = require('mixwith').mix;
 var App = require('./app');
 var Component = require('./component');
 var Store = require('./store');
-var Pipeline = require('./pipeline');
-var Transform = require('./transform');
-var Sig = require('./sig');
-var includes = require('../utils/includes');
 
 class _Weddell {
     static plugin(pluginObj) {
@@ -2001,8 +4545,8 @@ class _Weddell {
         if (!pluginObj.id) {
             throw 'Got a plugin with no ID assigned. Aborting';
         }
-        if (!includes(NewWeddell.loadedPlugins, pluginObj.id)) {
-            if (pluginObj.requires && !includes(NewWeddell.loadedPlugins, pluginObj.requires)) {
+        if (!NewWeddell.loadedPlugins.includes(pluginObj.id)) {
+            if (pluginObj.requires && !NewWeddell.loadedPlugins.includes(pluginObj.requires)) {
                 [].concat(pluginObj.requires).forEach((plugReq) => {
                     throw 'Plugin ' + pluginObj.id + ' requires the plugin ' + plugReq + ', which is not loaded. Load ' + plugReq + ' first.';
                 });
@@ -2046,27 +4590,39 @@ _Weddell.consts = {
     INDEX_ATTR_NAME: 'data-component-index'
 };
 _Weddell.deps = {};
-_Weddell.classes = {App, Component, Store, Pipeline, Transform, Sig};
+_Weddell.classes = {App, Component, Store};
 Object.values(_Weddell.classes).forEach(function(commonClass){
     commonClass.Weddell = _Weddell;
 });
 module.exports = _Weddell;
 
-},{"../utils/includes":26,"./app":16,"./component":17,"./pipeline":19,"./sig":20,"./store":21,"./transform":22,"mixwith-es5":12}],24:[function(require,module,exports){
+},{"./app":48,"./component":49,"./store":51,"mixwith":9}],54:[function(require,module,exports){
 module.exports = require('../core/weddell');
 
-},{"../core/weddell":23}],25:[function(require,module,exports){
-// var includes = require('./includes');
+},{"../core/weddell":53}],55:[function(require,module,exports){
+const h = require('virtual-dom/h');
+const svg = require('virtual-dom/virtual-hyperscript/svg');
+
+module.exports = function(vNode, newChildren=null, preserveIfUnchanged=false) {
+    return preserveIfUnchanged && !newChildren && !vNode.namespace ? vNode : 
+        (vNode.namespace ? svg : h)(vNode.tagName, Object.assign({}, vNode.properties, {
+            key: vNode.key
+        }), newChildren || vNode.children);
+};
+},{"virtual-dom/h":14,"virtual-dom/virtual-hyperscript/svg":35}],56:[function(require,module,exports){
+module.exports = function(arr) {
+    return arr.filter(item => item != null);
+};
+},{}],57:[function(require,module,exports){
 module.exports = function(arr1, arr2) {
     return arr1.filter(function(i) {return arr2.indexOf(i) < 0;});
 };
 
-},{}],26:[function(require,module,exports){
-module.exports = function(arr, val){
-    return arr.some(currKey=>currKey === val);
+},{}],58:[function(require,module,exports){
+module.exports = function(arr) {
+    return [].concat(...arr);
 }
-
-},{}],27:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = function makeid() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -2077,5 +4633,9 @@ module.exports = function makeid() {
   return text;
 };
 
-},{}]},{},[24])(24)
+},{}],60:[function(require,module,exports){
+module.exports = function(arr) {
+    return arr.reduce((acc, item) => acc.includes(item) ? acc : acc.concat(item), []);
+}
+},{}]},{},[54])(54)
 });

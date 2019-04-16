@@ -1,23 +1,22 @@
-var defaults = require('object.defaults/immutable');
+var defaults = require('defaults-es6');
 var pathToRegexp = require('path-to-regexp');
 var findParent = require('find-parent');
-var compact = require('array-compact');
 var defaultOpts = {};
-var mix = require('mixwith-es5').mix;
-var EventEmitterMixin = require('../../core/event-emitter-mixin');
+const { mix } = require('@weddell/mixwith');
+var EventEmitterMixin = require('@weddell/event-emitter-mixin');
 
 function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     var params = [];
 
     if (pattern.charAt(0) !== '/') {
         if (parentMatched) {
-            var regex = pathToRegexp('/' + pattern, params, {end});
+            var regex = pathToRegexp('/' + pattern, params, { end });
             var routePathname = pathName;
             var routeFullPath = fullPath;
             var match = regex.exec(routePathname);
         }
     } else {
-        regex = pathToRegexp(pattern, params, {end});
+        regex = pathToRegexp(pattern, params, { end });
         routePathname = fullPath;
         routeFullPath = routePathname;
         match = regex.exec(routePathname);
@@ -26,7 +25,7 @@ function matchPattern(pattern, parentMatched, pathName, fullPath, end) {
     return { params, match, fullPath: routeFullPath, pathName: routePathname, regex };
 }
 
-class BaseRouter {}
+class BaseRouter { }
 
 class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
@@ -43,64 +42,60 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         }
     }
 
-    route(pathName, shouldReplaceState=false, triggeringEvent=null) {
+    route(pathName, shouldReplaceState = false, triggeringEvent = null) {
         if (typeof shouldReplaceState !== 'boolean') {
             triggeringEvent = shouldReplaceState;
             shouldReplaceState = false
         }
         if (typeof pathName === 'string') {
-            var hashIndex = pathName.indexOf('#');
-            var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
-            pathName = hashIndex > -1 ? pathName.slice(0, hashIndex) : pathName;
             var matches = this.matchRoute(pathName, this.routes);
         } else if (Array.isArray(pathName)) {
             matches = pathName;
         } else if (pathName) {
-             //assuming an object was passed to route by named route.
+            //assuming an object was passed to route by named route.
             var matches = this.compileRouterLink(pathName);
-            if (matches)  {
+            if (matches) {
                 return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState, triggeringEvent);
             }
         }
         if (matches) {
-            Object.assign(matches, {hash, triggeringEvent});
+            var hash = matches.hash;
+            Object.assign(matches, { triggeringEvent });
             var isInitialRoute = !this.currentRoute;
-            
-            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
-                var promise = Promise.resolve(Object.assign(matches, {isCurrentRoute: true}))
+
+            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
+                var promise = Promise.resolve(Object.assign(matches, { isCurrentRoute: true }))
                     .then(matches => {
-                        if (this.currentRoute.hash !== matches.hash) {
-                            if (shouldReplaceState) {
-                                return this.replaceState(matches.fullPath, hash);
-                            } else {
-                                return this.pushState(matches.fullPath, hash);
-                            }
-                        } 
+                        if (shouldReplaceState) {
+                            return this.replaceState(matches.fullPath, hash);
+                        } else {
+                            return this.pushState(matches.fullPath, hash);
+                        }
                     });
             } else {
                 promise = Promise.all(matches.map((currMatch, key) => {
-                        if (key === matches.length - 1 && currMatch.route.redirect) {
-                            if (typeof currMatch.route.redirect === 'function') {
-                                var redirectPath = currMatch.route.redirect.call(this, matches);
-                            } else {
-                                //assuming string - path
-                                redirectPath = currMatch.route.redirect;
-                            }
-                            if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
-
-                            return Promise.reject(redirectPath);
+                    if (key === matches.length - 1 && currMatch.route.redirect) {
+                        if (typeof currMatch.route.redirect === 'function') {
+                            var redirectPath = currMatch.route.redirect.call(this, matches);
+                        } else {
+                            //assuming string - path
+                            redirectPath = currMatch.route.redirect;
                         }
-        
-                        return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
-                    }))
+                        if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
+
+                        return Promise.reject(redirectPath);
+                    }
+
+                    return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
+                }))
                     .then(results => {
-                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, compact(results)) : null)
+                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, results.filter(val => val)) : null)
                             .then(() => matches)
                             .then(matches => {
                                 if (isInitialRoute || shouldReplaceState) {
                                     this.replaceState(matches.fullPath, hash);
                                 } else if (!matches.isCurrentRoute) {
-                                    return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : {x:0,y:0})
+                                    return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 })
                                         .then(() => matches);
                                 }
                                 return matches;
@@ -113,7 +108,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             return this.promise = promise.then(result => {
                 this.promise = null
                 return result;
-            });                
+            });
         }
         return this.promise = null;
     }
@@ -134,7 +129,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             return !matchedRoute;
         });
         if (matchedRoute) {
-            matchedRoute = Object.assign({route: matchedRoute}, matchedRoute);
+            matchedRoute = Object.assign({ route: matchedRoute }, matchedRoute);
             matchedRoute = Object.assign(currPath.concat(matchedRoute.route), matchedRoute);
         }
         return matchedRoute || null;
@@ -143,10 +138,14 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
     matchRoute(pathName, routes, routePath, fullPath, parentMatched) {
         if (!routePath) routePath = [];
         var result = null;
+        var hashIndex = pathName.indexOf('#');
+        var hash = hashIndex > -1 ? pathName.slice(hashIndex + 1) : '';
+        pathName = hashIndex > -1 ? pathName.slice(0, hashIndex) : pathName;
+
         if (typeof pathName !== 'string') {
             return null;
         }
-        
+
         if (typeof fullPath === 'undefined') {
             fullPath = pathName;
         }
@@ -160,7 +159,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
             var currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, false);
 
-            var newPath = routePath.concat({route: currRoute, match: currMatch.match, params: currMatch.params});
+            var newPath = routePath.concat({ route: currRoute, match: currMatch.match, params: currMatch.params });
 
             if (currRoute.children) {
                 result = this.matchRoute(currMatch.pathName.replace(currMatch.regex, ''), currRoute.children, newPath, currMatch.fullPath, !!currMatch.match);
@@ -168,7 +167,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
             if (!result) {
                 currMatch = matchPattern(currRoute.pattern, parentMatched, pathName, fullPath, true);
-                var matchObj = {route: currRoute, match: currMatch.match, params: currMatch.params };
+                var matchObj = { route: currRoute, match: currMatch.match, params: currMatch.params };
                 var isValid = true;
                 if (currRoute.validator) {
                     isValid = currRoute.validator.call(currRoute, matchObj);
@@ -188,17 +187,18 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
 
                 result.route = result[result.length - 1].route;
                 result.fullPath = fullPath;
+                result.hash = hash;
             }
 
             return !result;
         });
-        
+
         if (result) {
             result.isRouteUpdate = !!(this.currentRoute && result.route.name === this.currentRoute.route.name);
-            result.keepUpdateScrollPos = result.isRouteUpdate && !!(typeof result.route.keepUpdateScrollPos === 'function' ? 
-                        (result.route.keepUpdateScrollPos.call(this, {newRoute: result, prevRoute: this.currentRoute})) : 
-                        result.route.keepUpdateScrollPos);
-        }        
+            result.keepUpdateScrollPos = result.isRouteUpdate && !!(typeof result.route.keepUpdateScrollPos === 'function' ?
+                (result.route.keepUpdateScrollPos.call(this, { newRoute: result, prevRoute: this.currentRoute })) :
+                result.route.keepUpdateScrollPos);
+        }
 
         return result;
     }
@@ -208,13 +208,13 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
     }
 
     compileRouterLink(obj) {
-         /*
-        * Takes an object specifying a router name and params, returns an object with compiled path and matched route
-        */
+        /*
+       * Takes an object specifying a router name and params, returns an object with compiled path and matched route
+       */
         if (typeof obj === 'string') return obj;
         var paramDefaults = {};
         var routeName;
-       
+
         if (this.currentRoute) {
             routeName = this.currentRoute.route.name;
 
@@ -228,12 +228,13 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                 return params;
             }, paramDefaults);
         }
-        
+
         routeName = obj.name ? obj.name : routeName;
         obj.params = Object.assign(paramDefaults, obj.params);
-       
+        var hash = obj.hash;
+
         var route = Router.getNamedRoute(routeName, this.routes);
-        
+
         if (route) {
             try {
                 var pattern = route.reduce((finalPath, pathRoute) => {
@@ -250,6 +251,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                 route,
                 match: null
             }];
+            matches.hash = hash;
             matches.route = route;
             matches.fullPath = fullPath[0] !== '/' ? '/' + fullPath : fullPath;
             return matches;
@@ -259,7 +261,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         return null;
     }
 
-    init() {
+    init(initPath) {
         if (!this._isInit && this.routes) {
             if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             this._isInit = true;
@@ -280,8 +282,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                     }
                 }
             });
-
-            return this.route(location.pathname + location.hash);
+            return this.route(initPath || (location.pathname + location.hash));
         }
         return Promise.resolve();
     }
@@ -300,13 +301,13 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             var pushState = evt => {
                 if (setListener) {
                     off();
-                    history.replaceState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                    history.replaceState({ fullPath: pathName, hash, scrollPos, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
                     this.setScrollPos(scrollPos, hash);
                 } else {
-                    history.pushState({fullPath: pathName, hash, scrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+                    history.pushState({ fullPath: pathName, hash, scrollPos, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
                     this.setScrollPos(scrollPos, hash);
                 }
-                
+
                 resolve();
             }
             if (location.hash === hash) {
@@ -322,19 +323,19 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
     replaceState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
-        
-        var currentScrollPos = {x: window.pageXOffset, y: window.pageYOffset};
+
+        var currentScrollPos = { x: window.pageXOffset, y: window.pageYOffset };
 
         if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash) {
-            history.replaceState({fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true}, document.title, location.origin + pathName + location.search + (hash  || ''));
+            history.replaceState({ fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
         }
-        
+
         this.setScrollPos(scrollPos, hash);
     }
 
     onHashChange(evt) {
         if (!history.state) {
-            this.replaceState(location.pathname, location.hash, {x: window.pageXOffset, y: window.pageYOffset});
+            this.replaceState(location.pathname, location.hash, { x: window.pageXOffset, y: window.pageYOffset });
         }
         this.trigger('hashchange')
     }
@@ -345,9 +346,10 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             try {
                 el = document.querySelector(hash);
             } catch (err) { }
-            
+
             if (el) {
-                window.scrollTo(el.offsetLeft, el.offsetTop);
+                var rect = el.getBoundingClientRect();
+                window.scrollTo(rect.left + window.pageXOffset, rect.top + window.pageYOffset);
             }
         } else if (scrollPos) {
             window.scrollTo(scrollPos.x, scrollPos.y);
@@ -357,7 +359,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
     onPopState(evt) {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
-        
+
         if (evt && evt.state && evt.state.isWeddellState === true) {
             var result = this.route(evt.state.fullPath + (evt.state.hash || ''), true, evt);
             if (result && evt.state.scrollPos) {

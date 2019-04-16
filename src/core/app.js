@@ -1,292 +1,622 @@
-var DOMReady = require('document-ready-promise')();
-var defaults = require('object.defaults/immutable');
-var mix = require('mixwith-es5').mix;
-var Sig = require('./sig');
-var EventEmitterMixin = require('./event-emitter-mixin');
-var isApplicationOf = require('mixwith-es5').isApplicationOf;
-var Component = require('./component');
+const DOMReady = require('document-ready-promise')();
+const defaults = require('defaults-es6');
+const mix = require('@weddell/mixwith').mix;
+const EventEmitterMixin = require('@weddell/event-emitter-mixin');
+const VDOMPatch = require('virtual-dom/patch');
+const VDOMDiff = require('virtual-dom/diff');
+const h = require('virtual-dom/h');
+const virtualize = require('@weddell/vdom-virtualize');
 
-Sig.addTypeAlias('CSSString', 'String');
+const WeddellComponent = require('./component');
 
-var defaultOpts = {
-    renderInterval: 41.6667,
-    markupRenderFormat: null,
-    stylesRenderFormat: 'CSSString',
-    markupTransforms: [],
-    pipelineInitMethods: {},
-    stylesTransforms: [],
-    childStylesFirst: true
+const defaultOpts = {
+    childStylesFirst: true,
+    verbosity: 0,
+    quietInterval: 100
 };
 
-function createStyleEl() {
-    var styleEl = document.createElement('style');
-    styleEl.setAttribute('type', 'text/css');
-    document.head.appendChild(styleEl);
+const patchInterval = 33.334;
+
+function createStyleEl(id, className = null) {
+    var styleEl = document.getElementById(id)
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.setAttribute('type', 'text/css');
+        document.head.appendChild(styleEl);
+        styleEl.id = id;
+    }
+    styleEl.classList.add(className);
     return styleEl;
 }
 
-var App = class extends mix(App).with(EventEmitterMixin) {
+/**
+ * @typedef {String} CssString A string of valid CSS style declarations. 
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS
+ */
+
+/**
+ * @typedef {String} HtmlString A string of valid HTML. 
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML
+ */
+
+ /**
+  * @typedef {Object} WeddellAppStateSnapshot A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state. 
+  * @property {HtmlString} stateHtml Application state, serialized to JSON with an event binding it to application init, all wrapped with a script tag, ready to be inserted into HTML files to allow for application restore.
+  * @property {HtmlString} stylesHtml All Weddell style tags grouped together in an HTML string, and ready to be inserted into HTML head.
+  * @property {HtmlString} fullResponse All HTML in document.
+  * @property {HtmlString} appHtml All HTML currently rendered into application mount point.
+  */
+
+ /**
+  * An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application. 
+  * 
+  * @alias App
+  * @static
+  * @memberOf Weddell
+  * 
+  * @example 
+  * const App = require('weddell').classes.App;
+  * 
+  * var app = new App({
+  *     routes,
+  *     el: '#app',
+  *     Component: Component => class MyWeddellComponent extends Component {},
+  *     styles: `
+  *       .my-weddell-component {
+  *         color: red;
+  *       }
+  *     `
+  * });
+  *
+  * app.init();
+  */
+
+class WeddellApp extends mix().with(EventEmitterMixin) {
+
+    /**
+     * @param {object} opts
+     * @param {String|Element} opts.el Element to mount app into, or a DOM query string that should resolve to a single element.
+     * @param {WeddellComponentMixin} opts.Component A Weddell component class factory. This component will be mounted as the root into the mount point specified in the 
+     * @param {number} [opts.quietInterval=100] Delay between DOM patches to wait before firing the "quiet" event.
+     * @param {CssString} [opts.styles] App styles that will be rendered to the DOM once the app initializes. 
+     */
+
     constructor(opts) {
         opts = defaults(opts, defaultOpts);
         super(opts);
-        this.styles = opts.styles;
-        this.el = opts.el;
+        this.styles = opts.styles || this.constructor.styles;
         this.renderOrder = ['markup', 'styles'];
-        this.pipelineInitMethods = opts.pipelineInitMethods;
-        this.styleEl = opts.styleEl;
+        this.quietInterval = opts.quietInterval;
         this.componentInitOpts = Array.isArray(opts.Component) ? opts.Component[1] : {};
-        this.Component = this.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component);
-        this.component = null;
         this.shouldRender = {};
-        this.renderInterval = opts.renderInterval;
-        this.renderPromise = null;
-        this.stylesRenderFormat = opts.stylesRenderFormat;
-        this.markupRenderFormat = opts.markupRenderFormat;
-        this.markupTransforms = opts.markupTransforms;
-        this.stylesTransforms = opts.stylesTransforms;
-        this.childStylesFirst = opts.childStylesFirst;
-        this.renderers = {};
-        var Sig = this.constructor.Weddell.classes.Sig;
+        this.childStylesFirst = opts.childStylesFirst; /*@TODO use this again*/
+
+        Object.defineProperties(this, {
+            Component: { value: this.constructor.Weddell.classes.Component.makeComponentClass(Array.isArray(opts.Component) ? opts.Component[0] : opts.Component) },
+            component: { get: () => this._component },
+            el: { get: () => this._el },
+            _liveWidget: { value: null, writable: true },
+            _lastPatchStartTime: { value: Date.now(), writable: true },
+            _el: { value: null, writable: true },
+            _initPromise: { value: null, writable: true },
+            _elInput: { value: opts.el },
+            _patchPromise: { value: null, writable: true },
+            _snapshotData: { value: null, writable: true },
+            patchPromise: { get: () => this._patchPromise },
+            _patchRequests: { value: [], writable: true },
+            _component: { value: null, writable: true },
+            _widget: { value: null, writable: true },
+            _createdComponents: { value: [] }
+        })
 
         var consts = this.constructor.Weddell.consts;
 
         if (!this.Component) {
-            throw "There is no base component set for this app. Can't mount.";
+            throw new Error(`There is no base component set for this app. Can't mount.`);
         }
         if (consts.VAR_NAME in window) {
-            throw "Namespace collision for", consts.VAR_NAME, "on window object. Aborting.";
+            throw new Error(`Namespace collision for ${consts.VAR_NAME} on window object. Aborting.`);
         }
 
         Object.defineProperty(window, consts.VAR_NAME, {
-            value: {app: this, components: {} }
-        });
-        
-        this.pipelines = {
-            styles: {
-                init: 'initStylesPipeline',
-                render: 'renderStyles',
-                componentEvent: 'renderstyles'
-            },
-            markup: {
-                render: 'renderMarkup',
-                componentEvent: 'rendermarkup'
-            }            
-        };
-    }
-
-    renderCSS(staticStyles=[], instanceStyles=[]) {
-        if (this.styles && !this.styleEl.textContent) {
-            this.styleEl.textContent = this.styles;
-        }
-        var prevEl;
-        var leftovers = staticStyles.concat(instanceStyles).reduce((final, obj) => {
-            var styleIndex = final.findIndex(styleEl => styleEl.id === 'weddell-style-' + obj.id);
-            var styleEl;
-
-            if (styleIndex === -1) {
-                styleEl = createStyleEl();
-                styleEl.id = 'weddell-style-' + obj.id;
-                styleEl.classList.add('weddell-style');
-            } else {
-                styleEl = final.splice(styleIndex, 1)[0];
-            }
-
-            if (!(styleEl.textContent === obj.styles)) {
-                styleEl.textContent = obj.styles;
-            }
-
-            if (prevEl) {
-                var comparison = prevEl.compareDocumentPosition(styleEl);
-                if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
-                    prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
-                }
-            }
-
-            prevEl = styleEl;
-
-            return final;
-        }, Array.from(document.querySelectorAll('head style.weddell-style')));
-
-        leftovers.forEach(el => {
-            document.head.removeChild(el);
-        });
-    }
-
-    initStylesPipeline() {
-        if (typeof this.styleEl == 'string') {
-            this.styleEl = document.querySelector(this.styleEl);
-        } else if (!this.styleEl) {
-            this.styleEl = createStyleEl();
-        }
-        var appStyles = this.styles;
-        if (appStyles) {
-            this.renderCSS();
-        }
-    }
-
-    renderMarkup(evt) {
-        if (!(evt.renderFormat in this.renderers)) {
-            throw "No appropriate markup renderer found for format: " + evt.renderFormat;
-        }
-        this.renderers[evt.renderFormat].call(this, evt.output);
-        this.component.trigger('renderdommarkup', Object.assign({}, evt));
-    }
-
-    renderStyles(evt) {
-        var staticStyles = [];
-        
-        var flattenStyles = (obj) => {
-            var childStyles = (obj.components ? obj.components.map(flattenStyles) : []).reduce((final, item) => final.concat(item), []);
-            var styles = Array.isArray(obj) ? obj.map(flattenStyles) : ({ styles: obj.output ? obj.output.trim() : '', id: obj.component._id });
-
-            if (obj.staticStyles) {
-                var staticObj = {
-                    class: obj.component.constructor,
-                    styles: (typeof obj.staticStyles === 'string' ? obj.staticStyles.trim() : '')
-                };
-                if (this.childStylesFirst) {
-                    staticStyles.unshift(staticObj)
-                } else {
-                    staticStyles.push(staticObj)
-                }
-            }
-            return (this.childStylesFirst ? childStyles.concat(styles) : [styles].concat(childStyles));
-        };
-        var instanceStyles = flattenStyles(evt)
-            .filter(item => item.styles);
-
-        staticStyles = staticStyles.reduce((finalArr, styleObj) => {
-            if (!styleObj.class._BaseClass || !finalArr.some(otherStyleObj => otherStyleObj.class._BaseClass === styleObj.class._BaseClass || otherStyleObj.class._BaseClass instanceof styleObj.class._BaseClass)) {
-                return finalArr.concat(styleObj)
-            }
-            return finalArr;
-        }, [])
-        .map(item => ({ id: item.class._id || 'root', styles: item.styles }))
-
-        this.renderCSS(staticStyles, instanceStyles);
-
-        this.component.trigger('renderdomstyles', Object.assign({}, evt));
-    }
-
-    makeComponentClass(ComponentClass) {
-        if (ComponentClass.prototype && (ComponentClass.prototype instanceof Component || ComponentClass.prototype.constructor === Component)) {
-            if (ComponentClass.prototype instanceof this.constructor.Weddell.classes.Component || ComponentClass.prototype.constructor === this.constructor.Weddell.classes.Component) {
-                return ComponentClass;
-            }
-            throw "Component input is a class extending Component, but it does not have necessary plugins applied to it. Consider using a factory function instead.";
-        } else if (typeof ComponentClass === 'function') {
-            // We got a non-Component class function, so we assuming it is a component factory function
-            return ComponentClass.call(this, this.constructor.Weddell.classes.Component);
-        } else {
-            //@TODO We may want to support plain objects here as well. Only problem is then we don't get the clean method inheritance and would have to additionally support passing method functions along as options, which is a bit messier.
-            throw "Unsupported component input";
-        }
-    }
-
-    makeComponent() {
-        var component = new (this.Component)({
-            isRoot: true,
-            targetStylesRenderFormat: this.stylesRenderFormat,
-            targetMarkupRenderFormat: this.markupRenderFormat,
-            markupTransforms: this.markupTransforms,
-            stylesTransforms: this.stylesTransforms
+            value: { app: this, components: {}, verbosity: opts.verbosity }
         });
 
-        component.assignProps(Object.values(this.el.attributes).reduce((finalObj, attr) => {
-            finalObj[attr.name] = attr.value;
-            return finalObj;
-        }, {}))
+        if (opts.verbosity > 0 && opts.styles) {
+            console.warn('You are using deprecated syntax: opts.styles on the app are no longer supported. Use static getter');
+        }
 
-        return component
-    }
-
-    initRenderLifecycleStyleHooks(rootComponent) {
-        this.component.once('renderdomstyles', evt => {
-            this.el.classList.add('first-styles-render-complete');
-            if (this.el.classList.contains('first-markup-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
-
-        this.component.once('renderdommarkup', evt => {
-            this.el.classList.add('first-markup-render-complete');
-            if (this.el.classList.contains('first-styles-render-complete')) {
-                this.el.classList.add('first-render-complete');
-            }
-        });
-    }
-
-    scheduleRender() {
-        return new Promise((resolve) => {
-            requestAnimationFrame(() => {
-                var neededRenders = this.renderOrder.filter(pipeline => this.shouldRender[pipeline]);
-                neededRenders.forEach(pipeline => this.shouldRender[pipeline] = false)
-                neededRenders
-                    .reduce((promise, pipeline) => {
-                        return promise
-                            .then(() => this.component.render(pipeline));
-                    }, Promise.resolve())
-                    .then(() => Object.values(this.shouldRender).some(val => val) ? this.scheduleRender() : null)
-                    .then(() => {
-                        this.renderOrder.forEach(pipeline => {
-                            this.el.classList.remove('rendering-' + pipeline);
-                        })
-                        resolve();
-                    });                    
-            })
+        Object.defineProperties(this, {
+            rootNode: { value: null, writable: true }
         })
     }
 
-    init() {
+    /**
+     * Initializes the app, rendering the root component and mounting it into the specified DOM element.
+     * 
+     * @param {Object} initObj Object with initialization options. 
+     * 
+     * @fires Window#weddellinit Event fired on window object once initialization completes.
+     * @fires WeddellApp#createcomponent Event fired on app object whenever its root component or any child components are created.
+     * @fires WeddellApp#createrootcomponent Event fired on app object whenever its root component is created.
+     * 
+     * @returns {Promise} Promise that resolves once the app has fully initialized and rendered into the DOM. 
+     */
+
+    init(initObj = {}) {
+        this.on('createcomponent', evt => {
+            this._createdComponents.push(evt.component);
+        })
+
         return DOMReady
-            .then(() => {
-                if (typeof this.el == 'string') {
-                    this.el = document.querySelector(this.el);
+            .then(async () => {
+                window.dispatchEvent(new CustomEvent('weddellinitbefore', { detail: { app: this } }));
+
+                this.initPatchers();
+
+                if (this._snapshotData) {
+                    this.el.classList.add('using-snapshot');
                 }
+                this.el.classList.add('initting');
+                this.el.classList.remove('init-complete', 'first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
 
-                Object.values(this.pipelines).forEach(pipelineObj => {
-                    this[pipelineObj.init] && this[pipelineObj.init].call(this);
-                });
-
-                this.component = this.makeComponent();
-
-                this.trigger('createcomponent', {component: this.component});
-                this.trigger('createrootcomponent', {component: this.component});
+                this._component = await this.makeComponent();
+                /**
+                 * @event WeddellApp#createcomponent
+                 * @type {Object}
+                 * @property {WeddellComponent} component 
+                 */
+                this.trigger('createcomponent', { component: this.component });
+                /**
+                 * @event WeddellApp#createrootcomponent
+                 * @type {Object}
+                 * @property {WeddellComponent} component 
+                 */
+                this.trigger('createrootcomponent', { component: this.component });
                 this.component.on('createcomponent', evt => this.trigger('createcomponent', Object.assign({}, evt)));
 
-                this.component.on('wantsrender', evt => {
-                    if (!this.shouldRender[evt.pipelineName]) {
-                        this.el.classList.add('rendering-' + evt.pipelineName);
-                        this.shouldRender[evt.pipelineName] = true;
-                    }
+                this.component.on('requestpatch', evt => {
+                    this.el.classList.add('awaiting-patch');
+                    this._patchRequests = this._patchRequests.concat(evt);
 
-                    if (!this.renderPromise) {
-                        this.el.classList.add('rendering');
-                        this.renderPromise = this.scheduleRender()
-                            .then(() => {
-                                this.renderPromise = null;
-                                this.component.markRendering(false);
-                                this.el.classList.remove('rendering');
-                            });
-                        this.component.markRendering(this.renderPromise);
-                    }
+                    this._initPromise.then(() => {
+                        if (!this._patchPromise) {
+                            this._patchPromise = this.queuePatch();
+                        }
+                    })
                 });
 
-                this.initRenderLifecycleStyleHooks(this.component);
+                var onPatch = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false)
+                    if (!isRendering) {
+                        this.trigger('quiet');
+                    }
+                    this.el.classList.add('first-patch-complete');
+                    this.component.trigger('patch');
+                };
+                this.on('patch', onPatch);
 
                 Object.seal(this);
 
-                return this.component.init(this.componentInitOpts)
+                return this._initPromise = this.initRootComponent(initObj)
+            })
+            .then(result => {
+                /**
+                 * Event fired on the window object when a Weddell app finishes initializing. 
+                 * 
+                 * @event Window#weddellinit
+                 * 
+                 * @type {CustomEvent}
+                 * @property {Object} detail
+                 * @property {WeddellApp} detail.app The app that has finished initializing.
+                 * 
+                 */
+
+                window.dispatchEvent(new CustomEvent('weddellinit', { detail: { app: this } }));
+                this.el.classList.remove('initting');
+                this.el.classList.add('init-complete');
+                return result;
+            })
+    }
+
+    /**
+     * Hook method that may be overridden and will be executed at the end of every DOM patch. 
+     * 
+     * @returns {Promise} Subsequent patches may be deferred by returning a Promise in this method.
+     */
+
+    onPatch() { }    
+
+    /**
+     * Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
+     * 
+     * @param {string} id Component id to wait for
+     * 
+     * @returns {Promise.<WeddellComponent>}
+     */
+
+    awaitComponentMount(id) {
+        return new Promise(resolve => {
+            Promise.resolve(this._createdComponents.find(component => component.id === id) || new Promise(resolve => {
+                this.on('createcomponent', evt => {
+                    if (evt.component.id === id) {
+                        resolve(evt.component)
+                    }
+                })
+            }))
+                .then(component => {
+                    component.awaitMount().then(() => resolve(component));
+                })
+        })
+    }
+
+    /**
+     * Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
+     * 
+     * @returns {Promise}
+     */
+    awaitPatch() {
+        return this.patchPromise || Promise.resolve();
+    }
+
+    /**
+     * Returns a promise that will resolve after current pending patch or the next patch completes.
+     * 
+     * @returns {Promise}
+     */
+
+    awaitNextPatch() {
+        return this.patchPromise || this.component.awaitEvent('requestpatch').then(() => this.patchPromise);
+    }
+
+    /**
+     * Dumps the current application state to a snapshot object, typically used for server-side rendering setups. 
+     * 
+     * @returns {WeddellAppStateSnapshot}
+     */
+
+    renderSnapshot() {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(document.documentElement.outerHTML, "text/html");
+        var scriptEl = doc.createElement('script');
+        scriptEl.innerHTML = `
+            window.addEventListener('weddellinitbefore', function(evt){
+                evt.detail.app._snapshotData = ${JSON.stringify(this.constructor.takeComponentStateSnapshot(this.component))};
+            });
+        `;
+        doc.body.appendChild(scriptEl);
+
+        return {
+            appHtml: this.component.el.outerHTML,
+            stateHtml: scriptEl.outerHTML,
+            stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
+                .map(el => el.outerHTML)
+                .join('\n'),
+            fullResponse: doc.documentElement.outerHTML
+        }
+    }
+
+    /**
+     * @private
+     */
+
+    static get patchMethods() {
+        return [
+            'patchDOM',
+            'patchStyles'
+        ];
+    }
+
+    /**
+     * @private
+     */
+
+    initRootComponent(initObj) {
+        return this.component.init(this.componentInitOpts)
+            .then(() => this.component.mount())
+            .then(() => {
+                this.el.classList.add('first-markup-render-complete', 'first-styles-render-complete', 'first-render-complete');
+            })
+    }
+
+    /**
+     * @private
+     */
+
+    patchStyles(patchRequests) {
+
+        var results = patchRequests.reduceRight((acc, item) => {
+            if (!(item.classId in acc.classes)) {
+                acc.classes[item.classId] = item;
+            }
+            if (!(item.id in acc.components)) {
+                acc.components[item.id] = item;
+            }
+            return acc;
+        }, { classes: {}, components: {} });
+
+        var instanceStyles = [];
+        var staticStyles = {};
+
+        this.component.walkComponents(component => {
+            var id = component.id;
+            var needsPatch = id in results.components;
+            var stylesObj = needsPatch ? results.components[id].results.renderStyles : component._renderCache.renderStyles;
+
+            var makeObj = (key, obj) => Object.assign(Object.create(null, { styles: { get: () => obj ? obj[key] : null } }), { id, needsPatch })
+            instanceStyles.push(makeObj('dynamicStyles', stylesObj));
+
+            id = component.constructor.id;
+
+            if (!(id in staticStyles)) {
+                needsPatch = id in results.classes;
+                stylesObj = needsPatch ? results.classes[id].results.renderStyles : component._renderCache.renderStyles;
+                staticStyles[id] = makeObj('staticStyles', stylesObj);
+            }
+        }, component => component.isMounted);
+
+        staticStyles = Object.values(staticStyles);
+
+        //We now have a pretty good idea what we're writing. Let's patch those styles to DOM
+
+        var prevEl;
+
+        staticStyles.concat(instanceStyles)
+            .reduce((final, obj) => {
+                if (!obj.styles) {
+                    /* this component has never rendered before. skip it */
+                    return final;
+                }
+
+                if (!obj.needsPatch) {
+
+                    obj.styles.forEach((styles, ii) => {
+                        var styleIndex = final.findIndex(styleEl => styleEl.id === `weddell-style-${obj.id}-${ii}`);
+
+                        if (styleIndex > -1) {
+                            /* Object doesn't need a patch and it already has a style element in dom, so do nothing. */
+                            var styleEl = final.splice(styleIndex, 1)[0];
+                        } else {
+                            /* Object doesn't need a patch and it does not have a style element in dom */
+                            if (styles) {
+                                styleEl = createStyleEl(`weddell-style-${obj.id}-${ii}`, 'weddell-style');
+                                styleEl.textContent = styles;
+                            }
+                        }
+
+                        if (prevEl && styleEl) {
+                            var comparison = prevEl.compareDocumentPosition(styleEl);
+                            if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                                prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                            }
+                        }
+
+                        if (styleEl) {
+                            prevEl = styleEl;
+                        }
+                    });
+
+                    return final;
+                } else {
+
+                    obj.styles.forEach((styles, ii) => {
+                        var styleIndex = final.findIndex(styleEl => styleEl.id === `weddell-style-${obj.id}-${ii}`);
+
+                        if (!styles) {
+                            if (styleIndex > -1) {
+                                final.splice(styleIndex, 1);
+                            }
+                            return final;
+                        }
+
+                        var styleEl = styleIndex > -1 ? final.splice(styleIndex, 1)[0] : createStyleEl(`weddell-style-${obj.id}-${ii}`, 'weddell-style');
+
+                        if (prevEl) {
+                            var comparison = prevEl.compareDocumentPosition(styleEl);
+                            if (comparison !== Node.DOCUMENT_POSITION_FOLLOWING) {
+                                prevEl.parentNode.insertBefore(styleEl, prevEl.nextSibling);
+                            }
+                        }
+
+                        prevEl = styleEl;
+
+                        if (styleEl.textContent !== styles) {
+                            styleEl.textContent = styles;
+                        }
+
+                    });
+
+                    return final;
+                }
+
+            }, Array.from(document.querySelectorAll('head style.weddell-style')))
+            .forEach(el => {
+                document.head.removeChild(el);
+            });
+        //@TODO could probably make this more succinct by using Virtual-dom with style elements
+
+        this.trigger('patchstyles');
+    }
+
+    /**
+     * @private
+     */
+
+    async makeComponent(componentOpts = {}) {
+        var id = this.rootNode.getAttribute('data-wdl-id');
+        var snapshot = this._snapshotData;
+        if (snapshot && id && snapshot.id !== id) {
+            throw new Error('Snapshot id does not match root element id.')
+        }
+
+        var opts = defaults({
+            isRoot: true,
+            id,
+        }, componentOpts);
+
+        if (snapshot) {
+            var addElReferences = (obj, parentEl) => {
+                var el = parentEl.querySelector(`[data-wdl-id="${obj.id}"]`);
+
+                if (el) {
+                    obj.el = el;
+
+                    if (obj.componentSnapshots) {
+                        for (var componentName in obj.componentSnapshots) {
+                            for (var index in obj.componentSnapshots[componentName]) {
+                                addElReferences(obj.componentSnapshots[componentName][index], el);
+                            }
+                        }
+                    }
+                }
+                return obj;
+            };
+            snapshot = addElReferences(snapshot, this.el);
+            if (snapshot.state) {
+                opts.initialState = snapshot.state;
+            }
+            if (snapshot.componentSnapshots) {
+                opts.componentSnapshots = snapshot.componentSnapshots;
+            }
+            if (snapshot.el) {
+                opts.el = snapshot.el;
+            }
+        }
+        var Component = await this.Component;
+        var component = new Component(opts);
+
+        component.assignProps(
+            Object.values(this.el.attributes)
+                .reduce((finalObj, attr) => {
+                    finalObj[attr.name] = attr.value;
+                    return finalObj;
+                }, {})
+        );
+
+        return component;
+    }
+
+    /**
+     * @private
+     */
+
+    queuePatch() {
+        var resolveFunc;
+        var promise = new Promise((resolve) => {
+            resolveFunc = resolve;
+        })
+            .then(currPatchRequests => {
+                return this.constructor.patchMethods.reduce((acc, patcher) => {
+                    return acc
+                        .then(() => this[patcher](currPatchRequests))
+                }, Promise.resolve())
                     .then(() => {
-
-                        Object.values(this.pipelines).forEach(pipelineObj => {
-                            this.component.on(pipelineObj.componentEvent, this[pipelineObj.render].bind(this));
-                        });
-
-                        this.component.render();
+                        if (this._patchRequests.length) {
+                            return Promise.reject('Rerender');
+                        }
+                    })
+                    .then(() => {
+                        this._patchPromise = null;
+                        /**
+                         * @event WeddellApp#patch
+                         */
+                        this.trigger('patch');
+                        this.el.classList.remove('awaiting-patch');
+                        return this.onPatch()
+                    }, err => {
+                        if (err === 'Rerender') {
+                            return this.queuePatch();
+                        }
+                        console.error('Error patching:', err.stack)
                     })
             })
+
+        var now = Date.now();
+        var dt = now - this._lastPatchStartTime;
+        this._lastPatchStartTime = Date.now();
+
+        window.setTimeout(() => {
+            var currPatchRequests = this._patchRequests;
+            this._patchRequests = [];
+            resolveFunc(currPatchRequests);
+        }, Math.max(0, patchInterval - dt))
+
+        return promise;
+    }
+
+    /**
+     * @private
+     */
+
+    initPatchers() {
+        var el = this._elInput;
+        if (typeof el == 'string') {
+            el = document.querySelector(el);
+            if (!el) {
+                throw new Error("Could not mount an element using provided query.");
+            }
+        }
+        this._el = el;
+
+        if (!(this.rootNode = this.el.firstChild)) {
+            this.rootNode = document.createElement('div');
+            this._widget = h('div');
+        } else {
+            this._widget = virtualize(this.rootNode, 'id');
+        }
+
+        if (this.styles) {
+            createStyleEl('weddell-app-styles', 'weddell-app-styles').textContent = this.styles;
+        }
+    }
+
+    /**
+     * @private
+     */
+
+    static takeComponentStateSnapshot(component) {
+        var obj = {
+            id: component.id,
+            state: Object.entries(component.state.collectChangedData())
+                .reduce((acc, curr) => {
+                    if (curr[0][0] !== '$') {
+                        return Object.assign(acc, { [curr[0]]: curr[1] })
+                    }
+                    return acc;
+                }, {})
+        };
+        var componentSnapshots = {};
+        for (var componentName in component._componentInstances) {
+            var components = component._componentInstances[componentName];
+            for (var componentIndex in components) {
+                if (!(componentName in componentSnapshots)) {
+                    componentSnapshots[componentName] = {};
+                }
+                componentSnapshots[componentName][componentIndex] = this.takeComponentStateSnapshot(components[componentIndex]);
+            }
+        }
+        if (Object.keys(componentSnapshots).length) {
+            obj.componentSnapshots = componentSnapshots;
+        }
+        return obj;
+    }
+
+    /**
+     * @private
+     */
+
+    patchDOM(patchRequests) {
+        if (!this.rootNode.parentNode) {
+            this.el.appendChild(this.rootNode);
+        }
+        this.component.refreshWidgets();
+        var patches = VDOMDiff(this._widget, this.component._widget);
+        var rootNode = VDOMPatch(this.rootNode, patches);
+        this.rootNode = rootNode;
+        this._widget = this.component._widget;
+
+        this.trigger('patchdom');
     }
 }
 
-module.exports = App;
+module.exports = WeddellApp;
