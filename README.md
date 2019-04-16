@@ -18,6 +18,8 @@
 <dt><a href="#WeddellAppStateSnapshot">WeddellAppStateSnapshot</a> : <code>Object</code></dt>
 <dd><p>A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.</p>
 </dd>
+<dt><a href="#WeddellComponentMixin">WeddellComponentMixin</a> ⇒ <code>function</code></dt>
+<dd></dd>
 <dt><a href="#DomCreateEvtObj">DomCreateEvtObj</a> : <code>object</code></dt>
 <dd></dd>
 <dt><a href="#DomDestroyEvtObj">DomDestroyEvtObj</a> : <code>object</code></dt>
@@ -77,6 +79,9 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
             * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
         * _static_
+            * [.state](#Weddell.Component.state) : <code>object</code>
+            * [.consts](#Weddell.Component.consts) : <code>object</code>
+            * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
             * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
@@ -243,6 +248,9 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
         * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
     * _static_
+        * [.state](#Weddell.Component.state) : <code>object</code>
+        * [.consts](#Weddell.Component.consts) : <code>object</code>
+        * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
         * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
@@ -699,6 +707,61 @@ Returns a promise that will resolve once a DOM element has been created for this
 Returns a promise that will resolve once the pending render promise has completed (or immediately, if there is no pending render promise).
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component.state"></a>
+
+#### Component.state : <code>object</code>
+Stub property. Typically, components override this property, returning the keys and default state values. When a component is initialized, it will use this object when creating its own local transient state object. Once initialized, subsequent changes to any key in the WeddellComponent#state object will trigger component rerenders -> DOM patches.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Example showing merging values with super
+
+<a name="Weddell.Component.consts"></a>
+
+#### Component.consts : <code>object</code>
+Stub property. Typically, components with constant helper values will override this property. These values will be proxied onto the component instance's 'state' property.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Example showing const availability on state object.
+
+<a name="Weddell.Component.components"></a>
+
+#### Component.components : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
+Stub property. Typically, components with child components will override this property, supplying component mixins that can then be included in the component's markup template by the entry key.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- supply example utilizing content tag directive
+- supply example demonstrating nested child tag scoping
+- example showing static parent -> child state binding
+- example showing custom event handlers
+
+**Example**  
+```js
+class MyComponent extends WeddellComponent {
+ static get markup(locals, h) {
+     return h('.foo', [
+         h('my-child-component')
+     ]);
+ }
+
+ static get components() {
+     return {
+         'my-child-component': Component => class extends Component {
+             static get markup(locals, h) {
+                 return h('.bar', ['bar']);
+             }
+         }
+     }
+ }
+}
+
+// will render '<div class="foo"><div class="bar">bar</div></div>' into the DOM.
+```
 <a name="Weddell.Component.markup"></a>
 
 #### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
@@ -847,6 +910,24 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
 </td>
     </tr><tr>
     <td>appHtml</td><td><code><a href="#HtmlString">HtmlString</a></code></td><td><p>All HTML currently rendered into application mount point.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+<a name="WeddellComponentMixin"></a>
+
+## WeddellComponentMixin ⇒ <code>function</code>
+**Kind**: global typedef  
+**Returns**: <code>function</code> - Extended class (typically the base class with extensions applied).  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>Component</td><td><code>function</code></td><td><p>Base WeddellComponent class.</p>
 </td>
     </tr>  </tbody>
 </table>
