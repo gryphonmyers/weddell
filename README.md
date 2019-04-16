@@ -56,9 +56,12 @@ Top-level Weddell class serving as an entrypoint to various APIs.
     * *[.Component](#Weddell.Component)*
         * [new WeddellComponent(opts)](#new_Weddell.Component_new)
         * _instance_
+            * [.onMount()](#Weddell.Component+onMount) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onFirstMount()](#Weddell.Component+onFirstMount) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onUnmount()](#Weddell.Component+onUnmount) ⇒ <code>Promise</code> \| <code>void</code>
             * [.onInit()](#Weddell.Component+onInit) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
             * [.onRender()](#Weddell.Component+onRender) ⇒ <code>Promise</code> \| <code>void</code>
+            * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
             * [.onRenderMarkup()](#Weddell.Component+onRenderMarkup) ⇒ <code>Promise</code> \| <code>void</code>
             * [.onRenderStyles()](#Weddell.Component+onRenderStyles) ⇒ <code>Promise</code> \| <code>void</code>
             * [.onDOMCreate(evt)](#Weddell.Component+onDOMCreate) ⇒ <code>void</code>
@@ -82,10 +85,10 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
         * _static_
             * [.state](#Weddell.Component.state) : <code>object</code>
-            * [.consts](#Weddell.Component.consts) : <code>object</code>
+            * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
             * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
-            * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+            * [.consts](#Weddell.Component.consts) : <code>object</code>
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
         * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
@@ -226,9 +229,12 @@ Class representing a Weddell component. A component encapsulates some combinatio
 * *[.Component](#Weddell.Component)*
     * [new WeddellComponent(opts)](#new_Weddell.Component_new)
     * _instance_
+        * [.onMount()](#Weddell.Component+onMount) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onFirstMount()](#Weddell.Component+onFirstMount) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onUnmount()](#Weddell.Component+onUnmount) ⇒ <code>Promise</code> \| <code>void</code>
         * [.onInit()](#Weddell.Component+onInit) ⇒ <code>Promise</code> \| <code>void</code>
-        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
         * [.onRender()](#Weddell.Component+onRender) ⇒ <code>Promise</code> \| <code>void</code>
+        * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
         * [.onRenderMarkup()](#Weddell.Component+onRenderMarkup) ⇒ <code>Promise</code> \| <code>void</code>
         * [.onRenderStyles()](#Weddell.Component+onRenderStyles) ⇒ <code>Promise</code> \| <code>void</code>
         * [.onDOMCreate(evt)](#Weddell.Component+onDOMCreate) ⇒ <code>void</code>
@@ -252,10 +258,10 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
     * _static_
         * [.state](#Weddell.Component.state) : <code>object</code>
-        * [.consts](#Weddell.Component.consts) : <code>object</code>
+        * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
         * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
-        * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+        * [.consts](#Weddell.Component.consts) : <code>object</code>
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
 <a name="new_Weddell.Component_new"></a>
@@ -308,22 +314,40 @@ WeddellComponent => class MyComponent extends WeddellComponent {
 
 // Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
 ```
+<a name="Weddell.Component+onMount"></a>
+
+#### component.onMount() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component. Returning a promise will defer completion of the mount process.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onFirstMount"></a>
+
+#### component.onFirstMount() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component, but only the first time it mounts. Subsequent unmounts and mounts will not call this method again. Returning a promise will defer completion of the mount process.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onUnmount"></a>
+
+#### component.onUnmount() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called whenever a component instance is unmounted from its parent component. Returning a promise will defer completion of the unmount process.
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
 <a name="Weddell.Component+onInit"></a>
 
 #### component.onInit() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called whenever a component instance finishes initializing. Returning a promise will defer completion of the init process.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
-<a name="Weddell.Component+onFirstRender"></a>
-
-#### component.onFirstRender() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
-
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
 <a name="Weddell.Component+onRender"></a>
 
 #### component.onRender() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called after the component finishes rendering. Returning a promise will defer completion of the render process (not advised unless you know what you are doing).
+
+**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+<a name="Weddell.Component+onFirstRender"></a>
+
+#### component.onFirstRender() ⇒ <code>Promise</code> \| <code>void</code>
+Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
 <a name="Weddell.Component+onRenderMarkup"></a>
@@ -723,16 +747,47 @@ Stub property. Typically, components override this property, returning the keys 
 - Example showing computed functions
 - Example demonstrating serializability constraints.
 
-<a name="Weddell.Component.consts"></a>
+<a name="Weddell.Component.markup"></a>
 
-#### Component.consts : <code>object</code>
-Stub property. Typically, components with constant helper values will override this property. These values will be proxied onto the component instance's 'state' property.
+#### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+Stub property. Typically, components will override the markup property to provide their application's virtual DOM template function.
 
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
-**Todo**
+**Example**  
+```js
+Component => class MyComponent extends Component {
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', [
+            h('div', {
+             attributes: {
+                 onclick: 'console.log("hello");'
+             }
+            }, 'Click Me')
+         ])
+ }
+}
 
-- Example showing const availability on state object.
+// The template function is passed both component state and the applications hyperscript implementation 
+// ('h'). See the virtual-dom docs for more info about this syntax.
+```
+**Example** *(Hscript can be a bit clunky to work with when your display logic gets more complex. Development tools like pug-vdom can port other, perhaps more succinct syntaxes to return virtual-dom nodes.)*  
+```js
 
+Component => class MyComponent extends Component {
+ static get markup() {
+     return require('./my-component.pug');
+ }
+}
+
+// in './my-component.pug':
+//
+// .my-component
+//   div(onclick="console.log('hello')") Click Me
+
+// This example would require the use of the pug-vdom dev tool. weddell-dev-tools includes pug support out of the box. Or
+// you can write your own require hook to adapt your favorite template syntax to return virtual dom nodes.
+```
 <a name="Weddell.Component.styles"></a>
 
 #### Component.styles ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
@@ -741,7 +796,7 @@ Stub property. Typically, components with custom CSS styles will override this p
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 **Example**  
 ```js
-class MyComponent extends WeddellComponent {
+Component => class MyComponent extends Component {
  static get styles() {
      return `
          .my-component {
@@ -761,7 +816,7 @@ class MyComponent extends WeddellComponent {
 **Example** *(You can also return a function instead of a string, in which case current component state is available for dynamic styling.)*  
 ```js
 
-class MyComponent extends WeddellComponent {
+Component => class MyComponent extends Component {
  static get state() {
      return {
          myImg: 'https://mywebsite.com/myimage.jpg'
@@ -784,10 +839,10 @@ class MyComponent extends WeddellComponent {
 
 // Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background.
 ```
-**Example** *(Be careful with CSS template functions though! Unlike string values, template functions will be executed and rendered to DOM for every component instance, which can lead to performance issues. Ideally, unchanging, class-level styles should be returned as strings, while styles making use of component state, if needed, should be returned as template functions. You can mix and match by returning an array of style values:)*  
+**Example** *(Be careful with CSS template functions though! Unlike string values, template functions will be executed and rendered to DOM for every component instance, which can lead to performance issues. Ideally, unchanging, class-level styles should be returned as strings, while styles making use of component state, if needed, should be returned as template functions. You can mix and match by returning an array of style values.)*  
 ```js
 
-class MyComponent extends WeddellComponent {
+Component => class MyComponent extends Component {
  static get state() {
      return {
          myImg: 'https://mywebsite.com/myimage.jpg'
@@ -797,16 +852,16 @@ class MyComponent extends WeddellComponent {
  static get styles() {
      return [
      (locals) => `
-         .my-component {
-             background-image: url(${locals.myImg});
-         }
-     `,
-     `
-         .my-component {
-             color: red;
-         }
-     `
-  ]
+           .my-component {
+               background-image: url(${locals.myImg});
+           }
+       `,
+       `
+           .my-component {
+               color: red;
+           }
+       `
+     ]
  }
 
  static get markup() {
@@ -815,7 +870,28 @@ class MyComponent extends WeddellComponent {
  }
 }
 
-// Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background and red text. Since the red text does not need component state, we return it as a string, separately from the background-image style - it will be more performant that way.
+// Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background and 
+// red text. Since the red text does not need component state, we return it as a string, separately 
+// from the background-image style - it will be more performant that way.
+```
+**Example** *(When inheriting from a parent component class, the ES6 class spec&#x27;s super keyword makes it easy to extend the parent styles.)*  
+```js
+
+Component => class MyChildComponent extends MyParentComponentMixin(MyComponent) {
+
+ static get styles() {
+     return [
+        `
+             .my-component {
+                 border: 2px solid red;
+            }
+         `
+     ].concat(super.styles);
+ }
+}
+
+// Assuming 'MyParentComponentMixin' is the mixin from the previous example, we would get an element
+// rendered to DOM with 'myimage.jpg' in the background, red text, and a 2px solid red border
 ```
 <a name="Weddell.Component.components"></a>
 
@@ -832,7 +908,7 @@ Stub property. Typically, components with child components will override this pr
 
 **Example**  
 ```js
-class MyComponent extends WeddellComponent {
+Component => class MyComponent extends Component {
  static get markup(locals, h) {
      return h('.foo', [
          h('my-child-component')
@@ -852,12 +928,16 @@ class MyComponent extends WeddellComponent {
 
 // will render '<div class="foo"><div class="bar">bar</div></div>' into the DOM.
 ```
-<a name="Weddell.Component.markup"></a>
+<a name="Weddell.Component.consts"></a>
 
-#### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
-Stub property. Typically, components will override the markup property to provide their application's virtual dom template function.
+#### Component.consts : <code>object</code>
+Stub property. Typically, components with constant helper values will override this property. These values will be proxied onto the component instance's 'state' property.
 
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Example showing const availability on state object.
+
 <a name="Weddell.Component.isWeddellComponent"></a>
 
 #### Component.isWeddellComponent
