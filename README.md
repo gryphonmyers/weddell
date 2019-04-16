@@ -19,7 +19,7 @@
 <dd><p>A snapshot of a Weddell app. This value is ready for serialization, allowing for later rehydration of application state.</p>
 </dd>
 <dt><a href="#StoreWatchArgs">StoreWatchArgs</a> : <code>Array</code></dt>
-<dd><p>Arguments as passed into Store#watch (in the most basic use case, this will be an array with two items: a key and a callback function).</p>
+<dd><p>Arguments as passed into <a href="https://github.com/gryphonmyers/weddell/tree/ft-new-render#storewatchkey-func-validator-invokeimmediately-onlyfireonce--removeeventlistenercallback">Store#watch</a> (in the most basic use case, this will be an array with two items: a key and a callback function).</p>
 </dd>
 <dt><a href="#StateTransform">StateTransform</a> ⇒ <code>*</code></dt>
 <dd></dd>
@@ -1631,7 +1631,7 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
 <a name="StoreWatchArgs"></a>
 
 ## StoreWatchArgs : <code>Array</code>
-Arguments as passed into Store#watch (in the most basic use case, this will be an array with two items: a key and a callback function).
+Arguments as passed into [Store#watch](https://github.com/gryphonmyers/weddell/tree/ft-new-render#storewatchkey-func-validator-invokeimmediately-onlyfireonce--removeeventlistenercallback) (in the most basic use case, this will be an array with two items: a key and a callback function).
 
 **Kind**: global typedef  
 <a name="StateTransform"></a>
@@ -1803,7 +1803,7 @@ A virtual node object, as implemented by the virtual-dom library.
   </thead>
   <tbody>
 <tr>
-    <td>value</td><td><code>Array</code> | <code>*</code></td><td><p>If a single key was watched, a single value will be passed in. If multiple keys were watched, all array with all watched values will be passed into the first argument.</p>
+    <td>value</td><td><code>Array</code> | <code>*</code></td><td><p>If a single key was watched, a single value will be passed in. If multiple keys were watched, an array with all watched values will be passed in as the first argument.</p>
 </td>
     </tr>  </tbody>
 </table>
