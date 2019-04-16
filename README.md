@@ -792,7 +792,8 @@ Component => class MyComponent extends Component {
  }
 }
 
-// Will throw an error. Instances of the Foobar class are not plain objects, and thus are not serializable.
+// Will throw an error. Instances of the Foobar class are not plain objects, and 
+// thus are not serializable.
 ```
 **Example** *(There is, however, an exception allowing serializable data in state: state values declared as functions will be interpreted as &#x27;computed values&#x27;. These functions are executed in the context of the component state object, and will be recomputed when referenced state values change. Note: functions may only be specified in the initial declaration - you can NOT set a state value to a new function at runtime (that will result in an error being thrown).)*  
 ```js
@@ -809,7 +810,9 @@ Component => class MyComponent extends Component {
 
  static get markup() {
      return (locals, h) =>
-         h('.my-component', { attributes: { onclick: locals.$bind('this.state.numbers = this.state.numbers.map(num => num + 1)') }}, locals.numbersDoubled)
+         h('.my-component', { attributes: { 
+             onclick: locals.$bind('this.state.numbers = this.state.numbers.map(num => num + 1)') }
+         }, locals.numbersDoubled)
  }
 }
 
@@ -822,7 +825,7 @@ Component => class MyComponent extends Component {
 
 Component => class MyComponent extends MyParentComponentMixin(Component) {
  static get state() {
-     return Object.assign({}, super.state, {
+     return Object.assign({}, super.state, { //Note argument order - we default to super state, override with our state.
          numbersDoubledMinus1: function(){
              return this.numbersDoubled.map(num => num - 1);
          }
@@ -839,6 +842,57 @@ Component => class MyComponent extends MyParentComponentMixin(Component) {
 // '<div class="my-component">1 3</div>'
 // * User clicks *
 // '<div class="my-component">3 5</div>'
+```
+**Example** *(When working with objects and arrays in component state, be cognizant of the fact that you must set the state value itself in order for the necessary change events to fire, triggering DOM refresh. Getting this wrong can lead to hard-to-track-down bugs.)*  
+```js
+
+Component => class MyComponent extends Component {
+ static get state() {
+     return {
+         myObject: {
+             myValue: 1
+         }
+     }
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', {
+             attributes: {
+                 onclick: locals.$bind('this.state.myObject.myValue += 1')
+             }
+         }, locals.myObject.myValue)
+ }
+}
+
+// '<div class="my-component">1/div>'
+// * User clicks *
+// '<div class="my-component">1</div>'
+// Even though our event handler was fired, the DOM did not get refreshed! Let's try this again...
+
+Component => class MyComponent extends Component {
+ static get state() {
+     return {
+         myObject: {
+             myValue: 1
+         }
+     }
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', {
+             attributes: {
+                 onclick: locals.$bind('this.state.myObject = { ...this.state.myObject, myValue: this.state.myObject.myValue + 1 }')
+             }
+         }, locals.myObject.myValue)
+ }
+}
+// '<div class="my-component">1/div>'
+// * User clicks *
+// '<div class="my-component">2</div>'
+// There we go! Because we set this.state.myObject itself to a new value instead of just setting 
+// a property on the existing value, the appropriate events got fired, and the DOM refreshed.
 ```
 <a name="Weddell.Component.styles"></a>
 
