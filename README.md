@@ -20,6 +20,8 @@
 </dd>
 <dt><a href="#WeddellComponentMixin">WeddellComponentMixin</a> ⇒ <code>function</code></dt>
 <dd></dd>
+<dt><a href="#StylesCallback">StylesCallback</a> ⇒ <code>String</code></dt>
+<dd></dd>
 <dt><a href="#DomCreateEvtObj">DomCreateEvtObj</a> : <code>object</code></dt>
 <dd></dd>
 <dt><a href="#DomDestroyEvtObj">DomDestroyEvtObj</a> : <code>object</code></dt>
@@ -81,6 +83,7 @@ Top-level Weddell class serving as an entrypoint to various APIs.
         * _static_
             * [.state](#Weddell.Component.state) : <code>object</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
+            * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code>
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
             * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
@@ -216,7 +219,7 @@ Dumps the current application state to a snapshot object, typically used for ser
 <a name="Weddell.Component"></a>
 
 ### *Weddell.Component*
-Class representing a Weddell component. A component encapsulates some combination of scripts, markup and/or styles into a instanceable custom tag.
+Class representing a Weddell component. A component encapsulates some combination of scripts, markup and/or styles into an instantiable custom tag.
 
 **Kind**: static class of [<code>Weddell</code>](#Weddell)  
 
@@ -250,6 +253,7 @@ Class representing a Weddell component. A component encapsulates some combinatio
     * _static_
         * [.state](#Weddell.Component.state) : <code>object</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
+        * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code>
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
         * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
@@ -716,6 +720,8 @@ Stub property. Typically, components override this property, returning the keys 
 **Todo**
 
 - Example showing merging values with super
+- Example showing computed functions
+- Example demonstrating serializability constraints.
 
 <a name="Weddell.Component.consts"></a>
 
@@ -727,6 +733,12 @@ Stub property. Typically, components with constant helper values will override t
 
 - Example showing const availability on state object.
 
+<a name="Weddell.Component.styles"></a>
+
+#### Component.styles ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code>
+Stub property. Typically, components with custom CSS styles will override this property. Styles returned here will be dynamically inserted into style elements in the DOM's head element when needed. Strings will be applied on a per-class basis (one copy for all component instances), while functions will be executed as a style template on a per-instance basis.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 <a name="Weddell.Component.components"></a>
 
 #### Component.components : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
@@ -929,6 +941,22 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
 <tr>
     <td>Component</td><td><code>function</code></td><td><p>Base WeddellComponent class.</p>
 </td>
+    </tr>  </tbody>
+</table>
+
+<a name="StylesCallback"></a>
+
+## StylesCallback ⇒ <code>String</code>
+**Kind**: global typedef  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>locals</td><td><code>object</code></td>
     </tr>  </tbody>
 </table>
 
