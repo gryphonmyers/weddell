@@ -20,7 +20,7 @@
 </dd>
 <dt><a href="#WeddellComponentMixin">WeddellComponentMixin</a> ⇒ <code>function</code></dt>
 <dd></dd>
-<dt><a href="#StylesCallback">StylesCallback</a> ⇒ <code>String</code></dt>
+<dt><a href="#CssTemplate">CssTemplate</a> ⇒ <code><a href="#CssString">CssString</a></code></dt>
 <dd></dd>
 <dt><a href="#DomCreateEvtObj">DomCreateEvtObj</a> : <code>object</code></dt>
 <dd></dd>
@@ -83,7 +83,7 @@ Top-level Weddell class serving as an entrypoint to various APIs.
         * _static_
             * [.state](#Weddell.Component.state) : <code>object</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
-            * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code> \| [<code>StylesCallback</code>](#StylesCallback)
+            * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
             * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
@@ -253,7 +253,7 @@ Class representing a Weddell component. A component encapsulates some combinatio
     * _static_
         * [.state](#Weddell.Component.state) : <code>object</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
-        * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code> \| [<code>StylesCallback</code>](#StylesCallback)
+        * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
         * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
@@ -735,10 +735,88 @@ Stub property. Typically, components with constant helper values will override t
 
 <a name="Weddell.Component.styles"></a>
 
-#### Component.styles ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code> \| [<code>StylesCallback</code>](#StylesCallback)
+#### Component.styles ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
 Stub property. Typically, components with custom CSS styles will override this property. Styles returned here will be dynamically inserted into style elements in the DOM's head when needed. Strings will be applied on a per-class basis (one copy for all component instances), while functions will be executed as a style template on a per-instance basis.
 
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+class MyComponent extends WeddellComponent {
+ static get styles() {
+     return `
+         .my-component {
+             color: red;
+         }
+     `
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', 'Foo bar')
+ }
+}
+
+// Once mounted and patched, the element will be rendered in DOM with red text.
+```
+**Example** *(You can also return a function instead of a string, in which case current component state is available for dynamic styling.)*  
+```js
+
+class MyComponent extends WeddellComponent {
+ static get state() {
+     return {
+         myImg: 'https://mywebsite.com/myimage.jpg'
+     }
+ }
+
+ static get styles() {
+     return (locals) => `
+         .my-component {
+             background-image: url(${locals.myImg});
+         }
+     `
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', 'Foo bar')
+ }
+}
+
+// Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background.
+```
+**Example** *(Be careful with CSS template functions though! Unlike string values, template functions will be executed and rendered to DOM for every component instance, which can lead to performance issues. Ideally, unchanging, class-level styles should be returned as strings, while styles making use of component state, if needed, should be returned as template functions. You can mix and match by returning an array of style values:)*  
+```js
+
+class MyComponent extends WeddellComponent {
+ static get state() {
+     return {
+         myImg: 'https://mywebsite.com/myimage.jpg'
+     }
+ }
+
+ static get styles() {
+     return [
+     (locals) => `
+         .my-component {
+             background-image: url(${locals.myImg});
+         }
+     `,
+     `
+         .my-component {
+             color: red;
+         }
+     `
+  ]
+ }
+
+ static get markup() {
+     return (locals, h) =>
+         h('.my-component', 'Foo bar')
+ }
+}
+
+// Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background and red text. Since the red text does not need component state, we return it as a string, separately from the background-image style - it will be more performant that way.
+```
 <a name="Weddell.Component.components"></a>
 
 #### Component.components : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
@@ -944,9 +1022,9 @@ A snapshot of a Weddell app. This value is ready for serialization, allowing for
     </tr>  </tbody>
 </table>
 
-<a name="StylesCallback"></a>
+<a name="CssTemplate"></a>
 
-## StylesCallback ⇒ <code>String</code>
+## CssTemplate ⇒ [<code>CssString</code>](#CssString)
 **Kind**: global typedef  
 <table>
   <thead>
