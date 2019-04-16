@@ -267,7 +267,7 @@ Class representing a Weddell component. A component encapsulates some combinatio
 <a name="new_Weddell.Component_new"></a>
 
 #### new WeddellComponent(opts)
-Constructs a Weddell Component. One does not generally instantiate components directly, but rather through the use of markup tags. This information is available primarily for the purposes of plugin authorship.
+Constructs a Weddell Component. One does not generally instantiate components directly, but rather includes them declaratively via markup tags. This information is available primarily for the purposes of plugin authorship. See the static [markup](#Weddell.Component.markup), [state](#Weddell.Component.state), and [styles](#Weddell.Component.styles) properties for more typical component development entrypoints.
 
 <table>
   <thead>
@@ -284,36 +284,6 @@ Constructs a Weddell Component. One does not generally instantiate components di
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-WeddellComponent => class MyComponent extends WeddellComponent {
-
- static get styles() {
-     return `
-         .my-component-class {
-             color: red;
-         }
-     `
- }
- static get markup() {
-     return (locals, h) =>
-         h('div.my-component-class', [
-             h('h1', [
-                 locals.myContent
-             ])
-         ])
- }
-
- static get state() {
-     return {
-         myContent: 'foobar'
-     }
- }
-
-}
-
-// Note that in most cases, what you are supplying in your app and / or child components is a component reference itself, but a factory function that will receive the base WeddellComponent class. The WeddellComponent class should never be required directly. 
-```
 <a name="Weddell.Component+onMount"></a>
 
 #### component.onMount() ⇒ <code>Promise</code> \| <code>void</code>
