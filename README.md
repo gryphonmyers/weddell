@@ -1223,7 +1223,7 @@ Component => class MyComponent extends Component {
 
 // Will render as '<div class="foo"><div class="my-child-component">foo bar</div></div>'
 ```
-**Example** *(You can also specify property sets as objects, if you need to rename the keys on the set object.)*  
+**Example** *(You can also specify property sets as objects, if you need to proxy the value to a different key on the set object.)*  
 ```js
 
 Component => class MyComponent extends Component {
