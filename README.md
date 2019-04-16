@@ -126,7 +126,7 @@ An app, which owns and manages a root component in the DOM. The Weddell app obje
     <td>opts.el</td><td><code>String</code> | <code>Element</code></td><td></td><td><p>Element to mount app into, or a DOM query string that should resolve to a single element.</p>
 </td>
     </tr><tr>
-    <td>opts.Component</td><td><code>function</code></td><td></td><td><p>A Weddell component class factory. This component will be mounted as the root into the mount point specified in the</p>
+    <td>opts.Component</td><td><code><a href="#WeddellComponentMixin">WeddellComponentMixin</a></code></td><td></td><td><p>A Weddell component class factory. This component will be mounted as the root into the mount point specified in the</p>
 </td>
     </tr><tr>
     <td>[opts.quietInterval]</td><td><code>number</code></td><td><code>100</code></td><td><p>Delay between DOM patches to wait before firing the &quot;quiet&quot; event.</p>
@@ -144,7 +144,7 @@ const App = require('weddell').classes.App;
 var app = new App({
     routes,
     el: '#app',
-    Component: class MyWeddellComponent {},
+    Component: Component => class MyWeddellComponent extends Component {},
     styles: `
       .my-weddell-component {
         color: red;
