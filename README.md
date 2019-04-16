@@ -317,51 +317,59 @@ WeddellComponent => class MyComponent extends WeddellComponent {
 <a name="Weddell.Component+onMount"></a>
 
 #### component.onMount() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component. Returning a promise will defer completion of the mount process.
+Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the mount process.  
 <a name="Weddell.Component+onFirstMount"></a>
 
 #### component.onFirstMount() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component, but only the first time it mounts. Subsequent unmounts and mounts will not call this method again. Returning a promise will defer completion of the mount process.
+Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component, but only the first time it mounts. Subsequent unmounts and mounts will not call this method again.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the mount process.  
 <a name="Weddell.Component+onUnmount"></a>
 
 #### component.onUnmount() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called whenever a component instance is unmounted from its parent component. Returning a promise will defer completion of the unmount process.
+Component lifecycle hook method that may be overridden. Called whenever a component instance is unmounted from its parent component.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the unmount process.  
 <a name="Weddell.Component+onInit"></a>
 
 #### component.onInit() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called whenever a component instance finishes initializing. Returning a promise will defer completion of the init process.
+Component lifecycle hook method that may be overridden. Called whenever a component instance finishes initializing.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the init process.  
 <a name="Weddell.Component+onRender"></a>
 
 #### component.onRender() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called after the component finishes rendering. Returning a promise will defer completion of the render process (not advised unless you know what you are doing).
+Component lifecycle hook method that may be overridden. Called after the component finishes rendering.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the render process (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onFirstRender"></a>
 
 #### component.onFirstRender() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders. Returning a promise will defer rendering (not advised unless you know what you are doing).
+Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer rendering (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onRenderMarkup"></a>
 
 #### component.onRenderMarkup() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called after the component finishes rendering markup as part of its rendering process. Returning a promise will defer completion of the markup render process, and thus the render process as a whole (not advised unless you know what you are doing).
+Component lifecycle hook method that may be overridden. Called after the component finishes rendering markup as part of its rendering process.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the markup render process, and thus the render process as a whole (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onRenderStyles"></a>
 
 #### component.onRenderStyles() ⇒ <code>Promise</code> \| <code>void</code>
-Component lifecycle hook method that may be overridden. Called after the component finishes rendering styles as part of its rendering process. Returning a promise will defer completion of the styles render process, and thus the render process as a whole (not advised unless you know what you are doing).
+Component lifecycle hook method that may be overridden. Called after the component finishes rendering styles as part of its rendering process.
 
 **Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the styles render process, and thus the render process as a whole (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onDOMCreate"></a>
 
 #### component.onDOMCreate(evt) ⇒ <code>void</code>
