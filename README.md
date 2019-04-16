@@ -83,7 +83,7 @@ Top-level Weddell class serving as an entrypoint to various APIs.
         * _static_
             * [.state](#Weddell.Component.state) : <code>object</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
-            * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code>
+            * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code> \| [<code>StylesCallback</code>](#StylesCallback)
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
             * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
@@ -253,7 +253,7 @@ Class representing a Weddell component. A component encapsulates some combinatio
     * _static_
         * [.state](#Weddell.Component.state) : <code>object</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
-        * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code>
+        * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code> \| [<code>StylesCallback</code>](#StylesCallback)
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
         * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
@@ -735,8 +735,8 @@ Stub property. Typically, components with constant helper values will override t
 
 <a name="Weddell.Component.styles"></a>
 
-#### Component.styles ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code>
-Stub property. Typically, components with custom CSS styles will override this property. Styles returned here will be dynamically inserted into style elements in the DOM's head element when needed. Strings will be applied on a per-class basis (one copy for all component instances), while functions will be executed as a style template on a per-instance basis.
+#### Component.styles ⇒ <code>Array.&lt;(StylesCallback\|String)&gt;</code> \| <code>String</code> \| [<code>StylesCallback</code>](#StylesCallback)
+Stub property. Typically, components with custom CSS styles will override this property. Styles returned here will be dynamically inserted into style elements in the DOM's head when needed. Strings will be applied on a per-class basis (one copy for all component instances), while functions will be executed as a style template on a per-instance basis.
 
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 <a name="Weddell.Component.components"></a>
