@@ -90,6 +90,7 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
             * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
+            * [.propertySets](#Weddell.Component.propertySets) : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
         * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
@@ -264,6 +265,7 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
         * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
+        * [.propertySets](#Weddell.Component.propertySets) : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
 <a name="new_Weddell.Component_new"></a>
@@ -1104,7 +1106,7 @@ Component => class MyComponent extends Component {
      return {
          'my-child-component': Component => class extends Component {
              static get inputs() {
-                 'myChildData'
+                 return ['myChildData']
              }
 
              static get state() {
@@ -1138,6 +1140,131 @@ Stub property. Typically, components with constant helper values will override t
 
 - Example showing const availability on state object.
 
+<a name="Weddell.Component.propertySets"></a>
+
+#### Component.propertySets : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
+Stub property. Typically, components with property sets will override this property. Property sets group other state keys together into objects, making them more portable for passing down to components in a way that avoids unnecessarily duplication.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Example**  
+```js
+Component => class MyComponent extends Component {
+
+ static get state() {
+     return {
+         myProperty1: 'foo',
+         myProperty2: 'bar',
+         myUnrelatedProperty: 'whoosh'
+     }
+ }
+
+ static get propertySets() {
+     return {
+         propertiesForChild: [
+             'myProperty1',
+             'myProperty2'
+         ]
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('.foo', [
+         h('my-child-component', {
+             attributes: locals.propertiesForChild
+         })
+     ]);
+ }
+
+ static get components() {
+     return {
+         'my-child-component': Component => class extends Component {
+             static get inputs() {
+                 return [
+                     'myProperty1',
+                     'myProperty2'
+                 ]   
+             }
+
+             static get state() {
+                 return {
+                     myProperty1: 'whizz',
+                     myProperty2: 'bang'
+                 }
+             }
+
+             static get markup(locals, h) {
+                 return h('.bar', [
+                     locals.myProperty1,
+                     locals.myProperty2
+                 ]);
+             }
+         }
+     }
+ }
+}
+
+// Will render as '<div class="foo"><div class="my-child-component">foo bar</div></div>'
+```
+**Example** *(You can also specify property sets as objects, if you need to rename the keys on the set object.)*  
+```js
+
+Component => class MyComponent extends Component {
+
+ static get state() {
+     return {
+         myProperty1: 'foo',
+         myProperty2: 'bar',
+         myUnrelatedProperty: 'whoosh'
+     }
+ }
+
+ static get propertySets() {
+     return {
+         propertiesForChild: {
+             myProperty1: 'myChildProperty1',
+             myProperty2: 'myChildProperty2'
+         }
+     }
+ }
+
+ static get markup(locals, h) {
+     return h('.foo', [
+         h('my-child-component', {
+             attributes: locals.propertiesForChild
+         })
+     ]);
+ }
+
+ static get components() {
+     return {
+         'my-child-component': Component => class extends Component {
+             static get inputs() {
+                 return [
+                     'myChildProperty1',
+                     'myChildProperty2'
+                 ]   
+             }
+
+             static get state() {
+                 return {
+                     myChildProperty1: 'whizz',
+                     myChildProperty2: 'bang'
+                 }
+             }
+
+             static get markup(locals, h) {
+                 return h('.bar', [
+                     locals.myChildProperty1,
+                     locals.myChildProperty2
+                 ]);
+             }
+         }
+     }
+ }
+}
+
+// Will render as '<div class="foo"><div class="my-child-component">foo bar</div></div>'
+```
 <a name="Weddell.Component.isWeddellComponent"></a>
 
 #### Component.isWeddellComponent
