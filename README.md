@@ -88,6 +88,7 @@ Top-level Weddell class serving as an entrypoint to various APIs.
             * [.state](#Weddell.Component.state) : <code>object</code>
             * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
             * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
+            * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
             * [.consts](#Weddell.Component.consts) : <code>object</code>
             * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
     * *[.Store](#Weddell.Store)*
@@ -261,6 +262,7 @@ Class representing a Weddell component. A component encapsulates some combinatio
         * [.state](#Weddell.Component.state) : <code>object</code>
         * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
         * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
+        * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
         * [.consts](#Weddell.Component.consts) : <code>object</code>
         * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
 
@@ -280,6 +282,14 @@ Constructs a Weddell Component. One does not generally instantiate components di
     <td>opts</td><td><code>object</code></td><td></td>
     </tr><tr>
     <td>opts.consts</td><td><code>object</code></td><td><p>Base consts object that will be merged into static store declaration.</p>
+</td>
+    </tr><tr>
+    <td>opts.state</td><td><code>object</code></td><td><p>Base state object that will be merged into static store declaration.</p>
+</td>
+    </tr><tr>
+    <td>opts.components</td><td><code>object</code></td><td></td>
+    </tr><tr>
+    <td>[opts.initialState]</td><td><code>object</code></td><td><p>Initial state of the component.</p>
 </td>
     </tr>  </tbody>
 </table>
@@ -945,7 +955,7 @@ Component => class MyComponent extends Component {
 
 // Once mounted and patched, the element will be rendered with 'myimage.jpg' in the background.
 ```
-**Example** *(Be careful with CSS template functions though! Unlike string values, template functions will be executed and rendered to DOM for every component instance, which can lead to performance issues. Ideally, unchanging, class-level styles should be returned as strings, while styles making use of component state, if needed, should be returned as template functions. You can mix and match by returning an array of style values.)*  
+**Example** *(Be careful with CSS template functions though! Unlike string values, template functions will be executed and rendered to DOM for every component instance, which can lead to performance issues. Ideally, static, class-level styles should be returned as strings, while styles making use of component instance state, if needed, should be returned as template functions. You can mix and match by returning an array of style values.)*  
 ```js
 
 Component => class MyComponent extends Component {
@@ -1007,7 +1017,6 @@ Stub property. Typically, components with child components will override this pr
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 **Todo**
 
-- supply example utilizing content tag directive
 - supply example demonstrating nested child tag scoping
 - example showing static parent -> child state binding
 - example showing custom event handlers
@@ -1033,6 +1042,91 @@ Component => class MyComponent extends Component {
 }
 
 // will render '<div class="foo"><div class="bar">bar</div></div>' into the DOM.
+```
+**Example** *(You can pass markup down from the parent component to the child by placing the &#x27;content&#x27; tag in the child.)*  
+```js
+
+Component => class MyComponent extends Component {
+ static get markup(locals, h) {
+     return h('.foo', [
+         h('my-child-component', [
+             'This is my content'
+         ])
+     ]);
+ }
+
+ static get components() {
+     return {
+         'my-child-component': Component => class extends Component {
+             static get markup(locals, h) {
+                 return h('.bar', [
+                     h('content')
+                 ]);
+             }
+         }
+     }
+ }
+}
+
+// Will render as '<div class="foo"><div class="my-child-component">This is my content</div></div>'
+```
+<a name="Weddell.Component.inputs"></a>
+
+#### Component.inputs : <code>Array.&lt;String&gt;</code>
+Stub property. Typically, components with inputs will override this property. The inputs property flags particular keys as being expected as input data from parent components.
+
+**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Todo**
+
+- Clean up / fix object form of inputs, then document.
+
+**Example**  
+```js
+Component => class MyComponent extends Component {
+ static get state() {
+     return {
+         myParentData: 'foo'
+     }
+ }
+ static get markup(locals, h) {
+     return h('.foo', [
+         h('my-child-component', {
+             attributes: {
+                 myChildData: locals.myParentData
+             }
+         }, [
+             'This is my content'
+         ])
+     ]);
+ }
+
+ static get components() {
+     return {
+         'my-child-component': Component => class extends Component {
+             static get inputs() {
+                 'myChildData'
+             }
+
+             static get state() {
+                 return {
+                     myChildData: 'bar'
+                 }
+             }
+
+             static get markup(locals, h) {
+                 return h('.bar', [
+                     locals.myChildData
+                 ]);
+             }
+         }
+     }
+ }
+}
+
+// Component will render as '<div class="foo"><div class="my-child-component">foo</div></div>'
+// But note that not that if the inputs property did not include 'myChildData', or if the parent
+// component did not pass 'locals.myParentData' into the child component, then it would render
+// '<div class="foo"><div class="my-child-component">bar</div></div>'
 ```
 <a name="Weddell.Component.consts"></a>
 
