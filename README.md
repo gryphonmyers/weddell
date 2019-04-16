@@ -716,7 +716,7 @@ Returns a promise that will resolve once the pending render promise has complete
 <a name="Weddell.Component.markup"></a>
 
 #### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
-Stub property. Typically, components will override the markup property to provide their application's virtual DOM template function.
+Stub property. Typically, components will override the markup property to provide their components's virtual DOM template function. The template function is passed both component state and the application's hyperscript implementation ('h'). See the [virtual-dom](https://github.com/Matt-Esch/virtual-dom) docs for more info about this syntax.
 
 **Kind**: static property of [<code>Component</code>](#Weddell.Component)  
 **Example**  
@@ -734,8 +734,7 @@ Component => class MyComponent extends Component {
  }
 }
 
-// The template function is passed both component state and the applications hyperscript 
-// implementation ('h'). See the virtual-dom docs for more info about this syntax.
+// Will render '<div class="my-component" onclick='console.log("hello");'>Click Me</div>' to DOM
 ```
 **Example** *(Hscript can be a bit clunky to work with when your display logic gets more complex. Development tools like pug-vdom can port other, perhaps more succinct syntaxes to return virtual-dom nodes.)*  
 ```js
