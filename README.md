@@ -156,20 +156,27 @@ An app, which owns and manages a root component in the DOM. The Weddell app obje
 
 **Example**  
 ```js
-const App = require('weddell').classes.App;
+const { App } = require('weddell');
 
 var app = new App({
-    routes,
     el: '#app',
-    Component: Component => class MyWeddellComponent extends Component {},
+    Component: Component => class MyRootComponent extends Component {
+        static get markup(locals, h) {
+            return h('.foo', 'bar');
+        }
+    },
     styles: `
-      .my-weddell-component {
+      #app {
         color: red;
       }
     `
 });
 
 app.init();
+
+// Given HTML '<div id="app"></div>', after init finishes, 
+// '<div id="app"><div class="foo">bar</div></div>' will be 
+// rendered into the DOM
 ```
 <a name="Weddell.App+init"></a>
 

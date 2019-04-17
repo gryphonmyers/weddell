@@ -6,6 +6,7 @@
   "scripts": {
     "start": "budo docs/app.js:static/bundle.js --dir docs",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "docs": "jsdoc2md --no-gfm ./src/core/*.js > README.md",
     "version": "gulp build && git add dist",
     "postversion": "git push && git push --tags"
   },
