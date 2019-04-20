@@ -228,7 +228,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             console.warn("opts.state is deprecated in favor of static 'state' getter. Update your code!");
         }
 
-        var state = { ...(opts.state || {}), ...(this.constructor.state) };
+        var state = Object.assign({}, opts.state || {}, this.constructor.state);
         var component = this;
         var serializers = component.constructor.serializers;
         var deserializers = component.constructor.deserializers;
@@ -258,7 +258,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         if (weddellGlobals.verbosity > 0 && opts.components) {
             console.warn("opts.components is deprecated in favor of static 'components' getter. Please update your code.");
         }
-        var components = { ...(opts.components || {}), ...(this.constructor.components) };
+        var components = Object.assign({}, opts.components || {}, this.constructor.components);
 
         Object.defineProperties(this, {
             _componentInstances: {

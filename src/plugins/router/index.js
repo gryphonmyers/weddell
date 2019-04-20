@@ -305,22 +305,6 @@ module.exports = function (_Weddell) {
                      */
                     onEnterOrUpdate() { }
 
-                    /**
-                     * Augments component state with routing data.
-                     * 
-                     * @static 
-                     * @returns {RouterComponentState} State object with routing information assigned to it. Be sure to call super when overriding this function!
-                     * 
-                     */
-
-                    static get state() {
-                        return defaults({
-                            $currentRoute: null,
-                            $currentRouteName: null,
-                            $pathParams: null
-                        }, super.state);
-                    }
-
                     static get tagDirectives() {
                         return defaults({
                             routerview: function (vNode, content, props, renderedComponents) {
@@ -341,12 +325,17 @@ module.exports = function (_Weddell) {
                         var self;
 
                         super(defaults(opts, {
-                            consts: {
+                            consts: defaults({
                                 $routerLink: function () {
                                     return self.compileRouterLink.apply(self, arguments);
                                 },
                                 $router: opts.router
-                            }
+                            }, opts.consts || {}),
+                            state: defaults({
+                                $currentRoute: null,
+                                $currentRouteName: null,
+                                $pathParams: null
+                            }, opts.state || {})
                         }));
 
                         Object.defineProperties(this, {
