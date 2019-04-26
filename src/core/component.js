@@ -4,12 +4,12 @@ const generateHash = require('../utils/make-hash');
 const mix = require('@weddell/mixwith').mix;
 const h = require('virtual-dom/h');
 const VdomWidget = require('./vdom-widget');
-const deepEqual = require('deep-equal');
 const cloneVNode = require('../utils/clone-vnode');
 const flatten = require('../utils/flatten');
 const compact = require('../utils/compact');
 const uniq = require('../utils/uniq');
 const difference = require('../utils/difference');
+const vdomDiff = require('virtual-dom/diff');
 
 const defaultOpts = {
     consts: {},
@@ -127,7 +127,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                 }, set: val => {
                     var oldContent = this._content;
                     this._content = val;
-                    if (!deepEqual(oldContent, val)) {
+                    if (vdomDiff(oldContent, val).a.length) {
                         this.markDirty();
                     }
                 }
@@ -1674,11 +1674,12 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
                 renderedComponents.splice(renderedComponents.indexOf(prom), 1, component);
                 component.assignProps(props, this);
                 var contentComponents = [];
-                return component.replaceComponentPlaceholders(content, contentComponents)
-                    .then(content => {
-                        component.content = content;
 
-                        if ((contentComponents.length !== component._contentComponents.length) || contentComponents.some((component, ii) => component._contentComponents[ii] !== component)) {
+                return component.replaceComponentPlaceholders(content, contentComponents)
+                    .then(innerContent => {                        
+                        component.content = innerContent;
+
+                        if ((contentComponents.length !== component._contentComponents.length) || contentComponents.some((subComponent, ii) => component._contentComponents[ii] !== subComponent)) {
                             component.trigger('contentcomponentschange', { currentComponents: contentComponents, previousComponents: component._contentComponents })
                         }
                         component._contentComponents = contentComponents;
