@@ -21,6 +21,7 @@
     "@weddell/vdom-virtualize": "^2.0.1",
     "array-compact": "^1.0.0",
     "array-uniq": "^1.0.3",
+    "array.prototype.flat": "^1.2.1",
     "deep-equal": "^1.0.1",
     "defaults-es6": "^1.1.1",
     "document-ready-promise": "^3.0.1",

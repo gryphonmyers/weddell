@@ -10,6 +10,8 @@ const compact = require('../utils/compact');
 const uniq = require('../utils/uniq');
 const difference = require('../utils/difference');
 const vdomDiff = require('virtual-dom/diff');
+const flat = require('array.prototype.flat');
+flat.shim();
 
 const defaultOpts = {
     consts: {},
@@ -290,7 +292,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             console.warn("You are using deprecated syntax. 'stylesTemplate' and 'dynamicStyles' static getter will be removed in the next major version. Use static 'styles' getter for static styles, and instance 'styles' for runtime templates.");
         }
         this.vNodeTemplate = this.makeVNodeTemplate(this.constructor.markup, opts.markupTemplate);
-        this.stylesTemplate = this.makeStylesTemplate(...[(this.constructor.dynamicStyles || opts.stylesTemplate)].concat(this.constructor.styles).filter(val => val));
+        this.stylesTemplate = this.makeStylesTemplate(...[(this.constructor.dynamicStyles || opts.stylesTemplate)].concat(this.constructor.styles).filter(val => val).flat(10));
 
         weddellGlobals.components[this._id] = this;
     }
