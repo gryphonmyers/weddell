@@ -115,7 +115,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         if (weddellGlobals.verbosity > 0 && opts.inputs) {
             console.warn('you are using outdated syntax! opts.inputs is deprecated in favor of static getter.')
         }
-        var inputs = compact(opts.inputs && opts.inputs.length ? opts.inputs : this.constructor.inputs);
+        var inputs = compact(uniq((opts.inputs || []).concat(this.constructor.inputs)));
 
         Object.defineProperties(this, {
             id: { get: () => this._id },
