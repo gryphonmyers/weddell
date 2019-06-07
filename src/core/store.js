@@ -105,6 +105,10 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             }.bind(this));
         });
 
+        Object.keys(this.propertySets).forEach(key => {
+            this.set(key, null, true);
+        });
+
         Object.keys(this.inputMappings).forEach(key => {
             this.set(key, null, true);
         });
