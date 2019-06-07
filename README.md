@@ -56,69 +56,114 @@ Top-level Weddell class serving as an entrypoint to various APIs.
 **Kind**: global abstract class  
 
 * *[Weddell](#Weddell)*
-    * *[.App](#Weddell.App)*
-        * [new WeddellApp(opts)](#new_Weddell.App_new)
-        * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
-        * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
-        * [.awaitComponentMount(id)](#Weddell.App+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
-        * [.awaitPatch()](#Weddell.App+awaitPatch) ⇒ <code>Promise</code>
-        * [.awaitNextPatch()](#Weddell.App+awaitNextPatch) ⇒ <code>Promise</code>
-        * [.renderSnapshot()](#Weddell.App+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
-    * *[.Component](#Weddell.Component)*
-        * [new WeddellComponent(opts)](#new_Weddell.Component_new)
-        * _instance_
-            * [.onMount()](#Weddell.Component+onMount) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onFirstMount()](#Weddell.Component+onFirstMount) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onUnmount()](#Weddell.Component+onUnmount) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onInit()](#Weddell.Component+onInit) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onRender()](#Weddell.Component+onRender) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onRenderMarkup()](#Weddell.Component+onRenderMarkup) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onRenderStyles()](#Weddell.Component+onRenderStyles) ⇒ <code>Promise</code> \| <code>void</code>
-            * [.onDOMCreate(evt)](#Weddell.Component+onDOMCreate) ⇒ <code>void</code>
-            * [.onDOMMove(evt)](#Weddell.Component+onDOMMove) ⇒ <code>void</code>
-            * [.onDOMChange(evt)](#Weddell.Component+onDOMChange) ⇒ <code>void</code>
-            * [.onDOMCreateOrChange(evt)](#Weddell.Component+onDOMCreateOrChange) ⇒ <code>void</code>
-            * [.onDOMDestroy(evt)](#Weddell.Component+onDOMDestroy) ⇒ <code>void</code>
-            * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
-            * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
-            * [.walkComponents(callback, [filterFunc])](#Weddell.Component+walkComponents)
-            * [.reduceComponents(callback, initialVal, [filterFunc])](#Weddell.Component+reduceComponents) ⇒ <code>\*</code>
-            * [.reduceParents(callback, initialVal)](#Weddell.Component+reduceParents) ⇒ <code>\*</code>
-            * [.collectComponentTree()](#Weddell.Component+collectComponentTree) ⇒ <code>object</code>
-            * [.getMountedChildComponents()](#Weddell.Component+getMountedChildComponents) ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
-            * [.queryDOM(query)](#Weddell.Component+queryDOM) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
-            * [.queryDOMAll(query)](#Weddell.Component+queryDOMAll) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
-            * [.awaitEvent(eventName)](#Weddell.Component+awaitEvent) ⇒ <code>Promise</code>
-            * [.awaitPatch()](#Weddell.Component+awaitPatch) ⇒ <code>Promise</code>
-            * [.awaitMount()](#Weddell.Component+awaitMount) ⇒ <code>Promise</code>
-            * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
-            * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
-        * _static_
-            * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
-            * [.state](#Weddell.Component.state) : <code>object</code>
-            * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
-            * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
-            * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
-            * [.consts](#Weddell.Component.consts) : <code>object</code>
-            * [.propertySets](#Weddell.Component.propertySets) : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
-            * [.deserializers](#Weddell.Component.deserializers) : <code>Object.&lt;string, StateTransform&gt;</code>
-            * [.serializers](#Weddell.Component.serializers) : <code>Object.&lt;string, StateTransform&gt;</code>
-            * [.watchers](#Weddell.Component.watchers) : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
-            * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
-    * *[.Store](#Weddell.Store)*
-        * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
-        * [.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce])](#Weddell.Store+watch) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
-    * *[.plugin(pluginObj)](#Weddell.plugin)*
+    * _static_
+        * *[.plugin(pluginObj)](#Weddell.plugin)*
+    * _inner_
+        * *[~WeddellApp](#Weddell.App)*
+            * [new WeddellApp(opts)](#new_Weddell.App_new)
+            * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
+            * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
+            * [.awaitComponentMount(id)](#Weddell.App+awaitComponentMount) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+            * [.awaitPatch()](#Weddell.App+awaitPatch) ⇒ <code>Promise</code>
+            * [.awaitNextPatch()](#Weddell.App+awaitNextPatch) ⇒ <code>Promise</code>
+            * [.renderSnapshot()](#Weddell.App+renderSnapshot) ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+        * *[~WeddellComponent](#Weddell.Component)*
+            * [new WeddellComponent(opts)](#new_Weddell.Component_new)
+            * _instance_
+                * [.onMount()](#Weddell.Component+onMount) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onFirstMount()](#Weddell.Component+onFirstMount) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onUnmount()](#Weddell.Component+onUnmount) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onInit()](#Weddell.Component+onInit) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onRender()](#Weddell.Component+onRender) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onFirstRender()](#Weddell.Component+onFirstRender) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onRenderMarkup()](#Weddell.Component+onRenderMarkup) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onRenderStyles()](#Weddell.Component+onRenderStyles) ⇒ <code>Promise</code> \| <code>void</code>
+                * [.onDOMCreate(evt)](#Weddell.Component+onDOMCreate) ⇒ <code>void</code>
+                * [.onDOMMove(evt)](#Weddell.Component+onDOMMove) ⇒ <code>void</code>
+                * [.onDOMChange(evt)](#Weddell.Component+onDOMChange) ⇒ <code>void</code>
+                * [.onDOMCreateOrChange(evt)](#Weddell.Component+onDOMCreateOrChange) ⇒ <code>void</code>
+                * [.onDOMDestroy(evt)](#Weddell.Component+onDOMDestroy) ⇒ <code>void</code>
+                * [.bindEvent(funcText, opts)](#Weddell.Component+bindEvent)
+                * [.bindEventValue(propName, opts)](#Weddell.Component+bindEventValue)
+                * [.walkComponents(callback, [filterFunc])](#Weddell.Component+walkComponents)
+                * [.reduceComponents(callback, initialVal, [filterFunc])](#Weddell.Component+reduceComponents) ⇒ <code>\*</code>
+                * [.reduceParents(callback, initialVal)](#Weddell.Component+reduceParents) ⇒ <code>\*</code>
+                * [.collectComponentTree()](#Weddell.Component+collectComponentTree) ⇒ <code>object</code>
+                * [.getMountedChildComponents()](#Weddell.Component+getMountedChildComponents) ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+                * [.queryDOM(query)](#Weddell.Component+queryDOM) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
+                * [.queryDOMAll(query)](#Weddell.Component+queryDOMAll) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
+                * [.awaitEvent(eventName)](#Weddell.Component+awaitEvent) ⇒ <code>Promise</code>
+                * [.awaitPatch()](#Weddell.Component+awaitPatch) ⇒ <code>Promise</code>
+                * [.awaitMount()](#Weddell.Component+awaitMount) ⇒ <code>Promise</code>
+                * [.awaitDom()](#Weddell.Component+awaitDom) ⇒ <code>Promise.&lt;Element&gt;</code>
+                * [.awaitRender()](#Weddell.Component+awaitRender) ⇒ <code>Promise</code>
+            * _static_
+                * [.markup](#Weddell.Component.markup) : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+                * [.state](#Weddell.Component.state) : <code>object</code>
+                * [.styles](#Weddell.Component.styles) ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
+                * [.components](#Weddell.Component.components) : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
+                * [.inputs](#Weddell.Component.inputs) : <code>Array.&lt;String&gt;</code>
+                * [.consts](#Weddell.Component.consts) : <code>object</code>
+                * [.propertySets](#Weddell.Component.propertySets) : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
+                * [.deserializers](#Weddell.Component.deserializers) : <code>Object.&lt;string, StateTransform&gt;</code>
+                * [.serializers](#Weddell.Component.serializers) : <code>Object.&lt;string, StateTransform&gt;</code>
+                * [.watchers](#Weddell.Component.watchers) : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
+                * [.isWeddellComponent](#Weddell.Component.isWeddellComponent)
+        * *[~WeddellStore](#Weddell.Store)*
+            * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
+            * [.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce])](#Weddell.Store+watch) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
 
+<a name="Weddell.plugin"></a>
+
+### *Weddell.plugin(pluginObj)*
+Extends the base Weddell class with additional functionality, as defined in a plugin object.
+
+**Kind**: static method of [<code>Weddell</code>](#Weddell)  
+<table>
+  <thead>
+    <tr>
+      <th>Param</th><th>Type</th><th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+<tr>
+    <td>pluginObj</td><td><code><a href="#WeddellPlugin">WeddellPlugin</a></code></td><td><p>A plugin object to apply to the base Weddell class.</p>
+</td>
+    </tr>  </tbody>
+</table>
+
+**Example**  
+```js
+const Weddell = require('weddell');
+
+const WeddellWithPluginApplied = Weddell.plugin({
+ id: 'my-plugin',
+ require: ['my-other-plugin'], // will error if app is initialized without 'my-other-plugin' also applied
+ classes: {
+     Component: Component => class extends Component {
+
+         onMount() {
+             console.log(this.myNewComponentMethod());
+         }
+
+         myNewComponentMethod() {
+             this.foo = 'bar';
+         }
+     }
+ },
+
+ // Every component mounted by this app will print 'bar' to logs.
+ 
+})
+```
 <a name="Weddell.App"></a>
 
-### *Weddell.App*
+### *Weddell~WeddellApp*
 An app, which owns and manages a root component in the DOM. The Weddell app object is the main entrypoint to your application.
 
-**Kind**: static class of [<code>Weddell</code>](#Weddell)  
+**Kind**: inner class of [<code>Weddell</code>](#Weddell)  
 
-* *[.App](#Weddell.App)*
+* *[~WeddellApp](#Weddell.App)*
     * [new WeddellApp(opts)](#new_Weddell.App_new)
     * [.init(initObj)](#Weddell.App+init) ⇒ <code>Promise</code>
     * [.onPatch()](#Weddell.App+onPatch) ⇒ <code>Promise</code>
@@ -180,10 +225,10 @@ app.init();
 ```
 <a name="Weddell.App+init"></a>
 
-#### app.init(initObj) ⇒ <code>Promise</code>
+#### weddellApp.init(initObj) ⇒ <code>Promise</code>
 Initializes the app, rendering the root component and mounting it into the specified DOM element.
 
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Kind**: instance method of [<code>WeddellApp</code>](#Weddell.App)  
 **Returns**: <code>Promise</code> - Promise that resolves once the app has fully initialized and rendered into the DOM.  
 **Emits**: <code>Window#event:weddellinit Event fired on window object once initialization completes.</code>, <code>WeddellApp#event:createcomponent Event fired on app object whenever its root component or any child components are created.</code>, <code>WeddellApp#event:createrootcomponent Event fired on app object whenever its root component is created.</code>  
 <table>
@@ -201,17 +246,17 @@ Initializes the app, rendering the root component and mounting it into the speci
 
 <a name="Weddell.App+onPatch"></a>
 
-#### app.onPatch() ⇒ <code>Promise</code>
+#### weddellApp.onPatch() ⇒ <code>Promise</code>
 Hook method that may be overridden and will be executed at the end of every DOM patch.
 
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Kind**: instance method of [<code>WeddellApp</code>](#Weddell.App)  
 **Returns**: <code>Promise</code> - Subsequent patches may be deferred by returning a Promise in this method.  
 <a name="Weddell.App+awaitComponentMount"></a>
 
-#### app.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
+#### weddellApp.awaitComponentMount(id) ⇒ <code>Promise.&lt;WeddellComponent&gt;</code>
 Returns a promise the resolves with a weddell component once the component with the specified id has been rendered and mounted (not necessarily patched to DOM yet). Note that if the component id does not match any current or future components, the returned promise will never resolve.
 
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Kind**: instance method of [<code>WeddellApp</code>](#Weddell.App)  
 <table>
   <thead>
     <tr>
@@ -227,30 +272,30 @@ Returns a promise the resolves with a weddell component once the component with 
 
 <a name="Weddell.App+awaitPatch"></a>
 
-#### app.awaitPatch() ⇒ <code>Promise</code>
+#### weddellApp.awaitPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve after pending patch completes, or immediately if no patch is currently queued or in progress.
 
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Kind**: instance method of [<code>WeddellApp</code>](#Weddell.App)  
 <a name="Weddell.App+awaitNextPatch"></a>
 
-#### app.awaitNextPatch() ⇒ <code>Promise</code>
+#### weddellApp.awaitNextPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve after current pending patch or the next patch completes.
 
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Kind**: instance method of [<code>WeddellApp</code>](#Weddell.App)  
 <a name="Weddell.App+renderSnapshot"></a>
 
-#### app.renderSnapshot() ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
+#### weddellApp.renderSnapshot() ⇒ [<code>WeddellAppStateSnapshot</code>](#WeddellAppStateSnapshot)
 Dumps the current application state to a snapshot object, typically used for server-side rendering setups.
 
-**Kind**: instance method of [<code>App</code>](#Weddell.App)  
+**Kind**: instance method of [<code>WeddellApp</code>](#Weddell.App)  
 <a name="Weddell.Component"></a>
 
-### *Weddell.Component*
+### *Weddell~WeddellComponent*
 Class representing a Weddell component. A component encapsulates some combination of scripts, markup and/or styles into an instantiable custom tag.
 
-**Kind**: static class of [<code>Weddell</code>](#Weddell)  
+**Kind**: inner class of [<code>Weddell</code>](#Weddell)  
 
-* *[.Component](#Weddell.Component)*
+* *[~WeddellComponent](#Weddell.Component)*
     * [new WeddellComponent(opts)](#new_Weddell.Component_new)
     * _instance_
         * [.onMount()](#Weddell.Component+onMount) ⇒ <code>Promise</code> \| <code>void</code>
@@ -323,66 +368,66 @@ Constructs a Weddell Component. One does not generally instantiate components di
 
 <a name="Weddell.Component+onMount"></a>
 
-#### component.onMount() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onMount() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the mount process.  
 <a name="Weddell.Component+onFirstMount"></a>
 
-#### component.onFirstMount() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onFirstMount() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component, but only the first time it mounts. Subsequent unmounts and mounts will not call this method again.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the mount process.  
 <a name="Weddell.Component+onUnmount"></a>
 
-#### component.onUnmount() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onUnmount() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called whenever a component instance is unmounted from its parent component.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the unmount process.  
 <a name="Weddell.Component+onInit"></a>
 
-#### component.onInit() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onInit() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called whenever a component instance finishes initializing.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the init process.  
 <a name="Weddell.Component+onRender"></a>
 
-#### component.onRender() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onRender() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called after the component finishes rendering.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the render process (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onFirstRender"></a>
 
-#### component.onFirstRender() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onFirstRender() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called the first time the component is ever rendered, but not on subsequent rerenders.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer rendering (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onRenderMarkup"></a>
 
-#### component.onRenderMarkup() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onRenderMarkup() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called after the component finishes rendering markup as part of its rendering process.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the markup render process, and thus the render process as a whole (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onRenderStyles"></a>
 
-#### component.onRenderStyles() ⇒ <code>Promise</code> \| <code>void</code>
+#### weddellComponent.onRenderStyles() ⇒ <code>Promise</code> \| <code>void</code>
 Component lifecycle hook method that may be overridden. Called after the component finishes rendering styles as part of its rendering process.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Returns**: <code>Promise</code> \| <code>void</code> - Returning a promise will defer completion of the styles render process, and thus the render process as a whole (not advised unless you know what you are doing).  
 <a name="Weddell.Component+onDOMCreate"></a>
 
-#### component.onDOMCreate(evt) ⇒ <code>void</code>
+#### weddellComponent.onDOMCreate(evt) ⇒ <code>void</code>
 Component lifecycle hook method that may be overridden. Called when a DOM element is created and set to this component's 'el' property.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -397,10 +442,10 @@ Component lifecycle hook method that may be overridden. Called when a DOM elemen
 
 <a name="Weddell.Component+onDOMMove"></a>
 
-#### component.onDOMMove(evt) ⇒ <code>void</code>
+#### weddellComponent.onDOMMove(evt) ⇒ <code>void</code>
 Component lifecycle hook method that may be overridden. Called when the DOM element associated with this component moves to a new location in the DOM.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -415,10 +460,10 @@ Component lifecycle hook method that may be overridden. Called when the DOM elem
 
 <a name="Weddell.Component+onDOMChange"></a>
 
-#### component.onDOMChange(evt) ⇒ <code>void</code>
+#### weddellComponent.onDOMChange(evt) ⇒ <code>void</code>
 Component lifecycle hook method that may be overridden. Called when the DOM element associated with this component changes.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -433,10 +478,10 @@ Component lifecycle hook method that may be overridden. Called when the DOM elem
 
 <a name="Weddell.Component+onDOMCreateOrChange"></a>
 
-#### component.onDOMCreateOrChange(evt) ⇒ <code>void</code>
+#### weddellComponent.onDOMCreateOrChange(evt) ⇒ <code>void</code>
 Component lifecycle hook method that may be overridden. Called either when a new DOM element is created for this component, or when the DOM element associated with it changes.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -451,10 +496,10 @@ Component lifecycle hook method that may be overridden. Called either when a new
 
 <a name="Weddell.Component+onDOMDestroy"></a>
 
-#### component.onDOMDestroy(evt) ⇒ <code>void</code>
+#### weddellComponent.onDOMDestroy(evt) ⇒ <code>void</code>
 Component lifecycle hook method that may be overridden. Called when a DOM element that was previously associated with this component is destroyed.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -469,10 +514,10 @@ Component lifecycle hook method that may be overridden. Called when a DOM elemen
 
 <a name="Weddell.Component+bindEvent"></a>
 
-#### component.bindEvent(funcText, opts)
+#### weddellComponent.bindEvent(funcText, opts)
 Binds a function body string to the scope of this component. This string will then typically be used in a native DOM event handler attribute.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -524,10 +569,10 @@ myComponentInstance.el.click();
 ```
 <a name="Weddell.Component+bindEventValue"></a>
 
-#### component.bindEventValue(propName, opts)
+#### weddellComponent.bindEventValue(propName, opts)
 Syntax sugar method very similar to bindEvent, but slightly less verbose for DOM elements with a value (inputs, etc) that you would like to bind to component state.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -578,10 +623,10 @@ console.log(myComponentInstance.state.myInputValue);
 ```
 <a name="Weddell.Component+walkComponents"></a>
 
-#### component.walkComponents(callback, [filterFunc])
+#### weddellComponent.walkComponents(callback, [filterFunc])
 Calls the specified callback for this component and all child components.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Todo**
 
 - Document callback param structure
@@ -604,10 +649,10 @@ Calls the specified callback for this component and all child components.
 
 <a name="Weddell.Component+reduceComponents"></a>
 
-#### component.reduceComponents(callback, initialVal, [filterFunc]) ⇒ <code>\*</code>
+#### weddellComponent.reduceComponents(callback, initialVal, [filterFunc]) ⇒ <code>\*</code>
 Calls the specified reducer for this component and all child components.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Todo**
 
 - Document callback param structure
@@ -633,10 +678,10 @@ Calls the specified reducer for this component and all child components.
 
 <a name="Weddell.Component+reduceParents"></a>
 
-#### component.reduceParents(callback, initialVal) ⇒ <code>\*</code>
+#### weddellComponent.reduceParents(callback, initialVal) ⇒ <code>\*</code>
 Calls the specified reducer recursively for all parent components upward from this one.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -655,26 +700,26 @@ Calls the specified reducer recursively for all parent components upward from th
 
 <a name="Weddell.Component+collectComponentTree"></a>
 
-#### component.collectComponentTree() ⇒ <code>object</code>
+#### weddellComponent.collectComponentTree() ⇒ <code>object</code>
 Performs a recursive scan upward from this component, to the application's root component.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Todo**
 
 - Document this more thoroughly
 
 <a name="Weddell.Component+getMountedChildComponents"></a>
 
-#### component.getMountedChildComponents() ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
+#### weddellComponent.getMountedChildComponents() ⇒ <code>Array.&lt;WeddellComponent&gt;</code>
 Queries the component tree for components that are currently mounted (rendered and typically in DOM or soon-to-be in DOM).
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <a name="Weddell.Component+queryDOM"></a>
 
-#### component.queryDOM(query) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
+#### weddellComponent.queryDOM(query) ⇒ <code>Promise.&lt;(Element\|null)&gt;</code>
 Returns a promise that will resolve with the result of querying this component's DOM element using querySelector, once the component has a DOM element to query.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -690,10 +735,10 @@ Returns a promise that will resolve with the result of querying this component's
 
 <a name="Weddell.Component+queryDOMAll"></a>
 
-#### component.queryDOMAll(query) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
+#### weddellComponent.queryDOMAll(query) ⇒ <code>Promise.&lt;NodeListOf.&lt;Element&gt;&gt;</code>
 Returns a promise that will resolve with the result of querying this component's DOM element using querySelectorAll, once the component has a DOM element to query.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -709,10 +754,10 @@ Returns a promise that will resolve with the result of querying this component's
 
 <a name="Weddell.Component+awaitEvent"></a>
 
-#### component.awaitEvent(eventName) ⇒ <code>Promise</code>
+#### weddellComponent.awaitEvent(eventName) ⇒ <code>Promise</code>
 Returns a promise that will resolve once this component fires a specific event.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <table>
   <thead>
     <tr>
@@ -728,34 +773,34 @@ Returns a promise that will resolve once this component fires a specific event.
 
 <a name="Weddell.Component+awaitPatch"></a>
 
-#### component.awaitPatch() ⇒ <code>Promise</code>
+#### weddellComponent.awaitPatch() ⇒ <code>Promise</code>
 Returns a promise that will resolve once this component has finished rendering, and the next application patch has completed (which should mean all state changes have been propagated to the DOM).
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <a name="Weddell.Component+awaitMount"></a>
 
-#### component.awaitMount() ⇒ <code>Promise</code>
+#### weddellComponent.awaitMount() ⇒ <code>Promise</code>
 Returns a promise that will resolve once this component mounts (or immediately, if it is already mounted). Note that mounting does not necessarily mean that application changes have been propagated to the DOM.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <a name="Weddell.Component+awaitDom"></a>
 
-#### component.awaitDom() ⇒ <code>Promise.&lt;Element&gt;</code>
+#### weddellComponent.awaitDom() ⇒ <code>Promise.&lt;Element&gt;</code>
 Returns a promise that will resolve once a DOM element has been created for this component (or immediately, if it already has one). The promise is resolved with this component's DOM element.
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <a name="Weddell.Component+awaitRender"></a>
 
-#### component.awaitRender() ⇒ <code>Promise</code>
+#### weddellComponent.awaitRender() ⇒ <code>Promise</code>
 Returns a promise that will resolve once the pending render promise has completed (or immediately, if there is no pending render promise).
 
-**Kind**: instance method of [<code>Component</code>](#Weddell.Component)  
+**Kind**: instance method of [<code>WeddellComponent</code>](#Weddell.Component)  
 <a name="Weddell.Component.markup"></a>
 
-#### Component.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
+#### WeddellComponent.markup : [<code>VirtualDomTemplate</code>](#VirtualDomTemplate)
 Stub property. Typically, components will override the markup property to provide their components's virtual DOM template function. The template function is passed both component state and the application's hyperscript implementation ('h'). See the [virtual-dom](https://github.com/Matt-Esch/virtual-dom) docs for more info about this syntax.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 Component => class MyComponent extends Component {
@@ -793,10 +838,10 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.state"></a>
 
-#### Component.state : <code>object</code>
+#### WeddellComponent.state : <code>object</code>
 Stub property. Typically, components override this property, returning the keys and default state values. When a component is initialized, it will use this object when creating its own local transient state object. Once initialized, subsequent changes to any key in the WeddellComponent#state object will trigger component rerenders -> DOM patches.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 Component => class MyComponent extends Component {
@@ -933,10 +978,10 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.styles"></a>
 
-#### Component.styles ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
+#### WeddellComponent.styles ⇒ <code>Array.&lt;(CssTemplate\|CssString)&gt;</code> \| [<code>CssString</code>](#CssString) \| [<code>CssTemplate</code>](#CssTemplate)
 Stub property. Typically, components with custom CSS styles will override this property. Styles returned here will be dynamically inserted into style elements in the DOM's head when needed. Strings will be applied on a per-class basis (one copy for all component instances), while functions will be executed as a style template on a per-instance basis.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 Component => class MyComponent extends Component {
@@ -1038,10 +1083,10 @@ Component => class MyChildComponent extends MyParentComponentMixin(MyComponent) 
 ```
 <a name="Weddell.Component.components"></a>
 
-#### Component.components : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
+#### WeddellComponent.components : <code>Object.&lt;string, WeddellComponentMixin&gt;</code>
 Stub property. Typically, components with child components will override this property, supplying component mixins that can then be included in the component's markup template by the entry key.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Todo**
 
 - supply example demonstrating nested child tag scoping
@@ -1099,10 +1144,10 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.inputs"></a>
 
-#### Component.inputs : <code>Array.&lt;String&gt;</code>
+#### WeddellComponent.inputs : <code>Array.&lt;String&gt;</code>
 Stub property. Typically, components with inputs will override this property. The inputs property flags particular keys as being expected as input data from parent components.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Todo**
 
 - Clean up / fix object form of inputs, then document.
@@ -1157,20 +1202,20 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.consts"></a>
 
-#### Component.consts : <code>object</code>
+#### WeddellComponent.consts : <code>object</code>
 Stub property. Typically, components with constant helper values will override this property. These values will be proxied onto the component instance's 'state' property.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Todo**
 
 - Example showing const availability on state object.
 
 <a name="Weddell.Component.propertySets"></a>
 
-#### Component.propertySets : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
+#### WeddellComponent.propertySets : <code>Object.&lt;string, (Object.&lt;string, string&gt;\|Array.&lt;String&gt;)&gt;</code>
 Stub property. Typically, components with property sets will override this property. Property sets group other state keys together into objects, making them more portable for passing down to components in a way that avoids unnecessary duplication.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 Component => class MyComponent extends Component {
@@ -1292,10 +1337,10 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.deserializers"></a>
 
-#### Component.deserializers : <code>Object.&lt;string, StateTransform&gt;</code>
+#### WeddellComponent.deserializers : <code>Object.&lt;string, StateTransform&gt;</code>
 Stub property. Typically, components needing non-serializable data in state will declare functions here for transforming specific keys from serialized data to complex data types at runtime.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 class MyThing {
@@ -1331,10 +1376,10 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.serializers"></a>
 
-#### Component.serializers : <code>Object.&lt;string, StateTransform&gt;</code>
+#### WeddellComponent.serializers : <code>Object.&lt;string, StateTransform&gt;</code>
 Stub property. A companion property to deserializers - serialized values will be used when a value set directly to state is a complex data type, and will need to be serialized before committing it to state.
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 class MyThing {
@@ -1378,10 +1423,10 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.watchers"></a>
 
-#### Component.watchers : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
-Stub property. Watch functions may be defined here, allowing for complex actions to be kicked off when component state changes. Watchers will be executed in state scope. Tip: if your watch function is really only setting other component state keys, you may be able to use a computed state propery instead (see example 3 [here](https://github.com/gryphonmyers/weddell/tree/ft-new-render#componentstate--object)).
+#### WeddellComponent.watchers : [<code>Array.&lt;StoreWatchArgs&gt;</code>](#StoreWatchArgs)
+Stub property. Watch functions may be defined here, allowing for complex actions to be kicked off when component state changes. Watchers will be executed in component scope. Tip: if your watch function is really only setting other component state keys, you may be able to use a computed state propery instead (see example 3 [here](https://github.com/gryphonmyers/weddell/tree/ft-new-render#componentstate--object)).
 
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 Component => class MyComponent extends Component {
@@ -1390,12 +1435,16 @@ Component => class MyComponent extends Component {
      return [
          ['watchedUrl', function (watchedUrl) {
              if (watchedUrl) {
-                 fetch(watchedUrl)
-                     .then(res => res.json())
-                     .then(data => this.fetchedData = data)
+                 this.fetchData(watchedUrl)
              }
          }]
      ]
+ }
+
+ async fetchData(url){
+     return fetch(url)
+         .then(res => res.json())
+         .then(data => this.state.fetchedData = data)
  }
 
  static get state() {
@@ -1455,8 +1504,8 @@ Component => class MyComponent extends Component {
 ```
 <a name="Weddell.Component.isWeddellComponent"></a>
 
-#### Component.isWeddellComponent
-**Kind**: static property of [<code>Component</code>](#Weddell.Component)  
+#### WeddellComponent.isWeddellComponent
+**Kind**: static property of [<code>WeddellComponent</code>](#Weddell.Component)  
 **Example**  
 ```js
 console.log(MyWeddellComponentClass.isWeddellComponent)
@@ -1464,12 +1513,12 @@ console.log(MyWeddellComponentClass.isWeddellComponent)
 ```
 <a name="Weddell.Store"></a>
 
-### *Weddell.Store*
+### *Weddell~WeddellStore*
 Class representing a store of key/value pairs. The store class is primarily used to model application state.
 
-**Kind**: static class of [<code>Weddell</code>](#Weddell)  
+**Kind**: inner class of [<code>Weddell</code>](#Weddell)  
 
-* *[.Store](#Weddell.Store)*
+* *[~WeddellStore](#Weddell.Store)*
     * [new WeddellStore(data, opts)](#new_Weddell.Store_new)
     * [.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce])](#Weddell.Store+watch) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
 
@@ -1519,10 +1568,10 @@ Constructs a store object. One does not generally require or implement the store
 
 <a name="Weddell.Store+watch"></a>
 
-#### store.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce]) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
+#### weddellStore.watch(key, func, [validator], [invokeImmediately], [onlyFireOnce]) ⇒ [<code>RemoveEventListenerCallback</code>](#RemoveEventListenerCallback)
 Watches a key or keys in the store, triggering a callback when values change.
 
-**Kind**: instance method of [<code>Store</code>](#Weddell.Store)  
+**Kind**: instance method of [<code>WeddellStore</code>](#Weddell.Store)  
 <table>
   <thead>
     <tr>
@@ -1548,49 +1597,6 @@ Watches a key or keys in the store, triggering a callback when values change.
     </tr>  </tbody>
 </table>
 
-<a name="Weddell.plugin"></a>
-
-### *Weddell.plugin(pluginObj)*
-Extends the base Weddell class with additional functionality, as defined in a plugin object.
-
-**Kind**: static method of [<code>Weddell</code>](#Weddell)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>pluginObj</td><td><code><a href="#WeddellPlugin">WeddellPlugin</a></code></td><td><p>A plugin object to apply to the base Weddell class.</p>
-</td>
-    </tr>  </tbody>
-</table>
-
-**Example**  
-```js
-const Weddell = require('weddell');
-
-const WeddellWithPluginApplied = Weddell.plugin({
- id: 'my-plugin',
- require: ['my-other-plugin'], // will error if app is initialized without 'my-other-plugin' also applied
- classes: {
-     Component: Component => class extends Component {
-
-         onMount() {
-             console.log(this.myNewComponentMethod());
-         }
-
-         myNewComponentMethod() {
-             this.foo = 'bar';
-         }
-     }
- },
-
- // Every component mounted by this app will print 'bar' to logs.
- 
-})
-```
 <a name="CssString"></a>
 
 ## CssString : <code>String</code>

@@ -957,7 +957,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
     }
 
     /**
-     * Stub property. Watch functions may be defined here, allowing for complex actions to be kicked off when component state changes. Watchers will be executed in state scope. Tip: if your watch function is really only setting other component state keys, you may be able to use a computed state propery instead (see example 3 {@link https://github.com/gryphonmyers/weddell/tree/ft-new-render#componentstate--object here}).
+     * Stub property. Watch functions may be defined here, allowing for complex actions to be kicked off when component state changes. Watchers will be executed in component scope. Tip: if your watch function is really only setting other component state keys, you may be able to use a computed state propery instead (see example 3 {@link https://github.com/gryphonmyers/weddell/tree/ft-new-render#componentstate--object here}).
      * 
      * @type {StoreWatchArgs[]}
      * 
@@ -969,12 +969,16 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
      *      return [
      *          ['watchedUrl', function (watchedUrl) {
      *              if (watchedUrl) {
-     *                  fetch(watchedUrl)
-     *                      .then(res => res.json())
-     *                      .then(data => this.fetchedData = data)
+     *                  this.fetchData(watchedUrl)
      *              }
      *          }]
      *      ]
+     *  }
+     * 
+     *  async fetchData(url){
+     *      return fetch(url)
+     *          .then(res => res.json())
+     *          .then(data => this.state.fetchedData = data)
      *  }
      * 
      *  static get state() {
@@ -1979,7 +1983,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             });
 
             this.constructor.watchers
-                .forEach(entry => this.state.watch(...entry))
+                .forEach(entry => this.state.watch(...entry.map(item => typeof item === 'function' ? item.bind(this) : item)))
 
             return Promise.resolve(this.onInit(opts))
                 .then(() => {
