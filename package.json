@@ -1,14 +1,12 @@
 {
   "name": "weddell",
-  "version": "3.1.6",
+  "version": "3.1.7",
   "description": "A tiny, modular, nonopinionated front-end web framework.",
   "main": "./src/presets/weddell-ro.js",
   "scripts": {
     "start": "budo docs/app.js:static/bundle.js --dir docs",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "jsdoc2md --no-gfm ./src/core/*.js > README.md",
-    "version": "gulp build && git add dist",
-    "postversion": "git push && git push --tags"
+    "docs": "jsdoc2md --no-gfm ./src/core/*.js > README.md"
   },
   "files": [
     "src"
@@ -39,6 +37,7 @@
     "gulp": "^3.9.1",
     "gulp-if": "^2.0.2",
     "gulp-uglify": "^3.0.0",
+    "jsdoc-to-markdown": "^5.0.0",
     "lodash": "^4.17.4",
     "mz": "^2.6.0",
     "prettysize": "^0.1.0",
