@@ -354,6 +354,16 @@ module.exports = function (_Weddell) {
                                         finalObj[machineStateMethod] = (evt) => {
                                             return this.getInitComponentInstance(componentName, 'router')
                                                 .then(componentInstance => {
+                                                    switch (machineStateMethod) {
+                                                        case 'onEnterState':
+                                                        case 'onExitState':
+                                                            return Promise.resolve(this.markDirty()).then(() => componentInstance)
+                                                        default:
+                                                            break;
+                                                    }
+                                                    return componentInstance;
+                                                })
+                                                .then(componentInstance => {
                                                     var methodNames = methods[1];
                                                     if (!Array.isArray(methodNames)) {
                                                         methodNames = [methodNames]
@@ -364,16 +374,7 @@ module.exports = function (_Weddell) {
                                                     )
                                                         .then(() => componentInstance)
                                                 })
-                                                .then(componentInstance => {
-                                                    switch (machineStateMethod) {
-                                                        case 'onEnterState':
-                                                        case 'onExitState':
-                                                            return Promise.resolve(this.markDirty()).then(() => componentInstance)
-                                                        default:
-                                                            break;
-                                                    }
-                                                    return componentInstance;
-                                                })
+                                                
                                         }
                                         return finalObj;
                                     }, {
