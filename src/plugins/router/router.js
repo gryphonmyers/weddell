@@ -287,7 +287,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         return Promise.resolve();
     }
 
-    pushState(pathName, hash, scrollPos) {
+    pushState(pathName, hash, scrollPos= { x: window.pageXOffset, y: window.pageYOffset }) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
 
@@ -320,14 +320,12 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         })
     }
 
-    replaceState(pathName, hash, scrollPos) {
+    replaceState(pathName, hash, scrollPos= { x: window.pageXOffset, y: window.pageYOffset }) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
 
-        var currentScrollPos = { x: window.pageXOffset, y: window.pageYOffset };
-
-        if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash) {
-            history.replaceState({ fullPath: pathName, hash, scrollPos: currentScrollPos, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
+        if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash || history.state.x !== scrollPos.x || history.state.y !== scrollPos.y) {
+            history.replaceState({ fullPath: pathName, hash, scrollPos, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
         }
 
         this.setScrollPos(scrollPos, hash);
