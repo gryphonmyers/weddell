@@ -323,8 +323,9 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
         }
     }
 
-    await(key, validator = true, invokeImmediately = true) {
-        return new Promise(resolve => {
+    await(key, validator = true, invokeImmediately = true, timeout=6000) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => reject(new Error(`State await timed out waiting for key: ${key}`)), timeout);
             this.watchOnce(key, resolve, validator, invokeImmediately);
         })
     }
