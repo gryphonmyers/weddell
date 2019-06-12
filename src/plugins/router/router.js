@@ -93,7 +93,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                             .then(() => matches)
                             .then(matches => {
                                 if (isInitialRoute || shouldReplaceState) {
-                                    this.replaceState(matches.fullPath, hash);
+                                    this.replaceState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 });
                                 } else if (!matches.isCurrentRoute) {
                                     return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 })
                                         .then(() => matches);
@@ -277,7 +277,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                         var result = this.route(href, evt);
                         if (result) {
                             evt.preventDefault();
-                            this.replaceState(location.pathname, location.hash);
+                            this.replaceState(location.pathname, location.hash, { x: window.pageXOffset, y: window.pageYOffset });
                         }
                     }
                 }
@@ -287,7 +287,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         return Promise.resolve();
     }
 
-    pushState(pathName, hash, scrollPos= { x: window.pageXOffset, y: window.pageYOffset }) {
+    pushState(pathName, hash, scrollPos={ x: window.pageXOffset, y: window.pageYOffset }) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
 
@@ -320,12 +320,12 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         })
     }
 
-    replaceState(pathName, hash, scrollPos= { x: window.pageXOffset, y: window.pageYOffset }) {
+    replaceState(pathName, hash, scrollPos) {
         if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
         if (pathName.charAt(pathName.length - 1) !== '/') pathName = pathName + '/';
 
-        if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash || history.state.x !== scrollPos.x || history.state.y !== scrollPos.y) {
-            history.replaceState({ fullPath: pathName, hash, scrollPos, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
+        if (!history.state || !history.state.isWeddellState || history.state.fullPath !== pathName || history.state.hash !== hash || (scrollPos && (history.state.x !== scrollPos.x || history.state.y !== scrollPos.y))) {
+            history.replaceState({ fullPath: pathName, hash, scrollPos: scrollPos || (history.state && history.state.scrollPos) || { x: window.pageXOffset, y: window.pageYOffset }, isWeddellState: true }, document.title, location.origin + pathName + location.search + (hash || ''));
         }
 
         this.setScrollPos(scrollPos, hash);
@@ -357,7 +357,6 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
     onPopState(evt) {
         //@TODO paging forward does not restore scroll position due to lack of available hook to capture it. we may at some point want to capture it in a scroll event.
         var state = history.state;
-
         if (evt && evt.state && evt.state.isWeddellState === true) {
             var result = this.route(evt.state.fullPath + (evt.state.hash || ''), true, evt);
             if (result && evt.state.scrollPos) {
