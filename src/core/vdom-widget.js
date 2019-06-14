@@ -90,8 +90,10 @@ module.exports = class WeddellVDOMWidget {
 
     update(previousWidget, prevDOMNode) {
         if (previousWidget instanceof WeddellVDOMWidget) {
+            this.component.onBeforePatch({ el: prevDOMNode });
             var patches = VDOMDiff(previousWidget.vTree, this.vTree);
             var el = VDOMPatch(prevDOMNode, patches);
+            this.component.onPatch({ el, prevEl: prevDOMNode });
 
             this.fireDomEvents(this.component.el, this.component._el = el);
 

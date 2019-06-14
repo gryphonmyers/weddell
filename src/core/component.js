@@ -1041,6 +1041,29 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
     }
 
     /**
+     * Component lifecycle hook method that may be overridden. Called whenever a component's DOM node is patched.
+     * 
+     * @param {Object} event
+     * @param {Node} event.el DOM node the component is now mounted into.
+     * @param {Node|null} event.prevEl DOM node the component was previously mounted into. May be the same node or null.
+     * 
+     * @returns {void}
+     */
+
+    onPatch(event) { }
+
+    /**
+     * Component lifecycle hook method that may be overridden. Called before a component's DOM node is patched.
+     * 
+     * @param {Object} event
+     * @param {Node} event.el DOM node the component is currently mounted into.
+     * 
+     * @returns {void}
+     */
+
+    onBeforePatch(event) { }
+
+    /**
      * Component lifecycle hook method that may be overridden. Called whenever a component instance finishes rendering and mounting into a parent component.
      * 
      * @returns {Promise|void} Returning a promise will defer completion of the mount process.
