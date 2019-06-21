@@ -282,6 +282,15 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             i++;
         }
 
+        if (val == null && (key in this.propertySets)) {
+            var propertySet = this.propertySets[key];
+            val = {};
+            Object.defineProperties(val,
+                (Array.isArray(propertySet) ? propertySet.map(key => [key, key]) : Object.entries(propertySet))
+                    .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: { enumerable: true, get: () => this[pair[1]] } }), {})
+            )
+        }
+
         i = 0;
         if (val == null) {
             val = this._transformedData[key] || this._data[key];
@@ -300,14 +309,7 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
-        if (val == null && (key in this.propertySets)) {
-            var propertySet = this.propertySets[key];
-            val = {};
-            Object.defineProperties(val,
-                (Array.isArray(propertySet) ? propertySet.map(key => [key, key]) : Object.entries(propertySet))
-                    .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: { enumerable: true, get: () => this[pair[1]] } }), {})
-            )
-        }
+        
         return val
     }
 
