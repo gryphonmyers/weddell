@@ -1475,32 +1475,61 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         }
     }
 
+    getVnodeComponentMaps(vNode, map={}, components=this.collectComponentTree()) {
+        if (vNode) {
+            if (Array.isArray(vNode)) {
+                return vNode.reduce((acc, child) => 
+                    this.getVnodeComponentMaps(child, acc, components), map);
+            } else if (vNode.tagName) {
+                var compName;
+                if ((compName = vNode.tagName.toLowerCase()) in components) {
+                    if (!map[compName]) map[compName] = new Map([['numIndexed', 0]]);
+
+                    if (vNode.key != null) {
+                        map[compName].set(vNode, vNode.key);
+                    } else {
+                        var numIndexed = map[compName].get('numIndexed');
+                        map[compName].set(vNode, numIndexed);
+                        map[compName].set('numIndexed', numIndexed + 1);
+                    }
+                }
+
+                if (vNode.children) {
+                    return this.getVnodeComponentMaps(vNode.children, map, components);
+                }
+            }
+        }
+
+        return map;
+    }
+
     /**
      * @private
      */
 
-    replaceComponentPlaceholders(vNode, renderedComponents = []) {
-        var components;
+    replaceComponentPlaceholders(vNode, renderedComponents = [], componentMap=this.getVnodeComponentMaps(vNode)) {
         var componentName;
 
         if (Array.isArray(vNode)) {
-            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents)))
+            return Promise.all(vNode.map(child => this.replaceComponentPlaceholders(child, renderedComponents, componentMap)))
         } else if (!vNode.tagName) {
             return vNode;
         } else if ((componentName = vNode.tagName.toLowerCase()) in this.constructor.tagDirectives) {
             return Promise.resolve(this.constructor.tagDirectives[componentName].call(this, vNode, vNode.children || [], vNode.properties.attributes, renderedComponents));
         }
 
-        return this.replaceComponentPlaceholders(vNode.children || [], renderedComponents)
+        return this.replaceComponentPlaceholders(vNode.children || [], renderedComponents, componentMap)
             .then(children => {
-                if (componentName in (components = this.collectComponentTree())) {
+                if (componentName in componentMap) {
                     var props = vNode.properties.attributes;
                     var content = children || [];
                     if (!(componentName in renderedComponents)) {
                         renderedComponents[componentName] = [];
                     }
-                    var index = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME]) || renderedComponents[componentName].length;
-
+                    var componentIndex = (vNode.properties.attributes && vNode.properties.attributes[this.constructor.Weddell.consts.INDEX_ATTR_NAME])
+                    
+                    var index = componentIndex || componentMap[componentName].get(vNode);
+                    
                     return this.makeChildComponentWidget(componentName, index, content, props, renderedComponents);
                 }
 
