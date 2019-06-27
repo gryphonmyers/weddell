@@ -105,13 +105,17 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             }.bind(this));
         });
 
-        Object.keys(this.propertySets).forEach(key => {
-            this.set(key, null, true);
-        });
+        [...Object.keys(this.propertySets), ...Object.keys(this.inputMappings)]
+            .forEach(key => {
+                this.set(key, null, true);
+            });
 
-        Object.keys(this.inputMappings).forEach(key => {
-            this.set(key, null, true);
-        });
+        var setKeys = Object.entries(this.propertySets).reduce((acc, [setKey, setMappings]) => {
+            Object.values(setMappings).forEach(key => {
+                acc[key] = [...(acc[key] || []), setKey]
+            })
+            return acc;
+        }, {})        
 
         this.proxies.concat(this.overrides).forEach(obj => {
             Object.keys(obj).forEach(key => {
@@ -130,6 +134,14 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
         this.on('change', evt => {
             delete this._cache[evt.changedKey];
         });
+
+        this.on('change', evt => {
+            if (evt.changedKey in setKeys) {
+                setKeys[evt.changedKey].forEach(setKey => {
+                    this.trigger('change', Object.assign({}, evt, { target: this, changedKey: setKey, origEvent: evt }))
+                })
+            }
+        })
 
         Object.seal(this);
     }
@@ -168,15 +180,21 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
                                 throw new Error(`Input failed validation: ${key}. Received value: ${val}`);
                             }
                         }
+                        
 
                         var oldTransformedValue = this._transformedData[key];
-                        this._data[key] = newValue;
+                        
+                        if (newValue && typeof newValue === "object" && !Array.isArray(newValue)) {
+                            this._data[key] = Object.assign({}, newValue);
+                        } else {
+                            this._data[key] = newValue
+                        }
+                        // this._data[key] = newValue
                         if (this.getTransform) {
                             this._transformedData[key] = this.getTransform.call(this, key, newValue);
                         }
 
                         if (this.shouldMonitorChanges) {
-
                             if (!deepEqual(newValue, oldValue)) {
                                 this._changedKeys.push(key);
                                 this.trigger('change', {
@@ -281,10 +299,11 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             val = typeof val === 'function' ? val.bind(this) : val;
             i++;
         }
-
+        
         if (val == null && (key in this.propertySets)) {
             var propertySet = this.propertySets[key];
             val = {};
+
             Object.defineProperties(val,
                 (Array.isArray(propertySet) ? propertySet.map(key => [key, key]) : Object.entries(propertySet))
                     .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: { enumerable: true, get: () => this[pair[1]] } }), {})
