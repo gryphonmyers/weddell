@@ -108,6 +108,7 @@ class WeddellApp extends mix().with(EventEmitterMixin) {
             _initPromise: { value: null, writable: true },
             _elInput: { value: opts.el },
             _patchPromise: { value: null, writable: true },
+            _suspendPromise: { value: Promise.resolve(), writable: true },
             _snapshotData: { value: null, writable: true },
             patchPromise: { get: () => this._patchPromise },
             _patchRequests: { value: [], writable: true },
@@ -136,6 +137,12 @@ class WeddellApp extends mix().with(EventEmitterMixin) {
         Object.defineProperties(this, {
             rootNode: { value: null, writable: true }
         })
+    }
+
+    suspendPatches() {
+        var resumePatches;
+        this._suspendPromise = new Promise(resolve => { resumePatches = resolve });
+        return resumePatches
     }
 
     /**
@@ -543,9 +550,13 @@ class WeddellApp extends mix().with(EventEmitterMixin) {
         this._lastPatchStartTime = Date.now();
 
         window.setTimeout(() => {
-            var currPatchRequests = this._patchRequests;
-            this._patchRequests = [];
-            resolveFunc(currPatchRequests);
+            
+            this._suspendPromise
+                .then(() => {
+                    var currPatchRequests = this._patchRequests;
+                    this._patchRequests = [];
+                    resolveFunc(currPatchRequests)
+                })
         }, Math.max(0, patchInterval - dt))
 
         return promise;
