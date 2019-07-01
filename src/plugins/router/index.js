@@ -179,7 +179,7 @@ module.exports = function (_Weddell) {
                                 return Promise.resolve(this.onBeforeRoute.call(this, { matches, componentNames }))
                                     .then(() => {
                                         this.el.classList.add('prerouting-finished');
-
+                                        
                                         return componentNames
                                             .map(componentName => componentName.toLowerCase())
                                             .reduce((promise, componentName) => {
@@ -352,29 +352,25 @@ module.exports = function (_Weddell) {
                                     var routerState = new RouterState([['onEnterState', ['onEnter', 'onEnterOrUpdate']], ['onExitState', 'onExit'], ['onUpdateState', ['onUpdate', 'onEnterOrUpdate']]].reduce((finalObj, methods) => {
                                         var machineStateMethod = methods[0];
                                         finalObj[machineStateMethod] = (evt) => {
+                                            var markDirty = async componentInstance => {
+                                                await this.markDirty()
+                                                return componentInstance
+                                            }
                                             return this.getInitComponentInstance(componentName, 'router')
-                                                .then(componentInstance => {
-                                                    switch (machineStateMethod) {
-                                                        case 'onEnterState':
-                                                        case 'onExitState':
-                                                            return Promise.resolve(this.markDirty()).then(() => componentInstance)
-                                                        default:
-                                                            break;
-                                                    }
-                                                    return componentInstance;
-                                                })
-                                                .then(componentInstance => {
+                                                .then(markDirty)
+                                                .then(async componentInstance => {
                                                     var methodNames = methods[1];
                                                     if (!Array.isArray(methodNames)) {
                                                         methodNames = [methodNames]
                                                     }
-                                                    return Promise.all(methodNames.map(methodName =>
-                                                        componentInstance[methodName].call(componentInstance, Object.assign({}, evt))
-                                                    )
-                                                    )
-                                                        .then(() => componentInstance)
+                                                    await Promise.all(
+                                                        methodNames.map(methodName =>
+                                                                componentInstance[methodName].call(componentInstance, Object.assign({}, evt))
+                                                            )
+                                                        )
+                                                    return componentInstance
                                                 })
-                                                
+                                                .then(markDirty)
                                         }
                                         return finalObj;
                                     }, {

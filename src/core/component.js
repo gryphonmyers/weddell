@@ -1727,10 +1727,13 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         renderedComponents[componentName].push(prom);
         renderedComponents.push(prom);
         return prom
-            .then(component => {
+            .then(async component => {
                 renderedComponents[componentName].splice(renderedComponents[componentName].indexOf(prom), 1, component);
                 renderedComponents.splice(renderedComponents.indexOf(prom), 1, component);
+
                 component.assignProps(props, this);
+                await component.renderPromise
+                
                 var contentComponents = [];
 
                 return component.replaceComponentPlaceholders(content, contentComponents)
