@@ -61,7 +61,6 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             _data: { configurable: false, value: {} },
             _transformedData: { configurable: false, value: {} },
             _initialState: { value: opts.initialState || {} },
-            _cache: { value: {}, writable: true },
             _funcProps: { configurable: false, value: {} },
             _funcPropHandlerRemovers: { configurable: false, value: {} },
             _proxyObjs: { configurable: false, value: {} },
@@ -132,10 +131,6 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
         });
 
         this.on('change', evt => {
-            delete this._cache[evt.changedKey];
-        });
-
-        this.on('change', evt => {
             if (evt.changedKey in setKeys) {
                 setKeys[evt.changedKey].forEach(setKey => {
                     this.trigger('change', Object.assign({}, evt, { target: this, changedKey: setKey, origEvent: evt }))
@@ -181,17 +176,16 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
                             }
                         }
                         
-
                         var oldTransformedValue = this._transformedData[key];
+                        var getTransformed = this.getTransform ? this.getTransform.call(this, key, newValue) : null;
                         
                         if (newValue && typeof newValue === "object" && !Array.isArray(newValue)) {
                             this._data[key] = Object.assign({}, newValue);
                         } else {
                             this._data[key] = newValue
                         }
-                        // this._data[key] = newValue
                         if (this.getTransform) {
-                            this._transformedData[key] = this.getTransform.call(this, key, newValue);
+                            this._transformedData[key] = getTransformed;
                         }
 
                         if (this.shouldMonitorChanges) {
@@ -199,7 +193,7 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
                                 this._changedKeys.push(key);
                                 this.trigger('change', {
                                     target: this, changedKey: key,
-                                    newValue: this._transformedData[key] == null ? this._data[key] : this._transformedData[key],
+                                    newValue: getTransformed == null ? newValue : getTransformed,
                                     oldValue: oldTransformedValue == null ? oldValue : oldTransformedValue
                                 });
                             }
@@ -265,9 +259,6 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
         var i = 0;
         var val;
 
-        if (this._cache[key]) {
-            return this._cache[key];
-        }
         if (this.shouldEvalFunctions && !this._firstGetComplete) {
             this._firstGetComplete = true;
             for (var propName in this._funcProps) {
@@ -402,8 +393,13 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
         if (!Array.isArray(key)) {
             key = [key];
         }
+        var vals;
         var checkKeys = function () {
-            var vals = key.map(currKey => this[currKey]);
+            var newVals = key.map(currKey => this[currKey]);
+            if (vals && newVals.every((val, ii) => val === vals[ii])) {
+                return
+            }
+            vals = newVals;
 
             if (!validator || (typeof validator === 'function' ? validator(key.length === 1 ? vals[0] : vals) : vals.every(val => typeof val !== 'undefined'))) {
                 func.apply(this, vals);
