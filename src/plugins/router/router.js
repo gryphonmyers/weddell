@@ -42,7 +42,11 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         }
     }
 
-    route(pathName, shouldReplaceState = false, triggeringEvent = null) {
+    awaitFirstRoute() {
+        return this.currentRoute ? Promise.resolve() : new Promise(resolve => this.once('route', resolve))
+    }
+
+    async route(pathName, shouldReplaceState = false, triggeringEvent = null) {
         if (typeof shouldReplaceState !== 'boolean') {
             triggeringEvent = shouldReplaceState;
             shouldReplaceState = false
@@ -53,6 +57,9 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             matches = pathName;
         } else if (pathName) {
             //assuming an object was passed to route by named route.
+            if (!pathName.name && !this.currentRoute) {
+                await this.awaitFirstRoute()
+            }
             var matches = this.compileRouterLink(pathName);
             if (matches) {
                 return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState, triggeringEvent);
@@ -107,6 +114,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             }
             return this.promise = promise.then(result => {
                 this.promise = null
+                this.trigger('route');
                 return result;
             });
         }
