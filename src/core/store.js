@@ -399,11 +399,11 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             if (vals && newVals.every((val, ii) => val === vals[ii])) {
                 return
             }
-            vals = newVals;
 
-            if (!validator || (typeof validator === 'function' ? validator(key.length === 1 ? vals[0] : vals) : vals.every(val => typeof val !== 'undefined'))) {
-                func.apply(this, vals);
+            if (!validator || (typeof validator === 'function' ? validator(key.length === 1 ? newVals[0] : newVals) : newVals.every(val => typeof val !== 'undefined'))) {
+                func.apply(this, [...newVals, ...(vals || [])]);
             }
+            vals = newVals;
         };
         var off = this[onlyFireOnce ? 'once' : 'on']('change', function (evt) {
             if (key.includes(evt.changedKey)) {

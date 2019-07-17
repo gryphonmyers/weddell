@@ -299,10 +299,14 @@ class WeddellApp extends mix().with(EventEmitterMixin) {
             });
         `;
         doc.body.appendChild(scriptEl);
+        
+        function safe_tags_replace(str) {
+            return str.replace(/<\/script>/g, '&lt;/script&gt;');
+        }
 
         return {
             appHtml: this.component.el.outerHTML,
-            stateHtml: scriptEl.outerHTML,
+            stateHtml: `<script>${safe_tags_replace(scriptEl.innerHTML)}</script>`,
             stylesHtml: Array.from(document.querySelectorAll('head style.weddell-style, head style.weddell-app-styles'))
                 .map(el => el.outerHTML)
                 .join('\n'),
