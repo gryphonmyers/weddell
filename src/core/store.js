@@ -130,13 +130,16 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             });
         });
 
-        this.on('change', evt => {
-            if (evt.changedKey in setKeys) {
-                setKeys[evt.changedKey].forEach(setKey => {
-                    this.trigger('change', Object.assign({}, evt, { target: this, changedKey: setKey, origEvent: evt }))
-                })
-            }
-        })
+        Object.keys(this.propertySets).forEach(setKey => {
+            var oldValue;
+            this.on('change', evt => {
+                if (evt.changedKey in setKeys) {
+                    var newValue = Object.assign({}, oldValue || Object.assign({}, this[setKey]), { [evt.changedKey]: evt.newValue }); 
+                    this.trigger('change', Object.assign({}, evt, { target: this, newValue, oldValue, changedKey: setKey, origEvent: evt }))
+                    oldValue = newValue;
+                }
+            })
+        })        
 
         Object.seal(this);
     }
@@ -394,11 +397,9 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
             key = [key];
         }
         var vals;
-        var checkKeys = function () {
-            var newVals = key.map(currKey => this[currKey]);
-            if (vals && newVals.every((val, ii) => val === vals[ii])) {
-                return
-            }
+        var checkKeys = function ({changedKey, newValue}={}) {
+            // if (changedKey === 'newsEntrySlug') debugger
+            var newVals = key.map((currKey, ii) => currKey === changedKey ? newValue : (vals ? vals[ii] : this[currKey]));
 
             if (!validator || (typeof validator === 'function' ? validator(key.length === 1 ? newVals[0] : newVals) : newVals.every(val => typeof val !== 'undefined'))) {
                 func.apply(this, [...newVals, ...(vals || [])]);
@@ -407,7 +408,7 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
         };
         var off = this[onlyFireOnce ? 'once' : 'on']('change', function (evt) {
             if (key.includes(evt.changedKey)) {
-                checkKeys.call(this);
+                checkKeys.call(this, evt);
             }
         });
         if (invokeImmediately) {
