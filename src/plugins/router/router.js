@@ -46,7 +46,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         return this.currentRoute ? Promise.resolve() : new Promise(resolve => this.once('route', resolve))
     }
 
-    async route(pathName, shouldReplaceState = false, triggeringEvent = null) {
+    route(pathName, shouldReplaceState = false, triggeringEvent = null) {
         if (typeof shouldReplaceState !== 'boolean') {
             triggeringEvent = shouldReplaceState;
             shouldReplaceState = false
@@ -58,67 +58,71 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         } else if (pathName) {
             //assuming an object was passed to route by named route.
             if (!pathName.name && !this.currentRoute) {
-                await this.awaitFirstRoute()
+                throw new Error(`Unable to route to unnamed object route because no routing event has occurred yet. Try awaiting router.awaitFirstRoute() before caling router.route.`);
             }
-            var matches = this.compileRouterLink(pathName);
+            matches = this.compileRouterLink(pathName);
             if (matches) {
                 return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState, triggeringEvent);
             }
         }
         if (matches) {
-            var hash = matches.hash;
-            Object.assign(matches, { triggeringEvent });
-            var isInitialRoute = !this.currentRoute;
+            return this.promise = (this.promise || Promise.resolve())
+                .then(() => {
+                    var hash = matches.hash;
+                    Object.assign(matches, { triggeringEvent });
+                    var isInitialRoute = !this.currentRoute;
 
-            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
-                var promise = Promise.resolve(Object.assign(matches, { isCurrentRoute: true }))
-                    .then(matches => {
-                        if (shouldReplaceState) {
-                            return this.replaceState(matches.fullPath, hash);
-                        } else {
-                            return this.pushState(matches.fullPath, hash);
-                        }
-                    });
-            } else {
-                promise = Promise.all(matches.map((currMatch, key) => {
-                    if (key === matches.length - 1 && currMatch.route.redirect) {
-                        if (typeof currMatch.route.redirect === 'function') {
-                            var redirectPath = currMatch.route.redirect.call(this, matches);
-                        } else {
-                            //assuming string - path
-                            redirectPath = currMatch.route.redirect;
-                        }
-                        if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
-
-                        return Promise.reject(redirectPath);
-                    }
-
-                    return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
-                }))
-                    .then(results => {
-                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, results.filter(val => val)) : null)
-                            .then(() => matches)
+                    if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
+                        var promise = Promise.resolve(Object.assign(matches, { isCurrentRoute: true }))
                             .then(matches => {
-                                if (isInitialRoute || shouldReplaceState) {
-                                    this.replaceState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 });
-                                } else if (!matches.isCurrentRoute) {
-                                    return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 })
-                                        .then(() => matches);
+                                if (shouldReplaceState) {
+                                    return this.replaceState(matches.fullPath, hash);
+                                } else {
+                                    return this.pushState(matches.fullPath, hash);
                                 }
-                                return matches;
                             });
-                    }, redirectPath => {
-                        return this.route(redirectPath, true, triggeringEvent)
-                    });
-                this.currentRoute = matches;
-            }
-            return this.promise = promise.then(result => {
-                this.promise = null
-                this.trigger('route');
-                return result;
-            });
+                    } else {
+                        promise = Promise.all(matches.map((currMatch, key) => {
+                            if (key === matches.length - 1 && currMatch.route.redirect) {
+                                if (typeof currMatch.route.redirect === 'function') {
+                                    var redirectPath = currMatch.route.redirect.call(this, matches);
+                                } else {
+                                    //assuming string - path
+                                    redirectPath = currMatch.route.redirect;
+                                }
+                                if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
+
+                                return Promise.reject(redirectPath);
+                            }
+
+                            return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
+                        }))
+                            .then(results => {
+                                return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, results.filter(val => val)) : null)
+                                    .then(() => matches)
+                                    .then(matches => {
+                                        if (isInitialRoute || shouldReplaceState) {
+                                            this.replaceState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 });
+                                        } else if (!matches.isCurrentRoute) {
+                                            return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 })
+                                                .then(() => matches);
+                                        }
+                                        return matches;
+                                    });
+                            }, redirectPath => {
+                                return this.route(redirectPath, true, triggeringEvent)
+                            });
+                        this.currentRoute = matches;
+                    }
+                    return promise;
+                })
+                .then(result => {
+                    this.promise = null
+                    this.trigger('route');
+                    return result;
+                });
         }
-        return this.promise = null;
+        return null;
     }
 
     awaitRoute() {
