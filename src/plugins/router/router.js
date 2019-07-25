@@ -34,6 +34,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         super(opts);
         this.currentRoute = null;
         this.routes = [];
+        this.queue = [];
         this.promise = null;
         this.onRoute = opts.onRoute;
         this._isInit = false;
@@ -46,7 +47,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
         return this.currentRoute ? Promise.resolve() : new Promise(resolve => this.once('route', resolve))
     }
 
-    route(pathName, shouldReplaceState = false, triggeringEvent = null) {
+    performRoute(pathName, shouldReplaceState, triggeringEvent) {
         if (typeof shouldReplaceState !== 'boolean') {
             triggeringEvent = shouldReplaceState;
             shouldReplaceState = false
@@ -62,65 +63,81 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             }
             matches = this.compileRouterLink(pathName);
             if (matches) {
-                return this.route(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState, triggeringEvent);
+                return this.performRoute(matches.fullPath + (pathName.hash ? '#' + pathName.hash : ''), shouldReplaceState, triggeringEvent);
             }
         }
+
         if (matches) {
-            return this.promise = (this.promise || Promise.resolve())
-                .then(() => {
-                    var hash = matches.hash;
-                    Object.assign(matches, { triggeringEvent });
-                    var isInitialRoute = !this.currentRoute;
+            var hash = matches.hash;
+            Object.assign(matches, { triggeringEvent });
+            var isInitialRoute = !this.currentRoute;
 
-                    if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
-                        var promise = Promise.resolve(Object.assign(matches, { isCurrentRoute: true }))
-                            .then(matches => {
-                                if (shouldReplaceState) {
-                                    return this.replaceState(matches.fullPath, hash);
-                                } else {
-                                    return this.pushState(matches.fullPath, hash);
-                                }
-                            });
-                    } else {
-                        promise = Promise.all(matches.map((currMatch, key) => {
-                            if (key === matches.length - 1 && currMatch.route.redirect) {
-                                if (typeof currMatch.route.redirect === 'function') {
-                                    var redirectPath = currMatch.route.redirect.call(this, matches);
-                                } else {
-                                    //assuming string - path
-                                    redirectPath = currMatch.route.redirect;
-                                }
-                                if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
+            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
+                var promise = Promise.resolve(Object.assign(matches, { isCurrentRoute: true }))
+                    .then(matches => {
+                        if (shouldReplaceState) {
+                            return this.replaceState(matches.fullPath, hash);
+                        } else {
+                            return this.pushState(matches.fullPath, hash);
+                        }
+                    });
+            } else {
+                promise = Promise.all(matches.map((currMatch, key) => {
+                    if (key === matches.length - 1 && currMatch.route.redirect) {
+                        if (typeof currMatch.route.redirect === 'function') {
+                            var redirectPath = currMatch.route.redirect.call(this, matches);
+                        } else {
+                            //assuming string - path
+                            redirectPath = currMatch.route.redirect;
+                        }
+                        if (redirectPath === matches.fullPath) throw "Redirect loop detected: '" + redirectPath + "'";
 
-                                return Promise.reject(redirectPath);
-                            }
-
-                            return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
-                        }))
-                            .then(results => {
-                                return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, results.filter(val => val)) : null)
-                                    .then(() => matches)
-                                    .then(matches => {
-                                        if (isInitialRoute || shouldReplaceState) {
-                                            this.replaceState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 });
-                                        } else if (!matches.isCurrentRoute) {
-                                            return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 })
-                                                .then(() => matches);
-                                        }
-                                        return matches;
-                                    });
-                            }, redirectPath => {
-                                return this.route(redirectPath, true, triggeringEvent)
-                            });
-                        this.currentRoute = matches;
+                        return Promise.reject(redirectPath);
                     }
-                    return promise;
-                })
-                .then(result => {
-                    this.promise = null
-                    this.trigger('route');
-                    return result;
-                });
+
+                    return Promise.resolve(typeof currMatch.route.handler == 'function' ? currMatch.route.handler.call(this, matches) : currMatch.route.handler);
+                }))
+                    .then(results => {
+                        return Promise.resolve(this.onRoute ? this.onRoute.call(this, matches, results.filter(val => val)) : null)
+                            .then(() => matches)
+                            .then(matches => {
+                                if (isInitialRoute || shouldReplaceState) {
+                                    this.replaceState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 });
+                                } else if (!matches.isCurrentRoute) {
+                                    return this.pushState(matches.fullPath, hash, matches.isRouteUpdate && matches.keepUpdateScrollPos ? null : { x: 0, y: 0 })
+                                        .then(() => matches);
+                                }
+                                return matches;
+                            });
+                    }, redirectPath => {
+                        return this.performRoute(redirectPath, true, triggeringEvent)
+                    });
+                this.currentRoute = matches;
+            }
+        }
+        
+        return promise;
+    }
+
+    route(pathName, shouldReplaceState = false, triggeringEvent = null) {
+        var routeArgs = [pathName, shouldReplaceState, triggeringEvent];
+        if (this.promise) {
+            this.queue.push(routeArgs)
+            return this.promise;
+        } else {
+            var consumeRouteQueue = (routeArgs) => {
+                return this.performRoute(...routeArgs)
+                    .then(result => {
+                        if (this.queue.length) {
+                            return consumeRouteQueue(this.queue.splice(0,1)[0]);
+                        } else {
+                            this.promise = null;
+                            this.trigger('route');
+                            return result;
+                        }
+                    })
+            }
+            return this.promise = consumeRouteQueue(routeArgs)
         }
         return null;
     }
