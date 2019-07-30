@@ -126,11 +126,11 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             return this.promise;
         } else {
             var consumeRouteQueue = (routeArgs) => {
-                var result = this.performRoute(...routeArgs);
-                if (!result) {
+                var promise = this.performRoute(...routeArgs);
+                if (!promise) {
                     return null;
                 }
-                return this.performRoute(...routeArgs)
+                return promise
                     .then(result => {
                         if (this.queue.length) {
                             return consumeRouteQueue(this.queue.splice(0,1)[0]);
