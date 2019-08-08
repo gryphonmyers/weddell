@@ -306,7 +306,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                 var clickedATag = findParent.byMatcher(evt.target, el => el.tagName === 'A');
                 if (clickedATag) {
                     var href = clickedATag.getAttribute('href');
-                    if (href) {
+                    if (href && href.slice(0, 11) !== 'javascript:') {
                         var result = this.route(href, evt);
                         if (result) {
                             evt.preventDefault();
