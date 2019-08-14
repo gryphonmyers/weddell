@@ -67,13 +67,13 @@ module.exports = class WeddellVDOMWidget {
         return el;
     }
 
-    fireDomEvents(prevEl, el) {
+    fireDomEvents(prevEl, el, previousWidget) {
         if (!prevEl) {
             this.component.trigger('domcreate', {el});
             this.component.onDOMCreate.call(this.component, {el});
             this.component.trigger('domcreateorchange', {newEl: el, prevEl});
             this.component.onDOMCreateOrChange.call(this.component, {newEl: el, prevEl});
-        } else if (prevEl !== el) {
+        } else if (prevEl !== el || previousWidget.component !== this.component) {
             this.component.trigger('domchange', {el});
             this.component.onDOMChange.call(this.component, { newEl: el, prevEl });
             this.component.trigger('domcreateorchange', {newEl: el, prevEl});
@@ -95,7 +95,7 @@ module.exports = class WeddellVDOMWidget {
             var el = VDOMPatch(prevDOMNode, patches);
             this.component.onPatch({ el, prevEl: prevDOMNode });
 
-            this.fireDomEvents(this.component.el, this.component._el = el);
+            this.fireDomEvents(this.component.el, this.component._el = el, previousWidget);
 
             el.setAttribute('data-wdl-id', this.component.id);
 
