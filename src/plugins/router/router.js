@@ -139,7 +139,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                             this.trigger('route');
                             return result;
                         }
-                    })
+                    });
             }
             return this.promise = consumeRouteQueue(routeArgs)
         }
@@ -307,7 +307,8 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
                 if (clickedATag) {
                     var href = clickedATag.getAttribute('href');
                     if (href && href.slice(0, 11) !== 'javascript:') {
-                        var result = this.route(href, evt);
+
+                        var result =  this.matchRoute(href, this.routes) && this.route(href, evt);
                         if (result) {
                             evt.preventDefault();
                             this.replaceState(location.pathname, location.hash, { x: window.pageXOffset, y: window.pageYOffset });
