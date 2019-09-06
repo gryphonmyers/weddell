@@ -140,6 +140,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             childComponents: { get: () => this._childComponents },
             contentComponents: { get: () => this._contentComponents },
             hasRendered: { get: () => this._hasRendered },
+            isBusy: { value: false, writable: true },
             el: { get: () => this._el },
             isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
@@ -295,6 +296,13 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         this.stylesTemplate = this.makeStylesTemplate(...[(this.constructor.dynamicStyles || opts.stylesTemplate)].concat(this.constructor.styles).filter(val => val).flat(10));
 
         weddellGlobals.components[this._id] = this;
+    }
+
+    setBusyState(val) {
+        if (val != this.isBusy) {
+            this.isBusy = val;
+            this.markDirty();
+        }
     }
 
     /**
