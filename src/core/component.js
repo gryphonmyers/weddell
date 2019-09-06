@@ -140,7 +140,9 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             childComponents: { get: () => this._childComponents },
             contentComponents: { get: () => this._contentComponents },
             hasRendered: { get: () => this._hasRendered },
-            isBusy: { value: false, writable: true },
+            _isBusy: { value: false, writable: true },
+            isBusy: { get: () => this._isBusy || this.numBusyChildren > 0 },
+            numBusyChildren: {value: 0, writable: true},
             el: { get: () => this._el },
             isInit: { get: () => this._isInit },
             defaultInitOpts: { value: defaults(opts.defaultInitOpts, defaultInitOpts) },
@@ -239,7 +241,8 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         Object.defineProperty(this, 'state', {
             value: new Store(defaults({
                 $attributes: null,
-                $id: () => this.id
+                $id: () => this.id,
+                $isBusy: null
             }, state), {
                     propertySets: this.constructor.propertySets,
                     initialState: opts.initialState,
@@ -298,10 +301,11 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         weddellGlobals.components[this._id] = this;
     }
 
-    setBusyState(val) {
-        if (val != this.isBusy) {
-            this.isBusy = val;
-            this.markDirty();
+    setBusyState(newBusyState) {
+        if (newBusyState != this._isBusy) {
+            this._isBusy = newBusyState;
+            this.state.$isBusy = this.isBusy;
+            this.trigger('busystatechange', {newBusyState, source: this})
         }
     }
 
@@ -2189,6 +2193,12 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         instance.on('requestpatch', evt => {
             this._componentsRequestingPatch.push(instance);
             this.trigger('requestpatch', Object.assign({}, evt));
+        });
+
+        instance.on('busystatechange', evt => {
+            this.numBusyChildren = evt.newBusyState ? this.numBusyChildren + 1 : this.numBusyChildren - 1;
+            this.state.$isBusy = this.isBusy;
+            this.trigger('busystatechange', Object.assign({}, evt));
         });
 
         return instance;

@@ -200,14 +200,19 @@ class WeddellApp extends mix().with(EventEmitterMixin) {
                     })
                 });
 
-                var onPatch = () => {
-                    var isBusy = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise || component.isBusy, false)
-                    if (!isBusy) {
+                var checkIfBusy = () => {
+                    var isRendering = this.component.reduceComponents((acc, component) => acc || !!component.renderPromise, false);
+                    if (!isRendering && !this.component.isBusy) {
                         this.trigger('quiet');
                     }
+                }
+
+                var onPatch = () => {
+                    checkIfBusy();
                     this.el.classList.add('first-patch-complete');
                     this.component.trigger('patch');
                 };
+                this.component.on('busystatechange', checkIfBusy);
                 this.on('patch', onPatch);
 
                 Object.seal(this);
