@@ -182,7 +182,7 @@ class WeddellStore extends mix().with(EventEmitterMixin) {
                         var oldTransformedValue = this._transformedData[key];
                         var getTransformed = this.getTransform ? this.getTransform.call(this, key, newValue) : null;
                         
-                        if (newValue && typeof newValue === "object" && !Array.isArray(newValue)) {
+                        if (newValue && this.requireSerializable && typeof newValue === "object" && !Array.isArray(newValue)) {
                             this._data[key] = Object.assign({}, newValue);
                         } else {
                             this._data[key] = newValue
