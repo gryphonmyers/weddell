@@ -72,7 +72,7 @@ class Router extends mix(BaseRouter).with(EventEmitterMixin) {
             Object.assign(matches, { triggeringEvent });
             var isInitialRoute = !this.currentRoute;
 
-            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath && this.currentRoute.hash === matches.hash) {
+            if (this.currentRoute && matches.fullPath === this.currentRoute.fullPath) {
                 var promise = Promise.resolve(Object.assign(matches, { isCurrentRoute: true }))
                     .then(matches => {
                         if (shouldReplaceState) {
