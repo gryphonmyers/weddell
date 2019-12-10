@@ -54,6 +54,7 @@ module.exports = class WeddellVDOMWidget {
     unbindChildren() {
         this._callbacks.forEach(callback => callback());
     }
+    
     init() {
         if (!this.vTree) {
             throw "Component has no VTree to init with";

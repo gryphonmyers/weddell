@@ -1,1 +1,1 @@
-module.exports = require('./src/presets/weddell-ro');
+module.exports = require('./lib/weddell');

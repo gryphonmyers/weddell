@@ -2,14 +2,21 @@
   "name": "weddell",
   "version": "3.5.10",
   "description": "A tiny, modular, nonopinionated front-end web framework.",
-  "main": "./src/presets/weddell-ro.js",
+  "main": "dist/weddell.js",
+  "module": "dist/weddell.mjs",
   "scripts": {
     "start": "budo docs/app.js:static/bundle.js --dir docs",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "jsdoc2md --no-gfm ./src/core/*.js > README.md"
+    "test": "tap test/*.js",
+    "docs": "jsdoc2md --no-gfm ./src/core/*.js > README.md",
+    "check-bundle-size": "rollup -c rollup.config.esm.js | terser --config-file terser.config.json | gzip-size",
+    "bundle": "rollup -c rollup.config.js -o dist/weddell.js",
+    "bundle-esm": "rollup -c rollup.config.esm.js -o dist/weddell.mjs",
+    "bundle-min": "rollup -c rollup.config.esm.js | terser --config-file terser.config.json -o dist/weddell.min.mjs"
   },
   "files": [
-    "src"
+    "src",
+    "lib",
+    "dist"
   ],
   "author": "Gryphon Myers",
   "license": "MIT",
@@ -23,8 +30,10 @@
     "deep-equal": "^1.0.1",
     "defaults-es6": "^1.1.1",
     "document-ready-promise": "^3.0.1",
+    "fast-deep-equal": "^2.0.1",
     "find-parent": "^2.0.2",
     "path-to-regexp": "^1.7.0",
+    "vdom-to-html": "^2.3.1",
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {
@@ -37,11 +46,19 @@
     "gulp": "^3.9.1",
     "gulp-if": "^2.0.2",
     "gulp-uglify": "^3.0.0",
+    "gzip-size-cli": "^3.0.0",
     "jsdoc-to-markdown": "^5.0.0",
+    "jsdom": "^15.1.1",
     "lodash": "^4.17.4",
     "mz": "^2.6.0",
     "prettysize": "^0.1.0",
+    "rollup": "^1.21.4",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
     "stream-to-promise": "^2.2.0",
+    "tap": "^14.6.1",
+    "terser": "^4.3.4",
     "uglify-es": "^3.0.24",
     "uglifyify": "^3.0.4",
     "vinyl-buffer": "^1.0.0",

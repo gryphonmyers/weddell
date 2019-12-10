@@ -274,15 +274,22 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
             },
             _locals: { value: new Store({}, { proxies: [this.state, this.consts], shouldMonitorChanges: false, shouldEvalFunctions: false }) }
         });
-
-        Object.defineProperty(this, 'components', {
-            value: Object.entries(components)
-                .map(entry => [entry[0].toLowerCase(), entry[1]])
-                .reduce((final, entry) => {
-                    final[entry[0]] = { weddellClassInput: entry[1] };
-                    return final;
-                }, {})
-        })
+        
+        Object.defineProperty(this, 'components', { value: 
+            Object.assign(
+                {},
+                opts.parentComponent ? opts.parentComponent.components : null,
+                Object.entries(components)
+                    .map(entry => [entry[0].toLowerCase(), entry[1]])
+                    .reduce((final, entry) => {
+                        final[entry[0]] = { 
+                            weddellClassInput: entry[1],
+                            sourceInstance: this
+                        };
+                        return final;
+                    }, {})
+            )            
+        });
 
         this.getParent = () => opts.parentComponent || null;
         if (weddellGlobals.verbosity > 0 && opts.markupTemplate) {
@@ -1549,6 +1556,14 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         this.trigger('requestpatch', { results: results ? Object.create(results) : {}, id: this.id, classId: this.constructor.id });
     }
 
+    wrapH(tagName) {
+        tagName = tagName.toLowerCase();
+        if (tagName in this.components) {
+            return this.makeComponentInstance()
+        }
+        return h(...arguments);
+    }
+
     /**
      * @private
      */
@@ -1561,7 +1576,7 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
         return [...arguments].reduce((acc, curr) => {
             if (!acc) {
                 if (typeof curr === 'function') {
-                    return this.wrapTemplate(curr, 'renderVNode', h);
+                    return this.wrapTemplate(curr, 'renderVNode', this.wrapH.bind(this));
                 }
                 if (typeof curr === 'string') {
                     //TODO support template string parser;
@@ -1633,8 +1648,25 @@ class WeddellComponent extends mix().with(EventEmitterMixin) {
      * @private
      */
 
-    renderVNode() {
-        var vTree = this.vNodeTemplate();
+    async renderVNode() {
+        this.prevRenderedComponents
+        var renderedComponents = []
+        var vTree = this.vNodeTemplate(renderedComponents);
+
+        await Promise.all(renderedComponents);
+        await Promise.all([
+            ...difference(renderedComponents, this.prevRenderedComponents)
+                .map(comp => comp.mount()),
+            ...difference(this.prevRenderedComponents, renderedComponents)
+                .map(comp => comp.unmount())
+        ]);
+        
+        this.prevRenderedComponents = renderedComponents;
+
+        this.emit('rendermarkup', evt);
+        this.onRenderMarkup(Object.assign({}, evt));
+
+        return vTree;
 
         if (Array.isArray(vTree)) {
             if (vTree.length > 1) {

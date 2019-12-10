@@ -1,0 +1,14 @@
+{
+    "mangle": {
+        "module": true,
+        "reserved": ["weddell"],
+        "properties": true
+    },
+    "compress": {
+        "ecma": 6,
+        "drop_console": true
+    },
+    "output": {
+        "comments": "/^$/"
+    }
+}
