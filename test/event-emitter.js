@@ -1,9 +1,9 @@
-const tap = require('tap');
+const ava = require('ava');
 import { EventTarget, CustomEvent } from '../lib/node-event-target';
 import createEventEmitterClass from '../lib/create-event-emitter-class';
 const EventEmitter = createEventEmitterClass({ EventTarget, CustomEvent });
 
-tap.test('Event Emitter working as expected', test => {   
+ava('Event Emitter working as expected', test => {   
     
     var em = new EventEmitter();
 
@@ -27,19 +27,19 @@ tap.test('Event Emitter working as expected', test => {
 
     em.trigger('hi', {foo: 'bar'});
 
-    test.deepEquals(triggered, {addListener:1, addEventListener:1, on:1}, 'trigger method triggers events on all listener aliases');
+    test.deepEqual(triggered, {addListener:1, addEventListener:1, on:1}, 'trigger method triggers events on all listener aliases');
     
     triggered = {};
 
     em.emit('hi', {foo: 'bar'});
 
-    test.deepEquals(triggered, {addListener:1, addEventListener:1, on:1}, 'emit method triggers events on all listener aliases');
+    test.deepEqual(triggered, {addListener:1, addEventListener:1, on:1}, 'emit method triggers events on all listener aliases');
 
     triggered = {};
     
     em.dispatchEvent('hi', {foo: 'bar'});
 
-    test.deepEquals(triggered, {addListener:1, addEventListener:1, on:1}, 'dispatchEvent triggers events on all listener aliases');
+    test.deepEqual(triggered, {addListener:1, addEventListener:1, on:1}, 'dispatchEvent triggers events on all listener aliases');
 
     em.removeEventListener('hi', onAddEventListener);
     em.removeListener('hi', onAddListener);
@@ -49,7 +49,7 @@ tap.test('Event Emitter working as expected', test => {
     
     em.trigger('hi', {foo: 'bar'});
 
-    test.deepEquals(triggered, {});
+    test.deepEqual(triggered, {});
 
     em = new EventEmitter();
     var numTriggers = 0;
@@ -60,7 +60,7 @@ tap.test('Event Emitter working as expected', test => {
     em.trigger('hi', {});    
     em.trigger('hi', {});
 
-    test.equals(numTriggers, 1, 'Once method only triggers once');
+    test.is(numTriggers, 1, 'Once method only triggers once');
 
     em = new EventEmitter();
 
@@ -72,17 +72,29 @@ tap.test('Event Emitter working as expected', test => {
 
     em.trigger('hi', null);
 
-    test.same(result, null, 'Triggering with null event object works');
+    test.falsy(result, 'Triggering with null event object works');
 
     result = 1;
     em.trigger('hi');
     
-    test.same(result, null, 'Triggering with no event object works');
+    test.falsy(result, 'Triggering with no event object works');
 
     result = null;
     em.trigger('hi', {foo: 'bar'});
     
-    test.deepEquals(result, {foo: 'bar'}, 'Triggering with event object works');
-
-    test.end();
+    test.deepEqual(result, {foo: 'bar'}, 'Triggering with event object works');
 })
+
+
+ava('Event order is correct', test => {
+    var em = new EventEmitter();
+    const evts = [];
+    em.on('foo', (evt) => {
+        evts.push(evt)
+    })
+
+    em.trigger('foo', {bar: 1});
+    em.trigger('foo', {bar: 2});
+
+    test.deepEqual(evts, [{bar: 1}, {bar: 2}])
+});

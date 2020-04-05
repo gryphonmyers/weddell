@@ -12,7 +12,7 @@ class MyApp extends App {
             })
     }
 
-    async generate({state, routes}) {
+    async generatePaths({state, routes}) {
         return [
             ...routes.map(route => {
                 switch (route.name) {
@@ -68,8 +68,8 @@ class MyApp extends App {
                             .then(res => res.json())
                     , ({timestamp, value}) => timestamp - Date.now() < 2000),
                     myThing: reactive('foo'),
-                    otherThing: computed('default', data => 
-                        data.myThing + data.stuff
+                    otherThing: computed('default', state => 
+                        state.myThing + state.stuff
                     , ({changedKeys}) => changedKeys),
                     appThing: constant(12),
                     forego: appStore.newsPreviews,
@@ -79,7 +79,7 @@ class MyApp extends App {
                 }
             }
     
-            template({html, state, slot, component, inputAttrs, id}) {
+            template({html, state, slot, component, inputAttrs, id, routes, router, params }) {
                 return html`
                     <div ${inputAttrs}>${state.myThing}</div>
                     <section my-attr="${state.myAttr}">
@@ -98,22 +98,27 @@ class MyApp extends App {
                         })}
                         <div class="wongo"></div>
                     `)}
-                    ${component('my-other-coponent', [
+                    ${component('my-other-coponent', 
                         html`
                         <span slot="wingo" onclick="${() => state.foo++}">
                             ${state.foo}
                         </span>
+                        <a href="${routes.news.path({ localeCode: state.localeCode })}"></a>
+                        <h2>${params.item}</h2>
+                        <select onchange="${({target: { value }}) => router.push(routes.foo({ item: value }))}">
+                            <option value="path-1">Path 1</option>
+                        </select>
                         <div class="worgow">hi</div>
                         <span class="worthless">wonky</span>
                         `
-                    ])}
+                    )}
                 `
             }
             
             static styles({css, namespace}) {
                 return css`
                     ${namespace} {
-                        background-
+                        color: white;
                     }
                 `
             }
