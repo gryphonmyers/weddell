@@ -87,7 +87,7 @@ ava('Returned computed values update when dependent keys change', test => {
 });
 
 
-ava.serial('Store fires change events when computed values change', test => {   
+ava('Store fires change events when computed values change, but lazily', test => {   
     const store = new Store(({ReactiveState, ComputedState}) => ({
         first: new ReactiveState('it'),
         second: new ReactiveState('begins'),
@@ -108,16 +108,25 @@ ava.serial('Store fires change events when computed values change', test => {
         val: 'ends',
         prevVal: 'begins',
         store: store.internal
-    },{
+    }]);
+
+    store.readOnly.big;
+
+    test.deepEqual(evts, [{
+        key: 'second',
+        val: 'ends',
+        prevVal: 'begins',
+        store: store.internal
+    }, {
         key: 'big',
         val: 'it ends',
         prevVal: 'it begins',
         store: store.internal
-    }]);
+    }]);    
 });
 
 
-ava.serial('Trying to set computed state throws', test => {   
+ava('Trying to set computed state throws', test => {   
     const store = new Store(({ReactiveState, ComputedState}) => ({
         first: new ReactiveState('it'),
         second: new ReactiveState('begins'),
@@ -128,7 +137,7 @@ ava.serial('Trying to set computed state throws', test => {
 });
 
 
-ava.serial('Plain values are treated as constants', test => {   
+ava('Plain values are treated as constants', test => {   
     const store = new Store(({ReactiveState, ComputedState}) => ({
         thing: 1,
         action: function(val) {
