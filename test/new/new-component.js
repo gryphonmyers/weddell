@@ -281,3 +281,140 @@ ava('Component renders sub component', async test => {
 
     test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div> <template id="08i6u3"> <div class="fickle">sho</div> </template>`)
 })
+
+
+ava('Component resolves and renders async component', async test => {
+    class MyComponent extends Component {
+        store() {
+            return {
+                foo: 1,
+                bar: 2
+            }
+        }
+
+        template({html, state, component}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                <div class="win">${state.bar}</div>
+                ${component('my-sub-component', {id: "08i6u3"})}
+            `
+        }
+
+        static get components() {
+            return {
+                'my-sub-component': () => new Promise(resolve => setTimeout(() => {
+                    resolve(class extends Component {
+                        store({reactive}) {
+                            return {
+                                bus: reactive('sho')
+                            }
+                        }
+    
+                        template({html, state}){
+                            return html`
+                                <div class="fickle">${state.bus}</div>
+                            `
+                        }
+                    })
+                }, 1000))
+            }
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+    comp.on('htmlchange', evt => evts.push(evt))
+
+    await comp.init();
+
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div> <template id="08i6u3"> <div class="fickle">sho</div> </template>`)
+})
+
+
+
+ava('Component rerenders on state change', async test => {
+    class MyComponent extends Component {
+        store({reactive}) {
+            return {
+                foo: reactive(1),
+                bar: 2
+            }
+        }
+
+        template({html, state}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                <div class="win">${state.bar}</div>
+            `
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+    comp.on('htmlchange', evt => evts.push(evt))
+
+    await comp.init();
+
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div>`)
+
+    comp.state.foo++
+
+    await comp.renderPromise
+
+    test.is(evts.length, 2)
+
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">2</div> <div class="win">2</div>`);
+})
+
+ava.todo('Child component state change causes render');
+
+
+ava('Component renders content into slot', async test => {
+    class MyComponent extends Component {
+        store() {
+            return {
+                foo: 1,
+                bar: 2
+            }
+        }
+
+        template({html, state, component}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                <div class="win">${state.bar}</div>
+                ${component('my-sub-component', {id: "08i6u3"}, html`
+                    <div class="wigga">${state.bar}</div>
+                `)}
+            `
+        }
+
+        static get components() {
+            return {
+                'my-sub-component': class extends Component {
+                    store({reactive}) {
+                        return {
+                            bus: reactive('sho')
+                        }
+                    }
+
+                    template({html, state, slot}){
+                        return html`
+                            <div class="fickle">${state.bus}</div>
+                            ${slot()}
+                        `
+                    }
+                }
+            }
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+    comp.on('htmlchange', evt => evts.push(evt))
+
+    await comp.init();
+
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div> <template id="08i6u3"> <div class="fickle">sho</div> <div class="wigga">2</div> </template>`)
+})
+
+ava.todo('State change used by slot content causes rerender')
