@@ -136,7 +136,7 @@
 //                 ]
 //             }
 
-//             components() {
+//             static get components() {
 //                 return {
 //                     'my-component': class extends Component {
 
@@ -182,15 +182,15 @@
 
 
 const ava = require('ava');
-import createStoreClass from "../lib/new/store";
-import { EventTarget, CustomEvent } from '../lib/node-event-target';
-import createEventEmitterClass from '../lib/create-event-emitter-class';
-import createComponentClass from "../lib/new/component";
+import createStoreClass from "../../lib/new/store";
+import { EventTarget, CustomEvent } from '../../lib/node-event-target';
+import createEventEmitterClass from '../../lib/create-event-emitter-class';
+import createComponentClass from "../../lib/new/component";
 const EventEmitter = createEventEmitterClass({ EventTarget, CustomEvent });
 const Store = createStoreClass({EventEmitter, Error});
 const Component = createComponentClass({Store, EventEmitter});
 
-ava('Component renders', test => {
+ava('Component renders', async test => {
     class MyComponent extends Component {
         store() {
             return {
@@ -211,10 +211,73 @@ ava('Component renders', test => {
     const evts = [];
     comp.on('htmlchange', evt => evts.push(evt))
 
-    test.is(comp.html, `
-    <div class="fi">1</div>
-    <div class="win">2</div>
-    `)
-    test.deepEqual(evts, [{}])
+    await comp.init();
 
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div>`);
+})
+
+ava('Component without store renders', async test => {
+    class MyComponent extends Component {
+
+        template({html, state}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                <div class="win">${state.bar}</div>
+            `
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+    comp.on('htmlchange', evt => evts.push(evt))
+
+    await comp.init();
+
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi"></div> <div class="win"></div>`)
+})
+
+
+ava('Component renders sub component', async test => {
+    class MyComponent extends Component {
+        store() {
+            return {
+                foo: 1,
+                bar: 2
+            }
+        }
+
+        template({html, state, component}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                <div class="win">${state.bar}</div>
+                ${component('my-sub-component', {id: "08i6u3"})}
+            `
+        }
+
+        static get components() {
+            return {
+                'my-sub-component': class extends Component {
+                    store({reactive}) {
+                        return {
+                            bus: reactive('sho')
+                        }
+                    }
+
+                    template({html, state}){
+                        return html`
+                            <div class="fickle">${state.bus}</div>
+                        `
+                    }
+                }
+            }
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+    comp.on('htmlchange', evt => evts.push(evt))
+
+    await comp.init();
+
+    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div> <template id="08i6u3"> <div class="fickle">sho</div> </template>`)
 })

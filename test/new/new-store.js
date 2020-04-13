@@ -1,7 +1,7 @@
 const ava = require('ava');
-import createStoreClass from "../lib/new/store";
-import { EventTarget, CustomEvent } from '../lib/node-event-target';
-import createEventEmitterClass from '../lib/create-event-emitter-class';
+import createStoreClass from "../../lib/new/store";
+import { EventTarget, CustomEvent } from '../../lib/node-event-target';
+import createEventEmitterClass from '../../lib/create-event-emitter-class';
 const EventEmitter = createEventEmitterClass({ EventTarget, CustomEvent });
 const Store = createStoreClass({EventEmitter, Error});
 
@@ -87,7 +87,7 @@ ava('Returned computed values update when dependent keys change', test => {
 });
 
 
-ava('Store fires change events when computed values change, but lazily', test => {   
+ava('Store fires change events when computed values change', test => {   
     const store = new Store(({ReactiveState, ComputedState}) => ({
         first: new ReactiveState('it'),
         second: new ReactiveState('begins'),
@@ -107,6 +107,11 @@ ava('Store fires change events when computed values change, but lazily', test =>
         key: 'second',
         val: 'ends',
         prevVal: 'begins',
+        store: store.internal
+    }, {
+        key: 'big',
+        val: 'it ends',
+        prevVal: 'it begins',
         store: store.internal
     }]);
 

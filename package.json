@@ -6,7 +6,7 @@
   "module": "dist/weddell.mjs",
   "scripts": {
     "start": "budo docs/app.js:static/bundle.js --dir docs",
-    "test": "export NODE_OPTIONS='-r esm' && ava ./test/new-component.js",
+    "test": "node --harmony -r esm node_modules/.bin/ava ./test/new/*.js",
     "docs": "jsdoc2md --no-gfm ./src/core/*.js > README.md",
     "check-bundle-size": "rollup -c rollup.config.esm.js | terser --config-file terser.config.json | gzip-size",
     "bundle": "rollup -c rollup.config.js -o dist/weddell.js",
