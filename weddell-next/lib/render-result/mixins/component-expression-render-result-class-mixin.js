@@ -1,4 +1,4 @@
-import ComponentExpression from "../expressions/component-expression.js";
+import { ComponentExpression } from "../expressions/component-expression.js";
 
 export const COMPONENT_ARTIFACTS_BY_EXPRESSION = Symbol();
 
@@ -19,8 +19,6 @@ export const componentExpressionRenderResultClassMixin = RenderResult =>
         transformExpression(exp) {
             if (exp instanceof ComponentExpression) {
                 const key = exp.key || this[COMPONENT_ARTIFACTS_BY_EXPRESSION].size;
-                
-                exp.depth = this.depth;
 
                 this[COMPONENT_ARTIFACTS_BY_EXPRESSION].set(exp, null);
                 

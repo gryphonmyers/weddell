@@ -28,6 +28,7 @@ export const CHILD_COMPONENT_INSTANCES = Symbol();
 export const ON_CHILD_RENDER_RESULTS_CHANGE = Symbol();
 export const ON_RENDER_FINISH = Symbol();
 export const SUBSCRIBERS_BY_COMPONENT = Symbol();
+export const DEPTH = Symbol();
 
 import createHtmlTemplateTag from "../create-html-template-tag.js";
 import createComponentDirective from "../render-result/directives/create-component-directive.js";
@@ -55,22 +56,24 @@ export const createComponentClass = ({
 
     return class Component extends PushableObservable {
 
-        get [RENDER_CONTEXT]() {
-            return {
-                // slot: (name='default', defaultContent=null) => {
-                //     if (name instanceof RenderResult) {
-                //         defaultContent = name;
-                //         name = 'default'
-                //     }
-                //     return new Slot({ name, defaultContent, component: this })
-                // },
-                unescape,
-                component: this.componentDirective,
-                html: createHtmlTemplateTag({ RenderResult, parent: this }), 
-                // @ts-ignore
-                state: this[STORE]?.[READ_ONLY]
-            }
-        }
+
+
+        // get [RENDER_CONTEXT]() {
+        //     return {
+        //         // slot: (name='default', defaultContent=null) => {
+        //         //     if (name instanceof RenderResult) {
+        //         //         defaultContent = name;
+        //         //         name = 'default'
+        //         //     }
+        //         //     return new Slot({ name, defaultContent, component: this })
+        //         // },
+        //         unescape,
+        //         component: (...args) => componentDirective(this[DEPTH], ...args),
+        //         html: (...args) => htmlTemplateTag(this, ...args), 
+        //         // @ts-ignore
+        //         state: this[STORE]?.[READ_ONLY]
+        //     }
+        // }
 
         async [PROCESS_RENDER_RESULT]() {
             throw new Error('Not implemented');
@@ -259,6 +262,12 @@ export const createComponentClass = ({
             return this[DIRTY_STATE];
         }
 
+        get [DEPTH]() {
+            return this[PARENT]
+                ? this[PARENT][DEPTH] + 1
+                : 0;
+        }
+
         // @ts-ignore
         constructor({ parent=null, id, classId, props={}, content=null }={}) {
             super();
@@ -290,10 +299,7 @@ export const createComponentClass = ({
                     next: () => this[IS_DIRTY] = true
                 });
 
-            this.componentDirective = createComponentDirective({ 
-                RenderResult, 
-                parentComponent: this
-            });
+           
 
             // @ts-ignore
             this[ID] = id || props.classId || this.constructor[GENERATE_ID]();
@@ -304,14 +310,35 @@ export const createComponentClass = ({
 
             // @ts-ignore
             this[RENDER_PROMISE] = null;
+            this[SUBSCRIBERS_BY_COMPONENT] = new Map;
             // @ts-ignore
             this[CLAIMED] = false;
             // @ts-ignore
             this[CHILD_COMPONENT_INSTANCES] = new Map;
             // @ts-ignore
             this[SET_CONTEXT]({props, id, content, parent});
+
+            // this[COMPONENT_DIRECTIVE] = 
             // @ts-ignore
             this[KEY_DEPS] = new Set;
+
+            this[RENDER_CONTEXT] = {
+                state: this[STORE]?.[READ_ONLY],
+                unescape,
+                component: createComponentDirective({  RenderResult, depth: this[DEPTH] }),
+                html: createHtmlTemplateTag({ RenderResult, parent: this })
+            }
+
+            // return new Proxy(this, {
+            //     get: (obj, key) => 
+            //         obj[STORE] 
+            //             ? key in obj[STORE]
+            //                 ? obj[STORE][key]
+            //                 : obj[key]
+            //             : obj[key],
+            //     set: (obj, key, val) =>
+
+            // })
         }
 
         /**

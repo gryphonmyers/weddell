@@ -15,6 +15,10 @@ export function createComputedStateClass({ ReactiveState }) {
             this[EVAL_FUNC] = func;
             // @ts-ignore
             this[STORES] = stores || this.constructor.stores || [];
+
+            if (this.constructor === ComputedState) {
+                Object.seal(this);
+            }
         }
 
         get value() {

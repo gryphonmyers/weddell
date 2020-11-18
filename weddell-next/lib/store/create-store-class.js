@@ -72,6 +72,10 @@ export function createStoreClass ({ PushableObservable, Error, ReactiveState, Co
                     }
                 });
 
+            if (this.constructor === Store) {
+                Object.seal(this);
+            }
+
             return readOnly
                 ? this[READ_ONLY]
                 : this[WRITABLE];

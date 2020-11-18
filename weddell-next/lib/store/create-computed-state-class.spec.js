@@ -34,6 +34,8 @@ test('basic computed state works', t => {
 
     t.is(state.value, 3);
     t.deepEqual(calls, [['filter'],['subscribe'], ['unsubscribe'],['filter'],['subscribe']])
+
+    t.throws(() => state.foo = '1');
 });
 
 test('computed state can source stores from static property', t => {  

@@ -18,6 +18,16 @@ test('Store returns initial reactive values', t => {
 
     t.is(store[READ_ONLY].foo, 'bar');
     t.is(store[WRITABLE].foo, 'bar');
+
+    t.throws(() => store.goo = 'bee');
+});
+
+test('extending properties throws', t => {   
+    const store = new Store(({ReactiveState}) => ({
+        foo: new ReactiveState('bar')
+    }))
+
+    t.throws(() => store.goo = 'bee');
 });
 
 test('Readonly store can not be written to', test => {

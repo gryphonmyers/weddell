@@ -13,6 +13,12 @@ test('reactive state initializes with value', t => {
     t.is(state.value, '1');
 });
 
+test('extending object throws', t => {
+    const state = new ReactiveState('1');
+
+    t.throws(() => state.foo = '1');
+});
+
 test('reactive state fires change event at appropriate times', t => {
     const evts = [];
 

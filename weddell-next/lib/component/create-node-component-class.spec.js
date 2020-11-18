@@ -212,11 +212,15 @@ function trimHtmlWhitespace(html) {
 test('Component renders', async t => {
 
     class MyComponent extends Component {
+        static fetchStuff() {
+            this.fug = thing;
+        }
+
         static state = ({reactive, computed}) => ({
             fug: reactive(4),
             dug: reactive('worry'),
             wug: computed(store => `${store.dug} ${store.fug} times`)
-        })
+        })      
 
         static template = ({html, state}) =>
              html`
@@ -248,7 +252,7 @@ test('Component renders', async t => {
     ]);
 });
 
-test('Component rerenders when state changes', async t => {
+test.skip('Component rerenders when state changes', async t => {
 
     class MyComponent extends Component {
         static state = ({reactive, computed}) => ({
@@ -317,7 +321,7 @@ test('Component rerenders when state changes', async t => {
     ]);
 });
 
-test('Component without store renders', async t => {
+test.skip('Component without store renders', async t => {
     class MyComponent extends Component {
 
         static template({html}) {
@@ -350,7 +354,7 @@ test('Component without store renders', async t => {
     // test.is(comp.html, `<div class="fi"></div> <div class="win"></div>`)
 });
 
-test('Component renders sub component', async t => {
+test.skip('Component renders sub component', async t => {
 
     class SubComponent extends Component {
         static template = ({html}) => 
@@ -377,8 +381,12 @@ test('Component renders sub component', async t => {
     const comp = new MyComponent();
     const evts = [];
     comp
-        .filter(evt => evt.eventName === 'htmlchange')
-        .map(({prevHtml, html}) => ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) }))
+        .filter(evt => ['htmlchange', 'renderfinish'].includes(evt.eventName))
+        .map(({eventName, renderResult, prevHtml, html}) => 
+            eventName === 'htmlchange'
+                ? ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) })
+                : ({renderResult: { html: trimHtmlWhitespace(renderResult.html) } })
+        )
         .subscribe({
             next(evt) {
                 evts.push(evt)
@@ -391,6 +399,9 @@ test('Component renders sub component', async t => {
         {
             html: '<div class="fi"></div> <div class="win"> <div class="gordi"></div> </div>',
             prevHtml: null
+        },
+        {
+            renderResult: { html: '<div class="fi"></div> <div class="win"> <template id="component-SubComponent-0-0"></template> </div>' }
         }
     ]);
 })

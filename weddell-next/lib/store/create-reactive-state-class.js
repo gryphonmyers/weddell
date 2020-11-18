@@ -11,8 +11,13 @@ export function createReactiveStateClass({PushableObservable, Error}) {
         
         constructor(val) {
             super();
+            this[STATE_VALUE] = null;
             // @ts-ignore
             this.value = val;
+
+            if (this.constructor === ReactiveState) {
+                Object.seal(this);
+            }
         }
 
         get value() {
