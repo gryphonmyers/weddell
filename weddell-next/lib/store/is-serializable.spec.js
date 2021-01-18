@@ -19,17 +19,28 @@ test('Serializable values are detected appropriately', t => {
             }
         ]
     }));
-});
-
-test('Unserializable values are detected appropriately', t => {   
-    t.false(isSerializable(function(hi){ return hi }));
-    t.false(isSerializable(new Map([['hi', 'bye'], ['yes', '2']])));
-    t.false(isSerializable(new Date()));
-    t.false(isSerializable({ 
+    t.true(isSerializable(new Date)); //Dates implement the toJSON method
+    t.true(isSerializable({ 
         time: new Date
     }));
-    t.false(isSerializable([{ 
+    t.true(isSerializable([{ 
         time: new Date,
+        yes: "ok"
+    }]));
+});
+
+test('Unserializable values are detected appropriately', t => {
+    class MyClass {
+        foo='bar'
+    }
+    t.false(isSerializable(function(hi){ return hi }));
+    t.false(isSerializable(new Map([['hi', 'bye'], ['yes', '2']])));
+    t.false(isSerializable(new MyClass));
+    t.false(isSerializable({ 
+        time: new MyClass
+    }));
+    t.false(isSerializable([{ 
+        time: new MyClass,
         yes: "ok"
     }]));
 });

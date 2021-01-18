@@ -252,7 +252,7 @@ test('Component renders', async t => {
     ]);
 });
 
-test.skip('Component rerenders when state changes', async t => {
+test('Component rerenders when state changes', async t => {
 
     class MyComponent extends Component {
         static state = ({reactive, computed}) => ({
@@ -321,7 +321,7 @@ test.skip('Component rerenders when state changes', async t => {
     ]);
 });
 
-test.skip('Component without store renders', async t => {
+test('Component without store renders', async t => {
     class MyComponent extends Component {
 
         static template({html}) {
@@ -354,7 +354,7 @@ test.skip('Component without store renders', async t => {
     // test.is(comp.html, `<div class="fi"></div> <div class="win"></div>`)
 });
 
-test.skip('Component renders sub component', async t => {
+test('Component renders sub component', async t => {
 
     class SubComponent extends Component {
         static template = ({html}) => 
@@ -407,65 +407,82 @@ test.skip('Component renders sub component', async t => {
 })
 
 
-test.skip('Component resolves and renders async component', async test => {
+test('Component resolves and renders async component', async t => {
     class MyComponent extends Component {
-        store() {
+        static state() {
             return {
                 foo: 1,
                 bar: 2
             }
         }
 
-        template({html, state, component}) {
+        static template({html, state, component}) {
             return html`
                 <div class="fi">${state.foo}</div>
                 <div class="win">${state.bar}</div>
-                ${component('my-sub-component', {id: "08i6u3"})}
+                ${component('my-sub-component')}
             `
         }
 
-        static get components() {
-            return {
-                'my-sub-component': () => new Promise(resolve => setTimeout(() => {
-                    resolve(class extends Component {
-                        store({reactive}) {
-                            return {
-                                bus: reactive('sho')
-                            }
+        static components = {
+            'my-sub-component': () => new Promise(resolve => setTimeout(() => {
+                resolve(class extends Component {
+                    static state({reactive}) {
+                        return {
+                            bus: reactive('sho')
                         }
-    
-                        template({html, state}){
-                            return html`
-                                <div class="fickle">${state.bus}</div>
-                            `
-                        }
-                    })
-                }, 1000))
-            }
+                    }
+
+                    static template({html, state}){
+                        return html`
+                            <div class="fickle">${state.bus}</div>
+                        `
+                    }
+                })
+            }, 1000))
         }
     }
 
     const comp = new MyComponent();
     const evts = [];
-    comp.on('htmlchange', evt => evts.push(evt))
+    comp
+        .filter(evt => ['htmlchange', 'renderfinish'].includes(evt.eventName))
+        .map(({eventName, renderResult, prevHtml, html}) => 
+            eventName === 'htmlchange'
+                ? ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) })
+                : ({renderResult: { html: trimHtmlWhitespace(renderResult.html) } })
+        )
+        .subscribe({
+            next(evt) {
+                evts.push(evt)
+            }
+        });
 
     await comp.init();
-
-    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div> <template id="08i6u3"> <div class="fickle">sho</div> </template>`)
+    
+    t.deepEqual(evts, [
+        {
+            html: '<div class="fi">1</div> <div class="win">2</div> <div class="fickle">sho</div>',
+            prevHtml: null
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <div class="win">2</div> <template id="component-my-sub-component-0-0"></template>' 
+            }
+        }
+    ]);
 })
 
-
-
-test.skip('Component rerenders on state change', async test => {
+test('Component rerenders on state change', async t => {
     class MyComponent extends Component {
-        store({reactive}) {
+        static state({reactive}) {
             return {
                 foo: reactive(1),
-                bar: 2
+                bar: reactive(2)
             }
         }
 
-        template({html, state}) {
+        static template({html, state}) {
             return html`
                 <div class="fi">${state.foo}</div>
                 <div class="win">${state.bar}</div>
@@ -475,19 +492,57 @@ test.skip('Component rerenders on state change', async test => {
 
     const comp = new MyComponent();
     const evts = [];
-    comp.on('htmlchange', evt => evts.push(evt))
+    comp
+        .filter(evt => ['htmlchange', 'renderfinish'].includes(evt.eventName))
+        .map(({eventName, renderResult, prevHtml, html}) => 
+            eventName === 'htmlchange'
+                ? ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) })
+                : ({renderResult: { html: trimHtmlWhitespace(renderResult.html) } })
+        )
+        .subscribe({
+            next(evt) {
+                evts.push(evt)
+            }
+        });
 
     await comp.init();
-
-    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <div class="win">2</div>`)
+    t.deepEqual(evts, [
+        {
+            html: '<div class="fi">1</div> <div class="win">2</div>',
+            prevHtml: null
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <div class="win">2</div>' 
+            }
+        }
+    ]);
 
     comp.state.foo++
+    comp.state.bar--
 
     await comp.renderPromise
 
-    test.is(evts.length, 2)
-
-    test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">2</div> <div class="win">2</div>`);
+    t.deepEqual(evts, [
+        {
+            html: '<div class="fi">1</div> <div class="win">2</div>',
+            prevHtml: null
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <div class="win">2</div>' 
+            }
+        },
+        {
+            html: '<div class="fi">2</div> <div class="win">1</div>',
+            prevHtml: '<div class="fi">1</div> <div class="win">2</div>'
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">2</div> <div class="win">1</div>' 
+            }
+        }
+    ]);
 })
 
 test.todo('Child component state change causes render');
@@ -594,3 +649,97 @@ test.skip('State change used by slot content causes rerender', async test => {
     test.is(comp.html.replace(/\s\s+/g, ' ').trim(), `<div class="fi">1</div> <template id="08i6u3"> <div class="fickle">sho</div> <div class="wigga">3</div> </template>`)
 
 })
+
+test('Renders prop values into child', async t => {
+    class MyComponent extends Component {
+        static state({reactive}) {
+            return {
+                foo: reactive(1),
+                bar: reactive(2)
+            }
+        }
+
+        static template({html, state, component}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                ${component('SubComponent', { fog: state.bar })}
+            `
+        }
+
+        static components = {
+            SubComponent: class extends Component {
+                static state({prop}) {
+                    return {
+                        fog: prop(17)
+                    }
+                }
+        
+                static template({html, state}) {
+                    return html`
+                        <div class="bip">${state.fog}</div>
+                    `
+                }
+            }
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+    comp
+        .filter(evt => ['htmlchange', 'renderfinish'].includes(evt.eventName))
+        .map(({eventName, renderResult, prevHtml, html}) => 
+            eventName === 'htmlchange'
+                ? ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) })
+                : ({renderResult: { html: trimHtmlWhitespace(renderResult.html) } })
+        )
+        .subscribe({
+            next(evt) {
+                evts.push(evt)
+            }
+        });
+
+    await comp.init();
+    t.deepEqual(evts, [
+        {
+            html: '<div class="fi">1</div> <div class="bip">2</div>',
+            prevHtml: null
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <template id="component-SubComponent-0-0"></template>' 
+            }
+        }
+    ]);
+
+    comp.state.bar--
+
+    await comp.renderPromise
+
+    t.deepEqual(evts, [
+        {
+            html: '<div class="fi">1</div> <div class="bip">2</div>',
+            prevHtml: null
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <template id="component-SubComponent-0-0"></template>' 
+            }
+        },
+        {
+            html: '<div class="fi">1</div> <div class="bip">1</div>',
+            prevHtml: '<div class="fi">1</div> <div class="bip">2</div>'
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <template id="component-SubComponent-0-0"></template>' 
+            }
+        }
+    ]);
+});
+
+test.todo('Validates prop values');
+
+test.todo('Uses default prop value when nullish value is passed in');
+test.todo('Re-renders when prop values from parent change');
+test.todo('Unsupported props default to attrs');
+test.todo('Errors when infinite render loop is detected');

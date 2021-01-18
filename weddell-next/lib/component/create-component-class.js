@@ -268,6 +268,12 @@ export const createComponentClass = ({
                 : 0;
         }
 
+        set [PROPS](props) {
+            if (this[STORE]) {
+                Object.assign(this[STORE][WRITABLE], props);
+            }
+        }
+
         // @ts-ignore
         constructor({ parent=null, id, classId, props={}, content=null }={}) {
             super();
@@ -292,15 +298,16 @@ export const createComponentClass = ({
                         })
                 )
                 : null;
-
+            this[KEY_DEPS] = new Set;
             this[STORE]?.filter(evt => evt.eventName === 'valuechange' && this[KEY_DEPS].has(evt.stateRef))
                 .subscribe({
                     // @ts-ignore
                     next: () => this[IS_DIRTY] = true
                 });
+            
+            this[PROPS] = props;
 
            
-
             // @ts-ignore
             this[ID] = id || props.classId || this.constructor[GENERATE_ID]();
             // @ts-ignore
@@ -320,7 +327,7 @@ export const createComponentClass = ({
 
             // this[COMPONENT_DIRECTIVE] = 
             // @ts-ignore
-            this[KEY_DEPS] = new Set;
+            
 
             this[RENDER_CONTEXT] = {
                 state: this[STORE]?.[READ_ONLY],
@@ -328,7 +335,7 @@ export const createComponentClass = ({
                 component: createComponentDirective({  RenderResult, depth: this[DEPTH] }),
                 html: createHtmlTemplateTag({ RenderResult, parent: this })
             }
-
+            
             // return new Proxy(this, {
             //     get: (obj, key) => 
             //         obj[STORE] 
