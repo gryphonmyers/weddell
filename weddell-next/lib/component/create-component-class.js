@@ -29,11 +29,15 @@ export const ON_CHILD_RENDER_RESULTS_CHANGE = Symbol();
 export const ON_RENDER_FINISH = Symbol();
 export const SUBSCRIBERS_BY_COMPONENT = Symbol();
 export const DEPTH = Symbol();
+export const PROP_REFS = Symbol();
+export const PRIVATE_STORE = Symbol();
+export const ERR_COMPONENT_CLAIMED = 'ERR_COMPONENT_CLAIMED';
+export const CACHED_RENDER_RESULT = Symbol();
 
 import createHtmlTemplateTag from "../create-html-template-tag.js";
 import createComponentDirective from "../render-result/directives/create-component-directive.js";
 import unescape from "../render-result/directives/unescape.js";
-import { READ_ONLY, WRITABLE } from "../store/create-store-class.js";
+import { READ_ONLY, WRITABLE, STATE } from "../store/create-store-class.js";
 
 const MAX_RERENDERS = 50;
 /**
@@ -88,9 +92,9 @@ export const createComponentClass = ({
                     // @ts-ignore
                     await Promise.resolve();
                     // @ts-ignore
-                    var renderResult,
-                        mountedRenderResultsByComponent,
-                        componentExpressionsByComponent;
+                    var renderResult;
+                    var mountedRenderResultsByComponent = new Map;
+                    var componentExpressionsByComponent = new Map;
                     
 
                     while (this[IS_DIRTY]) {
@@ -156,7 +160,7 @@ export const createComponentClass = ({
                                 comp
                                     .filter(evt => evt.eventName === 'renderfinish')
                                     .subscribe({
-                                        next({ renderResult: childRenderResult }) {
+                                        next: ({ renderResult: childRenderResult }) => {
                                             mountedRenderResultsByComponent.set(comp, childRenderResult);
                                             this[ON_CHILD_RENDER_RESULTS_CHANGE](renderResult, mountedRenderResultsByComponent, componentExpressionsByComponent);
                                         }
@@ -169,11 +173,14 @@ export const createComponentClass = ({
                                 if (!this[SUBSCRIBERS_BY_COMPONENT].has(comp)) {
                                     sub.unsubscribe();
                                 }
-                                comp[CLAIMED] = false; 
                             });
                         }
                     }
-
+                    if (!renderResult) {
+                        return resolve(this[CACHED_RENDER_RESULT]);
+                    }
+                    this[CACHED_RENDER_RESULT] = renderResult;
+                    
                     await this[ON_RENDER_FINISH](renderResult, mountedRenderResultsByComponent, componentExpressionsByComponent);
 
                     this.push({ eventName: 'renderfinish', renderResult })
@@ -210,23 +217,14 @@ export const createComponentClass = ({
                 // @ts-ignore
                 components = this[CHILD_COMPONENT_INSTANCES].set(ComponentClass, []).get(ComponentClass);
             }
-
-            let component = key == null 
-                // @ts-ignore
-                ? components.find(comp => !comp[CLAIMED]) 
-                : components[key];
+            let component = components[key];
 
             if (!component) {
                 component = new ComponentClass({ props, content, parent: this})
+                components.push(component);
             } else {
                 component[SET_CONTEXT]({ props, content, parent: this})
             }
-
-            // @ts-ignore
-            if (component[CLAIMED]) throw new Error(ERR_COMPONENT_CLAIMED);
-
-            // @ts-ignore
-            component[CLAIMED] = true;
 
             return component;
         }
@@ -270,15 +268,45 @@ export const createComponentClass = ({
 
         set [PROPS](props) {
             if (this[STORE]) {
-                Object.assign(this[STORE][WRITABLE], props);
+                const { attrs, validProps, invalidProps } = Object.entries(props)
+                    .reduce((acc, [k,v]) => {
+                        const propRef = this[STORE][STATE][k];
+
+                        if (!propRef) {
+                            if (!['string', 'number'].includes(typeof v)) {
+                                return acc;
+                            }
+
+                            return { ...acc, attrs: { ...acc.attrs, [k]: String(v) } }
+                        }
+                        
+                        const validator = this[PROP_REFS].get(propRef);
+
+                        if (!validator || validator(v)) {
+                            return { ...acc, validProps: { ...acc.validProps, [k]: v } };
+                        }
+
+                        return { ...acc, invalidProps: { ...acc.invalidProps, [k]: v } };
+
+                    }, {validProps: {}, attrs: {}, invalidProps: {}})
+
+                Object.assign(this[STORE][WRITABLE], validProps);
+                Object.entries(invalidProps)
+                    .forEach(([k,v]) => {
+                        this.push({ eventName: 'invalidprop', prevVal: this[STORE][READ_ONLY][k], invalidVal: v });
+                    });
+
+                this[PRIVATE_STORE][WRITABLE].attributes = attrs;
             }
         }
 
         // @ts-ignore
         constructor({ parent=null, id, classId, props={}, content=null }={}) {
             super();
+            this[CACHED_RENDER_RESULT] = null;
 
-            const propRefs = new Set;
+            this[PRIVATE_STORE] = new Store(({ReactiveState}) => ({ attributes: new ReactiveState({}) }));
+            this[PROP_REFS] = new Map;
             // @ts-ignore
             this[STORE] = this.constructor.state
                 ? new Store(
@@ -289,8 +317,8 @@ export const createComponentClass = ({
                             computed: func => new ComputedState(func),
                             prop: (defaultVal, validator) => {
                                 const prop = new ReactiveState(defaultVal);
-    
-                                propRefs.add([prop, validator]);
+                                
+                                this[PROP_REFS].set(prop, validator);
                                 
                                 return prop;
                             }
@@ -302,6 +330,11 @@ export const createComponentClass = ({
             this[STORE]?.filter(evt => evt.eventName === 'valuechange' && this[KEY_DEPS].has(evt.stateRef))
                 .subscribe({
                     // @ts-ignore
+                    next: () => this[IS_DIRTY] = true
+                });
+            //@TODO only mark dirty if render references attrs
+            this[PRIVATE_STORE].filter(evt => evt.eventName === 'valuechange')
+                .subscribe({
                     next: () => this[IS_DIRTY] = true
                 });
             
@@ -319,8 +352,6 @@ export const createComponentClass = ({
             this[RENDER_PROMISE] = null;
             this[SUBSCRIBERS_BY_COMPONENT] = new Map;
             // @ts-ignore
-            this[CLAIMED] = false;
-            // @ts-ignore
             this[CHILD_COMPONENT_INSTANCES] = new Map;
             // @ts-ignore
             this[SET_CONTEXT]({props, id, content, parent});
@@ -331,6 +362,15 @@ export const createComponentClass = ({
 
             this[RENDER_CONTEXT] = {
                 state: this[STORE]?.[READ_ONLY],
+                get attributes() {
+                    return this[PRIVATE_STORE][READ_ONLY].attributes;
+                },
+                toAttrsString(obj) {
+                    //@TODO do we want to handle this with a render result expression instead?
+                    return Object.entries(obj)
+                        .map(([k,v]) => `${k}="${v.replace('"', '\\"')}"`)
+                        .join(' ')
+                },
                 unescape,
                 component: createComponentDirective({  RenderResult, depth: this[DEPTH] }),
                 html: createHtmlTemplateTag({ RenderResult, parent: this })

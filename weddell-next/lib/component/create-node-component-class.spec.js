@@ -184,7 +184,7 @@
 import { createStoreClass } from "../store/create-store-class.js";
 // import { EventTarget, CustomEvent } from '../../lib/node-event-target';
 // import createEventEmitterClass from '../../lib/create-event-emitter-class';
-import { IS_DIRTY } from "./create-component-class.js";
+import { IS_DIRTY,CHILD_COMPONENT_INSTANCES } from "./create-component-class.js";
 import { createNodeComponentClass } from "./create-node-component-class.js";
 // const EventEmitter = createEventEmitterClass({ EventTarget, CustomEvent });
 
@@ -650,7 +650,7 @@ test.skip('State change used by slot content causes rerender', async test => {
 
 })
 
-test('Renders prop values into child', async t => {
+test('Renders prop values into child, rerender on change', async t => {
     class MyComponent extends Component {
         static state({reactive}) {
             return {
@@ -737,9 +737,106 @@ test('Renders prop values into child', async t => {
     ]);
 });
 
-test.todo('Validates prop values');
+test('Validates prop values', async t => {
+    class SubComponent extends Component {
+        static state({prop}) {
+            return {
+                fog: prop(17, val => val > 0)
+            }
+        }
+
+        static template({html, state}) {
+            return html`
+                <div class="bip">${state.fog}</div>
+            `
+        }
+    }
+    class MyComponent extends Component {
+        static state({reactive}) {
+            return {
+                foo: reactive(1),
+                bar: reactive(2)
+            }
+        }
+
+        static template({html, state, component}) {
+            return html`
+                <div class="fi">${state.foo}</div>
+                ${component('SubComponent', { fog: state.bar })}
+            `
+        }
+
+        static components = {
+            SubComponent
+        }
+    }
+
+    const comp = new MyComponent();
+    const evts = [];
+
+    comp
+        .filter(evt => {
+            return ['htmlchange', 'renderfinish', 'invalidprop'].includes(evt.eventName)
+        })
+        .map(({eventName, renderResult, prevHtml, html, invalidVal, prevVal }) => {
+            return eventName === 'htmlchange'
+            ? ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) })
+            : eventName === 'renderfinish'
+                ? ({renderResult: { html: trimHtmlWhitespace(renderResult.html) } })
+                : eventName === 'invalidprop'
+                    ? ({ invalidVal, prevVal })
+                    : null
+        })
+        .subscribe({
+            next(evt) {
+                evts.push(evt)
+            }
+        });
+
+    await comp.init();
+    t.deepEqual(evts, [
+        {
+            html: '<div class="fi">1</div> <div class="bip">2</div>',
+            prevHtml: null
+        },
+        {
+            renderResult: { 
+                html: '<div class="fi">1</div> <template id="component-SubComponent-0-0"></template>' 
+            }
+        }
+    ]);
+    const evts2 = []
+    comp[CHILD_COMPONENT_INSTANCES].get(SubComponent)[0]
+        .filter(evt => {
+            return ['htmlchange', 'renderfinish', 'invalidprop'].includes(evt.eventName)
+        })
+        .map(({eventName, renderResult, prevHtml, html, invalidVal, prevVal }) => {
+            return eventName === 'htmlchange'
+            ? ({prevHtml: prevHtml && trimHtmlWhitespace(prevHtml), html: trimHtmlWhitespace(html) })
+            : eventName === 'renderfinish'
+                ? ({renderResult: { html: trimHtmlWhitespace(renderResult.html) } })
+                : eventName === 'invalidprop'
+                    ? ({ invalidVal, prevVal })
+                    : null
+        })
+        .subscribe({
+            next(evt) {
+                evts2.push(evt)
+            }
+        });
+
+    comp.state.bar = -20;
+
+    await comp.renderPromise
+
+    t.deepEqual(evts2, [
+        {
+            invalidVal: -20,
+            prevVal: 2
+        }
+    ]);
+});
 
 test.todo('Uses default prop value when nullish value is passed in');
-test.todo('Re-renders when prop values from parent change');
 test.todo('Unsupported props default to attrs');
 test.todo('Errors when infinite render loop is detected');

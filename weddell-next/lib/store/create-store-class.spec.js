@@ -18,8 +18,7 @@ test('Store returns initial reactive values', t => {
 
     t.is(store[READ_ONLY].foo, 'bar');
     t.is(store[WRITABLE].foo, 'bar');
-
-    t.throws(() => store.goo = 'bee');
+    t.falsy(store.foo);
 });
 
 test('extending properties throws', t => {   
@@ -218,22 +217,6 @@ test('Plain values are treated as constants', test => {
     test.throws(() => store[WRITABLE].thing = 'fib')
     test.throws(() => store[WRITABLE].action = 'fib')
 });
-
-test('Readonly true option causes writes to throw', t => {
-    const store = new Store(({ReactiveState, ComputedState}) => ({
-        thing: new ReactiveState(1)
-    }), { readOnly: true });
-
-    t.throws(() => store.thing = 4);
-});
-
-test('Readonly false option allows writes', t => {
-    const store = new Store(({ReactiveState, ComputedState}) => ({
-        thing: new ReactiveState(1)
-    }), { readOnly: false });
-
-    t.notThrows(() => store.thing = 4);
-})
 
 test.todo('Async state');
 test.todo('Only fire get events when "monitorAccess" method is invoked.');
