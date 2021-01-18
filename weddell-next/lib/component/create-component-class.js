@@ -56,28 +56,8 @@ export const createComponentClass = ({
     Error, 
     PushableObservable,
     Store
-}) => {
-
-    return class Component extends PushableObservable {
-
-
-
-        // get [RENDER_CONTEXT]() {
-        //     return {
-        //         // slot: (name='default', defaultContent=null) => {
-        //         //     if (name instanceof RenderResult) {
-        //         //         defaultContent = name;
-        //         //         name = 'default'
-        //         //     }
-        //         //     return new Slot({ name, defaultContent, component: this })
-        //         // },
-        //         unescape,
-        //         component: (...args) => componentDirective(this[DEPTH], ...args),
-        //         html: (...args) => htmlTemplateTag(this, ...args), 
-        //         // @ts-ignore
-        //         state: this[STORE]?.[READ_ONLY]
-        //     }
-        // }
+}) =>
+    class Component extends PushableObservable {
 
         async [PROCESS_RENDER_RESULT]() {
             throw new Error('Not implemented');
@@ -340,7 +320,6 @@ export const createComponentClass = ({
             
             this[PROPS] = props;
 
-           
             // @ts-ignore
             this[ID] = id || props.classId || this.constructor[GENERATE_ID]();
             // @ts-ignore
@@ -354,11 +333,7 @@ export const createComponentClass = ({
             // @ts-ignore
             this[CHILD_COMPONENT_INSTANCES] = new Map;
             // @ts-ignore
-            this[SET_CONTEXT]({props, id, content, parent});
-
-            // this[COMPONENT_DIRECTIVE] = 
-            // @ts-ignore
-            
+            this[SET_CONTEXT]({props, id, content, parent});            
 
             this[RENDER_CONTEXT] = {
                 state: this[STORE]?.[READ_ONLY],
@@ -375,17 +350,6 @@ export const createComponentClass = ({
                 component: createComponentDirective({  RenderResult, depth: this[DEPTH] }),
                 html: createHtmlTemplateTag({ RenderResult, parent: this })
             }
-            
-            // return new Proxy(this, {
-            //     get: (obj, key) => 
-            //         obj[STORE] 
-            //             ? key in obj[STORE]
-            //                 ? obj[STORE][key]
-            //                 : obj[key]
-            //             : obj[key],
-            //     set: (obj, key, val) =>
-
-            // })
         }
 
         /**
@@ -409,4 +373,3 @@ export const createComponentClass = ({
             return this[STORE]?.[WRITABLE];
         }
     }
-}
