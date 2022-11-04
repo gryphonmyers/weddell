@@ -34,7 +34,7 @@
     "del": "^3.0.0",
     "disc": "^1.3.2",
     "es6-promisify": "^5.0.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-if": "^2.0.2",
     "gulp-uglify": "^3.0.0",
     "jsdoc-to-markdown": "^5.0.0",
